@@ -228,6 +228,7 @@ public class MythHunterStructureWizard : EditorWindow
         if (createBaseFiles)
         {
             CreateBaseFiles();
+            CreateExtraInterfaces();
         }
     }
 
@@ -309,6 +310,71 @@ This is the base structure for the MythHunter project.
 - Implement interfaces for all components and systems
 ";
         WriteFile(readmeFile, readmeContent);
+    }
+    private void CreateExtraInterfaces()
+    {
+        // Створення ISerializable
+        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
+        string iSerializableContent =
+    @"namespace MythHunter.Data.Serialization
+{
+    /// <summary>
+    /// Інтерфейс для серіалізації об'єктів
+    /// </summary>
+    public interface ISerializable
+    {
+        byte[] Serialize();
+        void Deserialize(byte[] data);
+    }
+}";
+        WriteFile(iSerializablePath, iSerializableContent);
+
+        // Створення IView
+        string iViewPath = $"{CODE_PATH}/UI/Core/IView.cs";
+        string iViewContent =
+    @"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базового UI View
+    /// </summary>
+    public interface IView
+    {
+        void Show();
+        void Hide();
+    }
+}";
+        WriteFile(iViewPath, iViewContent);
+
+        // Створення IPresenter
+        string iPresenterPath = $"{CODE_PATH}/UI/Core/IPresenter.cs";
+        string iPresenterContent =
+    @"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базового Presenter для MVP
+    /// </summary>
+    public interface IPresenter
+    {
+        void Initialize();
+        void Dispose();
+    }
+}";
+        WriteFile(iPresenterPath, iPresenterContent);
+
+        // Створення IModel
+        string iModelPath = $"{CODE_PATH}/UI/Core/IModel.cs";
+        string iModelContent =
+    @"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базової Model для MVP
+    /// </summary>
+    public interface IModel
+    {
+        void Reset();
+    }
+}";
+        WriteFile(iModelPath, iModelContent);
     }
 
     private void WriteFile(string path, string content)
