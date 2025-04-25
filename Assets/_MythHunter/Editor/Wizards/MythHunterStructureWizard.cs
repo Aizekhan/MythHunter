@@ -314,6 +314,22 @@ This is the base structure for the MythHunter project.
     }
     private void CreateExtraInterfaces()
     {
+        string iDIContainerPath = $"{CODE_PATH}/Core/DI/IDIContainer.cs";
+        string iDIContainerContent =
+        @"namespace MythHunter.Core.DI
+{
+    /// <summary>
+    /// Інтерфейс для DI контейнера
+    /// </summary>
+    public interface IDIContainer
+    {
+        void Register<TService, TImplementation>() where TImplementation : TService, new();
+        void RegisterSingleton<TService, TImplementation>() where TImplementation : TService, new();
+        void RegisterInstance<TService>(TService instance);
+        TService Resolve<TService>();
+    }
+}";
+        WriteFile(iDIContainerPath, iDIContainerContent);
         // Створення ISerializable
         string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
         string iSerializableContent =
@@ -610,6 +626,26 @@ namespace MythHunter.Authoring
     }
 }";
         WriteFile(baseAuthoringPath, baseAuthoringContent);
+        // InstallerRegistry.cs
+        string installerRegistryPath = $"{CODE_PATH}/Core/InstallerRegistry.cs";
+        string installerRegistryContent =
+        @"using MythHunter.Core.DI;
+
+namespace MythHunter.Core
+{
+    /// <summary>
+    /// Централізований реєстратор інсталерів для DI
+    /// </summary>
+    public static class InstallerRegistry
+    {
+        public static void RegisterInstallers(IDIContainer container)
+        {
+            // TODO: Wizard буде автоматично додавати сюди інсталери
+            // container.Register<MyPanelInstaller>();
+        }
+    }
+}";
+        WriteFile(installerRegistryPath, installerRegistryContent);
     }
 
     private void WriteFile(string path, string content)
