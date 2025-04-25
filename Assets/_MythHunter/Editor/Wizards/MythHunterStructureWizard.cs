@@ -375,7 +375,64 @@ This is the base structure for the MythHunter project.
     }
 }";
         WriteFile(iModelPath, iModelContent);
+
+        // Створення IEventBus
+        string iEventBusPath = $"{CODE_PATH}/Events/IEventBus.cs";
+        string iEventBusContent =
+    @"using System;
+
+namespace MythHunter.Events
+{
+    /// <summary>
+    /// Інтерфейс шини подій
+    /// </summary>
+    public interface IEventBus
+    {
+        void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent;
+        void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent;
+        void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent;
+        void Clear();
     }
+}";
+        WriteFile(iEventBusPath, iEventBusContent);
+
+        // Створення IEntityManager
+        string iEntityManagerPath = $"{CODE_PATH}/Core/ECS/IEntityManager.cs";
+        string iEntityManagerContent =
+    @"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Інтерфейс менеджера ентіті
+    /// </summary>
+    public interface IEntityManager
+    {
+        int CreateEntity();
+        void DestroyEntity(int entityId);
+        void AddComponent<TComponent>(int entityId, TComponent component) where TComponent : IComponent;
+        bool HasComponent<TComponent>(int entityId) where TComponent : IComponent;
+        TComponent GetComponent<TComponent>(int entityId) where TComponent : IComponent;
+    }
+}";
+        WriteFile(iEntityManagerPath, iEntityManagerContent);
+
+        // Створення ILogger
+        string iLoggerPath = $"{CODE_PATH}/Utils/Logging/ILogger.cs";
+        string iLoggerContent =
+    @"namespace MythHunter.Utils.Logging
+{
+    /// <summary>
+    /// Інтерфейс логування
+    /// </summary>
+    public interface ILogger
+    {
+        void LogInfo(string message);
+        void LogWarning(string message);
+        void LogError(string message);
+    }
+}";
+        WriteFile(iLoggerPath, iLoggerContent);
+    }
+
 
     private void WriteFile(string path, string content)
     {
