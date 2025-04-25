@@ -1,0 +1,323 @@
+using UnityEditor;
+using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
+
+/// <summary>
+/// Спрощений візард для створення початкової структури проекту MythHunter.
+/// </summary>
+public class MythHunterStructureWizard : EditorWindow
+{
+    private bool createTestFolders = true;
+    private bool createResourceFolders = true;
+    private bool createEditorFolders = true;
+    private bool createBaseFiles = true;
+
+    private List<string> createdPaths = new List<string>();
+    private bool showCreatedFolders = false;
+
+    private Vector2 scrollPosition;
+
+    private static readonly string ROOT_PATH = "Assets/_MythHunter";
+    private static readonly string CODE_PATH = ROOT_PATH + "/Code";
+
+    [MenuItem("MythHunter Tools/Project Structure Wizard")]
+    public static void ShowWindow()
+    {
+        GetWindow<MythHunterStructureWizard>("MythHunter Structure Wizard");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Створення структури проекту MythHunter", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Цей візард створить основну структуру папок для проекту MythHunter.", MessageType.Info);
+
+        EditorGUILayout.Space(10);
+
+        EditorGUILayout.LabelField("Опції створення папок:", EditorStyles.boldLabel);
+        createTestFolders = EditorGUILayout.Toggle("Створити папки для тестів", createTestFolders);
+        createResourceFolders = EditorGUILayout.Toggle("Створити папки для ресурсів", createResourceFolders);
+        createEditorFolders = EditorGUILayout.Toggle("Створити папки для редактора", createEditorFolders);
+        createBaseFiles = EditorGUILayout.Toggle("Створити базові файли", createBaseFiles);
+
+        EditorGUILayout.Space(10);
+
+        if (GUILayout.Button("Створити структуру проекту", GUILayout.Height(30)))
+        {
+            createdPaths.Clear();
+            CreateProjectStructure();
+            AssetDatabase.Refresh();
+            EditorUtility.DisplayDialog("Успіх", "Структура проекту створена успішно!", "OK");
+        }
+
+        EditorGUILayout.Space(10);
+
+        // Показати створені папки
+        if (createdPaths.Count > 0)
+        {
+            showCreatedFolders = EditorGUILayout.Foldout(showCreatedFolders, "Створені папки та файли (" + createdPaths.Count + ")");
+
+            if (showCreatedFolders)
+            {
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
+
+                foreach (var path in createdPaths)
+                {
+                    EditorGUILayout.LabelField(path);
+                }
+
+                EditorGUILayout.EndScrollView();
+            }
+        }
+    }
+
+    private void CreateProjectStructure()
+    {
+        // Основні папки структури кодової бази
+        List<string> directories = new List<string>
+        {
+            // Корінь проекту і код
+            ROOT_PATH,
+            CODE_PATH,
+            
+            // Core
+            $"{CODE_PATH}/Core",
+            $"{CODE_PATH}/Core/DI",
+            $"{CODE_PATH}/Core/Game",
+            $"{CODE_PATH}/Core/StateMachine",
+            $"{CODE_PATH}/Core/Config",
+            $"{CODE_PATH}/Core/ECS",
+            
+            // Events
+            $"{CODE_PATH}/Events",
+            $"{CODE_PATH}/Events/Domain",
+            $"{CODE_PATH}/Events/Debugging",
+            
+            // Components
+            $"{CODE_PATH}/Components",
+            $"{CODE_PATH}/Components/Core",
+            $"{CODE_PATH}/Components/Character",
+            $"{CODE_PATH}/Components/Combat",
+            $"{CODE_PATH}/Components/Movement",
+            $"{CODE_PATH}/Components/Tags",
+            
+            // Entities
+            $"{CODE_PATH}/Entities",
+            
+            // Systems
+            $"{CODE_PATH}/Systems",
+            $"{CODE_PATH}/Systems/Core",
+            $"{CODE_PATH}/Systems/Groups",
+            $"{CODE_PATH}/Systems/Features",
+            $"{CODE_PATH}/Systems/Phase",
+            $"{CODE_PATH}/Systems/Combat",
+            $"{CODE_PATH}/Systems/Movement",
+            $"{CODE_PATH}/Systems/AI",
+            
+            // Authoring
+            $"{CODE_PATH}/Authoring",
+            
+            // Data
+            $"{CODE_PATH}/Data",
+            $"{CODE_PATH}/Data/Interfaces",
+            $"{CODE_PATH}/Data/ScriptableObjects",
+            $"{CODE_PATH}/Data/StaticData",
+            $"{CODE_PATH}/Data/Serialization",
+            
+            // Networking
+            $"{CODE_PATH}/Networking",
+            $"{CODE_PATH}/Networking/Core",
+            $"{CODE_PATH}/Networking/Client",
+            $"{CODE_PATH}/Networking/Server",
+            $"{CODE_PATH}/Networking/Messages",
+            $"{CODE_PATH}/Networking/Serialization",
+            
+            // Resources
+            $"{CODE_PATH}/Resources",
+            $"{CODE_PATH}/Resources/Core",
+            $"{CODE_PATH}/Resources/Providers",
+            $"{CODE_PATH}/Resources/Pool",
+            $"{CODE_PATH}/Resources/SceneManagement",
+            
+            // Cloud
+            $"{CODE_PATH}/Cloud",
+            $"{CODE_PATH}/Cloud/Core",
+            $"{CODE_PATH}/Cloud/Analytics",
+            $"{CODE_PATH}/Cloud/AWS",
+            $"{CODE_PATH}/Cloud/Local",
+            
+            // UI
+            $"{CODE_PATH}/UI",
+            $"{CODE_PATH}/UI/Core",
+            $"{CODE_PATH}/UI/Views",
+            $"{CODE_PATH}/UI/Presenters",
+            $"{CODE_PATH}/UI/Models",
+            
+            // Other
+            $"{CODE_PATH}/Replay",
+            $"{CODE_PATH}/Debug",
+            $"{CODE_PATH}/Utils",
+            $"{CODE_PATH}/Utils/Logging",
+            $"{CODE_PATH}/Utils/Extensions",
+            $"{CODE_PATH}/Utils/Validation"
+        };
+
+        // Test folders
+        if (createTestFolders)
+        {
+            directories.AddRange(new[]
+            {
+                $"{ROOT_PATH}/Tests",
+                $"{ROOT_PATH}/Tests/Editor",
+                $"{ROOT_PATH}/Tests/Editor/Systems",
+                $"{ROOT_PATH}/Tests/Editor/Components",
+                $"{ROOT_PATH}/Tests/Editor/Events",
+                $"{ROOT_PATH}/Tests/Runtime",
+                $"{ROOT_PATH}/Tests/Runtime/Integration",
+                $"{ROOT_PATH}/Tests/Runtime/Performance"
+            });
+        }
+
+        // Resource folders
+        if (createResourceFolders)
+        {
+            directories.AddRange(new[]
+            {
+                $"{ROOT_PATH}/Resources",
+                $"{ROOT_PATH}/Resources/Prefabs",
+                $"{ROOT_PATH}/Resources/Prefabs/Characters",
+                $"{ROOT_PATH}/Resources/Prefabs/Weapons",
+                $"{ROOT_PATH}/Resources/Prefabs/UI",
+                $"{ROOT_PATH}/Resources/Prefabs/Effects",
+                $"{ROOT_PATH}/Resources/ScriptableObjects",
+                $"{ROOT_PATH}/Resources/ScriptableObjects/Characters",
+                $"{ROOT_PATH}/Resources/ScriptableObjects/Weapons",
+                $"{ROOT_PATH}/Resources/ScriptableObjects/Items",
+                $"{ROOT_PATH}/Resources/ScriptableObjects/Runes",
+                $"{ROOT_PATH}/Resources/Data",
+                $"{ROOT_PATH}/Resources/Data/Configs",
+                $"{ROOT_PATH}/Resources/Data/Maps",
+                $"{ROOT_PATH}/Resources/Data/Localizations",
+                $"{ROOT_PATH}/Scenes"
+            });
+        }
+
+        // Editor folders
+        if (createEditorFolders)
+        {
+            directories.AddRange(new[]
+            {
+                $"{ROOT_PATH}/Editor",
+                $"{ROOT_PATH}/Editor/Tools",
+                $"{ROOT_PATH}/Editor/Inspectors",
+                $"{ROOT_PATH}/Editor/Wizards"
+            });
+        }
+
+        // Create all directories
+        foreach (var dir in directories)
+        {
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+                createdPaths.Add(dir);
+            }
+        }
+
+        // Create base files for core architecture if needed
+        if (createBaseFiles)
+        {
+            CreateBaseFiles();
+        }
+    }
+
+    private void CreateBaseFiles()
+    {
+        // Create a simple interface file to start with
+        string iComponentFile = $"{CODE_PATH}/Core/ECS/IComponent.cs";
+        string iComponentContent =
+@"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Базовий інтерфейс для компонентів ECS
+    /// </summary>
+    public interface IComponent
+    {
+        // Маркерний інтерфейс
+    }
+}";
+        WriteFile(iComponentFile, iComponentContent);
+
+        // Create a simple system interface
+        string iSystemFile = $"{CODE_PATH}/Core/ECS/ISystem.cs";
+        string iSystemContent =
+@"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Базовий інтерфейс для систем ECS
+    /// </summary>
+    public interface ISystem
+    {
+        void Initialize();
+        void Update(float deltaTime);
+        void Dispose();
+    }
+}";
+        WriteFile(iSystemFile, iSystemContent);
+
+        // Create a basic event interface
+        string iEventFile = $"{CODE_PATH}/Events/IEvent.cs";
+        string iEventContent =
+@"namespace MythHunter.Events
+{
+    /// <summary>
+    /// Базовий інтерфейс для подій
+    /// </summary>
+    public interface IEvent
+    {
+        string GetEventId();
+    }
+}";
+        WriteFile(iEventFile, iEventContent);
+
+        // Create a basic README file
+        string readmeFile = $"{ROOT_PATH}/README.md";
+        string readmeContent =
+@"# MythHunter Project Structure
+
+This is the base structure for the MythHunter project. 
+
+## Structure Overview
+
+- `/Code` - Contains all the code for the project
+  - `/Core` - Core systems and interfaces
+  - `/Components` - ECS components
+  - `/Systems` - ECS systems
+  - `/Events` - Event system
+  - ...
+
+## Getting Started
+
+1. First, familiarize yourself with the project structure
+2. Check the architecture documentation
+3. Use the MythHunter wizards for generating new components and systems
+
+## Development Guidelines
+
+- Follow the ECS architecture pattern
+- Use events for communication between systems
+- Implement interfaces for all components and systems
+";
+        WriteFile(readmeFile, readmeContent);
+    }
+
+    private void WriteFile(string path, string content)
+    {
+        if (!File.Exists(path))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            File.WriteAllText(path, content);
+            createdPaths.Add(path);
+        }
+    }
+}
