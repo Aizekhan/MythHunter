@@ -1,33 +1,32 @@
-name: Unity CI
+name: Unity EditMode Tests
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ "dev" ]
+    branches: [ main, dev ]
 
 jobs:
   test:
-    name: 🔧 Build & Run Tests
+    name: Run EditMode Tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Cache Library
         uses: actions/cache@v3
         with:
           path: Library
           key: Library-${{ runner.os }}-${{ hashFiles('**/*.cs') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
 
-      - name: Create dummy test result
-        run: |
-          mkdir -p TestResults
-          echo "<test-run result='Skipped' />" > TestResults/Results.xml
-
-      - name: Upload dummy test result
-        uses: actions/upload-artifact@v3
+      - name: Run Unity tests
+        uses: game-ci/unity-test-runner@v2
         with:
-          name: TestResults
-          path: TestResults/Results.xml
+          unityVersion: 2022.3.14f1
+          testMode: EditMode
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
