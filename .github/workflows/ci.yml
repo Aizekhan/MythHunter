@@ -1,0 +1,31 @@
+name: Unity CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    name: Run Unity Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v3
+
+      - name: Cache Library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('**/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: Run Unity EditMode Tests
+        uses: game-ci/unity-test-runner@v2
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          projectPath: .
+          testMode: editmode
