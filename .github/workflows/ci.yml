@@ -1,32 +1,17 @@
-name: Unity EditMode Tests
+name: Minimal CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches:
+      - dev
   pull_request:
-    branches: [ main, dev ]
+    branches:
+      - dev
 
 jobs:
-  test:
-    name: Run EditMode Tests
+  noop:
+    name: Just acknowledge the push
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Cache Library
-        uses: actions/cache@v3
-        with:
-          path: Library
-          key: Library-${{ runner.os }}-${{ hashFiles('**/*.cs') }}
-          restore-keys: |
-            Library-${{ runner.os }}-
-
-      - name: Run Unity tests
-        uses: game-ci/unity-test-runner@v2
-        with:
-          unityVersion: 2022.3.14f1
-          testMode: EditMode
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      - name: ✅ No CI actions needed
+        run: echo "CI is delegated to Unity Cloud Build 🚀"
