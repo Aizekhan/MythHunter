@@ -42,7 +42,7 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Starting async gameplay initialization");
 
             // Приклад асинхронної ініціалізації
-            object value = await UniTask.Delay(100);
+            await UniTask.Delay(100);
             
             _logger.LogInfo("Async gameplay initialization completed");
         }

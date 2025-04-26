@@ -39,18 +39,18 @@ namespace MythHunter.Events.Debugging
                 _logger.LogInfo("Event logger disabled");
             }
         }
-        
+
         public void SubscribeToEvents()
         {
-            // Підписка на всі події (можна замінити на конкретний список)
-            _eventBus.Subscribe<IEvent>(OnAnyEvent);
+            _eventBus?.SubscribeAny(OnAnyEvent);
         }
-        
+
         public void UnsubscribeFromEvents()
         {
-            _eventBus.Unsubscribe<IEvent>(OnAnyEvent);
+            _eventBus?.UnsubscribeAny(OnAnyEvent);
         }
-        
+
+
         private void OnAnyEvent(IEvent evt)
         {
             _logger.LogDebug($"Event: {evt.GetType().Name}, ID: {evt.GetEventId()}");
