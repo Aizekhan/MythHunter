@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
@@ -391,8 +391,9 @@ public class MythHunterWizard : EditorWindow
 
         List<string> interfaces = new List<string> { "ISystem" };
 
-        if (implementsInterface)
-            interfaces.Add("IEventSubscriber");
+        // Це вообще видалити мабуть треба, бо це дублює залежність від IEventSubscriber,IEventSubscriber - 2 рази в створюваних файлах
+        //if (implementsInterface)
+        //  interfaces.Add("IEventSubscriber");
 
         List<string> body = new List<string>
         {

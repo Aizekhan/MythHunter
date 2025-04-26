@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
@@ -448,6 +448,21 @@ namespace MythHunter.Events
     }
 }";
         WriteFile(iLoggerPath, iLoggerContent);
+
+        // Створення IEventSubscriber
+        string iEventSubscriberPath = $"{CODE_PATH}/Events/IEventSubscriber.cs";
+        string iEventSubscriberContent =
+        @"namespace MythHunter.Events
+{
+    /// <summary>
+    /// Інтерфейс для підписників на події
+    /// </summary>
+    public interface IEventSubscriber
+    {
+    }
+}";
+        WriteFile(iEventSubscriberPath, iEventSubscriberContent);
+
     }
 
     private void CreateCoreImplementations()
@@ -646,6 +661,60 @@ namespace MythHunter.Core
     }
 }";
         WriteFile(installerRegistryPath, installerRegistryContent);
+
+        // SystemBase.cs
+        string systemBasePath = $"{CODE_PATH}/Core/ECS/SystemBase.cs";
+        string systemBaseContent =
+        @"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Базовий клас для систем
+    /// </summary>
+    public abstract class SystemBase : ISystem
+    {
+        public virtual void Initialize() { }
+        public virtual void Update(float deltaTime) { }
+        public virtual void Dispose() { }
+    }
+}";
+        WriteFile(systemBasePath, systemBaseContent);
+        // InjectAttribute.cs
+        string injectAttributePath = $"{CODE_PATH}/Core/DI/InjectAttribute.cs";
+        string injectAttributeContent =
+        @"using System;
+
+namespace MythHunter.Core.DI
+{
+    /// <summary>
+    /// Атрибут для позначення полів для інжекції
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Constructor)]
+    public class InjectAttribute : Attribute
+    {
+    }
+}";
+        WriteFile(injectAttributePath, injectAttributeContent);
+        // Entity.cs
+        string entityPath = $"{CODE_PATH}/Core/ECS/Entity.cs";
+        string entityContent =
+        @"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Базовий клас для Entity
+    /// </summary>
+    public class Entity
+    {
+        public int Id { get; }
+
+        public Entity(int id)
+        {
+            Id = id;
+        }
+    }
+}";
+        WriteFile(entityPath, entityContent);
+
+
     }
 
     private void WriteFile(string path, string content)
