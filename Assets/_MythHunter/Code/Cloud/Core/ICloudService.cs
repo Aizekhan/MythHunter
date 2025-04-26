@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Cloud.Core
 {
@@ -7,7 +7,7 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface ICloudService
     {
-        Task<bool> Initialize();
+        UniTask<bool> InitializeAsync();
         bool IsInitialized { get; }
         string GetServiceId();
     }

@@ -268,7 +268,7 @@ public class MythHunterStructureWizard : EditorWindow
         // IComponent - базовий інтерфейс для компонентів ECS
         string iComponentFile = $"{CODE_PATH}/Core/ECS/IComponent.cs";
         string iComponentContent =
-@"namespace MythHunter.Core.ECS
+    @"namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Базовий інтерфейс для компонентів ECS
@@ -283,7 +283,7 @@ public class MythHunterStructureWizard : EditorWindow
         // ISystem - базовий інтерфейс для систем ECS
         string iSystemFile = $"{CODE_PATH}/Core/ECS/ISystem.cs";
         string iSystemContent =
-@"namespace MythHunter.Core.ECS
+    @"namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Базовий інтерфейс для систем ECS
@@ -300,7 +300,7 @@ public class MythHunterStructureWizard : EditorWindow
         // IEvent - базовий інтерфейс для подій
         string iEventFile = $"{CODE_PATH}/Events/IEvent.cs";
         string iEventContent =
-@"namespace MythHunter.Events
+    @"namespace MythHunter.Events
 {
     /// <summary>
     /// Базовий інтерфейс для подій
@@ -315,7 +315,7 @@ public class MythHunterStructureWizard : EditorWindow
         // README.md - базовий опис проекту
         string readmeFile = $"{ROOT_PATH}/README.md";
         string readmeContent =
-@"# MythHunter Project
+    @"# MythHunter Project
 
 ## Архітектура проекту
 
@@ -325,6 +325,8 @@ public class MythHunterStructureWizard : EditorWindow
 - **ECS (Entity-Component-System)** - розділення даних (компоненти) та логіки (системи)
 - **Dependency Injection** - явна ін'єкція залежностей через конструктори
 - **Events-driven** - комунікація через події, а не прямі виклики методів
+- **UniTask** - використання Cysharp.Threading.Tasks замість стандартних System.Threading.Tasks
+- **Generic StateMachine** - використання дженериків і enum для типобезпечних машин станів
 - **SOLID** - дотримання принципів SOLID
 - **Testability** - можливість тестування компонентів окремо
 - **Serializability** - серіалізація даних для мережевої передачі
@@ -354,6 +356,26 @@ public class MythHunterStructureWizard : EditorWindow
 - Системи тільки для логіки
 - Комунікація тільки через події";
         WriteFile(readmeFile, readmeContent);
+
+        // Додаємо файл з імпортами UniTask
+        string uniTaskPath = $"{CODE_PATH}/Core/UniTaskImports.cs";
+        string uniTaskContent =
+    @"// Цей файл містить допоміжні методи для роботи з UniTask
+using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Core
+{
+    /// <summary>
+    /// Допоміжний клас для роботи з UniTask
+    /// </summary>
+    public static class UniTaskHelper
+    {
+        // Додайте Cysharp.Threading.Tasks як залежність до проекту
+        // Завантажте пакет з: https://github.com/Cysharp/UniTask
+    }
+}";
+        WriteFile(uniTaskPath, uniTaskContent);
     }
 
     private void CreateEcsInterfaces()
@@ -361,7 +383,7 @@ public class MythHunterStructureWizard : EditorWindow
         // IEcsWorld - інтерфейс світу ECS
         string iEcsWorldPath = $"{CODE_PATH}/Core/ECS/IEcsWorld.cs";
         string iEcsWorldContent =
-@"namespace MythHunter.Core.ECS
+    @"namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Інтерфейс світу ECS
@@ -379,7 +401,7 @@ public class MythHunterStructureWizard : EditorWindow
         // IEntityManager - інтерфейс менеджера сутностей
         string iEntityManagerPath = $"{CODE_PATH}/Core/ECS/IEntityManager.cs";
         string iEntityManagerContent =
-@"namespace MythHunter.Core.ECS
+    @"namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Інтерфейс менеджера сутностей
@@ -401,7 +423,7 @@ public class MythHunterStructureWizard : EditorWindow
         // IFixedUpdateSystem - інтерфейс для систем з фіксованим оновленням
         string iFixedUpdateSystemPath = $"{CODE_PATH}/Systems/Core/IFixedUpdateSystem.cs";
         string iFixedUpdateSystemContent =
-@"using MythHunter.Core.ECS;
+    @"using MythHunter.Core.ECS;
 
 namespace MythHunter.Systems.Core
 {
@@ -418,7 +440,7 @@ namespace MythHunter.Systems.Core
         // ILateUpdateSystem - інтерфейс для систем з пізнім оновленням
         string iLateUpdateSystemPath = $"{CODE_PATH}/Systems/Core/ILateUpdateSystem.cs";
         string iLateUpdateSystemContent =
-@"using MythHunter.Core.ECS;
+    @"using MythHunter.Core.ECS;
 
 namespace MythHunter.Systems.Core
 {
@@ -431,6 +453,48 @@ namespace MythHunter.Systems.Core
     }
 }";
         WriteFile(iLateUpdateSystemPath, iLateUpdateSystemContent);
+
+        // Додаємо інтерфейси для типобезпечної машини станів
+        string iStatePath = $"{CODE_PATH}/Core/StateMachine/IState.cs";
+        string iStateContent =
+    @"using System;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Інтерфейс стану для машини станів
+    /// </summary>
+    public interface IState<TStateEnum> where TStateEnum : Enum
+    {
+        void Enter();
+        void Update();
+        void Exit();
+        TStateEnum StateId { get; }
+    }
+}";
+        WriteFile(iStatePath, iStateContent);
+
+        string iStateMachinePath = $"{CODE_PATH}/Core/StateMachine/IStateMachine.cs";
+        string iStateMachineContent =
+    @"using System;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Інтерфейс машини станів з підтримкою enum
+    /// </summary>
+    public interface IStateMachine<TStateEnum> where TStateEnum : Enum
+    {
+        void RegisterState(TStateEnum stateId, IState<TStateEnum> state);
+        void UnregisterState(TStateEnum stateId);
+        bool SetState(TStateEnum stateId);
+        void Update();
+        TStateEnum CurrentState { get; }
+        void AddTransition(TStateEnum fromStateId, TStateEnum toStateId);
+        bool CanTransition(TStateEnum fromStateId, TStateEnum toStateId);
+    }
+}";
+        WriteFile(iStateMachinePath, iStateMachineContent);
     }
 
     private void CreateDiInterfaces()
@@ -630,7 +694,7 @@ namespace MythHunter.Events.Domain
         // IView - інтерфейс для View (MVP)
         string iViewPath = $"{CODE_PATH}/UI/Core/IView.cs";
         string iViewContent =
-@"namespace MythHunter.UI.Core
+    @"namespace MythHunter.UI.Core
 {
     /// <summary>
     /// Інтерфейс базового UI View
@@ -646,14 +710,16 @@ namespace MythHunter.Events.Domain
         // IPresenter - інтерфейс для Presenter (MVP)
         string iPresenterPath = $"{CODE_PATH}/UI/Core/IPresenter.cs";
         string iPresenterContent =
-@"namespace MythHunter.UI.Core
+    @"using Cysharp.Threading.Tasks;
+
+namespace MythHunter.UI.Core
 {
     /// <summary>
     /// Інтерфейс базового Presenter для MVP
     /// </summary>
     public interface IPresenter
     {
-        void Initialize();
+        UniTask InitializeAsync();
         void Dispose();
     }
 }";
@@ -662,7 +728,7 @@ namespace MythHunter.Events.Domain
         // IModel - інтерфейс для Model (MVP)
         string iModelPath = $"{CODE_PATH}/UI/Core/IModel.cs";
         string iModelContent =
-@"namespace MythHunter.UI.Core
+    @"namespace MythHunter.UI.Core
 {
     /// <summary>
     /// Інтерфейс базової Model для MVP
@@ -676,7 +742,8 @@ namespace MythHunter.Events.Domain
         // IUISystem - інтерфейс для UI системи
         string iUISystemPath = $"{CODE_PATH}/UI/Core/IUISystem.cs";
         string iUISystemContent =
-@"using UnityEngine;
+    @"using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Core
 {
@@ -687,6 +754,7 @@ namespace MythHunter.UI.Core
     {
         void ShowView<TView>() where TView : Component, IView;
         void HideView<TView>() where TView : Component, IView;
+        UniTask<TView> ShowViewAsync<TView>(string prefabPath) where TView : Component, IView;
         void RegisterView<TView>(TView view) where TView : Component, IView;
         void UnregisterView<TView>(TView view) where TView : Component, IView;
         TView GetView<TView>() where TView : Component, IView;
@@ -701,7 +769,8 @@ namespace MythHunter.UI.Core
         // INetworkSystem - інтерфейс мережевої системи
         string iNetworkSystemPath = $"{CODE_PATH}/Networking/Core/INetworkSystem.cs";
         string iNetworkSystemContent =
-@"using System;
+    @"using System;
+using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 
 namespace MythHunter.Networking.Core
@@ -712,8 +781,8 @@ namespace MythHunter.Networking.Core
     public interface INetworkSystem
     {
         void StartServer(ushort port);
-        Task<bool> ConnectToServer(string address, ushort port);
-        void Disconnect();
+        UniTask<bool> ConnectToServerAsync(string address, ushort port);
+        UniTask DisconnectAsync();
         void SendMessage<T>(T message) where T : INetworkMessage;
         event Action<INetworkMessage> OnMessageReceived;
         event Action<NetworkClientInfo, bool> OnClientConnectionChanged;
@@ -736,7 +805,7 @@ namespace MythHunter.Networking.Core
         // INetworkMessage - інтерфейс мережевого повідомлення
         string iNetworkMessagePath = $"{CODE_PATH}/Networking/Messages/INetworkMessage.cs";
         string iNetworkMessageContent =
-@"using MythHunter.Data.Serialization;
+    @"using MythHunter.Data.Serialization;
 
 namespace MythHunter.Networking.Messages
 {
@@ -753,7 +822,7 @@ namespace MythHunter.Networking.Messages
         // INetworkSerializer - інтерфейс мережевого серіалізатора
         string iNetworkSerializerPath = $"{CODE_PATH}/Networking/Serialization/INetworkSerializer.cs";
         string iNetworkSerializerContent =
-@"namespace MythHunter.Networking.Serialization
+    @"namespace MythHunter.Networking.Serialization
 {
     /// <summary>
     /// Інтерфейс мережевого серіалізатора
@@ -770,7 +839,8 @@ namespace MythHunter.Networking.Messages
         // Базові мережеві інтерфейси клієнта і сервера
         string iNetworkClientPath = $"{CODE_PATH}/Networking/Client/INetworkClient.cs";
         string iNetworkClientContent =
-@"using System;
+    @"using System;
+using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 
 namespace MythHunter.Networking.Client
@@ -780,8 +850,8 @@ namespace MythHunter.Networking.Client
     /// </summary>
     public interface INetworkClient
     {
-        Task<bool> Connect(string address, ushort port);
-        void Disconnect();
+        UniTask<bool> ConnectAsync(string address, ushort port);
+        UniTask DisconnectAsync();
         void SendMessage<T>(T message) where T : INetworkMessage;
         event Action<INetworkMessage> OnMessageReceived;
         event Action OnConnected;
@@ -794,7 +864,8 @@ namespace MythHunter.Networking.Client
 
         string iNetworkServerPath = $"{CODE_PATH}/Networking/Server/INetworkServer.cs";
         string iNetworkServerContent =
-@"using System;
+    @"using System;
+using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 
 namespace MythHunter.Networking.Server
@@ -805,7 +876,7 @@ namespace MythHunter.Networking.Server
     public interface INetworkServer
     {
         void Start(ushort port);
-        void Stop();
+        UniTask StopAsync();
         void SendMessage<T>(T message, int clientId) where T : INetworkMessage;
         void BroadcastMessage<T>(T message) where T : INetworkMessage;
         event Action<int, INetworkMessage> OnMessageReceived;
@@ -825,7 +896,7 @@ namespace MythHunter.Networking.Server
         string iResourceProviderPath = $"{CODE_PATH}/Resources/Core/IResourceProvider.cs";
         string iResourceProviderContent =
     @"using System.Collections.Generic;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MythHunter.Resources.Core
@@ -835,8 +906,8 @@ namespace MythHunter.Resources.Core
     /// </summary>
     public interface IResourceProvider
     {
-        Task<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
-        Task<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
+        UniTask<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
+        UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
         void Unload(string key);
         void UnloadAll();
         T GetFromPool<T>(string key) where T : UnityEngine.Object;
@@ -867,7 +938,7 @@ namespace MythHunter.Resources.Core
         // ISceneLoader - інтерфейс завантажувача сцен
         string iSceneLoaderPath = $"{CODE_PATH}/Resources/SceneManagement/ISceneLoader.cs";
         string iSceneLoaderContent =
-    @"using System.Threading.Tasks;
+    @"using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Resources.SceneManagement
 {
@@ -876,9 +947,9 @@ namespace MythHunter.Resources.SceneManagement
     /// </summary>
     public interface ISceneLoader
     {
-        Task LoadSceneAsync(string sceneName, bool showLoadingScreen = true);
-        Task LoadSceneAdditiveAsync(string sceneName);
-        void UnloadScene(string sceneName);
+        UniTask LoadSceneAsync(string sceneName, bool showLoadingScreen = true);
+        UniTask LoadSceneAdditiveAsync(string sceneName);
+        UniTask UnloadSceneAsync(string sceneName);
         string GetActiveScene();
         bool IsSceneLoaded(string sceneName);
     }
@@ -889,7 +960,7 @@ namespace MythHunter.Resources.SceneManagement
         string resourceRequestPath = $"{CODE_PATH}/Resources/Core/ResourceRequest.cs";
         string resourceRequestContent =
     @"using System;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MythHunter.Resources.Core
@@ -900,10 +971,10 @@ namespace MythHunter.Resources.Core
     public class ResourceRequest<T> where T : UnityEngine.Object
     {
         public string Key { get; }
-        public Task<T> Task { get; }
-        public bool IsCompleted => Task.IsCompleted;
+        public UniTask<T> Task { get; }
+        public bool IsCompleted => Task.Status.IsCompleted();
         
-        public ResourceRequest(string key, Task<T> task)
+        public ResourceRequest(string key, UniTask<T> task)
         {
             Key = key;
             Task = task;
@@ -916,7 +987,7 @@ namespace MythHunter.Resources.Core
         string iAddressablesProviderPath = $"{CODE_PATH}/Resources/Providers/IAddressablesProvider.cs";
         string iAddressablesProviderContent =
     @"using System.Collections.Generic;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MythHunter.Resources.Providers
@@ -926,12 +997,12 @@ namespace MythHunter.Resources.Providers
     /// </summary>
     public interface IAddressablesProvider
     {
-        Task<T> LoadAssetAsync<T>(string key) where T : UnityEngine.Object;
-        Task<IList<T>> LoadAssetsAsync<T>(IEnumerable<string> keys) where T : UnityEngine.Object;
-        Task<IList<T>> LoadAssetsAsync<T>(string label) where T : UnityEngine.Object;
+        UniTask<T> LoadAssetAsync<T>(string key) where T : UnityEngine.Object;
+        UniTask<IList<T>> LoadAssetsAsync<T>(IEnumerable<string> keys) where T : UnityEngine.Object;
+        UniTask<IList<T>> LoadAssetsAsync<T>(string label) where T : UnityEngine.Object;
         void ReleaseAsset<T>(T asset) where T : UnityEngine.Object;
         void ReleaseAssets<T>(IList<T> assets) where T : UnityEngine.Object;
-        Task<GameObject> InstantiateAsync(string key, Transform parent = null);
+        UniTask<GameObject> InstantiateAsync(string key, Transform parent = null);
         void ReleaseInstance(GameObject instance);
     }
 }";
@@ -976,7 +1047,7 @@ namespace MythHunter.Resources.SceneManagement
         // ICloudService - інтерфейс хмарного сервісу
         string iCloudServicePath = $"{CODE_PATH}/Cloud/Core/ICloudService.cs";
         string iCloudServiceContent =
-    @"using System.Threading.Tasks;
+    @"using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Cloud.Core
 {
@@ -985,7 +1056,7 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface ICloudService
     {
-        Task<bool> Initialize();
+        UniTask<bool> InitializeAsync();
         bool IsInitialized { get; }
         string GetServiceId();
     }
@@ -995,7 +1066,7 @@ namespace MythHunter.Cloud.Core
         // IDataService - інтерфейс сервісу даних
         string iDataServicePath = $"{CODE_PATH}/Cloud/Core/IDataService.cs";
         string iDataServiceContent =
-    @"using System.Threading.Tasks;
+    @"using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace MythHunter.Cloud.Core
@@ -1005,11 +1076,11 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface IDataService : ICloudService
     {
-        Task<T> LoadDataAsync<T>(string key) where T : class;
-        Task SaveDataAsync<T>(string key, T data) where T : class;
-        Task<bool> DeleteDataAsync(string key);
-        Task<bool> ExistsAsync(string key);
-        Task<List<string>> GetKeysAsync(string prefix);
+        UniTask<T> LoadDataAsync<T>(string key) where T : class;
+        UniTask SaveDataAsync<T>(string key, T data) where T : class;
+        UniTask<bool> DeleteDataAsync(string key);
+        UniTask<bool> ExistsAsync(string key);
+        UniTask<List<string>> GetKeysAsync(string prefix);
     }
 }";
         WriteFile(iDataServicePath, iDataServiceContent);
@@ -1017,7 +1088,7 @@ namespace MythHunter.Cloud.Core
         // IAuthService - інтерфейс сервісу авторизації
         string iAuthServicePath = $"{CODE_PATH}/Cloud/Core/IAuthService.cs";
         string iAuthServiceContent =
-    @"using System.Threading.Tasks;
+    @"using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Cloud.Core
 {
@@ -1026,10 +1097,10 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface IAuthService : ICloudService
     {
-        Task<bool> SignInAsync(string username, string password);
-        Task<bool> SignUpAsync(string username, string password, string email);
-        Task<bool> SignOutAsync();
-        Task<bool> DeleteAccountAsync();
+        UniTask<bool> SignInAsync(string username, string password);
+        UniTask<bool> SignUpAsync(string username, string password, string email);
+        UniTask<bool> SignOutAsync();
+        UniTask<bool> DeleteAccountAsync();
         bool IsSignedIn { get; }
         string CurrentUserId { get; }
     }
@@ -1040,7 +1111,7 @@ namespace MythHunter.Cloud.Core
         string iAnalyticsServicePath = $"{CODE_PATH}/Cloud/Analytics/IAnalyticsService.cs";
         string iAnalyticsServiceContent =
     @"using System.Collections.Generic;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Cloud.Analytics
 {
@@ -1051,7 +1122,7 @@ namespace MythHunter.Cloud.Analytics
     {
         void TrackEvent(string eventName);
         void TrackEvent(string eventName, Dictionary<string, object> parameters);
-        Task<bool> FlushAsync();
+        UniTask<bool> FlushAsync();
         void SetUserId(string userId);
         void SetUserProperty(string name, string value);
     }
@@ -1363,10 +1434,13 @@ namespace MythHunter.Core
 }";
         WriteFile(installerRegistryPath, installerRegistryContent);
 
+
+
         // GameBootstrapper - точка входу в гру
         string gameBootstrapperPath = $"{CODE_PATH}/Core/Game/GameBootstrapper.cs";
         string gameBootstrapperContent =
     @"using UnityEngine;
+using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
@@ -1385,7 +1459,7 @@ namespace MythHunter.Core.Game
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         
-        private void Awake()
+        private async void Awake()
         {
             InitializeDependencyInjection();
             InitializeLogging();
@@ -1395,6 +1469,9 @@ namespace MythHunter.Core.Game
             DontDestroyOnLoad(gameObject);
             
             _logger.LogInfo(""GameBootstrapper initialized successfully"");
+            
+            // Асинхронна ініціалізація сервісів
+            await InitializeServicesAsync();
         }
         
         private void InitializeDependencyInjection()
@@ -1438,6 +1515,19 @@ namespace MythHunter.Core.Game
             _logger.LogInfo(""Game state machine initialized"");
         }
         
+        private async UniTask InitializeServicesAsync()
+        {
+            _logger.LogInfo(""Starting async services initialization"");
+            
+            // Тут можна ініціалізувати сервіси, які потребують асинхронності
+            // Наприклад, завантаження конфігурацій, підключення до серверів тощо
+            
+            // Імітація асинхронної операції
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo(""Async services initialization completed"");
+        }
+        
         private void Update()
         {
             _ecsWorld?.Update(Time.deltaTime);
@@ -1454,6 +1544,26 @@ namespace MythHunter.Core.Game
         WriteFile(gameBootstrapperPath, gameBootstrapperContent);
 
         // GameStateMachine - машина станів гри
+        string gameStateTypePath = $"{CODE_PATH}/Core/Game/GameStateType.cs";
+        string gameStateTypeContent =
+    @"namespace MythHunter.Core.Game
+{
+    /// <summary>
+    /// Типи станів гри
+    /// </summary>
+    public enum GameStateType
+    {
+        None = 0,
+        Boot,
+        MainMenu,
+        Loading,
+        Game,
+        Pause,
+        GameOver
+    }
+}";
+        WriteFile(gameStateTypePath, gameStateTypeContent);
+
         string gameStateMachinePath = $"{CODE_PATH}/Core/Game/GameStateMachine.cs";
         string gameStateMachineContent =
     @"using MythHunter.Core.DI;
@@ -1467,7 +1577,7 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameStateMachine
     {
-        private readonly IStateMachine _stateMachine;
+        private readonly IStateMachine<GameStateType> _stateMachine;
         private readonly ILogger _logger;
         private readonly IDIContainer _container;
         
@@ -1475,7 +1585,7 @@ namespace MythHunter.Core.Game
         {
             _container = container;
             _logger = container.Resolve<ILogger>();
-            _stateMachine = new StateMachine.StateMachine();
+            _stateMachine = new StateMachine<GameStateType>();
         }
         
         public void Initialize()
@@ -1508,25 +1618,12 @@ namespace MythHunter.Core.Game
             _stateMachine.SetState(newState);
         }
         
-        public GameStateType CurrentState => (GameStateType)_stateMachine.CurrentStateId;
-    }
-    
-    /// <summary>
-    /// Типи станів гри
-    /// </summary>
-    public enum GameStateType
-    {
-        None = 0,
-        Boot,
-        MainMenu,
-        Loading,
-        Game,
-        Pause,
-        GameOver
+        public GameStateType CurrentState => _stateMachine.CurrentState;
     }
 }";
         WriteFile(gameStateMachinePath, gameStateMachineContent);
-    }
+    
+}
     private void CreateEcsImplementations()
     {
         // Entity - базовий клас для сутностей
@@ -1822,6 +1919,116 @@ namespace MythHunter.Components.Core
     }
 }";
         WriteFile(idComponentPath, idComponentContent);
+
+        // StateMachine - реалізація машини станів з дженериками
+        string stateMachinePath = $"{CODE_PATH}/Core/StateMachine/StateMachine.cs";
+        string stateMachineContent =
+    @"using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Реалізація машини станів з підтримкою enum
+    /// </summary>
+    public class StateMachine<TStateEnum> : IStateMachine<TStateEnum> where TStateEnum : Enum
+    {
+        private readonly Dictionary<TStateEnum, IState<TStateEnum>> _states = new Dictionary<TStateEnum, IState<TStateEnum>>();
+        private readonly HashSet<(TStateEnum from, TStateEnum to)> _allowedTransitions = new HashSet<(TStateEnum from, TStateEnum to)>();
+        
+        private IState<TStateEnum> _currentState;
+        
+        public TStateEnum CurrentState => _currentState != null ? _currentState.StateId : default;
+        
+        public void RegisterState(TStateEnum stateId, IState<TStateEnum> state)
+        {
+            _states[stateId] = state;
+        }
+        
+        public void UnregisterState(TStateEnum stateId)
+        {
+            if (_states.ContainsKey(stateId))
+            {
+                if (_currentState != null && EqualityComparer<TStateEnum>.Default.Equals(_currentState.StateId, stateId))
+                {
+                    _currentState.Exit();
+                    _currentState = null;
+                }
+                
+                _states.Remove(stateId);
+            }
+        }
+        
+        public bool SetState(TStateEnum stateId)
+        {
+            if (!_states.ContainsKey(stateId))
+                return false;
+                
+            if (_currentState != null)
+            {
+                if (EqualityComparer<TStateEnum>.Default.Equals(_currentState.StateId, stateId))
+                    return true;
+                    
+                if (!CanTransition(_currentState.StateId, stateId))
+                    return false;
+                    
+                _currentState.Exit();
+            }
+            
+            _currentState = _states[stateId];
+            _currentState.Enter();
+            
+            return true;
+        }
+        
+        public void Update()
+        {
+            _currentState?.Update();
+        }
+        
+        public void AddTransition(TStateEnum fromStateId, TStateEnum toStateId)
+        {
+            _allowedTransitions.Add((fromStateId, toStateId));
+        }
+        
+        public bool CanTransition(TStateEnum fromStateId, TStateEnum toStateId)
+        {
+            return _allowedTransitions.Contains((fromStateId, toStateId));
+        }
+    }
+}";
+        WriteFile(stateMachinePath, stateMachineContent);
+
+        // BaseState - базовий клас для станів
+        string baseStatePath = $"{CODE_PATH}/Core/StateMachine/BaseState.cs";
+        string baseStateContent =
+    @"using System;
+using MythHunter.Core.DI;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Базовий клас для станів з підтримкою enum
+    /// </summary>
+    public abstract class BaseState<TStateEnum> : IState<TStateEnum> where TStateEnum : Enum
+    {
+        protected readonly IDIContainer Container;
+        
+        public abstract TStateEnum StateId { get; }
+        
+        protected BaseState(IDIContainer container)
+        {
+            Container = container;
+        }
+        
+        public virtual void Enter() { }
+        
+        public virtual void Update() { }
+        
+        public virtual void Exit() { }
+    }
+}";
+        WriteFile(baseStatePath, baseStateContent);
     }
 
     private void CreateEventImplementations()
@@ -2192,154 +2399,8 @@ namespace MythHunter.Systems.Groups
 }";
         WriteFile(systemGroupPath, systemGroupContent);
 
-        // IState - інтерфейс стану (State Machine)
-        string iStatePath = $"{CODE_PATH}/Core/StateMachine/IState.cs";
-        string iStateContent =
-    @"namespace MythHunter.Core.StateMachine
-{
-    /// <summary>
-    /// Інтерфейс стану для машини станів
-    /// </summary>
-    public interface IState
-    {
-        void Enter();
-        void Update();
-        void Exit();
-        int StateId { get; }
-    }
-}";
-        WriteFile(iStatePath, iStateContent);
 
-        // IStateMachine - інтерфейс машини станів
-        string iStateMachinePath = $"{CODE_PATH}/Core/StateMachine/IStateMachine.cs";
-        string iStateMachineContent =
-    @"namespace MythHunter.Core.StateMachine
-{
-    /// <summary>
-    /// Інтерфейс машини станів
-    /// </summary>
-    public interface IStateMachine
-    {
-        void RegisterState(int stateId, IState state);
-        void UnregisterState(int stateId);
-        bool SetState(int stateId);
-        void Update();
-        int CurrentStateId { get; }
-        void AddTransition(int fromStateId, int toStateId);
-        bool CanTransition(int fromStateId, int toStateId);
-    }
-}";
-        WriteFile(iStateMachinePath, iStateMachineContent);
-
-        // StateMachine - реалізація машини станів
-        string stateMachinePath = $"{CODE_PATH}/Core/StateMachine/StateMachine.cs";
-        string stateMachineContent =
-    @"using System.Collections.Generic;
-
-namespace MythHunter.Core.StateMachine
-{
-    /// <summary>
-    /// Реалізація машини станів
-    /// </summary>
-    public class StateMachine : IStateMachine
-    {
-        private readonly Dictionary<int, IState> _states = new Dictionary<int, IState>();
-        private readonly HashSet<(int from, int to)> _allowedTransitions = new HashSet<(int from, int to)>();
-        
-        private IState _currentState;
-        
-        public int CurrentStateId => _currentState?.StateId ?? 0;
-        
-        public void RegisterState(int stateId, IState state)
-        {
-            _states[stateId] = state;
-        }
-        
-        public void UnregisterState(int stateId)
-        {
-            if (_states.ContainsKey(stateId))
-            {
-                if (_currentState != null && _currentState.StateId == stateId)
-                {
-                    _currentState.Exit();
-                    _currentState = null;
-                }
-                
-                _states.Remove(stateId);
-            }
-        }
-        
-        public bool SetState(int stateId)
-        {
-            if (!_states.ContainsKey(stateId))
-                return false;
-                
-            if (_currentState != null)
-            {
-                if (_currentState.StateId == stateId)
-                    return true;
-                    
-                if (!CanTransition(_currentState.StateId, stateId))
-                    return false;
-                    
-                _currentState.Exit();
-            }
-            
-            _currentState = _states[stateId];
-            _currentState.Enter();
-            
-            return true;
-        }
-        
-        public void Update()
-        {
-            _currentState?.Update();
-        }
-        
-        public void AddTransition(int fromStateId, int toStateId)
-        {
-            _allowedTransitions.Add((fromStateId, toStateId));
-        }
-        
-        public bool CanTransition(int fromStateId, int toStateId)
-        {
-            return _allowedTransitions.Contains((fromStateId, toStateId));
-        }
-    }
-}";
-        WriteFile(stateMachinePath, stateMachineContent);
-
-        // BaseState - базовий клас для станів
-        string baseStatePath = $"{CODE_PATH}/Core/StateMachine/BaseState.cs";
-        string baseStateContent =
-    @"using MythHunter.Core.DI;
-
-namespace MythHunter.Core.StateMachine
-{
-    /// <summary>
-    /// Базовий клас для станів
-    /// </summary>
-    public abstract class BaseState : IState
-    {
-        protected readonly IDIContainer Container;
-        
-        public abstract int StateId { get; }
-        
-        protected BaseState(IDIContainer container)
-        {
-            Container = container;
-        }
-        
-        public virtual void Enter() { }
-        
-        public virtual void Update() { }
-        
-        public virtual void Exit() { }
-    }
-}";
-        WriteFile(baseStatePath, baseStateContent);
-
-        // GameplayState - приклад стану гри
+        // GameplayState - оновлюємо для використання типізованої StateMachine
         string gameplayStatePath = $"{CODE_PATH}/Core/Game/GameplayState.cs";
         string gameplayStateContent =
     @"using MythHunter.Core.DI;
@@ -2347,18 +2408,19 @@ using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Game
 {
     /// <summary>
     /// Стан ігрового процесу
     /// </summary>
-    public class GameplayState : BaseState
+    public class GameplayState : BaseState<GameStateType>
     {
         private ILogger _logger;
         private IEventBus _eventBus;
         
-        public override int StateId => (int)GameStateType.Game;
+        public override GameStateType StateId => GameStateType.Game;
         
         public GameplayState(IDIContainer container) : base(container)
         {
@@ -2375,6 +2437,19 @@ namespace MythHunter.Core.Game
             {
                 Timestamp = System.DateTime.UtcNow
             });
+            
+            // Асинхронна ініціалізація
+            InitializeAsync().Forget();
+        }
+        
+        private async UniTaskVoid InitializeAsync()
+        {
+            _logger.LogInfo(""Starting async gameplay initialization"");
+            
+            // Приклад асинхронної ініціалізації
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo(""Async gameplay initialization completed"");
         }
         
         public override void Update()
@@ -2409,17 +2484,18 @@ namespace MythHunter.Core.Game
     $@"using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Game
 {{
     /// <summary>
     /// Стан {stateName}
     /// </summary>
-    public class {stateName}State : BaseState
+    public class {stateName}State : BaseState<GameStateType>
     {{
         private ILogger _logger;
         
-        public override int StateId => (int)GameStateType.{stateTypeName};
+        public override GameStateType StateId => GameStateType.{stateTypeName};
         
         public {stateName}State(IDIContainer container) : base(container)
         {{
@@ -2429,6 +2505,17 @@ namespace MythHunter.Core.Game
         public override void Enter()
         {{
             _logger.LogInfo(""Entering {stateName} state"");
+            
+            // Асинхронна ініціалізація
+            InitializeAsync().Forget();
+        }}
+        
+        private async UniTaskVoid InitializeAsync()
+        {{
+            // Приклад асинхронної ініціалізації
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo(""{stateName} state initialized asynchronously"");
         }}
         
         public override void Update()

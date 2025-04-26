@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 
 namespace MythHunter.Networking.Server
@@ -9,7 +10,7 @@ namespace MythHunter.Networking.Server
     public interface INetworkServer
     {
         void Start(ushort port);
-        void Stop();
+        UniTask StopAsync();
         void SendMessage<T>(T message, int clientId) where T : INetworkMessage;
         void BroadcastMessage<T>(T message) where T : INetworkMessage;
         event Action<int, INetworkMessage> OnMessageReceived;

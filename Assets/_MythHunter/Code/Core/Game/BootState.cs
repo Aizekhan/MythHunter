@@ -1,41 +1,48 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Game
 {
     /// <summary>
-    /// Стан завантаження гри
+    /// Стан Boot
     /// </summary>
-    public class BootState : IState<GameStateType>
+    public class BootState : BaseState<GameStateType>
     {
-        private readonly IDIContainer _container;
-        private readonly ILogger _logger;
-
-        public BootState(IDIContainer container)
+        private ILogger _logger;
+        
+        public override GameStateType StateId => GameStateType.Boot;
+        
+        public BootState(IDIContainer container) : base(container)
         {
-            _container = container;
             _logger = container.Resolve<ILogger>();
         }
-
-        public GameStateType StateId => GameStateType.Boot;
-
-        public void Enter()
+        
+        public override void Enter()
         {
-            _logger.LogInfo("Entering Boot State");
-            // Ініціалізація систем
-            // Завантаження основних ресурсів
+            _logger.LogInfo("Entering Boot state");
+            
+            // Асинхронна ініціалізація
+            InitializeAsync().Forget();
         }
-
-        public void Update()
+        
+        private async UniTaskVoid InitializeAsync()
         {
-            // Тут можна виконувати логіку переходу до MainMenu
-            // Наприклад, перевірка завершення завантаження
+            // Приклад асинхронної ініціалізації
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo("Boot state initialized asynchronously");
         }
-
-        public void Exit()
+        
+        public override void Update()
         {
-            _logger.LogInfo("Exiting Boot State");
+            // Логіка оновлення Boot стану
+        }
+        
+        public override void Exit()
+        {
+            _logger.LogInfo("Exiting Boot state");
         }
     }
 }

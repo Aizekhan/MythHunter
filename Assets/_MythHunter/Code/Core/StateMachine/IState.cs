@@ -3,17 +3,13 @@ using System;
 namespace MythHunter.Core.StateMachine
 {
     /// <summary>
-    /// Інтерфейс стану для дженериків
+    /// Інтерфейс стану для машини станів
     /// </summary>
-    public interface IState<TStateId> where TStateId : Enum
+    public interface IState<TStateEnum> where TStateEnum : Enum
     {
-        TStateId StateId
-        {
-            get;
-        }
         void Enter();
         void Update();
         void Exit();
+        TStateEnum StateId { get; }
     }
-
 }

@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace MythHunter.Cloud.Core
@@ -8,10 +8,10 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface IDataService : ICloudService
     {
-        Task<T> LoadDataAsync<T>(string key) where T : class;
-        Task SaveDataAsync<T>(string key, T data) where T : class;
-        Task<bool> DeleteDataAsync(string key);
-        Task<bool> ExistsAsync(string key);
-        Task<List<string>> GetKeysAsync(string prefix);
+        UniTask<T> LoadDataAsync<T>(string key) where T : class;
+        UniTask SaveDataAsync<T>(string key, T data) where T : class;
+        UniTask<bool> DeleteDataAsync(string key);
+        UniTask<bool> ExistsAsync(string key);
+        UniTask<List<string>> GetKeysAsync(string prefix);
     }
 }

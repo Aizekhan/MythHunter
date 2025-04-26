@@ -3,21 +3,16 @@ using System;
 namespace MythHunter.Core.StateMachine
 {
     /// <summary>
-    /// Інтерфейс машини станів
+    /// Інтерфейс машини станів з підтримкою enum
     /// </summary>
-    public interface IStateMachine<TStateId> where TStateId : Enum
+    public interface IStateMachine<TStateEnum> where TStateEnum : Enum
     {
-        void RegisterState(TStateId stateId, IState<TStateId> state);
-        void UnregisterState(TStateId stateId);
-        bool SetState(TStateId stateId);
+        void RegisterState(TStateEnum stateId, IState<TStateEnum> state);
+        void UnregisterState(TStateEnum stateId);
+        bool SetState(TStateEnum stateId);
         void Update();
-        TStateId CurrentStateId
-        {
-            get;
-        }
-        void AddTransition(TStateId fromStateId, TStateId toStateId);
-        bool CanTransition(TStateId fromStateId, TStateId toStateId);
+        TStateEnum CurrentState { get; }
+        void AddTransition(TStateEnum fromStateId, TStateEnum toStateId);
+        bool CanTransition(TStateEnum fromStateId, TStateEnum toStateId);
     }
-
-  
 }

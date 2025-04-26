@@ -1,40 +1,48 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Game
 {
     /// <summary>
-    /// Стан головного меню
+    /// Стан MainMenu
     /// </summary>
-    public class MainMenuState : IState<GameStateType>
+    public class MainMenuState : BaseState<GameStateType>
     {
-        private readonly IDIContainer _container;
-        private readonly ILogger _logger;
-
-        public MainMenuState(IDIContainer container)
+        private ILogger _logger;
+        
+        public override GameStateType StateId => GameStateType.MainMenu;
+        
+        public MainMenuState(IDIContainer container) : base(container)
         {
-            _container = container;
             _logger = container.Resolve<ILogger>();
         }
-
-        public GameStateType StateId => GameStateType.MainMenu;
-
-        public void Enter()
+        
+        public override void Enter()
         {
-            _logger.LogInfo("Entering Main Menu State");
-            // Активація UI головного меню
+            _logger.LogInfo("Entering MainMenu state");
+            
+            // Асинхронна ініціалізація
+            InitializeAsync().Forget();
         }
-
-        public void Update()
+        
+        private async UniTaskVoid InitializeAsync()
         {
-            // Обробка логіки головного меню
+            // Приклад асинхронної ініціалізації
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo("MainMenu state initialized asynchronously");
         }
-
-        public void Exit()
+        
+        public override void Update()
         {
-            _logger.LogInfo("Exiting Main Menu State");
-            // Деактивація UI головного меню
+            // Логіка оновлення MainMenu стану
+        }
+        
+        public override void Exit()
+        {
+            _logger.LogInfo("Exiting MainMenu state");
         }
     }
 }

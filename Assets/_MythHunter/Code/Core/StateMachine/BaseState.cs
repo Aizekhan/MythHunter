@@ -1,15 +1,16 @@
+using System;
 using MythHunter.Core.DI;
 
 namespace MythHunter.Core.StateMachine
 {
     /// <summary>
-    /// Базовий клас для станів
+    /// Базовий клас для станів з підтримкою enum
     /// </summary>
-    public abstract class BaseState : IState
+    public abstract class BaseState<TStateEnum> : IState<TStateEnum> where TStateEnum : Enum
     {
         protected readonly IDIContainer Container;
         
-        public abstract int StateId { get; }
+        public abstract TStateEnum StateId { get; }
         
         protected BaseState(IDIContainer container)
         {

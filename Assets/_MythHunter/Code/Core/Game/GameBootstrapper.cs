@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
@@ -17,7 +18,7 @@ namespace MythHunter.Core.Game
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         
-        private void Awake()
+        private async void Awake()
         {
             InitializeDependencyInjection();
             InitializeLogging();
@@ -27,6 +28,9 @@ namespace MythHunter.Core.Game
             DontDestroyOnLoad(gameObject);
             
             _logger.LogInfo("GameBootstrapper initialized successfully");
+            
+            // Асинхронна ініціалізація сервісів
+            await InitializeServicesAsync();
         }
         
         private void InitializeDependencyInjection()
@@ -68,6 +72,19 @@ namespace MythHunter.Core.Game
             _stateMachine.Initialize();
             
             _logger.LogInfo("Game state machine initialized");
+        }
+        
+        private async UniTask InitializeServicesAsync()
+        {
+            _logger.LogInfo("Starting async services initialization");
+            
+            // Тут можна ініціалізувати сервіси, які потребують асинхронності
+            // Наприклад, завантаження конфігурацій, підключення до серверів тощо
+            
+            // Імітація асинхронної операції
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo("Async services initialization completed");
         }
         
         private void Update()

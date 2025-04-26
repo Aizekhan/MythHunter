@@ -1,5 +1,8 @@
+using MythHunter.Networking.Messages;
+
 namespace MythHunter.Networking.Serialization
 {
+    
     /// <summary>
     /// Інтерфейс мережевого серіалізатора
     /// </summary>

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Core
 {
@@ -9,6 +10,7 @@ namespace MythHunter.UI.Core
     {
         void ShowView<TView>() where TView : Component, IView;
         void HideView<TView>() where TView : Component, IView;
+        UniTask<TView> ShowViewAsync<TView>(string prefabPath) where TView : Component, IView;
         void RegisterView<TView>(TView view) where TView : Component, IView;
         void UnregisterView<TView>(TView view) where TView : Component, IView;
         TView GetView<TView>() where TView : Component, IView;

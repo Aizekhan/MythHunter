@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MythHunter.Resources.Core
@@ -10,10 +10,10 @@ namespace MythHunter.Resources.Core
     public class ResourceRequest<T> where T : UnityEngine.Object
     {
         public string Key { get; }
-        public Task<T> Task { get; }
-        public bool IsCompleted => Task.IsCompleted;
+        public UniTask<T> Task { get; }
+        public bool IsCompleted => Task.Status.IsCompleted();
         
-        public ResourceRequest(string key, Task<T> task)
+        public ResourceRequest(string key, UniTask<T> task)
         {
             Key = key;
             Task = task;

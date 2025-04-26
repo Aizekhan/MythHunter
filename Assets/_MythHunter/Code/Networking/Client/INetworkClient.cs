@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 
 namespace MythHunter.Networking.Client
@@ -8,8 +9,8 @@ namespace MythHunter.Networking.Client
     /// </summary>
     public interface INetworkClient
     {
-        Task<bool> Connect(string address, ushort port);
-        void Disconnect();
+        UniTask<bool> ConnectAsync(string address, ushort port);
+        UniTask DisconnectAsync();
         void SendMessage<T>(T message) where T : INetworkMessage;
         event Action<INetworkMessage> OnMessageReceived;
         event Action OnConnected;

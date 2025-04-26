@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Cloud.Core
 {
@@ -7,10 +7,10 @@ namespace MythHunter.Cloud.Core
     /// </summary>
     public interface IAuthService : ICloudService
     {
-        Task<bool> SignInAsync(string username, string password);
-        Task<bool> SignUpAsync(string username, string password, string email);
-        Task<bool> SignOutAsync();
-        Task<bool> DeleteAccountAsync();
+        UniTask<bool> SignInAsync(string username, string password);
+        UniTask<bool> SignUpAsync(string username, string password, string email);
+        UniTask<bool> SignOutAsync();
+        UniTask<bool> DeleteAccountAsync();
         bool IsSignedIn { get; }
         string CurrentUserId { get; }
     }

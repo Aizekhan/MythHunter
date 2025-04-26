@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -5,7 +7,7 @@ namespace MythHunter.UI.Core
     /// </summary>
     public interface IPresenter
     {
-        void Initialize();
+        UniTask InitializeAsync();
         void Dispose();
     }
 }

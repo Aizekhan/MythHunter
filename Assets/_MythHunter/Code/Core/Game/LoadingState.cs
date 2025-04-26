@@ -1,42 +1,48 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Game
 {
     /// <summary>
-    /// Стан завантаження рівня
+    /// Стан Loading
     /// </summary>
-    public class LoadingState : IState<GameStateType>
+    public class LoadingState : BaseState<GameStateType>
     {
-        private readonly IDIContainer _container;
-        private readonly ILogger _logger;
-
-        public LoadingState(IDIContainer container)
+        private ILogger _logger;
+        
+        public override GameStateType StateId => GameStateType.Loading;
+        
+        public LoadingState(IDIContainer container) : base(container)
         {
-            _container = container;
             _logger = container.Resolve<ILogger>();
         }
-
-        public GameStateType StateId => GameStateType.Loading;
-
-        public void Enter()
+        
+        public override void Enter()
         {
-            _logger.LogInfo("Entering Loading State");
-            // Ініціалізація екрану завантаження
-            // Початок асинхронного завантаження ресурсів
+            _logger.LogInfo("Entering Loading state");
+            
+            // Асинхронна ініціалізація
+            InitializeAsync().Forget();
         }
-
-        public void Update()
+        
+        private async UniTaskVoid InitializeAsync()
         {
-            // Перевірка прогресу завантаження
-            // Перехід до гри при завершенні
+            // Приклад асинхронної ініціалізації
+            await UniTask.Delay(100);
+            
+            _logger.LogInfo("Loading state initialized asynchronously");
         }
-
-        public void Exit()
+        
+        public override void Update()
         {
-            _logger.LogInfo("Exiting Loading State");
-            // Деактивація екрану завантаження
+            // Логіка оновлення Loading стану
+        }
+        
+        public override void Exit()
+        {
+            _logger.LogInfo("Exiting Loading state");
         }
     }
 }

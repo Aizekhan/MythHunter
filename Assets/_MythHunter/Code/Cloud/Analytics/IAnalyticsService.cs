@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
-
+using Cysharp.Threading.Tasks;
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>
@@ -10,7 +10,7 @@ namespace MythHunter.Cloud.Analytics
     {
         void TrackEvent(string eventName);
         void TrackEvent(string eventName, Dictionary<string, object> parameters);
-        Task<bool> FlushAsync();
+        UniTask<bool> FlushAsync();
         void SetUserId(string userId);
         void SetUserProperty(string name, string value);
     }

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MythHunter.Resources.Core
@@ -9,8 +9,8 @@ namespace MythHunter.Resources.Core
     /// </summary>
     public interface IResourceProvider
     {
-        Task<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
-        Task<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
+        UniTask<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
+        UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
         void Unload(string key);
         void UnloadAll();
         T GetFromPool<T>(string key) where T : UnityEngine.Object;

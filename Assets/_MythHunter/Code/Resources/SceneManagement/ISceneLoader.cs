@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Resources.SceneManagement
 {
@@ -7,9 +7,9 @@ namespace MythHunter.Resources.SceneManagement
     /// </summary>
     public interface ISceneLoader
     {
-        Task LoadSceneAsync(string sceneName, bool showLoadingScreen = true);
-        Task LoadSceneAdditiveAsync(string sceneName);
-        void UnloadScene(string sceneName);
+        UniTask LoadSceneAsync(string sceneName, bool showLoadingScreen = true);
+        UniTask LoadSceneAdditiveAsync(string sceneName);
+        UniTask UnloadSceneAsync(string sceneName);
         string GetActiveScene();
         bool IsSceneLoaded(string sceneName);
     }
