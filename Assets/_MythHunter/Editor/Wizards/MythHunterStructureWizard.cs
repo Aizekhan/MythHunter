@@ -2,9 +2,14 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
+using static PlasticGui.WorkspaceWindow.Merge.MergeInProgress;
+using System;
+using UnityEditor.PackageManager;
+using System.Diagnostics;
+using UnityEditor.Build.Pipeline.Interfaces;
 
 /// <summary>
-/// Спрощений візард для створення початкової структури проекту MythHunter.
+/// Повний візард для створення структури проекту MythHunter.
 /// </summary>
 public class MythHunterStructureWizard : EditorWindow
 {
@@ -30,11 +35,11 @@ public class MythHunterStructureWizard : EditorWindow
     private void OnGUI()
     {
         GUILayout.Label("Створення структури проекту MythHunter", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Цей візард створить основну структуру папок для проекту MythHunter.", MessageType.Info);
+        EditorGUILayout.HelpBox("Цей візард створить повну структуру папок і базові файли для проекту MythHunter.", MessageType.Info);
 
         EditorGUILayout.Space(10);
 
-        EditorGUILayout.LabelField("Опції створення папок:", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Опції створення:", EditorStyles.boldLabel);
         createTestFolders = EditorGUILayout.Toggle("Створити папки для тестів", createTestFolders);
         createResourceFolders = EditorGUILayout.Toggle("Створити папки для ресурсів", createResourceFolders);
         createEditorFolders = EditorGUILayout.Toggle("Створити папки для редактора", createEditorFolders);
@@ -72,6 +77,36 @@ public class MythHunterStructureWizard : EditorWindow
     }
 
     private void CreateProjectStructure()
+    {
+        // Створення всіх папок
+        CreateDirectories();
+
+        // Створення базових файлів
+        if (createBaseFiles)
+        {
+            // Створення основних інтерфейсів
+            CreateCoreInterfaces();
+
+            // Створення додаткових інтерфейсів
+            CreateEcsInterfaces();
+            CreateDiInterfaces();
+            CreateEventInterfaces();
+            CreateUiInterfaces();
+            CreateNetworkingInterfaces();
+            CreateResourceInterfaces();
+            CreateCloudInterfaces();
+            CreateUtilInterfaces();
+
+            // Створення імплементацій
+            CreateCoreImplementations();
+            CreateEcsImplementations();
+            CreateEventImplementations();
+            CreateSystemImplementations();
+            CreateUtilImplementations();
+        }
+    }
+
+    private void CreateDirectories()
     {
         // Основні папки структури кодової бази
         List<string> directories = new List<string>
@@ -172,6 +207,9 @@ public class MythHunterStructureWizard : EditorWindow
                 $"{ROOT_PATH}/Tests/Editor/Systems",
                 $"{ROOT_PATH}/Tests/Editor/Components",
                 $"{ROOT_PATH}/Tests/Editor/Events",
+                $"{ROOT_PATH}/Tests/Editor/Entities",
+                $"{ROOT_PATH}/Tests/Editor/Networking",
+                $"{ROOT_PATH}/Tests/Editor/UI",
                 $"{ROOT_PATH}/Tests/Runtime",
                 $"{ROOT_PATH}/Tests/Runtime/Integration",
                 $"{ROOT_PATH}/Tests/Runtime/Performance"
@@ -223,19 +261,11 @@ public class MythHunterStructureWizard : EditorWindow
                 createdPaths.Add(dir);
             }
         }
-
-        // Create base files for core architecture if needed
-        if (createBaseFiles)
-        {
-            CreateBaseFiles();
-            CreateExtraInterfaces();
-            CreateCoreImplementations();
-        }
     }
 
-    private void CreateBaseFiles()
+    private void CreateCoreInterfaces()
     {
-        // Create a simple interface file to start with
+        // IComponent - базовий інтерфейс для компонентів ECS
         string iComponentFile = $"{CODE_PATH}/Core/ECS/IComponent.cs";
         string iComponentContent =
 @"namespace MythHunter.Core.ECS
@@ -250,7 +280,7 @@ public class MythHunterStructureWizard : EditorWindow
 }";
         WriteFile(iComponentFile, iComponentContent);
 
-        // Create a simple system interface
+        // ISystem - базовий інтерфейс для систем ECS
         string iSystemFile = $"{CODE_PATH}/Core/ECS/ISystem.cs";
         string iSystemContent =
 @"namespace MythHunter.Core.ECS
@@ -267,7 +297,7 @@ public class MythHunterStructureWizard : EditorWindow
 }";
         WriteFile(iSystemFile, iSystemContent);
 
-        // Create a basic event interface
+        // IEvent - базовий інтерфейс для подій
         string iEventFile = $"{CODE_PATH}/Events/IEvent.cs";
         string iEventContent =
 @"namespace MythHunter.Events
@@ -282,121 +312,188 @@ public class MythHunterStructureWizard : EditorWindow
 }";
         WriteFile(iEventFile, iEventContent);
 
-        // Create a basic README file
+        // README.md - базовий опис проекту
         string readmeFile = $"{ROOT_PATH}/README.md";
         string readmeContent =
-@"# MythHunter Project Structure
+@"# MythHunter Project
 
-This is the base structure for the MythHunter project. 
+## Архітектура проекту
 
-## Structure Overview
+Проект MythHunter використовує компонентно-орієнтовану ECS архітектуру з подійною моделлю комунікації між системами.
 
-- `/Code` - Contains all the code for the project
-  - `/Core` - Core systems and interfaces
-  - `/Components` - ECS components
-  - `/Systems` - ECS systems
-  - `/Events` - Event system
-  - ...
+### Основні принципи:
+- **ECS (Entity-Component-System)** - розділення даних (компоненти) та логіки (системи)
+- **Dependency Injection** - явна ін'єкція залежностей через конструктори
+- **Events-driven** - комунікація через події, а не прямі виклики методів
+- **SOLID** - дотримання принципів SOLID
+- **Testability** - можливість тестування компонентів окремо
+- **Serializability** - серіалізація даних для мережевої передачі
 
-## Getting Started
+## Структура проекту
 
-1. First, familiarize yourself with the project structure
-2. Check the architecture documentation
-3. Use the MythHunter wizards for generating new components and systems
+- `/Code/Core` - ядро системи (DI, ECS, StateMachine)
+- `/Code/Components` - компоненти ECS (дані)
+- `/Code/Systems` - системи ECS (логіка)
+- `/Code/Events` - події та шина подій
+- `/Code/Entities` - фабрики сутностей
+- `/Code/Networking` - мережева частина
+- `/Code/UI` - система UI на основі MVP
+- `/Code/Resources` - система ресурсів
+- `/Code/Data` - дані та налаштування
+- `/Code/Utils` - утиліти
 
-## Development Guidelines
+## Розробка
 
-- Follow the ECS architecture pattern
-- Use events for communication between systems
-- Implement interfaces for all components and systems
-";
+Для розробки нових компонентів та систем рекомендується використовувати інструмент:
+- MythHunter Tools > Component Wizard
+
+## Правила кодування:
+- Інтерфейси починаються з I
+- Один файл - один клас/інтерфейс
+- Компоненти тільки для даних
+- Системи тільки для логіки
+- Комунікація тільки через події";
         WriteFile(readmeFile, readmeContent);
     }
-    private void CreateExtraInterfaces()
-    {
-        string iDIContainerPath = $"{CODE_PATH}/Core/DI/IDIContainer.cs";
-        string iDIContainerContent =
-        @"namespace MythHunter.Core.DI
-{
-    /// <summary>
-    /// Інтерфейс для DI контейнера
-    /// </summary>
-    public interface IDIContainer
-    {
-        void Register<TService, TImplementation>() where TImplementation : TService, new();
-        void RegisterSingleton<TService, TImplementation>() where TImplementation : TService, new();
-        void RegisterInstance<TService>(TService instance);
-        TService Resolve<TService>();
-    }
-}";
-        WriteFile(iDIContainerPath, iDIContainerContent);
-        // Створення ISerializable
-        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
-        string iSerializableContent =
-    @"namespace MythHunter.Data.Serialization
-{
-    /// <summary>
-    /// Інтерфейс для серіалізації об'єктів
-    /// </summary>
-    public interface ISerializable
-    {
-        byte[] Serialize();
-        void Deserialize(byte[] data);
-    }
-}";
-        WriteFile(iSerializablePath, iSerializableContent);
 
-        // Створення IView
-        string iViewPath = $"{CODE_PATH}/UI/Core/IView.cs";
-        string iViewContent =
-    @"namespace MythHunter.UI.Core
+    private void CreateEcsInterfaces()
+    {
+        // IEcsWorld - інтерфейс світу ECS
+        string iEcsWorldPath = $"{CODE_PATH}/Core/ECS/IEcsWorld.cs";
+        string iEcsWorldContent =
+@"namespace MythHunter.Core.ECS
 {
     /// <summary>
-    /// Інтерфейс базового UI View
+    /// Інтерфейс світу ECS
     /// </summary>
-    public interface IView
+    public interface IEcsWorld
     {
-        void Show();
-        void Hide();
-    }
-}";
-        WriteFile(iViewPath, iViewContent);
-
-        // Створення IPresenter
-        string iPresenterPath = $"{CODE_PATH}/UI/Core/IPresenter.cs";
-        string iPresenterContent =
-    @"namespace MythHunter.UI.Core
-{
-    /// <summary>
-    /// Інтерфейс базового Presenter для MVP
-    /// </summary>
-    public interface IPresenter
-    {
+        IEntityManager EntityManager { get; }
         void Initialize();
+        void Update(float deltaTime);
         void Dispose();
     }
 }";
-        WriteFile(iPresenterPath, iPresenterContent);
+        WriteFile(iEcsWorldPath, iEcsWorldContent);
 
-        // Створення IModel
-        string iModelPath = $"{CODE_PATH}/UI/Core/IModel.cs";
-        string iModelContent =
-    @"namespace MythHunter.UI.Core
+        // IEntityManager - інтерфейс менеджера сутностей
+        string iEntityManagerPath = $"{CODE_PATH}/Core/ECS/IEntityManager.cs";
+        string iEntityManagerContent =
+@"namespace MythHunter.Core.ECS
 {
     /// <summary>
-    /// Інтерфейс базової Model для MVP
+    /// Інтерфейс менеджера сутностей
     /// </summary>
-    public interface IModel
+    public interface IEntityManager
     {
-        void Reset();
+        int CreateEntity();
+        void DestroyEntity(int entityId);
+        void AddComponent<TComponent>(int entityId, TComponent component) where TComponent : IComponent;
+        bool HasComponent<TComponent>(int entityId) where TComponent : IComponent;
+        TComponent GetComponent<TComponent>(int entityId) where TComponent : IComponent;
+        void RemoveComponent<TComponent>(int entityId) where TComponent : IComponent;
+        int[] GetAllEntities();
+        int[] GetEntitiesWith<TComponent>() where TComponent : IComponent;
     }
 }";
-        WriteFile(iModelPath, iModelContent);
+        WriteFile(iEntityManagerPath, iEntityManagerContent);
 
-        // Створення IEventBus
+        // IFixedUpdateSystem - інтерфейс для систем з фіксованим оновленням
+        string iFixedUpdateSystemPath = $"{CODE_PATH}/Systems/Core/IFixedUpdateSystem.cs";
+        string iFixedUpdateSystemContent =
+@"using MythHunter.Core.ECS;
+
+namespace MythHunter.Systems.Core
+{
+    /// <summary>
+    /// Інтерфейс для систем з фіксованим оновленням
+    /// </summary>
+    public interface IFixedUpdateSystem : ISystem
+    {
+        void FixedUpdate(float fixedDeltaTime);
+    }
+}";
+        WriteFile(iFixedUpdateSystemPath, iFixedUpdateSystemContent);
+
+        // ILateUpdateSystem - інтерфейс для систем з пізнім оновленням
+        string iLateUpdateSystemPath = $"{CODE_PATH}/Systems/Core/ILateUpdateSystem.cs";
+        string iLateUpdateSystemContent =
+@"using MythHunter.Core.ECS;
+
+namespace MythHunter.Systems.Core
+{
+    /// <summary>
+    /// Інтерфейс для систем з пізнім оновленням
+    /// </summary>
+    public interface ILateUpdateSystem : ISystem
+    {
+        void LateUpdate(float deltaTime);
+    }
+}";
+        WriteFile(iLateUpdateSystemPath, iLateUpdateSystemContent);
+    }
+
+    private void CreateDiInterfaces()
+    {
+        // IDIContainer - інтерфейс контейнера залежностей
+        string iDIContainerPath = $"{CODE_PATH}/Core/DI/IDIContainer.cs";
+        string iDIContainerContent =
+@"namespace MythHunter.Core.DI
+{
+    /// <summary>
+    /// Інтерфейс контейнера залежностей
+    /// </summary>
+    public interface IDIContainer
+    {
+        void Register<TService, TImplementation>() where TImplementation : TService;
+        void RegisterSingleton<TService, TImplementation>() where TImplementation : TService;
+        void RegisterInstance<TService>(TService instance);
+        TService Resolve<TService>();
+        bool IsRegistered<TService>();
+        void AnalyzeDependencies();
+    }
+}";
+        WriteFile(iDIContainerPath, iDIContainerContent);
+
+        // InjectAttribute - атрибут для ін'єкції залежностей
+        string injectAttributePath = $"{CODE_PATH}/Core/DI/InjectAttribute.cs";
+        string injectAttributeContent =
+@"using System;
+
+namespace MythHunter.Core.DI
+{
+    /// <summary>
+    /// Атрибут для позначення полів і конструкторів для ін'єкції
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Constructor | AttributeTargets.Method)]
+    public class InjectAttribute : Attribute
+    {
+    }
+}";
+        WriteFile(injectAttributePath, injectAttributeContent);
+
+        // DIInstaller - інтерфейс для інсталяторів залежностей
+        string diInstallerPath = $"{CODE_PATH}/Core/DI/IDIInstaller.cs";
+        string diInstallerContent =
+@"namespace MythHunter.Core.DI
+{
+    /// <summary>
+    /// Інтерфейс для інсталяторів залежностей
+    /// </summary>
+    public interface IDIInstaller
+    {
+        void InstallBindings(IDIContainer container);
+    }
+}";
+        WriteFile(diInstallerPath, diInstallerContent);
+    }
+
+    private void CreateEventInterfaces()
+    {
+        // IEventBus - інтерфейс шини подій
         string iEventBusPath = $"{CODE_PATH}/Events/IEventBus.cs";
         string iEventBusContent =
-    @"using System;
+@"using System;
 
 namespace MythHunter.Events
 {
@@ -413,26 +510,593 @@ namespace MythHunter.Events
 }";
         WriteFile(iEventBusPath, iEventBusContent);
 
-        // Створення IEntityManager
-        string iEntityManagerPath = $"{CODE_PATH}/Core/ECS/IEntityManager.cs";
-        string iEntityManagerContent =
-    @"namespace MythHunter.Core.ECS
+        // IEventSubscriber - інтерфейс для підписників на події
+        string iEventSubscriberPath = $"{CODE_PATH}/Events/IEventSubscriber.cs";
+        string iEventSubscriberContent =
+@"namespace MythHunter.Events
 {
     /// <summary>
-    /// Інтерфейс менеджера ентіті
+    /// Інтерфейс для підписників на події
     /// </summary>
-    public interface IEntityManager
+    public interface IEventSubscriber
     {
-        int CreateEntity();
-        void DestroyEntity(int entityId);
-        void AddComponent<TComponent>(int entityId, TComponent component) where TComponent : IComponent;
-        bool HasComponent<TComponent>(int entityId) where TComponent : IComponent;
-        TComponent GetComponent<TComponent>(int entityId) where TComponent : IComponent;
+        void SubscribeToEvents();
+        void UnsubscribeFromEvents();
     }
 }";
-        WriteFile(iEntityManagerPath, iEntityManagerContent);
+        WriteFile(iEventSubscriberPath, iEventSubscriberContent);
 
-        // Створення ILogger
+        // Базові події (Core Events)
+        string gameCoreEventsPath = $"{CODE_PATH}/Events/Domain/GameEvents.cs";
+        string gameCoreEventsContent =
+@"using System;
+
+namespace MythHunter.Events.Domain
+{
+    /// <summary>
+    /// Подія запуску гри
+    /// </summary>
+    public struct GameStartedEvent : IEvent
+    {
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+    
+    /// <summary>
+    /// Подія паузи гри
+    /// </summary>
+    public struct GamePausedEvent : IEvent
+    {
+        public bool IsPaused;
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+    
+    /// <summary>
+    /// Подія завершення гри
+    /// </summary>
+    public struct GameEndedEvent : IEvent
+    {
+        public bool IsVictory;
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+}";
+        WriteFile(gameCoreEventsPath, gameCoreEventsContent);
+
+        // Створення файлу з подіями фаз
+        string phaseEventsPath = $"{CODE_PATH}/Events/Domain/PhaseEvents.cs";
+        string phaseEventsContent =
+@"using System;
+
+namespace MythHunter.Events.Domain
+{
+    /// <summary>
+    /// Фази гри
+    /// </summary>
+    public enum GamePhase
+    {
+        None = 0,
+        Rune,
+        Planning,
+        Movement,
+        Combat,
+        Freeze
+    }
+    
+    /// <summary>
+    /// Подія зміни фази
+    /// </summary>
+    public struct PhaseChangedEvent : IEvent
+    {
+        public GamePhase PreviousPhase;
+        public GamePhase CurrentPhase;
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+    
+    /// <summary>
+    /// Подія початку фази
+    /// </summary>
+    public struct PhaseStartedEvent : IEvent
+    {
+        public GamePhase Phase;
+        public float Duration;
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+    
+    /// <summary>
+    /// Подія завершення фази
+    /// </summary>
+    public struct PhaseEndedEvent : IEvent
+    {
+        public GamePhase Phase;
+        public DateTime Timestamp;
+        
+        public string GetEventId() => $""{GetType().Name}_{Guid.NewGuid()}"";
+    }
+}";
+        WriteFile(phaseEventsPath, phaseEventsContent);
+    }
+
+    private void CreateUiInterfaces()
+    {
+        // IView - інтерфейс для View (MVP)
+        string iViewPath = $"{CODE_PATH}/UI/Core/IView.cs";
+        string iViewContent =
+@"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базового UI View
+    /// </summary>
+    public interface IView
+    {
+        void Show();
+        void Hide();
+    }
+}";
+        WriteFile(iViewPath, iViewContent);
+
+        // IPresenter - інтерфейс для Presenter (MVP)
+        string iPresenterPath = $"{CODE_PATH}/UI/Core/IPresenter.cs";
+        string iPresenterContent =
+@"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базового Presenter для MVP
+    /// </summary>
+    public interface IPresenter
+    {
+        void Initialize();
+        void Dispose();
+    }
+}";
+        WriteFile(iPresenterPath, iPresenterContent);
+
+        // IModel - інтерфейс для Model (MVP)
+        string iModelPath = $"{CODE_PATH}/UI/Core/IModel.cs";
+        string iModelContent =
+@"namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс базової Model для MVP
+    /// </summary>
+    public interface IModel
+    {
+    }
+}";
+        WriteFile(iModelPath, iModelContent);
+
+        // IUISystem - інтерфейс для UI системи
+        string iUISystemPath = $"{CODE_PATH}/UI/Core/IUISystem.cs";
+        string iUISystemContent =
+@"using UnityEngine;
+
+namespace MythHunter.UI.Core
+{
+    /// <summary>
+    /// Інтерфейс системи UI
+    /// </summary>
+    public interface IUISystem
+    {
+        void ShowView<TView>() where TView : Component, IView;
+        void HideView<TView>() where TView : Component, IView;
+        void RegisterView<TView>(TView view) where TView : Component, IView;
+        void UnregisterView<TView>(TView view) where TView : Component, IView;
+        TView GetView<TView>() where TView : Component, IView;
+        bool IsViewActive<TView>() where TView : Component, IView;
+    }
+}";
+        WriteFile(iUISystemPath, iUISystemContent);
+    }
+
+    private void CreateNetworkingInterfaces()
+    {
+        // INetworkSystem - інтерфейс мережевої системи
+        string iNetworkSystemPath = $"{CODE_PATH}/Networking/Core/INetworkSystem.cs";
+        string iNetworkSystemContent =
+@"using System;
+using MythHunter.Networking.Messages;
+
+namespace MythHunter.Networking.Core
+{
+    /// <summary>
+    /// Інтерфейс мережевої системи
+    /// </summary>
+    public interface INetworkSystem
+    {
+        void StartServer(ushort port);
+        Task<bool> ConnectToServer(string address, ushort port);
+        void Disconnect();
+        void SendMessage<T>(T message) where T : INetworkMessage;
+        event Action<INetworkMessage> OnMessageReceived;
+        event Action<NetworkClientInfo, bool> OnClientConnectionChanged;
+        bool IsServer { get; }
+        bool IsClient { get; }
+        bool IsConnected { get; }
+    }
+    
+    /// <summary>
+    /// Інформація про клієнта
+    /// </summary>
+    public struct NetworkClientInfo
+    {
+        public int ClientId;
+        public string Address;
+    }
+}";
+        WriteFile(iNetworkSystemPath, iNetworkSystemContent);
+
+        // INetworkMessage - інтерфейс мережевого повідомлення
+        string iNetworkMessagePath = $"{CODE_PATH}/Networking/Messages/INetworkMessage.cs";
+        string iNetworkMessageContent =
+@"using MythHunter.Data.Serialization;
+
+namespace MythHunter.Networking.Messages
+{
+    /// <summary>
+    /// Інтерфейс мережевого повідомлення
+    /// </summary>
+    public interface INetworkMessage : ISerializable
+    {
+        string GetMessageId();
+    }
+}";
+        WriteFile(iNetworkMessagePath, iNetworkMessageContent);
+
+        // INetworkSerializer - інтерфейс мережевого серіалізатора
+        string iNetworkSerializerPath = $"{CODE_PATH}/Networking/Serialization/INetworkSerializer.cs";
+        string iNetworkSerializerContent =
+@"namespace MythHunter.Networking.Serialization
+{
+    /// <summary>
+    /// Інтерфейс мережевого серіалізатора
+    /// </summary>
+    public interface INetworkSerializer
+    {
+        byte[] Serialize<T>(T message) where T : INetworkMessage;
+        T Deserialize<T>(byte[] data) where T : INetworkMessage, new();
+        INetworkMessage Deserialize(byte[] data, System.Type messageType);
+    }
+}";
+        WriteFile(iNetworkSerializerPath, iNetworkSerializerContent);
+
+        // Базові мережеві інтерфейси клієнта і сервера
+        string iNetworkClientPath = $"{CODE_PATH}/Networking/Client/INetworkClient.cs";
+        string iNetworkClientContent =
+@"using System;
+using MythHunter.Networking.Messages;
+
+namespace MythHunter.Networking.Client
+{
+    /// <summary>
+    /// Інтерфейс мережевого клієнта
+    /// </summary>
+    public interface INetworkClient
+    {
+        Task<bool> Connect(string address, ushort port);
+        void Disconnect();
+        void SendMessage<T>(T message) where T : INetworkMessage;
+        event Action<INetworkMessage> OnMessageReceived;
+        event Action OnConnected;
+        event Action OnDisconnected;
+        bool IsConnected { get; }
+        bool IsActive { get; }
+    }
+}";
+        WriteFile(iNetworkClientPath, iNetworkClientContent);
+
+        string iNetworkServerPath = $"{CODE_PATH}/Networking/Server/INetworkServer.cs";
+        string iNetworkServerContent =
+@"using System;
+using MythHunter.Networking.Messages;
+
+namespace MythHunter.Networking.Server
+{
+    /// <summary>
+    /// Інтерфейс мережевого сервера
+    /// </summary>
+    public interface INetworkServer
+    {
+        void Start(ushort port);
+        void Stop();
+        void SendMessage<T>(T message, int clientId) where T : INetworkMessage;
+        void BroadcastMessage<T>(T message) where T : INetworkMessage;
+        event Action<int, INetworkMessage> OnMessageReceived;
+        event Action<int> OnClientConnected;
+        event Action<int> OnClientDisconnected;
+        bool IsRunning { get; }
+        bool IsActive { get; }
+        int[] GetConnectedClients();
+    }
+}";
+        WriteFile(iNetworkServerPath, iNetworkServerContent);
+    }
+
+    private void CreateResourceInterfaces()
+    {
+        // IResourceProvider - інтерфейс провайдера ресурсів
+        string iResourceProviderPath = $"{CODE_PATH}/Resources/Core/IResourceProvider.cs";
+        string iResourceProviderContent =
+    @"using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+
+namespace MythHunter.Resources.Core
+{
+    /// <summary>
+    /// Інтерфейс провайдера ресурсів
+    /// </summary>
+    public interface IResourceProvider
+    {
+        Task<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
+        Task<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
+        void Unload(string key);
+        void UnloadAll();
+        T GetFromPool<T>(string key) where T : UnityEngine.Object;
+        void ReturnToPool<T>(string key, T instance) where T : UnityEngine.Object;
+    }
+}";
+        WriteFile(iResourceProviderPath, iResourceProviderContent);
+
+        // IObjectPool - інтерфейс пулу об'єктів
+        string iObjectPoolPath = $"{CODE_PATH}/Resources/Pool/IObjectPool.cs";
+        string iObjectPoolContent =
+    @"namespace MythHunter.Resources.Pool
+{
+    /// <summary>
+    /// Інтерфейс пулу об'єктів
+    /// </summary>
+    public interface IObjectPool<T> where T : class
+    {
+        T Get();
+        void Return(T instance);
+        void Clear();
+        int CountActive { get; }
+        int CountInactive { get; }
+    }
+}";
+        WriteFile(iObjectPoolPath, iObjectPoolContent);
+
+        // ISceneLoader - інтерфейс завантажувача сцен
+        string iSceneLoaderPath = $"{CODE_PATH}/Resources/SceneManagement/ISceneLoader.cs";
+        string iSceneLoaderContent =
+    @"using System.Threading.Tasks;
+
+namespace MythHunter.Resources.SceneManagement
+{
+    /// <summary>
+    /// Інтерфейс завантажувача сцен
+    /// </summary>
+    public interface ISceneLoader
+    {
+        Task LoadSceneAsync(string sceneName, bool showLoadingScreen = true);
+        Task LoadSceneAdditiveAsync(string sceneName);
+        void UnloadScene(string sceneName);
+        string GetActiveScene();
+        bool IsSceneLoaded(string sceneName);
+    }
+}";
+        WriteFile(iSceneLoaderPath, iSceneLoaderContent);
+
+        // ResourceRequest - клас запиту на ресурс
+        string resourceRequestPath = $"{CODE_PATH}/Resources/Core/ResourceRequest.cs";
+        string resourceRequestContent =
+    @"using System;
+using System.Threading.Tasks;
+using UnityEngine;
+
+namespace MythHunter.Resources.Core
+{
+    /// <summary>
+    /// Клас запиту на ресурс
+    /// </summary>
+    public class ResourceRequest<T> where T : UnityEngine.Object
+    {
+        public string Key { get; }
+        public Task<T> Task { get; }
+        public bool IsCompleted => Task.IsCompleted;
+        
+        public ResourceRequest(string key, Task<T> task)
+        {
+            Key = key;
+            Task = task;
+        }
+    }
+}";
+        WriteFile(resourceRequestPath, resourceRequestContent);
+
+        // IAddressablesProvider - інтерфейс провайдера Addressables
+        string iAddressablesProviderPath = $"{CODE_PATH}/Resources/Providers/IAddressablesProvider.cs";
+        string iAddressablesProviderContent =
+    @"using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+
+namespace MythHunter.Resources.Providers
+{
+    /// <summary>
+    /// Інтерфейс провайдера Addressables
+    /// </summary>
+    public interface IAddressablesProvider
+    {
+        Task<T> LoadAssetAsync<T>(string key) where T : UnityEngine.Object;
+        Task<IList<T>> LoadAssetsAsync<T>(IEnumerable<string> keys) where T : UnityEngine.Object;
+        Task<IList<T>> LoadAssetsAsync<T>(string label) where T : UnityEngine.Object;
+        void ReleaseAsset<T>(T asset) where T : UnityEngine.Object;
+        void ReleaseAssets<T>(IList<T> assets) where T : UnityEngine.Object;
+        Task<GameObject> InstantiateAsync(string key, Transform parent = null);
+        void ReleaseInstance(GameObject instance);
+    }
+}";
+        WriteFile(iAddressablesProviderPath, iAddressablesProviderContent);
+
+        // SceneReference - клас для посилання на сцену
+        string sceneReferencePath = $"{CODE_PATH}/Resources/SceneManagement/SceneReference.cs";
+        string sceneReferenceContent =
+    @"using UnityEngine;
+
+namespace MythHunter.Resources.SceneManagement
+{
+    /// <summary>
+    /// Клас для посилання на сцену
+    /// </summary>
+    [System.Serializable]
+    public class SceneReference
+    {
+        [SerializeField] private string scenePath;
+        [SerializeField] private string sceneName;
+        
+        public string ScenePath => scenePath;
+        public string SceneName => sceneName;
+        
+        public SceneReference(string path)
+        {
+            scenePath = path;
+            sceneName = System.IO.Path.GetFileNameWithoutExtension(path);
+        }
+        
+        public override string ToString()
+        {
+            return sceneName;
+        }
+    }
+}";
+        WriteFile(sceneReferencePath, sceneReferenceContent);
+    }
+
+    private void CreateCloudInterfaces()
+    {
+        // ICloudService - інтерфейс хмарного сервісу
+        string iCloudServicePath = $"{CODE_PATH}/Cloud/Core/ICloudService.cs";
+        string iCloudServiceContent =
+    @"using System.Threading.Tasks;
+
+namespace MythHunter.Cloud.Core
+{
+    /// <summary>
+    /// Базовий інтерфейс хмарного сервісу
+    /// </summary>
+    public interface ICloudService
+    {
+        Task<bool> Initialize();
+        bool IsInitialized { get; }
+        string GetServiceId();
+    }
+}";
+        WriteFile(iCloudServicePath, iCloudServiceContent);
+
+        // IDataService - інтерфейс сервісу даних
+        string iDataServicePath = $"{CODE_PATH}/Cloud/Core/IDataService.cs";
+        string iDataServiceContent =
+    @"using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace MythHunter.Cloud.Core
+{
+    /// <summary>
+    /// Інтерфейс сервісу даних
+    /// </summary>
+    public interface IDataService : ICloudService
+    {
+        Task<T> LoadDataAsync<T>(string key) where T : class;
+        Task SaveDataAsync<T>(string key, T data) where T : class;
+        Task<bool> DeleteDataAsync(string key);
+        Task<bool> ExistsAsync(string key);
+        Task<List<string>> GetKeysAsync(string prefix);
+    }
+}";
+        WriteFile(iDataServicePath, iDataServiceContent);
+
+        // IAuthService - інтерфейс сервісу авторизації
+        string iAuthServicePath = $"{CODE_PATH}/Cloud/Core/IAuthService.cs";
+        string iAuthServiceContent =
+    @"using System.Threading.Tasks;
+
+namespace MythHunter.Cloud.Core
+{
+    /// <summary>
+    /// Інтерфейс сервісу авторизації
+    /// </summary>
+    public interface IAuthService : ICloudService
+    {
+        Task<bool> SignInAsync(string username, string password);
+        Task<bool> SignUpAsync(string username, string password, string email);
+        Task<bool> SignOutAsync();
+        Task<bool> DeleteAccountAsync();
+        bool IsSignedIn { get; }
+        string CurrentUserId { get; }
+    }
+}";
+        WriteFile(iAuthServicePath, iAuthServiceContent);
+
+        // IAnalyticsService - інтерфейс сервісу аналітики
+        string iAnalyticsServicePath = $"{CODE_PATH}/Cloud/Analytics/IAnalyticsService.cs";
+        string iAnalyticsServiceContent =
+    @"using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace MythHunter.Cloud.Analytics
+{
+    /// <summary>
+    /// Інтерфейс сервісу аналітики
+    /// </summary>
+    public interface IAnalyticsService : ICloudService
+    {
+        void TrackEvent(string eventName);
+        void TrackEvent(string eventName, Dictionary<string, object> parameters);
+        Task<bool> FlushAsync();
+        void SetUserId(string userId);
+        void SetUserProperty(string name, string value);
+    }
+}";
+        WriteFile(iAnalyticsServicePath, iAnalyticsServiceContent);
+
+        // AnalyticsEvent - базовий клас події аналітики
+        string analyticsEventPath = $"{CODE_PATH}/Cloud/Analytics/AnalyticsEvent.cs";
+        string analyticsEventContent =
+    @"using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Cloud.Analytics
+{
+    /// <summary>
+    /// Базовий клас події аналітики
+    /// </summary>
+    public abstract class AnalyticsEvent
+    {
+        public DateTime Timestamp { get; private set; }
+        public string EventName { get; protected set; }
+        
+        protected readonly Dictionary<string, object> Parameters = new Dictionary<string, object>();
+        
+        protected AnalyticsEvent()
+        {
+            Timestamp = DateTime.UtcNow;
+        }
+        
+        public Dictionary<string, object> GetParameters()
+        {
+            Dictionary<string, object> result = new Dictionary<string, object>(Parameters)
+            {
+                { ""timestamp"", Timestamp.ToString(""o"") }
+            };
+            
+            return result;
+        }
+    }
+}";
+        WriteFile(analyticsEventPath, analyticsEventContent);
+    }
+    private void CreateUtilInterfaces()
+    {
+        // ILogger - інтерфейс системи логування
         string iLoggerPath = $"{CODE_PATH}/Utils/Logging/ILogger.cs";
         string iLoggerContent =
     @"namespace MythHunter.Utils.Logging
@@ -444,228 +1108,594 @@ namespace MythHunter.Events
     {
         void LogInfo(string message);
         void LogWarning(string message);
-        void LogError(string message);
+        void LogError(string message, System.Exception exception = null);
+        void LogDebug(string message);
+        void SetLogLevel(LogLevel level);
+    }
+    
+    /// <summary>
+    /// Рівні логування
+    /// </summary>
+    public enum LogLevel
+    {
+        Debug,
+        Info,
+        Warning,
+        Error,
+        None
     }
 }";
         WriteFile(iLoggerPath, iLoggerContent);
 
-        // Створення IEventSubscriber
-        string iEventSubscriberPath = $"{CODE_PATH}/Events/IEventSubscriber.cs";
-        string iEventSubscriberContent =
-        @"namespace MythHunter.Events
+        // ITelemetryLogger - інтерфейс телеметрії
+        string iTelemetryLoggerPath = $"{CODE_PATH}/Utils/Logging/ITelemetryLogger.cs";
+        string iTelemetryLoggerContent =
+    @"using System.Collections.Generic;
+
+namespace MythHunter.Utils.Logging
 {
     /// <summary>
-    /// Інтерфейс для підписників на події
+    /// Інтерфейс телеметричного логера
     /// </summary>
-    public interface IEventSubscriber
+    public interface ITelemetryLogger : ILogger
     {
+        void TrackMetric(string name, float value);
+        void TrackEvent(string name, Dictionary<string, string> properties = null);
+        void TrackException(System.Exception exception, Dictionary<string, string> properties = null);
     }
 }";
-        WriteFile(iEventSubscriberPath, iEventSubscriberContent);
+        WriteFile(iTelemetryLoggerPath, iTelemetryLoggerContent);
 
+        // ISerializer - інтерфейс серіалізатора
+        string iSerializerPath = $"{CODE_PATH}/Data/Serialization/ISerializer.cs";
+        string iSerializerContent =
+    @"namespace MythHunter.Data.Serialization
+{
+    /// <summary>
+    /// Інтерфейс серіалізатора
+    /// </summary>
+    public interface ISerializer
+    {
+        byte[] Serialize<T>(T obj);
+        T Deserialize<T>(byte[] data);
+        string SerializeToString<T>(T obj);
+        T DeserializeFromString<T>(string data);
     }
+}";
+        WriteFile(iSerializerPath, iSerializerContent);
 
+        // ISerializable - інтерфейс для серіалізовуваних об'єктів
+        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
+        string iSerializableContent =
+    @"namespace MythHunter.Data.Serialization
+{
+    /// <summary>
+    /// Інтерфейс для серіалізації об'єктів
+    /// </summary>
+    public interface ISerializable
+    {
+        byte[] Serialize();
+        void Deserialize(byte[] data);
+    }
+}";
+        WriteFile(iSerializablePath, iSerializableContent);
+
+        // IReplaySystem - інтерфейс системи реплеїв
+        string iReplaySystemPath = $"{CODE_PATH}/Replay/IReplaySystem.cs";
+        string iReplaySystemContent =
+    @"using System;
+using System.Threading.Tasks;
+
+namespace MythHunter.Replay
+{
+    /// <summary>
+    /// Інтерфейс системи реплеїв
+    /// </summary>
+    public interface IReplaySystem
+    {
+        void StartRecording();
+        void StopRecording();
+        Task<string> SaveReplayAsync(string name);
+        Task<bool> LoadReplayAsync(string replayId);
+        Task<string[]> GetAvailableReplaysAsync();
+        bool IsRecording { get; }
+        bool IsPlaying { get; }
+        void PlayReplay();
+        void PauseReplay();
+        void StopReplay();
+        event Action<float> OnReplayProgress;
+    }
+}";
+        WriteFile(iReplaySystemPath, iReplaySystemContent);
+
+        // IConfigProvider - інтерфейс провайдера конфігурацій
+        string iConfigProviderPath = $"{CODE_PATH}/Core/Config/IConfigProvider.cs";
+        string iConfigProviderContent =
+    @"namespace MythHunter.Core.Config
+{
+    /// <summary>
+    /// Інтерфейс провайдера конфігурацій
+    /// </summary>
+    public interface IConfigProvider
+    {
+        T GetConfig<T>() where T : class;
+        void SetConfig<T>(T config) where T : class;
+        bool HasConfig<T>() where T : class;
+    }
+}";
+        WriteFile(iConfigProviderPath, iConfigProviderContent);
+    }
     private void CreateCoreImplementations()
     {
-        // DIContainer.cs
+        // DIContainer - реалізація DI контейнера
         string diContainerPath = $"{CODE_PATH}/Core/DI/DIContainer.cs";
         string diContainerContent =
     @"using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace MythHunter.Core.DI
 {
     /// <summary>
-    /// Проста реалізація DI контейнера
+    /// Реалізація DI контейнера
     /// </summary>
     public class DIContainer : IDIContainer
     {
+        private readonly Dictionary<Type, Func<object>> _factories = new Dictionary<Type, Func<object>>();
         private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
-
-        public void Register<TService, TImplementation>() where TImplementation : TService, new()
+        
+        public void Register<TService, TImplementation>() where TImplementation : TService
         {
-            _instances[typeof(TService)] = new TImplementation();
+            _factories[typeof(TService)] = () => Activator.CreateInstance(typeof(TImplementation));
         }
-
-        public void RegisterSingleton<TService, TImplementation>() where TImplementation : TService, new()
+        
+        public void RegisterSingleton<TService, TImplementation>() where TImplementation : TService
         {
-            _instances[typeof(TService)] = new TImplementation();
+            var serviceType = typeof(TService);
+            
+            if (!_instances.ContainsKey(serviceType))
+            {
+                _instances[serviceType] = Activator.CreateInstance(typeof(TImplementation));
+            }
         }
-
+        
         public void RegisterInstance<TService>(TService instance)
         {
             _instances[typeof(TService)] = instance;
         }
-
+        
         public TService Resolve<TService>()
         {
-            return (TService)_instances[typeof(TService)];
+            return (TService)Resolve(typeof(TService));
+        }
+        
+        private object Resolve(Type serviceType)
+        {
+            // Перевірка наявності синглтону
+            if (_instances.TryGetValue(serviceType, out var instance))
+            {
+                return instance;
+            }
+            
+            // Перевірка наявності фабрики
+            if (_factories.TryGetValue(serviceType, out var factory))
+            {
+                return factory();
+            }
+            
+            throw new Exception($""Type {serviceType.Name} is not registered"");
+        }
+        
+        public bool IsRegistered<TService>()
+        {
+            var serviceType = typeof(TService);
+            return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
+        }
+        
+        public void AnalyzeDependencies()
+        {
+            Console.WriteLine(""Analyzing dependencies..."");
+            
+            foreach (var registration in _factories)
+            {
+                Console.WriteLine($""Service: {registration.Key.Name}"");
+            }
+            
+            foreach (var instance in _instances)
+            {
+                Console.WriteLine($""Singleton: {instance.Key.Name}"");
+            }
         }
     }
 }";
         WriteFile(diContainerPath, diContainerContent);
 
-        // EventBus.cs
-        string eventBusPath = $"{CODE_PATH}/Events/EventBus.cs";
-        string eventBusContent =
-    @"using System;
-using System.Collections.Generic;
-
-namespace MythHunter.Events
+        // DIInstaller - базовий клас для інсталяторів залежностей
+        string diInstallerPath = $"{CODE_PATH}/Core/DI/DIInstaller.cs";
+        string diInstallerContent =
+    @"namespace MythHunter.Core.DI
 {
     /// <summary>
-    /// Базова реалізація IEventBus
+    /// Базовий клас для інсталяторів залежностей
     /// </summary>
-    public class EventBus : IEventBus
+    public abstract class DIInstaller : IDIInstaller
     {
-        private readonly Dictionary<Type, List<Delegate>> _handlers = new();
-
-        public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent
+        public abstract void InstallBindings(IDIContainer container);
+        
+        protected void BindSingleton<TService, TImplementation>(IDIContainer container) 
+            where TImplementation : TService
         {
-            var type = typeof(TEvent);
-            if (!_handlers.ContainsKey(type))
-                _handlers[type] = new List<Delegate>();
-
-            _handlers[type].Add(handler);
+            container.RegisterSingleton<TService, TImplementation>();
         }
-
-        public void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent
+        
+        protected void Bind<TService, TImplementation>(IDIContainer container) 
+            where TImplementation : TService
         {
-            var type = typeof(TEvent);
-            if (_handlers.TryGetValue(type, out var list))
-                list.Remove(handler);
+            container.Register<TService, TImplementation>();
         }
-
-        public void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
+        
+        protected void BindInstance<TService>(IDIContainer container, TService instance)
         {
-            var type = typeof(TEvent);
-            if (_handlers.TryGetValue(type, out var list))
-            {
-                foreach (var handler in list)
-                    ((Action<TEvent>)handler)?.Invoke(eventData);
-            }
-        }
-
-        public void Clear()
-        {
-            _handlers.Clear();
+            container.RegisterInstance<TService>(instance);
         }
     }
 }";
-        WriteFile(eventBusPath, eventBusContent);
+        WriteFile(diInstallerPath, diInstallerContent);
 
-        // GameBootstrapper.cs
-        string bootstrapperPath = $"{CODE_PATH}/Core/Game/GameBootstrapper.cs";
-        string bootstrapperContent =
-    @"using UnityEngine;
-using MythHunter.Core.DI;
-using MythHunter.Events;
-
-namespace MythHunter.Core.Game
-{
-    /// <summary>
-    /// Початковий ініціалізатор гри
-    /// </summary>
-    public class GameBootstrapper : MonoBehaviour
-    {
-        private void Awake()
-        {
-            var container = new DIContainer();
-            container.Register<IEventBus, EventBus>();
-
-            InstallerRegistry.RegisterInstallers(container);
-
-            Debug.Log(""✅ GameBootstrapper: DI container initialized"");
-        }
-    }
-}";
-        WriteFile(bootstrapperPath, bootstrapperContent);
-
-        // SystemGroup.cs
-        string systemGroupPath = $"{CODE_PATH}/Systems/Core/SystemGroup.cs";
-        string systemGroupContent =
-    @"using System.Collections.Generic;
-using MythHunter.Core.ECS;
-
-namespace MythHunter.Systems.Core
-{
-    /// <summary>
-    /// Група систем, що виконується послідовно
-    /// </summary>
-    public class SystemGroup : ISystem
-    {
-        private readonly List<ISystem> _systems = new();
-
-        public void AddSystem(ISystem system)
-        {
-            _systems.Add(system);
-        }
-
-        public void Initialize()
-        {
-            foreach (var system in _systems)
-                system.Initialize();
-        }
-
-        public void Update(float deltaTime)
-        {
-            foreach (var system in _systems)
-                system.Update(deltaTime);
-        }
-
-        public void Dispose()
-        {
-            foreach (var system in _systems)
-                system.Dispose();
-        }
-    }
-}";
-        WriteFile(systemGroupPath, systemGroupContent);
-
-        // BaseAuthoring.cs
-        string baseAuthoringPath = $"{CODE_PATH}/Authoring/BaseAuthoring.cs";
-        string baseAuthoringContent =
-    @"using UnityEngine;
-
-namespace MythHunter.Authoring
-{
-    /// <summary>
-    /// Базовий Authoring компонент для ентіті
-    /// </summary>
-    public class BaseAuthoring : MonoBehaviour
-    {
-        public virtual void ApplyData(int entityId)
-        {
-            // Override to inject components to the entity
-        }
-    }
-}";
-        WriteFile(baseAuthoringPath, baseAuthoringContent);
-        // InstallerRegistry.cs
+        // InstallerRegistry - реєстр інсталяторів DI
         string installerRegistryPath = $"{CODE_PATH}/Core/InstallerRegistry.cs";
         string installerRegistryContent =
-        @"using MythHunter.Core.DI;
+    @"using MythHunter.Core.DI;
 
 namespace MythHunter.Core
 {
     /// <summary>
-    /// Централізований реєстратор інсталерів для DI
+    /// Реєстр інсталяторів для DI
     /// </summary>
     public static class InstallerRegistry
     {
         public static void RegisterInstallers(IDIContainer container)
         {
-            // TODO: Wizard буде автоматично додавати сюди інсталери
-            // container.Register<MyPanelInstaller>();
+            // Core installers
+            // TODO: Wizard will automatically add installers here
         }
     }
 }";
         WriteFile(installerRegistryPath, installerRegistryContent);
 
-        // SystemBase.cs
+        // GameBootstrapper - точка входу в гру
+        string gameBootstrapperPath = $"{CODE_PATH}/Core/Game/GameBootstrapper.cs";
+        string gameBootstrapperContent =
+    @"using UnityEngine;
+using MythHunter.Core.DI;
+using MythHunter.Events;
+using MythHunter.Utils.Logging;
+using MythHunter.Core.ECS;
+
+namespace MythHunter.Core.Game
+{
+    /// <summary>
+    /// Точка входу в гру
+    /// </summary>
+    public class GameBootstrapper : MonoBehaviour
+    {
+        private IDIContainer _container;
+        private IEventBus _eventBus;
+        private ILogger _logger;
+        private IEcsWorld _ecsWorld;
+        private GameStateMachine _stateMachine;
+        
+        private void Awake()
+        {
+            InitializeDependencyInjection();
+            InitializeLogging();
+            InitializeEcs();
+            InitializeStateMachine();
+            
+            DontDestroyOnLoad(gameObject);
+            
+            _logger.LogInfo(""GameBootstrapper initialized successfully"");
+        }
+        
+        private void InitializeDependencyInjection()
+        {
+            _container = new DIContainer();
+            
+            // Реєстрація базових сервісів
+            _container.RegisterSingleton<IEventBus, EventBus>();
+            _container.RegisterSingleton<ILogger, UnityLogger>();
+            
+            // Реєстрація всіх інсталяторів
+            InstallerRegistry.RegisterInstallers(_container);
+        }
+        
+        private void InitializeLogging()
+        {
+            _logger = _container.Resolve<ILogger>();
+            _logger.LogInfo(""Logging system initialized"");
+        }
+        
+        private void InitializeEcs()
+        {
+            _eventBus = _container.Resolve<IEventBus>();
+            
+            // Створення ECS світу
+            var entityManager = new EntityManager();
+            var systemRegistry = new Systems.Core.SystemRegistry();
+            
+            _ecsWorld = new EcsWorld(entityManager, systemRegistry);
+            _container.RegisterInstance<IEntityManager>(entityManager);
+            _container.RegisterInstance<IEcsWorld>(_ecsWorld);
+            
+            _logger.LogInfo(""ECS world initialized"");
+        }
+        
+        private void InitializeStateMachine()
+        {
+            _stateMachine = new GameStateMachine(_container);
+            _stateMachine.Initialize();
+            
+            _logger.LogInfo(""Game state machine initialized"");
+        }
+        
+        private void Update()
+        {
+            _ecsWorld?.Update(Time.deltaTime);
+            _stateMachine?.Update();
+        }
+        
+        private void OnDestroy()
+        {
+            _ecsWorld?.Dispose();
+            _logger?.LogInfo(""GameBootstrapper destroyed"");
+        }
+    }
+}";
+        WriteFile(gameBootstrapperPath, gameBootstrapperContent);
+
+        // GameStateMachine - машина станів гри
+        string gameStateMachinePath = $"{CODE_PATH}/Core/Game/GameStateMachine.cs";
+        string gameStateMachineContent =
+    @"using MythHunter.Core.DI;
+using MythHunter.Core.StateMachine;
+using MythHunter.Utils.Logging;
+
+namespace MythHunter.Core.Game
+{
+    /// <summary>
+    /// Машина станів гри
+    /// </summary>
+    public class GameStateMachine
+    {
+        private readonly IStateMachine _stateMachine;
+        private readonly ILogger _logger;
+        private readonly IDIContainer _container;
+        
+        public GameStateMachine(IDIContainer container)
+        {
+            _container = container;
+            _logger = container.Resolve<ILogger>();
+            _stateMachine = new StateMachine.StateMachine();
+        }
+        
+        public void Initialize()
+        {
+            // Реєстрація станів
+            _stateMachine.RegisterState(GameStateType.Boot, new BootState(_container));
+            _stateMachine.RegisterState(GameStateType.MainMenu, new MainMenuState(_container));
+            _stateMachine.RegisterState(GameStateType.Loading, new LoadingState(_container));
+            _stateMachine.RegisterState(GameStateType.Game, new GameplayState(_container));
+            
+            // Налаштування переходів
+            _stateMachine.AddTransition(GameStateType.Boot, GameStateType.MainMenu);
+            _stateMachine.AddTransition(GameStateType.MainMenu, GameStateType.Loading);
+            _stateMachine.AddTransition(GameStateType.Loading, GameStateType.Game);
+            _stateMachine.AddTransition(GameStateType.Game, GameStateType.MainMenu);
+            
+            // Перехід до початкового стану
+            _stateMachine.SetState(GameStateType.Boot);
+            
+            _logger.LogInfo($""Initialized GameStateMachine with initial state: {GameStateType.Boot}"");
+        }
+        
+        public void Update()
+        {
+            _stateMachine.Update();
+        }
+        
+        public void ChangeState(GameStateType newState)
+        {
+            _stateMachine.SetState(newState);
+        }
+        
+        public GameStateType CurrentState => (GameStateType)_stateMachine.CurrentStateId;
+    }
+    
+    /// <summary>
+    /// Типи станів гри
+    /// </summary>
+    public enum GameStateType
+    {
+        None = 0,
+        Boot,
+        MainMenu,
+        Loading,
+        Game,
+        Pause,
+        GameOver
+    }
+}";
+        WriteFile(gameStateMachinePath, gameStateMachineContent);
+    }
+    private void CreateEcsImplementations()
+    {
+        // Entity - базовий клас для сутностей
+        string entityPath = $"{CODE_PATH}/Core/ECS/Entity.cs";
+        string entityContent =
+    @"namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Базовий клас для сутності
+    /// </summary>
+    public class Entity
+    {
+        public int Id { get; }
+        
+        public Entity(int id)
+        {
+            Id = id;
+        }
+    }
+}";
+        WriteFile(entityPath, entityContent);
+
+        // EntityManager - реалізація менеджера сутностей
+        string entityManagerPath = $"{CODE_PATH}/Core/ECS/EntityManager.cs";
+        string entityManagerContent =
+    @"using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Реалізація менеджера сутностей
+    /// </summary>
+    public class EntityManager : IEntityManager
+    {
+        private int _nextEntityId = 1;
+        private readonly Dictionary<int, Dictionary<Type, IComponent>> _components = new Dictionary<int, Dictionary<Type, IComponent>>();
+        private readonly Dictionary<Type, HashSet<int>> _entitiesByComponent = new Dictionary<Type, HashSet<int>>();
+        
+        public int CreateEntity()
+        {
+            int entityId = _nextEntityId++;
+            _components[entityId] = new Dictionary<Type, IComponent>();
+            return entityId;
+        }
+        
+        public void DestroyEntity(int entityId)
+        {
+            if (!_components.ContainsKey(entityId))
+                return;
+                
+            // Видалення всіх компонентів
+            foreach (var componentType in _components[entityId].Keys.ToList())
+            {
+                if (_entitiesByComponent.ContainsKey(componentType))
+                {
+                    _entitiesByComponent[componentType].Remove(entityId);
+                }
+            }
+            
+            _components.Remove(entityId);
+        }
+        
+        public void AddComponent<TComponent>(int entityId, TComponent component) where TComponent : IComponent
+        {
+            if (!_components.ContainsKey(entityId))
+                _components[entityId] = new Dictionary<Type, IComponent>();
+                
+            Type componentType = typeof(TComponent);
+            _components[entityId][componentType] = component;
+            
+            // Оновлення кешу для швидкого пошуку
+            if (!_entitiesByComponent.ContainsKey(componentType))
+                _entitiesByComponent[componentType] = new HashSet<int>();
+                
+            _entitiesByComponent[componentType].Add(entityId);
+        }
+        
+        public bool HasComponent<TComponent>(int entityId) where TComponent : IComponent
+        {
+            return _components.ContainsKey(entityId) && _components[entityId].ContainsKey(typeof(TComponent));
+        }
+        
+        public TComponent GetComponent<TComponent>(int entityId) where TComponent : IComponent
+        {
+            if (!HasComponent<TComponent>(entityId))
+                return default;
+                
+            return (TComponent)_components[entityId][typeof(TComponent)];
+        }
+        
+        public void RemoveComponent<TComponent>(int entityId) where TComponent : IComponent
+        {
+            if (!HasComponent<TComponent>(entityId))
+                return;
+                
+            Type componentType = typeof(TComponent);
+            _components[entityId].Remove(componentType);
+            
+            if (_entitiesByComponent.ContainsKey(componentType))
+            {
+                _entitiesByComponent[componentType].Remove(entityId);
+            }
+        }
+        
+        public int[] GetAllEntities()
+        {
+            return _components.Keys.ToArray();
+        }
+        
+        public int[] GetEntitiesWith<TComponent>() where TComponent : IComponent
+        {
+            Type componentType = typeof(TComponent);
+            
+            if (!_entitiesByComponent.ContainsKey(componentType))
+                return Array.Empty<int>();
+                
+            return _entitiesByComponent[componentType].ToArray();
+        }
+    }
+}";
+        WriteFile(entityManagerPath, entityManagerContent);
+
+        // EcsWorld - реалізація світу ECS
+        string ecsWorldPath = $"{CODE_PATH}/Core/ECS/EcsWorld.cs";
+        string ecsWorldContent =
+    @"using MythHunter.Systems.Core;
+
+namespace MythHunter.Core.ECS
+{
+    /// <summary>
+    /// Реалізація світу ECS
+    /// </summary>
+    public class EcsWorld : IEcsWorld
+    {
+        private readonly IEntityManager _entityManager;
+        private readonly SystemRegistry _systemRegistry;
+        
+        public IEntityManager EntityManager => _entityManager;
+        
+        public EcsWorld(IEntityManager entityManager, SystemRegistry systemRegistry)
+        {
+            _entityManager = entityManager;
+            _systemRegistry = systemRegistry;
+        }
+        
+        public void Initialize()
+        {
+            _systemRegistry.InitializeAll();
+        }
+        
+        public void Update(float deltaTime)
+        {
+            _systemRegistry.UpdateAll(deltaTime);
+        }
+        
+        public void Dispose()
+        {
+            _systemRegistry.DisposeAll();
+        }
+    }
+}";
+        WriteFile(ecsWorldPath, ecsWorldContent);
+
+        // SystemBase - базовий клас для систем
         string systemBasePath = $"{CODE_PATH}/Core/ECS/SystemBase.cs";
         string systemBaseContent =
-        @"namespace MythHunter.Core.ECS
+    @"namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Базовий клас для систем
@@ -678,45 +1708,1203 @@ namespace MythHunter.Core
     }
 }";
         WriteFile(systemBasePath, systemBaseContent);
-        // InjectAttribute.cs
-        string injectAttributePath = $"{CODE_PATH}/Core/DI/InjectAttribute.cs";
-        string injectAttributeContent =
-        @"using System;
 
-namespace MythHunter.Core.DI
+        // BaseEntityFactory - базова фабрика сутностей
+        string baseEntityFactoryPath = $"{CODE_PATH}/Entities/EntityFactory.cs";
+        string baseEntityFactoryContent =
+    @"using MythHunter.Core.ECS;
+using MythHunter.Core.DI;
+using MythHunter.Utils.Logging;
+
+namespace MythHunter.Entities
 {
     /// <summary>
-    /// Атрибут для позначення полів для інжекції
+    /// Базова фабрика сутностей
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Constructor)]
-    public class InjectAttribute : Attribute
+    public abstract class EntityFactory
     {
-    }
-}";
-        WriteFile(injectAttributePath, injectAttributeContent);
-        // Entity.cs
-        string entityPath = $"{CODE_PATH}/Core/ECS/Entity.cs";
-        string entityContent =
-        @"namespace MythHunter.Core.ECS
-{
-    /// <summary>
-    /// Базовий клас для Entity
-    /// </summary>
-    public class Entity
-    {
-        public int Id { get; }
-
-        public Entity(int id)
+        protected readonly IEntityManager EntityManager;
+        protected readonly ILogger Logger;
+        
+        [Inject]
+        public EntityFactory(IEntityManager entityManager, ILogger logger)
         {
-            Id = id;
+            EntityManager = entityManager;
+            Logger = logger;
+        }
+        
+        protected int CreateBaseEntity()
+        {
+            int entityId = EntityManager.CreateEntity();
+            EntityManager.AddComponent(entityId, new NameComponent { Name = ""Entity_"" + entityId });
+            EntityManager.AddComponent(entityId, new IdComponent { Id = entityId });
+            
+            Logger.LogDebug($""Created entity with ID {entityId}"");
+            
+            return entityId;
         }
     }
 }";
-        WriteFile(entityPath, entityContent);
+        WriteFile(baseEntityFactoryPath, baseEntityFactoryContent);
 
+        // NameComponent - базовий компонент імені
+        string nameComponentPath = $"{CODE_PATH}/Components/Core/NameComponent.cs";
+        string nameComponentContent =
+    @"using System.IO;
+using MythHunter.Core.ECS;
+using MythHunter.Data.Serialization;
 
+namespace MythHunter.Components.Core
+{
+    /// <summary>
+    /// Компонент імені
+    /// </summary>
+    public struct NameComponent : IComponent, ISerializable
+    {
+        public string Name;
+        
+        public byte[] Serialize()
+        {
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                writer.Write(Name ?? string.Empty);
+                return stream.ToArray();
+            }
+        }
+        
+        public void Deserialize(byte[] data)
+        {
+            using (MemoryStream stream = new MemoryStream(data))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                Name = reader.ReadString();
+            }
+        }
+    }
+}";
+        WriteFile(nameComponentPath, nameComponentContent);
+
+        // IdComponent - базовий компонент ідентифікатора
+        string idComponentPath = $"{CODE_PATH}/Components/Core/IdComponent.cs";
+        string idComponentContent =
+    @"using System.IO;
+using MythHunter.Core.ECS;
+using MythHunter.Data.Serialization;
+
+namespace MythHunter.Components.Core
+{
+    /// <summary>
+    /// Компонент ідентифікатора
+    /// </summary>
+    public struct IdComponent : IComponent, ISerializable
+    {
+        public int Id;
+        
+        public byte[] Serialize()
+        {
+            using (MemoryStream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                writer.Write(Id);
+                return stream.ToArray();
+            }
+        }
+        
+        public void Deserialize(byte[] data)
+        {
+            using (MemoryStream stream = new MemoryStream(data))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                Id = reader.ReadInt32();
+            }
+        }
+    }
+}";
+        WriteFile(idComponentPath, idComponentContent);
     }
 
+    private void CreateEventImplementations()
+    {
+        // EventBus - реалізація шини подій
+        string eventBusPath = $"{CODE_PATH}/Events/EventBus.cs";
+        string eventBusContent =
+    @"using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Events
+{
+    /// <summary>
+    /// Реалізація шини подій
+    /// </summary>
+    public class EventBus : IEventBus
+    {
+        private readonly Dictionary<Type, List<Delegate>> _handlers = new Dictionary<Type, List<Delegate>>();
+        
+        public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent
+        {
+            Type eventType = typeof(TEvent);
+            
+            if (!_handlers.ContainsKey(eventType))
+                _handlers[eventType] = new List<Delegate>();
+                
+            _handlers[eventType].Add(handler);
+        }
+        
+        public void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : struct, IEvent
+        {
+            Type eventType = typeof(TEvent);
+            
+            if (!_handlers.ContainsKey(eventType))
+                return;
+                
+            _handlers[eventType].Remove(handler);
+            
+            if (_handlers[eventType].Count == 0)
+                _handlers.Remove(eventType);
+        }
+        
+        public void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
+        {
+            Type eventType = typeof(TEvent);
+            
+            if (!_handlers.ContainsKey(eventType))
+                return;
+                
+            foreach (var handler in _handlers[eventType])
+            {
+                try
+                {
+                    ((Action<TEvent>)handler).Invoke(eventData);
+                }
+                catch (Exception ex)
+                {
+                    // Логування виключень при обробці подій
+                    Console.Error.WriteLine($""Error handling event {eventType.Name}: {ex.Message}"");
+                }
+            }
+        }
+        
+        public void Clear()
+        {
+            _handlers.Clear();
+        }
+    }
+}";
+        WriteFile(eventBusPath, eventBusContent);
+
+        // EventLogger - логер подій для дебагу
+        string eventLoggerPath = $"{CODE_PATH}/Events/Debugging/EventLogger.cs";
+        string eventLoggerContent =
+    @"using System;
+using MythHunter.Utils.Logging;
+using MythHunter.Core.DI;
+
+namespace MythHunter.Events.Debugging
+{
+    /// <summary>
+    /// Логер подій для відлагодження
+    /// </summary>
+    public class EventLogger : IEventSubscriber
+    {
+        private readonly IEventBus _eventBus;
+        private readonly ILogger _logger;
+        private bool _isEnabled = false;
+        
+        [Inject]
+        public EventLogger(IEventBus eventBus, ILogger logger)
+        {
+            _eventBus = eventBus;
+            _logger = logger;
+        }
+        
+        public void Enable()
+        {
+            if (!_isEnabled)
+            {
+                SubscribeToEvents();
+                _isEnabled = true;
+                _logger.LogInfo(""Event logger enabled"");
+            }
+        }
+        
+        public void Disable()
+        {
+            if (_isEnabled)
+            {
+                UnsubscribeFromEvents();
+                _isEnabled = false;
+                _logger.LogInfo(""Event logger disabled"");
+            }
+        }
+        
+        public void SubscribeToEvents()
+        {
+            // Підписка на всі події (можна замінити на конкретний список)
+            _eventBus.Subscribe<IEvent>(OnAnyEvent);
+        }
+        
+        public void UnsubscribeFromEvents()
+        {
+            _eventBus.Unsubscribe<IEvent>(OnAnyEvent);
+        }
+        
+        private void OnAnyEvent(IEvent evt)
+        {
+            _logger.LogDebug($""Event: {evt.GetType().Name}, ID: {evt.GetEventId()}"");
+        }
+    }
+}";
+        WriteFile(eventLoggerPath, eventLoggerContent);
+
+        // EventVisualizer - для візуалізації подій в редакторі
+        string eventVisualizerPath = $"{CODE_PATH}/Events/Debugging/EventVisualizer.cs";
+        string eventVisualizerContent =
+    @"using System;
+using System.Collections.Generic;
+using UnityEngine;
+using MythHunter.Core.DI;
+
+namespace MythHunter.Events.Debugging
+{
+    /// <summary>
+    /// Візуалізатор подій для відлагодження
+    /// </summary>
+    public class EventVisualizer : MonoBehaviour, IEventSubscriber
+    {
+        [Inject] private IEventBus _eventBus;
+        
+        private readonly List<EventRecord> _eventHistory = new List<EventRecord>();
+        private readonly int _maxEvents = 100;
+        private bool _isVisible = false;
+        private Vector2 _scrollPosition;
+        
+        private void OnEnable()
+        {
+            SubscribeToEvents();
+        }
+        
+        private void OnDisable()
+        {
+            UnsubscribeFromEvents();
+        }
+        
+        public void SubscribeToEvents()
+        {
+            _eventBus?.Subscribe<IEvent>(OnEventReceived);
+        }
+        
+        public void UnsubscribeFromEvents()
+        {
+            _eventBus?.Unsubscribe<IEvent>(OnEventReceived);
+        }
+        
+        private void OnEventReceived(IEvent evt)
+        {
+            _eventHistory.Add(new EventRecord
+            {
+                EventType = evt.GetType().Name,
+                EventId = evt.GetEventId(),
+                Timestamp = DateTime.Now
+            });
+            
+            if (_eventHistory.Count > _maxEvents)
+                _eventHistory.RemoveAt(0);
+        }
+        
+        private void OnGUI()
+        {
+            if (!_isVisible) return;
+            
+            GUILayout.BeginArea(new Rect(10, 10, 400, 500));
+            GUILayout.BeginVertical(""box"");
+            
+            GUILayout.Label(""Event Visualizer"", GUI.skin.box);
+            
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(""Clear"", GUILayout.Width(80)))
+            {
+                _eventHistory.Clear();
+            }
+            if (GUILayout.Button(""Close"", GUILayout.Width(80)))
+            {
+                _isVisible = false;
+            }
+            GUILayout.EndHorizontal();
+            
+            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+            
+            foreach (var record in _eventHistory)
+            {
+                GUILayout.BeginHorizontal(""box"");
+                GUILayout.Label($""{record.Timestamp.ToString(""HH:mm:ss.fff"")}"", GUILayout.Width(100));
+                GUILayout.Label(record.EventType);
+                GUILayout.EndHorizontal();
+            }
+            
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
+        }
+        
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F8))
+            {
+                _isVisible = !_isVisible;
+            }
+        }
+        
+        private struct EventRecord
+        {
+            public string EventType;
+            public string EventId;
+            public DateTime Timestamp;
+        }
+    }
+}";
+        WriteFile(eventVisualizerPath, eventVisualizerContent);
+    }
+    private void CreateSystemImplementations()
+    {
+        // SystemRegistry - реєстр систем
+        string systemRegistryPath = $"{CODE_PATH}/Systems/Core/SystemRegistry.cs";
+        string systemRegistryContent =
+    @"using System.Collections.Generic;
+using MythHunter.Core.ECS;
+using MythHunter.Systems.Core;
+
+namespace MythHunter.Systems.Core
+{
+    /// <summary>
+    /// Реєстр систем для керування їх життєвим циклом
+    /// </summary>
+    public class SystemRegistry
+    {
+        private readonly List<ISystem> _updateSystems = new List<ISystem>();
+        private readonly List<IFixedUpdateSystem> _fixedUpdateSystems = new List<IFixedUpdateSystem>();
+        private readonly List<ILateUpdateSystem> _lateUpdateSystems = new List<ILateUpdateSystem>();
+        
+        public void RegisterSystem(ISystem system)
+        {
+            _updateSystems.Add(system);
+            
+            if (system is IFixedUpdateSystem fixedUpdateSystem)
+                _fixedUpdateSystems.Add(fixedUpdateSystem);
+                
+            if (system is ILateUpdateSystem lateUpdateSystem)
+                _lateUpdateSystems.Add(lateUpdateSystem);
+        }
+        
+        public void InitializeAll()
+        {
+            foreach (var system in _updateSystems)
+            {
+                system.Initialize();
+            }
+        }
+        
+        public void UpdateAll(float deltaTime)
+        {
+            foreach (var system in _updateSystems)
+            {
+                system.Update(deltaTime);
+            }
+        }
+        
+        public void FixedUpdateAll(float fixedDeltaTime)
+        {
+            foreach (var system in _fixedUpdateSystems)
+            {
+                system.FixedUpdate(fixedDeltaTime);
+            }
+        }
+        
+        public void LateUpdateAll(float deltaTime)
+        {
+            foreach (var system in _lateUpdateSystems)
+            {
+                system.LateUpdate(deltaTime);
+            }
+        }
+        
+        public void DisposeAll()
+        {
+            foreach (var system in _updateSystems)
+            {
+                system.Dispose();
+            }
+            
+            _updateSystems.Clear();
+            _fixedUpdateSystems.Clear();
+            _lateUpdateSystems.Clear();
+        }
+    }
+}";
+        WriteFile(systemRegistryPath, systemRegistryContent);
+
+        // SystemGroup - група систем
+        string systemGroupPath = $"{CODE_PATH}/Systems/Groups/SystemGroup.cs";
+        string systemGroupContent =
+    @"using System.Collections.Generic;
+using MythHunter.Core.ECS;
+
+namespace MythHunter.Systems.Groups
+{
+    /// <summary>
+    /// Група систем для послідовного виконання
+    /// </summary>
+    public class SystemGroup : SystemBase
+    {
+        private readonly List<ISystem> _systems = new List<ISystem>();
+        
+        public void AddSystem(ISystem system)
+        {
+            _systems.Add(system);
+        }
+        
+        public override void Initialize()
+        {
+            foreach (var system in _systems)
+            {
+                system.Initialize();
+            }
+        }
+        
+        public override void Update(float deltaTime)
+        {
+            foreach (var system in _systems)
+            {
+                system.Update(deltaTime);
+            }
+        }
+        
+        public override void Dispose()
+        {
+            foreach (var system in _systems)
+            {
+                system.Dispose();
+            }
+            
+            _systems.Clear();
+        }
+    }
+}";
+        WriteFile(systemGroupPath, systemGroupContent);
+
+        // IState - інтерфейс стану (State Machine)
+        string iStatePath = $"{CODE_PATH}/Core/StateMachine/IState.cs";
+        string iStateContent =
+    @"namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Інтерфейс стану для машини станів
+    /// </summary>
+    public interface IState
+    {
+        void Enter();
+        void Update();
+        void Exit();
+        int StateId { get; }
+    }
+}";
+        WriteFile(iStatePath, iStateContent);
+
+        // IStateMachine - інтерфейс машини станів
+        string iStateMachinePath = $"{CODE_PATH}/Core/StateMachine/IStateMachine.cs";
+        string iStateMachineContent =
+    @"namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Інтерфейс машини станів
+    /// </summary>
+    public interface IStateMachine
+    {
+        void RegisterState(int stateId, IState state);
+        void UnregisterState(int stateId);
+        bool SetState(int stateId);
+        void Update();
+        int CurrentStateId { get; }
+        void AddTransition(int fromStateId, int toStateId);
+        bool CanTransition(int fromStateId, int toStateId);
+    }
+}";
+        WriteFile(iStateMachinePath, iStateMachineContent);
+
+        // StateMachine - реалізація машини станів
+        string stateMachinePath = $"{CODE_PATH}/Core/StateMachine/StateMachine.cs";
+        string stateMachineContent =
+    @"using System.Collections.Generic;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Реалізація машини станів
+    /// </summary>
+    public class StateMachine : IStateMachine
+    {
+        private readonly Dictionary<int, IState> _states = new Dictionary<int, IState>();
+        private readonly HashSet<(int from, int to)> _allowedTransitions = new HashSet<(int from, int to)>();
+        
+        private IState _currentState;
+        
+        public int CurrentStateId => _currentState?.StateId ?? 0;
+        
+        public void RegisterState(int stateId, IState state)
+        {
+            _states[stateId] = state;
+        }
+        
+        public void UnregisterState(int stateId)
+        {
+            if (_states.ContainsKey(stateId))
+            {
+                if (_currentState != null && _currentState.StateId == stateId)
+                {
+                    _currentState.Exit();
+                    _currentState = null;
+                }
+                
+                _states.Remove(stateId);
+            }
+        }
+        
+        public bool SetState(int stateId)
+        {
+            if (!_states.ContainsKey(stateId))
+                return false;
+                
+            if (_currentState != null)
+            {
+                if (_currentState.StateId == stateId)
+                    return true;
+                    
+                if (!CanTransition(_currentState.StateId, stateId))
+                    return false;
+                    
+                _currentState.Exit();
+            }
+            
+            _currentState = _states[stateId];
+            _currentState.Enter();
+            
+            return true;
+        }
+        
+        public void Update()
+        {
+            _currentState?.Update();
+        }
+        
+        public void AddTransition(int fromStateId, int toStateId)
+        {
+            _allowedTransitions.Add((fromStateId, toStateId));
+        }
+        
+        public bool CanTransition(int fromStateId, int toStateId)
+        {
+            return _allowedTransitions.Contains((fromStateId, toStateId));
+        }
+    }
+}";
+        WriteFile(stateMachinePath, stateMachineContent);
+
+        // BaseState - базовий клас для станів
+        string baseStatePath = $"{CODE_PATH}/Core/StateMachine/BaseState.cs";
+        string baseStateContent =
+    @"using MythHunter.Core.DI;
+
+namespace MythHunter.Core.StateMachine
+{
+    /// <summary>
+    /// Базовий клас для станів
+    /// </summary>
+    public abstract class BaseState : IState
+    {
+        protected readonly IDIContainer Container;
+        
+        public abstract int StateId { get; }
+        
+        protected BaseState(IDIContainer container)
+        {
+            Container = container;
+        }
+        
+        public virtual void Enter() { }
+        
+        public virtual void Update() { }
+        
+        public virtual void Exit() { }
+    }
+}";
+        WriteFile(baseStatePath, baseStateContent);
+
+        // GameplayState - приклад стану гри
+        string gameplayStatePath = $"{CODE_PATH}/Core/Game/GameplayState.cs";
+        string gameplayStateContent =
+    @"using MythHunter.Core.DI;
+using MythHunter.Core.StateMachine;
+using MythHunter.Utils.Logging;
+using MythHunter.Events;
+using MythHunter.Events.Domain;
+
+namespace MythHunter.Core.Game
+{
+    /// <summary>
+    /// Стан ігрового процесу
+    /// </summary>
+    public class GameplayState : BaseState
+    {
+        private ILogger _logger;
+        private IEventBus _eventBus;
+        
+        public override int StateId => (int)GameStateType.Game;
+        
+        public GameplayState(IDIContainer container) : base(container)
+        {
+            _logger = container.Resolve<ILogger>();
+            _eventBus = container.Resolve<IEventBus>();
+        }
+        
+        public override void Enter()
+        {
+            _logger.LogInfo(""Entering gameplay state"");
+            
+            // Публікуємо подію старту гри
+            _eventBus.Publish(new GameStartedEvent
+            {
+                Timestamp = System.DateTime.UtcNow
+            });
+        }
+        
+        public override void Update()
+        {
+            // Логіка оновлення геймплею
+        }
+        
+        public override void Exit()
+        {
+            _logger.LogInfo(""Exiting gameplay state"");
+            
+            // Публікуємо подію завершення гри
+            _eventBus.Publish(new GameEndedEvent
+            {
+                IsVictory = false,
+                Timestamp = System.DateTime.UtcNow
+            });
+        }
+    }
+}";
+        WriteFile(gameplayStatePath, gameplayStateContent);
+
+        // Заготовки інших станів
+        CreateBasicGameState("Boot", "Boot");
+        CreateBasicGameState("MainMenu", "MainMenu");
+        CreateBasicGameState("Loading", "Loading");
+    }
+    private void CreateBasicGameState(string stateName, string stateTypeName)
+    {
+        string statePath = $"{CODE_PATH}/Core/Game/{stateName}State.cs";
+        string stateContent =
+    $@"using MythHunter.Core.DI;
+using MythHunter.Core.StateMachine;
+using MythHunter.Utils.Logging;
+
+namespace MythHunter.Core.Game
+{{
+    /// <summary>
+    /// Стан {stateName}
+    /// </summary>
+    public class {stateName}State : BaseState
+    {{
+        private ILogger _logger;
+        
+        public override int StateId => (int)GameStateType.{stateTypeName};
+        
+        public {stateName}State(IDIContainer container) : base(container)
+        {{
+            _logger = container.Resolve<ILogger>();
+        }}
+        
+        public override void Enter()
+        {{
+            _logger.LogInfo(""Entering {stateName} state"");
+        }}
+        
+        public override void Update()
+        {{
+            // Логіка оновлення {stateName} стану
+        }}
+        
+        public override void Exit()
+        {{
+            _logger.LogInfo(""Exiting {stateName} state"");
+        }}
+    }}
+}}";
+        WriteFile(statePath, stateContent);
+    }
+    /// <summary>
+    /// //////////////////////////////////////CreateUtilImplementations() ////////////////////////////////
+    /// </summary>
+    private void CreateUtilImplementations()
+    {
+        CreateUnityLogger();
+        CreateFileLogger();
+        CreateCompositeLogger();
+        CreateLoggerFactory();
+        CreateEnsureHelper();
+        CreateValidator();
+    }
+    private void CreateUnityLogger()
+    {
+        string unityLoggerPath = $"{CODE_PATH}/Utils/Logging/UnityLogger.cs";
+        string unityLoggerContent =
+    @"using UnityEngine;
+
+namespace MythHunter.Utils.Logging
+{
+    /// <summary>
+    /// Реалізація логера через Unity Debug
+    /// </summary>
+    public class UnityLogger : ILogger
+    {
+        private LogLevel _logLevel = LogLevel.Info;
+        
+        public void LogInfo(string message)
+        {
+            if (_logLevel <= LogLevel.Info)
+                Debug.Log($""[INFO] {message}"");
+        }
+        
+        public void LogWarning(string message)
+        {
+            if (_logLevel <= LogLevel.Warning)
+                Debug.LogWarning($""[WARNING] {message}"");
+        }
+        
+        public void LogError(string message, System.Exception exception = null)
+        {
+            if (_logLevel <= LogLevel.Error)
+            {
+                if (exception != null)
+                    Debug.LogError($""[ERROR] {message}\nException: {exception}"");
+                else
+                    Debug.LogError($""[ERROR] {message}"");
+            }
+        }
+        
+        public void LogDebug(string message)
+        {
+            if (_logLevel <= LogLevel.Debug)
+                Debug.Log($""[DEBUG] {message}"");
+        }
+        
+        public void SetLogLevel(LogLevel level)
+        {
+            _logLevel = level;
+        }
+    }
+}";
+        WriteFile(unityLoggerPath, unityLoggerContent);
+    }
+    ////////////////////////////////////FILE LOGER SYSTEM//////////////////////////
+
+    //////////////
+    private void CreateFileLogger()
+    {
+        string fileLoggerPath = $"{CODE_PATH}/Utils/Logging/FileLogger.cs";
+        string fileLoggerContent = @"using System;
+using System.IO;
+using UnityEngine;
+
+namespace MythHunter.Utils.Logging
+{
+    /// <summary>
+    /// Реалізація логера через файл
+    /// </summary>
+    public class FileLogger : ILogger
+    {
+        private readonly string _logFilePath;
+        private LogLevel _logLevel = LogLevel.Info;
+        
+        public FileLogger(string fileName = ""MythHunter.log"")
+        {
+            _logFilePath = Path.Combine(Application.persistentDataPath, fileName);
+            
+            // Створення файлу та запис заголовка
+            using (StreamWriter writer = new StreamWriter(_logFilePath, false))
+            {
+                writer.WriteLine($""=== MythHunter Log Started {DateTime.Now} ==="");
+            }
+        }
+        
+        public void LogInfo(string message)
+        {
+            if (_logLevel <= LogLevel.Info)
+                WriteToFile(""INFO"", message);
+        }
+        
+        public void LogWarning(string message)
+        {
+            if (_logLevel <= LogLevel.Warning)
+                WriteToFile(""WARNING"", message);
+        }
+        
+        public void LogError(string message, Exception exception = null)
+        {
+            if (_logLevel <= LogLevel.Error)
+            {
+                if (exception != null)
+                    WriteToFile(""ERROR"", $""{message}\nException: {exception}"");
+                else
+                    WriteToFile(""ERROR"", message);
+            }
+        }
+        
+        public void LogDebug(string message)
+        {
+            if (_logLevel <= LogLevel.Debug)
+                WriteToFile(""DEBUG"", message);
+        }
+        
+        public void SetLogLevel(LogLevel level)
+        {
+            _logLevel = level;
+        }
+        
+        private void WriteToFile(string level, string message)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(_logFilePath, true))
+                {
+                    writer.WriteLine($""[{DateTime.Now.ToString(""yyyy-MM-dd HH:mm:ss.fff"")}] [{level}] {message}"");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($""Failed to write to log file: {ex.Message}"");
+            }
+        }
+    }
+}";
+        WriteFile(fileLoggerPath, fileLoggerContent);
+    }
+    private void CreateCompositeLogger()
+    {
+        string compositeLoggerPath = $"{CODE_PATH}/Utils/Logging/CompositeLogger.cs";
+        string compositeLoggerContent =
+    @"using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Utils.Logging
+{
+    /// <summary>
+    /// Комбінований логер, який використовує кілька логерів
+    /// </summary>
+    public class CompositeLogger : ILogger
+    {
+        private readonly List<ILogger> _loggers = new List<ILogger>();
+        private LogLevel _logLevel = LogLevel.Info;
+        
+        public CompositeLogger(params ILogger[] loggers)
+        {
+            _loggers.AddRange(loggers);
+        }
+        
+        public void AddLogger(ILogger logger)
+        {
+            _loggers.Add(logger);
+        }
+        
+        public void RemoveLogger(ILogger logger)
+        {
+            _loggers.Remove(logger);
+        }
+        
+        public void LogInfo(string message)
+        {
+            if (_logLevel <= LogLevel.Info)
+            {
+                foreach (var logger in _loggers)
+                {
+                    logger.LogInfo(message);
+                }
+            }
+        }
+        
+        public void LogWarning(string message)
+        {
+            if (_logLevel <= LogLevel.Warning)
+            {
+                foreach (var logger in _loggers)
+                {
+                    logger.LogWarning(message);
+                }
+            }
+        }
+        
+        public void LogError(string message, Exception exception = null)
+        {
+            if (_logLevel <= LogLevel.Error)
+            {
+                foreach (var logger in _loggers)
+                {
+                    logger.LogError(message, exception);
+                }
+            }
+        }
+        
+        public void LogDebug(string message)
+        {
+            if (_logLevel <= LogLevel.Debug)
+            {
+                foreach (var logger in _loggers)
+                {
+                    logger.LogDebug(message);
+                }
+            }
+        }
+        
+        public void SetLogLevel(LogLevel level)
+        {
+            _logLevel = level;
+            
+            foreach (var logger in _loggers)
+            {
+                logger.SetLogLevel(level);
+            }
+        }
+    }
+}";
+        WriteFile(compositeLoggerPath, compositeLoggerContent);
+    }
+    private void CreateLoggerFactory()
+    {
+        string loggerFactoryPath = $"{CODE_PATH}/Utils/Logging/LoggerFactory.cs";
+        string loggerFactoryContent =
+    @"namespace MythHunter.Utils.Logging
+{
+    /// <summary>
+    /// Фабрика логерів
+    /// </summary>
+    public static class LoggerFactory
+    {
+        public static ILogger CreateUnityLogger(LogLevel level = LogLevel.Info)
+        {
+            var logger = new UnityLogger();
+            logger.SetLogLevel(level);
+            return logger;
+        }
+        
+        public static ILogger CreateFileLogger(string fileName = ""MythHunter.log"", LogLevel level = LogLevel.Info)
+        {
+            var logger = new FileLogger(fileName);
+            logger.SetLogLevel(level);
+            return logger;
+        }
+        
+        public static ILogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
+        {
+            var unityLogger = CreateUnityLogger(level);
+            var fileLogger = CreateFileLogger(""MythHunter.log"", level);
+            
+            return new CompositeLogger(unityLogger, fileLogger);
+        }
+        
+        public static ILogger CreateDefaultLogger()
+        {
+            #if UNITY_EDITOR
+            return CreateUnityLogger();
+            #else
+            return CreateCompositeLogger();
+            #endif
+        }
+    }
+}";
+        WriteFile(loggerFactoryPath, loggerFactoryContent);
+    }
+
+    private void CreateEnsureHelper()
+    {
+        string ensurePath = $"{CODE_PATH}/Utils/Validation/Ensure.cs";
+        string ensureContent =
+    @"using System;
+
+namespace MythHunter.Utils.Validation
+{
+    /// <summary>
+    /// Утиліта для перевірки умов
+    /// </summary>
+    public static class Ensure
+    {
+        public static void NotNull<T>(T value, string paramName) where T : class
+        {
+            if (value == null)
+                throw new ArgumentNullException(paramName, $""{paramName} cannot be null"");
+        }
+        
+        public static void NotNullOrEmpty(string value, string paramName)
+        {
+            if (string.IsNullOrEmpty(value))
+                throw new ArgumentException($""{paramName} cannot be null or empty"", paramName);
+        }
+        
+        public static void IsTrue(bool condition, string message)
+        {
+            if (!condition)
+                throw new ArgumentException(message);
+        }
+        
+        public static void IsInRange(int value, int min, int max, string paramName)
+        {
+            if (value < min || value > max)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} must be between {min} and {max}"");
+        }
+        
+        public static void IsInRange(float value, float min, float max, string paramName)
+        {
+            if (value < min || value > max)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} must be between {min} and {max}"");
+        }
+        
+        public static void IsPositive(int value, string paramName)
+        {
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} must be positive"");
+        }
+        
+        public static void IsPositive(float value, string paramName)
+        {
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} must be positive"");
+        }
+        
+        public static void IsNotNegative(int value, string paramName)
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} cannot be negative"");
+        }
+        
+        public static void IsNotNegative(float value, string paramName)
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(paramName, value, $""{paramName} cannot be negative"");
+        }
+    }
+}";
+        WriteFile(ensurePath, ensureContent);
+    }
+    private void CreateValidator()
+    {
+        string validatorPath = $"{CODE_PATH}/Utils/Validation/Validator.cs";
+        string validatorContent =
+    @"using System;
+using System.Collections.Generic;
+
+namespace MythHunter.Utils.Validation
+{
+    /// <summary>
+    /// Клас для валідації об'єктів
+    /// </summary>
+    public class Validator<T>
+    {
+        private readonly List<Func<T, ValidationResult>> _validationRules = new List<Func<T, ValidationResult>>();
+        
+        /// <summary>
+        /// Додає правило валідації
+        /// </summary>
+        public Validator<T> AddRule(Func<T, ValidationResult> rule)
+        {
+            _validationRules.Add(rule);
+            return this;
+        }
+        
+        /// <summary>
+        /// Додає умову, яка має виконуватись
+        /// </summary>
+        public Validator<T> AddCondition(Func<T, bool> condition, string errorMessage)
+        {
+            _validationRules.Add(obj => condition(obj) 
+                ? ValidationResult.Success() 
+                : ValidationResult.Error(errorMessage));
+                
+            return this;
+        }
+        
+        /// <summary>
+        /// Перевіряє об'єкт на відповідність усім правилам
+        /// </summary>
+        public ValidationResult Validate(T obj)
+        {
+            List<string> errors = new List<string>();
+            
+            foreach (var rule in _validationRules)
+            {
+                var result = rule(obj);
+                if (!result.IsValid)
+                {
+                    errors.AddRange(result.Errors);
+                    
+                    // Якщо помилка критична - відразу повертаємо результат
+                    if (result.IsCritical)
+                    {
+                        return ValidationResult.Critical(errors);
+                    }
+                }
+            }
+            
+            return errors.Count > 0 ? ValidationResult.Error(errors) : ValidationResult.Success();
+        }
+    }
+    
+    /// <summary>
+    /// Результат валідації
+    /// </summary>
+    public class ValidationResult
+    {
+        public bool IsValid => Errors.Count == 0;
+        public bool IsCritical { get; private set; }
+        public List<string> Errors { get; } = new List<string>();
+        
+        public static ValidationResult Success()
+        {
+            return new ValidationResult();
+        }
+        
+        public static ValidationResult Error(string error)
+        {
+            var result = new ValidationResult();
+            result.Errors.Add(error);
+            return result;
+        }
+        
+        public static ValidationResult Error(List<string> errors)
+        {
+            var result = new ValidationResult();
+            result.Errors.AddRange(errors);
+            return result;
+        }
+        
+        public static ValidationResult Critical(string error)
+        {
+            var result = new ValidationResult { IsCritical = true };
+            result.Errors.Add(error);
+            return result;
+        }
+        
+        public static ValidationResult Critical(List<string> errors)
+        {
+            var result = new ValidationResult { IsCritical = true };
+            result.Errors.AddRange(errors);
+            return result;
+        }
+    }
+}";
+        WriteFile(validatorPath, validatorContent);
+    }
+    /// //////////////////////////////////////CreateUtilImplementations() ////////////////////////////////
     private void WriteFile(string path, string content)
     {
         if (!File.Exists(path))
@@ -726,4 +2914,21 @@ namespace MythHunter.Core.DI
             createdPaths.Add(path);
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
