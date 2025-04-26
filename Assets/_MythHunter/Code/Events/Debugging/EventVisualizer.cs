@@ -26,17 +26,17 @@ namespace MythHunter.Events.Debugging
         {
             UnsubscribeFromEvents();
         }
-        
+
         public void SubscribeToEvents()
         {
-            _eventBus?.Subscribe<IEvent>(OnEventReceived);
+            _eventBus?.SubscribeAny(OnEventReceived);
         }
-        
+
         public void UnsubscribeFromEvents()
         {
-            _eventBus?.Unsubscribe<IEvent>(OnEventReceived);
+            _eventBus?.UnsubscribeAny(OnEventReceived);
         }
-        
+
         private void OnEventReceived(IEvent evt)
         {
             _eventHistory.Add(new EventRecord

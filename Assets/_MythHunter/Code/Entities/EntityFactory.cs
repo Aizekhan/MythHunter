@@ -1,7 +1,7 @@
 using MythHunter.Core.ECS;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Components.Core;
 namespace MythHunter.Entities
 {
     /// <summary>
