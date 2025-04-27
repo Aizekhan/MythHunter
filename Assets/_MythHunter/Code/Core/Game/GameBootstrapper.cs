@@ -17,7 +17,7 @@ namespace MythHunter.Core.Game
         private MythHunter.Utils.Logging.ILogger _logger;
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
-        
+        public IDIContainer Container => _container; // 🔥 Додали цю публічну властивість
         private async void Awake()
         {
             InitializeDependencyInjection();

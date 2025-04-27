@@ -49,4 +49,26 @@ namespace MythHunter.Events.Domain
         
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
     }
+    /// <summary>
+    /// Подія запиту на перехід до наступної фази
+    /// </summary>
+    public struct RequestNextPhaseEvent : IEvent
+    {
+        public GamePhase CurrentPhase;
+        public DateTime Timestamp;
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+    }
+
+    /// <summary>
+    /// Подія зміни таймера фази
+    /// </summary>
+    public struct PhaseTimerUpdatedEvent : IEvent
+    {
+        public GamePhase Phase;
+        public float RemainingTime;
+        public float TotalTime;
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+    }
 }
