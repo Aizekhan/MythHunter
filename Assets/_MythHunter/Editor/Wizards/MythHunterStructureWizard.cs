@@ -2,17 +2,18 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
-using static PlasticGui.WorkspaceWindow.Merge.MergeInProgress;
 using System;
-using UnityEditor.PackageManager;
-using System.Diagnostics;
-using UnityEditor.Build.Pipeline.Interfaces;
+
 
 /// <summary>
 /// Повний візард для створення структури проекту MythHunter.
 /// </summary>
 public class MythHunterStructureWizard : EditorWindow
 {
+    private string rootFolderName = "_MythHunter";
+    private string ROOT_PATH => $"Assets/{rootFolderName}";
+    private string CODE_PATH => $"{ROOT_PATH}/Code";
+
     private bool createTestFolders = true;
     private bool createResourceFolders = true;
     private bool createEditorFolders = true;
@@ -23,8 +24,7 @@ public class MythHunterStructureWizard : EditorWindow
 
     private Vector2 scrollPosition;
 
-    private static readonly string ROOT_PATH = "Assets/_MythHunter";
-    private static readonly string CODE_PATH = ROOT_PATH + "/Code";
+    
 
     [MenuItem("MythHunter Tools/Project Structure Wizard")]
     public static void ShowWindow()
@@ -34,10 +34,14 @@ public class MythHunterStructureWizard : EditorWindow
 
     private void OnGUI()
     {
+
         GUILayout.Label("Створення структури проекту MythHunter", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox("Цей візард створить повну структуру папок і базові файли для проекту MythHunter.", MessageType.Info);
-
+        
         EditorGUILayout.Space(10);
+
+        // Додати поле для назви кореневої папки
+        rootFolderName = EditorGUILayout.TextField("Назва кореневої папки:", rootFolderName);
 
         EditorGUILayout.LabelField("Опції створення:", EditorStyles.boldLabel);
         createTestFolders = EditorGUILayout.Toggle("Створити папки для тестів", createTestFolders);
@@ -47,6 +51,7 @@ public class MythHunterStructureWizard : EditorWindow
 
         EditorGUILayout.Space(10);
 
+        GUI.enabled = !string.IsNullOrEmpty(rootFolderName);
         if (GUILayout.Button("Створити структуру проекту", GUILayout.Height(30)))
         {
             createdPaths.Clear();
@@ -371,8 +376,12 @@ namespace MythHunter.Core
     /// </summary>
     public static class UniTaskHelper
     {
-        // Додайте Cysharp.Threading.Tasks як залежність до проекту
-        // Завантажте пакет з: https://github.com/Cysharp/UniTask
+        // ВАЖЛИВО: Для роботи цього проекту необхідно встановити пакет UniTask від Cysharp
+        // Встановіть його через Package Manager з GitHub URL: https://github.com/Cysharp/UniTask.git
+        // Або через меню Window > Package Manager > + > Add package from git URL...
+        
+        // Приклади використання асинхронних методів можна знайти на сторінці:
+        // https://github.com/Cysharp/UniTask/blob/master/README.md
     }
 }";
         WriteFile(uniTaskPath, uniTaskContent);
@@ -1175,6 +1184,20 @@ namespace MythHunter.Cloud.Analytics
 namespace MythHunter.Utils.Logging
 {
     /// <summary>
+    /// Рівні логування, від найменш до найбільш важливого
+    /// </summary>
+    public enum LogLevel
+    {
+        Trace = 0,
+        Debug = 1,
+        Info = 2,
+        Warning = 3,
+        Error = 4,
+        Fatal = 5,
+        Off = 6 // Вимкнути логування
+    }
+
+    /// <summary>
     /// Інтерфейс для системи логування проекту MythHunter.
     /// Забезпечує методи для логування повідомлень різних рівнів важливості.
     /// </summary>
@@ -1182,7 +1205,7 @@ namespace MythHunter.Utils.Logging
     {
         void LogInfo(string message, string category = null);
         void LogWarning(string message, string category = null);
-        void LogError(string message, string category = null);
+        void LogError(string message, string category = null, Exception exception = null);
         void LogFatal(string message, string category = null);
         void LogDebug(string message, string category = null);
         void LogTrace(string message, string category = null);
@@ -1193,7 +1216,7 @@ namespace MythHunter.Utils.Logging
         void EnableFileLogging(bool enable);
     }
 }"
-    ;
+        ;
         WriteFile(iLoggerPath, iLoggerContent);
     }
     private void CreateCoreImplementations()
@@ -2309,6 +2332,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {
@@ -2317,8 +2341,8 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameplayState : BaseState<GameStateType>
     {
-        private IMythLogger _logger;
-        private IEventBus _eventBus;
+        private readonly IMythLogger _logger;
+        private readonly IEventBus _eventBus;
         
         public override GameStateType StateId => GameStateType.Game;
         
@@ -2335,7 +2359,7 @@ namespace MythHunter.Core.Game
             // Публікуємо подію старту гри
             _eventBus.Publish(new GameStartedEvent
             {
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
             
             // Асинхронна ініціалізація
@@ -2365,7 +2389,7 @@ namespace MythHunter.Core.Game
             _eventBus.Publish(new GameEndedEvent
             {
                 IsVictory = false,
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
         }
     }
@@ -2385,6 +2409,7 @@ namespace MythHunter.Core.Game
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {{
@@ -2393,7 +2418,7 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class {stateName}State : BaseState<GameStateType>
     {{
-        private IMythLogger _logger;
+        private readonly IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.{stateTypeName};
         
@@ -2404,7 +2429,7 @@ namespace MythHunter.Core.Game
         
         public override void Enter()
         {{
-            _logger.LogInfo(""Entering {stateName} state"");
+            _logger.LogInfo(""Entering {stateName} state"", ""GameState"");
             
             // Асинхронна ініціалізація
             InitializeAsync().Forget();
@@ -2412,10 +2437,17 @@ namespace MythHunter.Core.Game
         
         private async UniTaskVoid InitializeAsync()
         {{
-            // Приклад асинхронної ініціалізації
-            await UniTask.Delay(100);
-            
-            _logger.LogInfo(""{stateName} state initialized asynchronously"");
+            try
+            {{
+                // Приклад асинхронної ініціалізації
+                await UniTask.Delay(100);
+                
+                _logger.LogInfo(""{stateName} state initialized asynchronously"", ""GameState"");
+            }}
+            catch (Exception ex)
+            {{
+                _logger.LogError($""Error in {stateName} initialization: {{ex.Message}}"", ""GameState"", ex);
+            }}
         }}
         
         public override void Update()
@@ -2425,7 +2457,7 @@ namespace MythHunter.Core.Game
         
         public override void Exit()
         {{
-            _logger.LogInfo(""Exiting {stateName} state"");
+            _logger.LogInfo(""Exiting {stateName} state"", ""GameState"");
         }}
     }}
 }}";
@@ -2437,9 +2469,7 @@ namespace MythHunter.Core.Game
     private void CreateUtilImplementations()
     {
         CreateUnityLogger();
-        CreateFileLogger();
-        CreateCompositeLogger();
-        CreateLoggerFactory();
+       
         CreateEnsureHelper();
         CreateValidator();
     }
@@ -3071,223 +3101,7 @@ namespace MythHunter.Utils.Logging
     ;
         WriteFile(mythLoggerPath, mythLoggerContent);
     }
-    ////////////////////////////////////FILE LOGER SYSTEM//////////////////////////
 
-    //////////////
-    private void CreateFileLogger()
-    {
-        string fileLoggerPath = $"{CODE_PATH}/Utils/Logging/FileLogger.cs";
-        string fileLoggerContent = @"using System;
-using System.IO;
-using UnityEngine;
-
-namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Реалізація логера через файл
-    /// </summary>
-    public class FileLogger : IMythLogger
-    {
-        private readonly string _logFilePath;
-        private LogLevel _logLevel = LogLevel.Info;
-        
-        public FileLogger(string fileName = ""MythHunter.log"")
-        {
-            _logFilePath = Path.Combine(Application.persistentDataPath, fileName);
-            
-            // Створення файлу та запис заголовка
-            using (StreamWriter writer = new StreamWriter(_logFilePath, false))
-            {
-                writer.WriteLine($""=== MythHunter Log Started {DateTime.Now} ==="");
-            }
-        }
-        
-        public void LogInfo(string message)
-        {
-            if (_logLevel <= LogLevel.Info)
-                WriteToFile(""INFO"", message);
-        }
-        
-        public void LogWarning(string message)
-        {
-            if (_logLevel <= LogLevel.Warning)
-                WriteToFile(""WARNING"", message);
-        }
-        
-        public void LogError(string message, Exception exception = null)
-        {
-            if (_logLevel <= LogLevel.Error)
-            {
-                if (exception != null)
-                    WriteToFile(""ERROR"", $""{message}\nException: {exception}"");
-                else
-                    WriteToFile(""ERROR"", message);
-            }
-        }
-        
-        public void LogDebug(string message)
-        {
-            if (_logLevel <= LogLevel.Debug)
-                WriteToFile(""DEBUG"", message);
-        }
-        
-        public void SetLogLevel(LogLevel level)
-        {
-            _logLevel = level;
-        }
-        
-        private void WriteToFile(string level, string message)
-        {
-            try
-            {
-                using (StreamWriter writer = new StreamWriter(_logFilePath, true))
-                {
-                    writer.WriteLine($""[{DateTime.Now.ToString(""yyyy-MM-dd HH:mm:ss.fff"")}] [{level}] {message}"");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($""Failed to write to log file: {ex.Message}"");
-            }
-        }
-    }
-}";
-        WriteFile(fileLoggerPath, fileLoggerContent);
-    }
-    private void CreateCompositeLogger()
-    {
-        string compositeLoggerPath = $"{CODE_PATH}/Utils/Logging/CompositeLogger.cs";
-        string compositeLoggerContent =
-    @"using System;
-using System.Collections.Generic;
-
-namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Комбінований логер, який використовує кілька логерів
-    /// </summary>
-    public class CompositeLogger : IMythLogger
-    {
-        private readonly List<IMythLogger> _loggers = new List<IMythLogger>();
-        private LogLevel _logLevel = LogLevel.Info;
-        
-        public CompositeLogger(params IMythLogger[] loggers)
-        {
-            _loggers.AddRange(loggers);
-        }
-        
-        public void AddLogger(IMythLogger logger)
-        {
-            _loggers.Add(logger);
-        }
-        
-        public void RemoveLogger(IMythLogger logger)
-        {
-            _loggers.Remove(logger);
-        }
-        
-        public void LogInfo(string message)
-        {
-            if (_logLevel <= LogLevel.Info)
-            {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogInfo(message);
-                }
-            }
-        }
-        
-        public void LogWarning(string message)
-        {
-            if (_logLevel <= LogLevel.Warning)
-            {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogWarning(message);
-                }
-            }
-        }
-        
-        public void LogError(string message, Exception exception = null)
-        {
-            if (_logLevel <= LogLevel.Error)
-            {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogError(message, exception);
-                }
-            }
-        }
-        
-        public void LogDebug(string message)
-        {
-            if (_logLevel <= LogLevel.Debug)
-            {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogDebug(message);
-                }
-            }
-        }
-        
-        public void SetLogLevel(LogLevel level)
-        {
-            _logLevel = level;
-            
-            foreach (var logger in _loggers)
-            {
-                logger.SetLogLevel(level);
-            }
-        }
-    }
-}";
-        WriteFile(compositeLoggerPath, compositeLoggerContent);
-    }
-    private void CreateLoggerFactory()
-    {
-        string loggerFactoryPath = $"{CODE_PATH}/Utils/Logging/LoggerFactory.cs";
-        string loggerFactoryContent =
-    @"namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Фабрика логерів
-    /// </summary>
-    public static class LoggerFactory
-    {
-        public static IMythLogger CreateUnityLogger(LogLevel level = LogLevel.Info)
-        {
-            var logger = new MythLogger();
-            logger.SetLogLevel(level);
-            return logger;
-        }
-        
-        public static IMythLogger CreateFileLogger(string fileName = ""MythHunter.log"", LogLevel level = LogLevel.Info)
-        {
-            var logger = new FileLogger(fileName);
-            logger.SetLogLevel(level);
-            return logger;
-        }
-        
-        public static IMythLogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
-        {
-            var mythLogger = CreateUnityLogger(level);
-            var fileLogger = CreateFileLogger(""MythHunter.log"", level);
-            
-            return new CompositeLogger(mythLogger, fileLogger);
-        }
-        
-        public static IMythLogger CreateDefaultLogger()
-        {
-            #if UNITY_EDITOR
-            return CreateUnityLogger();
-            #else
-            return CreateCompositeLogger();
-            #endif
-        }
-    }
-}";
-        WriteFile(loggerFactoryPath, loggerFactoryContent);
-    }
 
     private void CreateEnsureHelper()
     {
