@@ -135,7 +135,7 @@ namespace MythHunter.Core.Game
 
             // Реєстрація базових сервісів
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<IMythLogger, UnityLogger>();
+            _container.RegisterSingleton<IMythLogger, MythLogger>();
 
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);

@@ -1380,7 +1380,7 @@ namespace MythHunter.Core.Game
             
             // Реєстрація базових сервісів
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<IMythLogger, MythLogger>();
+            _container.RegisterSingleton<IMythLogger, UnityLogger>();
             
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
@@ -3256,7 +3256,7 @@ namespace MythHunter.Utils.Logging
     {
         public static IMythLogger CreateUnityLogger(LogLevel level = LogLevel.Info)
         {
-            var logger = new MythLogger();
+            var logger = new UnityLogger();
             logger.SetLogLevel(level);
             return logger;
         }
@@ -3270,10 +3270,10 @@ namespace MythHunter.Utils.Logging
         
         public static IMythLogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
         {
-            var mythLogger = CreateUnityLogger(level);
+            var unityLogger = CreateUnityLogger(level);
             var fileLogger = CreateFileLogger(""MythHunter.log"", level);
             
-            return new CompositeLogger(mythLogger, fileLogger);
+            return new CompositeLogger(unityLogger, fileLogger);
         }
         
         public static IMythLogger CreateDefaultLogger()
