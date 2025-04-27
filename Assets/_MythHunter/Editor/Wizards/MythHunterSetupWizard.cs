@@ -774,7 +774,24 @@ public class MythHunterSetupWizard : EditorWindow
 
     private void ShowProjectStructureWizard()
     {
-        MythHunterStructureWizard.ShowWindow();
+        var type = Type.GetType("MythHunterStructureWizard");
+
+        if (type != null)
+        {
+            var methodInfo = type.GetMethod("ShowWindow", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            if (methodInfo != null)
+            {
+                methodInfo.Invoke(null, null);
+            }
+            else
+            {
+                Debug.LogWarning("MythHunterStructureWizard існує, але немає методу ShowWindow()");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("MythHunterStructureWizard не знайдено в проекті.");
+        }
     }
 
     private void UpdateStatus(string status)

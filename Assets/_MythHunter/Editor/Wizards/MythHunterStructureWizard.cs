@@ -101,13 +101,19 @@ public class MythHunterStructureWizard : EditorWindow
             CreateResourceInterfaces();
             CreateCloudInterfaces();
             CreateUtilInterfaces();
-
+            CreateDataInterfaces();
+            CreateValidationInterfaces();
             // Створення імплементацій
             CreateCoreImplementations();
             CreateEcsImplementations();
             CreateEventImplementations();
             CreateSystemImplementations();
             CreateUtilImplementations();
+
+            // Додавання нових систем
+           
+            CreateReplaySystem();
+            
         }
     }
 
@@ -831,7 +837,8 @@ namespace MythHunter.Networking.Messages
         // INetworkSerializer - інтерфейс мережевого серіалізатора
         string iNetworkSerializerPath = $"{CODE_PATH}/Networking/Serialization/INetworkSerializer.cs";
         string iNetworkSerializerContent =
-    @"namespace MythHunter.Networking.Serialization
+    @"using MythHunter.Networking.Messages;
+namespace MythHunter.Networking.Serialization
 {
     /// <summary>
     /// Інтерфейс мережевого серіалізатора
@@ -1050,7 +1057,143 @@ namespace MythHunter.Resources.SceneManagement
 }";
         WriteFile(sceneReferencePath, sceneReferenceContent);
     }
+    // Додати в метод CreateBaseFiles() або створити окремий метод
 
+    // Data
+    private void CreateDataInterfaces()
+    {
+        // ISerializable - інтерфейс для об'єктів, які можна серіалізувати
+        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
+        string iSerializableContent =
+    @"using System;
+
+namespace MythHunter.Data.Serialization
+{
+    /// <summary>
+    /// Інтерфейс для об'єктів, які можна серіалізувати
+    /// </summary>
+    public interface ISerializable
+    {
+        byte[] Serialize();
+        void Deserialize(byte[] data);
+    }
+}";
+        WriteFile(iSerializablePath, iSerializableContent);
+
+        // StaticData - базовий клас для статичних даних
+        string staticDataPath = $"{CODE_PATH}/Data/StaticData/StaticData.cs";
+        string staticDataContent =
+    @"using System;
+using UnityEngine;
+
+namespace MythHunter.Data.StaticData
+{
+    /// <summary>
+    /// Базовий клас для статичних даних
+    /// </summary>
+    [Serializable]
+    public abstract class StaticData
+    {
+        [SerializeField] private string id;
+        
+        public string Id => id;
+        
+        public virtual void Initialize() { }
+        
+        public virtual void Validate()
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                Debug.LogWarning($""StaticData ID is empty for {GetType().Name}"");
+            }
+        }
+    }
+}";
+        WriteFile(staticDataPath, staticDataContent);
+    }
+
+    // Replay
+    private void CreateReplaySystem()
+    {
+        string iReplaySystemPath = $"{CODE_PATH}/Replay/IReplaySystem.cs";
+        string iReplaySystemContent =
+    @"using System;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using MythHunter.Events;
+
+namespace MythHunter.Replay
+{
+    /// <summary>
+    /// Інтерфейс для системи реплеїв
+    /// </summary>
+    public interface IReplaySystem
+    {
+        void StartRecording();
+        void StopRecording();
+        bool IsRecording { get; }
+        
+        UniTask SaveReplayAsync(string fileName);
+        UniTask<bool> LoadReplayAsync(string fileName);
+        
+        void StartPlayback();
+        void PausePlayback();
+        void ResumePlayback();
+        void StopPlayback();
+        bool IsPlayingBack { get; }
+        
+        float PlaybackSpeed { get; set; }
+        float CurrentTime { get; }
+        float TotalDuration { get; }
+        
+        void RegisterEventType<T>() where T : struct, IEvent;
+        void UnregisterEventType<T>() where T : struct, IEvent;
+        
+        event Action<IEvent> OnEventPlayback;
+        event Action OnPlaybackStarted;
+        event Action OnPlaybackPaused;
+        event Action OnPlaybackResumed;
+        event Action OnPlaybackStopped;
+        event Action OnPlaybackCompleted;
+    }
+    
+    /// <summary>
+    /// Запис події для реплею
+    /// </summary>
+    public struct ReplayEventRecord
+    {
+        public float Timestamp;
+        public string EventTypeId;
+        public byte[] SerializedEvent;
+        
+        public ReplayEventRecord(float timestamp, string eventTypeId, byte[] serializedEvent)
+        {
+            Timestamp = timestamp;
+            EventTypeId = eventTypeId;
+            SerializedEvent = serializedEvent;
+        }
+    }
+}";
+        WriteFile(iReplaySystemPath, iReplaySystemContent);
+    }
+
+    // Utils/Validation
+    private void CreateValidationInterfaces()
+    {
+        string iValidatorPath = $"{CODE_PATH}/Utils/Validation/IValidator.cs";
+        string iValidatorContent =
+    @"namespace MythHunter.Utils.Validation
+{
+    /// <summary>
+    /// Інтерфейс для валідації об'єктів
+    /// </summary>
+    public interface IValidator<T>
+    {
+        ValidationResult Validate(T obj);
+    }
+}";
+        WriteFile(iValidatorPath, iValidatorContent);
+    }
     private void CreateCloudInterfaces()
     {
         // ICloudService - інтерфейс хмарного сервісу
@@ -1121,7 +1264,7 @@ namespace MythHunter.Cloud.Core
         string iAnalyticsServiceContent =
     @"using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>
@@ -1143,7 +1286,7 @@ namespace MythHunter.Cloud.Analytics
         string analyticsEventContent =
     @"using System;
 using System.Collections.Generic;
-
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>
@@ -1732,9 +1875,11 @@ namespace MythHunter.Core.ECS
         // BaseEntityFactory - базова фабрика сутностей
         string baseEntityFactoryPath = $"{CODE_PATH}/Entities/EntityFactory.cs";
         string baseEntityFactoryContent =
-    @"using MythHunter.Core.ECS;
+    @"
+using MythHunter.Core.ECS;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using MythHunter.Components.Core;
 
 namespace MythHunter.Entities
 {
@@ -2022,11 +2167,13 @@ namespace MythHunter.Events
     }
 }";
         WriteFile(eventBusPath, eventBusContent);
-
-        // EventLogger - логер подій для дебагу
+        // EventLogger - для візуалізації подій в редакторі
         string eventLoggerPath = $"{CODE_PATH}/Events/Debugging/EventLogger.cs";
         string eventLoggerContent =
-    @"using System;
+        @"using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 
@@ -2040,12 +2187,55 @@ namespace MythHunter.Events.Debugging
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
         private bool _isEnabled = false;
+        private readonly List<Type> _eventTypes = new List<Type>();
+        private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
         
         [Inject]
         public EventLogger(IEventBus eventBus, IMythLogger logger)
         {
             _eventBus = eventBus;
             _logger = logger;
+            
+            // Знаходимо всі типи подій при створенні
+            FindAllEventTypes();
+        }
+        
+        private void FindAllEventTypes()
+        {
+            try
+            {
+                // Отримуємо всі завантажені збірки
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        // Знаходимо всі структури, які реалізують IEvent
+                       var allTypes = assembly.GetTypes();
+var eventTypes = new List<Type>();
+foreach (var type in allTypes)
+{
+    if (type.IsValueType && typeof(IEvent).IsAssignableFrom(type))
+    {
+        eventTypes.Add(type);
+    }
+}
+                        
+                        _eventTypes.AddRange(eventTypes);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($""Failed to scan assembly {assembly.FullName}: {ex.Message}"", ""EventLogger"");
+                    }
+                }
+                
+                _logger.LogInfo($""Found {_eventTypes.Count} event types"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error finding event types: {ex.Message}"", ""EventLogger"", ex);
+            }
         }
         
         public void Enable()
@@ -2054,7 +2244,7 @@ namespace MythHunter.Events.Debugging
             {
                 SubscribeToEvents();
                 _isEnabled = true;
-                _logger.LogInfo(""Event logger enabled"");
+                _logger.LogInfo(""Event logger enabled"", ""EventLogger"");
             }
         }
         
@@ -2064,24 +2254,81 @@ namespace MythHunter.Events.Debugging
             {
                 UnsubscribeFromEvents();
                 _isEnabled = false;
-                _logger.LogInfo(""Event logger disabled"");
+                _logger.LogInfo(""Event logger disabled"", ""EventLogger"");
             }
         }
         
         public void SubscribeToEvents()
         {
-            // Підписка на всі події (можна замінити на конкретний список)
-            _eventBus.Subscribe<IEvent>(OnAnyEvent);
+            try
+            {
+                foreach (var eventType in _eventTypes)
+                {
+                    // Створюємо типізований метод підписки для кожного типу події
+                    SubscribeToEventType(eventType);
+                }
+                
+                _logger.LogInfo($""Subscribed to {_handlers.Count} event types"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error subscribing to events: {ex.Message}"", ""EventLogger"", ex);
+            }
+        }
+        
+        private void SubscribeToEventType(Type eventType)
+        {
+            try
+            {
+                // Отримуємо метод Subscribe з правильним типом
+                var methodInfo = typeof(IEventBus).GetMethod(""Subscribe"").MakeGenericMethod(eventType);
+                
+                // Створюємо типізований делегат для обробки події
+                var handlerType = typeof(Action<>).MakeGenericType(eventType);
+                var handler = Delegate.CreateDelegate(handlerType, this, 
+                    GetType().GetMethod(""OnAnyEvent"", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(eventType));
+                
+                // Зберігаємо делегат для подальшої відписки
+                _handlers[eventType] = handler;
+                
+                // Викликаємо метод Subscribe
+                methodInfo.Invoke(_eventBus, new object[] { handler });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($""Failed to subscribe to event type {eventType.Name}: {ex.Message}"", ""EventLogger"");
+            }
         }
         
         public void UnsubscribeFromEvents()
         {
-            _eventBus.Unsubscribe<IEvent>(OnAnyEvent);
+            try
+            {
+                foreach (var pair in _handlers)
+                {
+                    var eventType = pair.Key;
+                    var handler = pair.Value;
+                    
+                    // Отримуємо метод Unsubscribe з правильним типом
+                    var methodInfo = typeof(IEventBus).GetMethod(""Unsubscribe"").MakeGenericMethod(eventType);
+                    
+                    // Викликаємо метод Unsubscribe
+                    methodInfo.Invoke(_eventBus, new object[] { handler });
+                }
+                
+                _handlers.Clear();
+                _logger.LogInfo(""Unsubscribed from all events"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error unsubscribing from events: {ex.Message}"", ""EventLogger"", ex);
+            }
         }
         
-        private void OnAnyEvent(IEvent evt)
+        // Універсальний метод обробки будь-якої події
+        private void OnAnyEvent<T>(T evt) where T : struct, IEvent
         {
-            _logger.LogDebug($""Event: {evt.GetType().Name}, ID: {evt.GetEventId()}"");
+            _logger.LogDebug($""Event: {typeof(T).Name}, ID: {evt.GetEventId()}"", ""EventDebug"");
         }
     }
 }";
@@ -2090,8 +2337,9 @@ namespace MythHunter.Events.Debugging
         // EventVisualizer - для візуалізації подій в редакторі
         string eventVisualizerPath = $"{CODE_PATH}/Events/Debugging/EventVisualizer.cs";
         string eventVisualizerContent =
-    @"using System;
+        @"using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using MythHunter.Core.DI;
 
@@ -2108,6 +2356,7 @@ namespace MythHunter.Events.Debugging
         private readonly int _maxEvents = 100;
         private bool _isVisible = false;
         private Vector2 _scrollPosition;
+        private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
         
         private void OnEnable()
         {
@@ -2121,15 +2370,96 @@ namespace MythHunter.Events.Debugging
         
         public void SubscribeToEvents()
         {
-            _eventBus?.Subscribe<IEvent>(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                // Отримуємо всі завантажені збірки
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        // Знаходимо всі структури, які реалізують IEvent
+                       var allTypes = assembly.GetTypes();
+                         var eventTypes = new List<Type>();
+                            foreach (var type in allTypes)
+                                    {
+                                       if (type.IsValueType && typeof(IEvent).IsAssignableFrom(type))
+                                                     {
+                                                          eventTypes.Add(type);
+                                                     }
+                                    }
+                        
+                        foreach (var eventType in eventTypes)
+                        {
+                            SubscribeToEventType(eventType);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($""Failed to scan assembly {assembly.FullName}: {ex.Message}"");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($""Error subscribing to events: {ex.Message}"");
+            }
+        }
+        
+        private void SubscribeToEventType(Type eventType)
+        {
+            try
+            {
+                // Отримуємо метод Subscribe з правильним типом
+                var methodInfo = typeof(IEventBus).GetMethod(""Subscribe"").MakeGenericMethod(eventType);
+                
+                // Створюємо типізований делегат для обробки події
+                var handlerType = typeof(Action<>).MakeGenericType(eventType);
+                var handler = Delegate.CreateDelegate(handlerType, this, 
+                    GetType().GetMethod(""OnEventReceived"", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(eventType));
+                
+                // Зберігаємо делегат для подальшої відписки
+                _handlers[eventType] = handler;
+                
+                // Викликаємо метод Subscribe
+                methodInfo.Invoke(_eventBus, new object[] { handler });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($""Failed to subscribe to event type {eventType.Name}: {ex.Message}"");
+            }
         }
         
         public void UnsubscribeFromEvents()
         {
-            _eventBus?.Unsubscribe<IEvent>(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                foreach (var pair in _handlers)
+                {
+                    var eventType = pair.Key;
+                    var handler = pair.Value;
+                    
+                    // Отримуємо метод Unsubscribe з правильним типом
+                    var methodInfo = typeof(IEventBus).GetMethod(""Unsubscribe"").MakeGenericMethod(eventType);
+                    
+                    // Викликаємо метод Unsubscribe
+                    methodInfo.Invoke(_eventBus, new object[] { handler });
+                }
+                
+                _handlers.Clear();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($""Error unsubscribing from events: {ex.Message}"");
+            }
         }
         
-        private void OnEventReceived(IEvent evt)
+        private void OnEventReceived<T>(T evt) where T : struct, IEvent
         {
             _eventHistory.Add(new EventRecord
             {
@@ -2489,19 +2819,7 @@ using System.Runtime.CompilerServices;
 
 namespace MythHunter.Utils.Logging
 {
-    /// <summary>
-    /// Рівні логування, від найменш до найбільш важливого
-    /// </summary>
-    public enum LogLevel
-    {
-        Trace = 0,
-        Debug = 1,
-        Info = 2,
-        Warning = 3,
-        Error = 4,
-        Fatal = 5,
-        Off = 6 // Вимкнути логування
-    }
+    
 
     /// <summary>
     /// Сигнатура для методів, що будуть вставлятися в логи для додаткової обробки
@@ -2635,10 +2953,22 @@ namespace MythHunter.Utils.Logging
         /// <summary>
         /// Логує помилку
         /// </summary>
-        public void LogError(string message, string category = null)
+        public void LogError(string message, string category = null, Exception exception = null)
+{
+    if (_minLogLevel <= LogLevel.Error)
+    {
+        string errorMsg = message;
+        if (exception != null)
         {
-            Log(LogLevel.Error, message, category ?? _defaultCategory);
+            errorMsg += $""\nException: {exception.Message}"";
+            if (exception.StackTrace != null)
+            {
+                errorMsg += $""\nStackTrace: {exception.StackTrace}"";
+            }
         }
+        Log(LogLevel.Error, errorMsg, category ?? _defaultCategory);
+    }
+}
 
         /// <summary>
         /// Логує фатальну помилку
