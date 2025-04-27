@@ -6,6 +6,10 @@ using System.Collections.Generic;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using System.Linq;
+using System.Net;
+using UnityEngine.Networking;
+using System.Collections;
+using UnityEditor.Build;
 
 /// <summary>
 /// Візард для початкового налаштування проекту Unity перед створенням структури MythHunter.
@@ -13,6 +17,31 @@ using System.Linq;
 public class MythHunterSetupWizard : EditorWindow
 {
     private Vector2 scrollPosition;
+
+    // Режими роботи візарда
+    private enum WizardMode
+    {
+        Form,           // Форма введення даних користувачем
+        Setup,          // Налаштування проекту
+        Complete        // Завершено
+    }
+    private WizardMode currentMode = WizardMode.Form;
+
+    // Дані користувача
+    private string companyName = "YourCompany";
+    private string productName = "MythHunter";
+    private string bundleIdentifier = "com.yourcompany.mythhunter";
+    private string startSceneName = "Boot";
+
+    // Цільова платформа
+    public enum TargetPlatform
+    {
+        PC,
+        Mobile,
+        WebGL,
+        Console
+    }
+    private TargetPlatform targetPlatform = TargetPlatform.PC;
 
     // Налаштування проекту
     private bool setupPlayerSettings = true;
@@ -22,18 +51,16 @@ public class MythHunterSetupWizard : EditorWindow
     private bool installRequiredPackages = true;
 
     // Player Settings
-    private string companyName = "YourCompany";
-    private string productName = "MythHunter";
-    private string bundleIdentifier = "com.yourcompany.mythhunter";
     private bool setScriptingBackend = true;
     private ScriptingImplementation scriptingBackend = ScriptingImplementation.IL2CPP;
     private bool setApiCompatibility = true;
     private ApiCompatibilityLevel apiCompatibility = ApiCompatibilityLevel.NET_4_6;
-    private bool optimizeForMobile = true;
 
     // Quality Settings
     private bool setupPCQuality = true;
     private bool setupMobileQuality = true;
+    private bool setupWebGLQuality = true;
+    private bool setupConsoleQuality = true;
     private int defaultQualityLevel = 3; // Medium
 
     // Project Settings
@@ -67,9 +94,14 @@ public class MythHunterSetupWizard : EditorWindow
     private bool addCustomGitIgnoreRules = true;
     private string customGitIgnoreRules = "# Custom rules\n/Assets/Temp/\n/Assets/Builds/\n*.log";
 
-    // UniTask
+    // URL для пакетів
     private bool installUniTask = true;
     private string uniTaskGitUrl = "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask";
+    private bool validateUniTaskUrl = true;
+
+    private bool installNuGetForUnity = false;
+    private string nuGetForUnityUrl = "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity";
+    private bool validateNuGetUrl = true;
 
     // Стан
     private bool showAdvancedSettings = false;
@@ -81,6 +113,9 @@ public class MythHunterSetupWizard : EditorWindow
     private ListRequest packageListRequest;
     private bool showSetupLog = false;
 
+    // Результати перевірки URL
+    private Dictionary<string, bool> urlValidationResults = new Dictionary<string, bool>();
+
     [MenuItem("MythHunter Tools/Project Setup Wizard")]
     public static void ShowWindow()
     {
@@ -89,205 +124,345 @@ public class MythHunterSetupWizard : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("MythHunter Project Setup Wizard", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Цей інструмент налаштує Unity для оптимальної роботи з проектом MythHunter.", MessageType.Info);
-
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
-        EditorGUILayout.Space(10);
-        DrawSetupOptions();
-
-        EditorGUILayout.Space(10);
-        DrawPlayerSettings();
-
-        EditorGUILayout.Space(10);
-        DrawOtherSettings();
-
-        EditorGUILayout.Space(10);
-        DrawPackages();
-
-        EditorGUILayout.Space(10);
-        DrawGitSettings();
-
-        EditorGUILayout.Space(10);
-        DrawButtons();
-
-        if (isProcessing)
+        switch (currentMode)
         {
-            EditorGUILayout.Space(5);
-            DrawProgressBar();
+            case WizardMode.Form:
+                DrawUserForm();
+                break;
+            case WizardMode.Setup:
+                DrawSetupOptions();
+                break;
+            case WizardMode.Complete:
+                DrawCompleteScreen();
+                break;
         }
-
-        DrawSetupLog();
 
         EditorGUILayout.EndScrollView();
     }
 
+    private void DrawUserForm()
+    {
+        GUILayout.Label("MythHunter Project Setup Wizard", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Заповніть базові параметри для вашого проекту. Ці дані будуть використані для налаштування Unity.", MessageType.Info);
+
+        EditorGUILayout.Space(15);
+        GUILayout.Label("Основні параметри проекту", EditorStyles.boldLabel);
+
+        EditorGUILayout.BeginVertical("box");
+
+        companyName = EditorGUILayout.TextField("Назва компанії:", companyName);
+        productName = EditorGUILayout.TextField("Назва продукту:", productName);
+        bundleIdentifier = EditorGUILayout.TextField("Bundle Identifier:", bundleIdentifier);
+        startSceneName = EditorGUILayout.TextField("Назва стартової сцени:", startSceneName);
+
+        EditorGUILayout.Space(5);
+
+        GUILayout.Label("Цільова платформа:", EditorStyles.boldLabel);
+        targetPlatform = (TargetPlatform)EditorGUILayout.EnumPopup("Основна платформа:", targetPlatform);
+
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.Space(15);
+        GUILayout.Label("Налаштування пакетів", EditorStyles.boldLabel);
+
+        EditorGUILayout.BeginVertical("box");
+
+        // UniTask
+        installUniTask = EditorGUILayout.BeginToggleGroup("Встановити UniTask", installUniTask);
+        EditorGUI.indentLevel++;
+        uniTaskGitUrl = EditorGUILayout.TextField("Git URL для UniTask:", uniTaskGitUrl);
+        validateUniTaskUrl = EditorGUILayout.Toggle("Перевірити URL перед завантаженням", validateUniTaskUrl);
+
+        // Показуємо результат валідації, якщо він є
+        if (urlValidationResults.ContainsKey("UniTask"))
+        {
+            EditorGUILayout.HelpBox(
+                urlValidationResults["UniTask"]
+                    ? "URL доступний ✓"
+                    : "URL недоступний! Перевірте правильність ссилки ✗",
+                urlValidationResults["UniTask"] ? MessageType.Info : MessageType.Error);
+        }
+
+        EditorGUI.indentLevel--;
+        EditorGUILayout.EndToggleGroup();
+
+        // NuGetForUnity
+        installNuGetForUnity = EditorGUILayout.BeginToggleGroup("Встановити NuGetForUnity", installNuGetForUnity);
+        EditorGUI.indentLevel++;
+        nuGetForUnityUrl = EditorGUILayout.TextField("Git URL для NuGetForUnity:", nuGetForUnityUrl);
+        validateNuGetUrl = EditorGUILayout.Toggle("Перевірити URL перед завантаженням", validateNuGetUrl);
+
+        // Показуємо результат валідації, якщо він є
+        if (urlValidationResults.ContainsKey("NuGet"))
+        {
+            EditorGUILayout.HelpBox(
+                urlValidationResults["NuGet"]
+                    ? "URL доступний ✓"
+                    : "URL недоступний! Перевірте правильність ссилки ✗",
+                urlValidationResults["NuGet"] ? MessageType.Info : MessageType.Error);
+        }
+
+        EditorGUI.indentLevel--;
+        EditorGUILayout.EndToggleGroup();
+
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.Space(15);
+
+        // Кнопки для навігації
+        EditorGUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("Валідувати URL", GUILayout.Height(30)))
+        {
+            ValidateUrls();
+        }
+
+        if (GUILayout.Button("Далі", GUILayout.Height(30)))
+        {
+            bool urlsValid = true;
+
+            // Перевіряємо валідність URL, якщо потрібно
+            if ((installUniTask && validateUniTaskUrl && urlValidationResults.ContainsKey("UniTask") && !urlValidationResults["UniTask"]) ||
+                (installNuGetForUnity && validateNuGetUrl && urlValidationResults.ContainsKey("NuGet") && !urlValidationResults["NuGet"]))
+            {
+                urlsValid = false;
+                EditorUtility.DisplayDialog("Помилка", "URL для пакетів недоступні. Перевірте правильність ссилок або відключіть перевірку.", "OK");
+            }
+
+            if (urlsValid)
+            {
+                currentMode = WizardMode.Setup;
+            }
+        }
+
+        EditorGUILayout.EndHorizontal();
+    }
+
     private void DrawSetupOptions()
     {
+        GUILayout.Label("MythHunter Project Setup Wizard", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Налаштуйте параметри для вашого проекту на основі платформи: " + targetPlatform.ToString(), MessageType.Info);
+
+        EditorGUILayout.Space(10);
         GUILayout.Label("Налаштування для застосування:", EditorStyles.boldLabel);
         setupPlayerSettings = EditorGUILayout.Toggle("Налаштувати Player Settings", setupPlayerSettings);
         setupQualitySettings = EditorGUILayout.Toggle("Налаштувати Quality Settings", setupQualitySettings);
         setupProjectSettings = EditorGUILayout.Toggle("Налаштувати Project Settings", setupProjectSettings);
         setupGitIgnore = EditorGUILayout.Toggle("Налаштувати GitIgnore", setupGitIgnore);
         installRequiredPackages = EditorGUILayout.Toggle("Встановити необхідні пакети", installRequiredPackages);
-        installUniTask = EditorGUILayout.Toggle("Встановити UniTask", installUniTask);
 
         showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Розширені налаштування");
+
+        if (showAdvancedSettings)
+        {
+            DrawAdvancedSettings();
+        }
+
+        EditorGUILayout.Space(10);
+
+        if (isProcessing)
+        {
+            DrawProgressBar();
+        }
+        else
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Назад", GUILayout.Height(30)))
+            {
+                currentMode = WizardMode.Form;
+            }
+
+            if (GUILayout.Button("Застосувати налаштування", GUILayout.Height(30)))
+            {
+                ApplySettings();
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        DrawSetupLog();
     }
 
-    private void DrawPlayerSettings()
+    private void DrawAdvancedSettings()
     {
-        if (!showAdvancedSettings || !setupPlayerSettings)
-            return;
+        EditorGUILayout.Space(10);
 
-        GUILayout.Label("Player Settings:", EditorStyles.boldLabel);
-
-        EditorGUI.indentLevel++;
-        companyName = EditorGUILayout.TextField("Company Name", companyName);
-        productName = EditorGUILayout.TextField("Product Name", productName);
-        bundleIdentifier = EditorGUILayout.TextField("Bundle Identifier", bundleIdentifier);
-
-        setScriptingBackend = EditorGUILayout.Toggle("Set Scripting Backend", setScriptingBackend);
-        if (setScriptingBackend)
+        // Player Settings
+        if (setupPlayerSettings)
         {
+            GUILayout.Label("Player Settings:", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            scriptingBackend = (ScriptingImplementation)EditorGUILayout.EnumPopup("Scripting Backend", scriptingBackend);
+
+            setScriptingBackend = EditorGUILayout.Toggle("Set Scripting Backend", setScriptingBackend);
+            if (setScriptingBackend)
+            {
+                EditorGUI.indentLevel++;
+                scriptingBackend = (ScriptingImplementation)EditorGUILayout.EnumPopup("Scripting Backend", scriptingBackend);
+                EditorGUI.indentLevel--;
+            }
+
+            setApiCompatibility = EditorGUILayout.Toggle("Set API Compatibility", setApiCompatibility);
+            if (setApiCompatibility)
+            {
+                EditorGUI.indentLevel++;
+                apiCompatibility = (ApiCompatibilityLevel)EditorGUILayout.EnumPopup("API Compatibility", apiCompatibility);
+                EditorGUI.indentLevel--;
+            }
+
             EditorGUI.indentLevel--;
         }
 
-        setApiCompatibility = EditorGUILayout.Toggle("Set API Compatibility", setApiCompatibility);
-        if (setApiCompatibility)
-        {
-            EditorGUI.indentLevel++;
-            apiCompatibility = (ApiCompatibilityLevel)EditorGUILayout.EnumPopup("API Compatibility", apiCompatibility);
-            EditorGUI.indentLevel--;
-        }
-
-        optimizeForMobile = EditorGUILayout.Toggle("Optimize for Mobile", optimizeForMobile);
-        EditorGUI.indentLevel--;
-    }
-
-    private void DrawOtherSettings()
-    {
-        if (!showAdvancedSettings)
-            return;
-
+        // Quality Settings
         if (setupQualitySettings)
         {
+            EditorGUILayout.Space(5);
             GUILayout.Label("Quality Settings:", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
+
             setupPCQuality = EditorGUILayout.Toggle("Setup PC Quality", setupPCQuality);
             setupMobileQuality = EditorGUILayout.Toggle("Setup Mobile Quality", setupMobileQuality);
+            setupWebGLQuality = EditorGUILayout.Toggle("Setup WebGL Quality", setupWebGLQuality);
+            setupConsoleQuality = EditorGUILayout.Toggle("Setup Console Quality", setupConsoleQuality);
             defaultQualityLevel = EditorGUILayout.IntSlider("Default Quality Level", defaultQualityLevel, 0, 5);
+
             EditorGUI.indentLevel--;
         }
 
+        // Project Settings
         if (setupProjectSettings)
         {
             EditorGUILayout.Space(5);
             GUILayout.Label("Project Settings:", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
+
             colorSpace = (ColorSpace)EditorGUILayout.EnumPopup("Color Space", colorSpace);
             enableNewInputSystem = EditorGUILayout.Toggle("Enable New Input System", enableNewInputSystem);
             enableAddressables = EditorGUILayout.Toggle("Enable Addressables", enableAddressables);
+
+            EditorGUI.indentLevel--;
+        }
+
+        // Packages
+        if (installRequiredPackages)
+        {
+            EditorGUILayout.Space(5);
+            GUILayout.Label("Packages:", EditorStyles.boldLabel);
+
+            EditorGUI.indentLevel++;
+            GUILayout.Label("Essential Packages (завжди встановлюються):", EditorStyles.miniBoldLabel);
+            EditorGUI.indentLevel++;
+            foreach (var package in essentialPackages)
+            {
+                EditorGUILayout.LabelField(package);
+            }
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(5);
+            GUILayout.Label("Optional Packages:", EditorStyles.miniBoldLabel);
+            EditorGUI.indentLevel++;
+
+            Dictionary<string, bool> updatedOptionalPackages = new Dictionary<string, bool>();
+            foreach (var package in optionalPackages)
+            {
+                bool isSelected = EditorGUILayout.Toggle(package.Key, package.Value);
+                updatedOptionalPackages[package.Key] = isSelected;
+            }
+            optionalPackages.Clear();
+            foreach (var package in updatedOptionalPackages)
+            {
+                optionalPackages[package.Key] = package.Value;
+            }
+
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+
+        // GitIgnore
+        if (setupGitIgnore)
+        {
+            EditorGUILayout.Space(5);
+            GUILayout.Label("Git Settings:", EditorStyles.boldLabel);
+
+            EditorGUI.indentLevel++;
+            useStandardGitIgnore = EditorGUILayout.Toggle("Use Standard Unity GitIgnore", useStandardGitIgnore);
+            addCustomGitIgnoreRules = EditorGUILayout.Toggle("Add Custom GitIgnore Rules", addCustomGitIgnoreRules);
+
+            if (addCustomGitIgnoreRules)
+            {
+                EditorGUILayout.LabelField("Custom Rules:");
+                customGitIgnoreRules = EditorGUILayout.TextArea(customGitIgnoreRules, GUILayout.Height(100));
+            }
             EditorGUI.indentLevel--;
         }
     }
 
-    private void DrawPackages()
+    private void DrawCompleteScreen()
     {
-        if (!showAdvancedSettings || !installRequiredPackages)
-            return;
+        GUILayout.Label("MythHunter Project Setup Wizard", EditorStyles.boldLabel);
 
-        EditorGUILayout.Space(5);
-        GUILayout.Label("Packages:", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Налаштування проекту успішно завершено!", MessageType.Info);
 
-        EditorGUI.indentLevel++;
-        GUILayout.Label("Essential Packages (завжди встановлюються):", EditorStyles.miniBoldLabel);
+        EditorGUILayout.Space(20);
+
+        GUILayout.Label("Підсумок:", EditorStyles.boldLabel);
+
+        EditorGUILayout.BeginVertical("box");
+
+        EditorGUILayout.LabelField("Компанія:", companyName);
+        EditorGUILayout.LabelField("Продукт:", productName);
+        EditorGUILayout.LabelField("Bundle Identifier:", bundleIdentifier);
+        EditorGUILayout.LabelField("Цільова платформа:", targetPlatform.ToString());
+
+        EditorGUILayout.Space(10);
+
+        EditorGUILayout.LabelField("Встановлені пакети:");
+
         EditorGUI.indentLevel++;
         foreach (var package in essentialPackages)
         {
-            EditorGUILayout.LabelField(package);
+            EditorGUILayout.LabelField("✓ " + package);
         }
-        EditorGUI.indentLevel--;
 
-        EditorGUILayout.Space(5);
-        GUILayout.Label("Optional Packages:", EditorStyles.miniBoldLabel);
-        EditorGUI.indentLevel++;
-
-        Dictionary<string, bool> updatedOptionalPackages = new Dictionary<string, bool>();
         foreach (var package in optionalPackages)
         {
-            bool isSelected = EditorGUILayout.Toggle(package.Key, package.Value);
-            updatedOptionalPackages[package.Key] = isSelected;
+            if (package.Value)
+            {
+                EditorGUILayout.LabelField("✓ " + package.Key);
+            }
         }
-        optionalPackages.Clear();
-        foreach (var package in updatedOptionalPackages)
-        {
-            optionalPackages[package.Key] = package.Value;
-        }
-
-        EditorGUI.indentLevel--;
 
         if (installUniTask)
         {
-            EditorGUILayout.Space(5);
-            GUILayout.Label("UniTask Settings:", EditorStyles.miniBoldLabel);
-            EditorGUI.indentLevel++;
-            uniTaskGitUrl = EditorGUILayout.TextField("Git URL", uniTaskGitUrl);
-            EditorGUI.indentLevel--;
+            EditorGUILayout.LabelField("✓ UniTask");
+        }
+
+        if (installNuGetForUnity)
+        {
+            EditorGUILayout.LabelField("✓ NuGetForUnity");
         }
 
         EditorGUI.indentLevel--;
-    }
 
-    private void DrawGitSettings()
-    {
-        if (!showAdvancedSettings || !setupGitIgnore)
-            return;
+        EditorGUILayout.EndVertical();
 
-        EditorGUILayout.Space(5);
-        GUILayout.Label("Git Settings:", EditorStyles.boldLabel);
+        EditorGUILayout.Space(20);
 
-        EditorGUI.indentLevel++;
-        useStandardGitIgnore = EditorGUILayout.Toggle("Use Standard Unity GitIgnore", useStandardGitIgnore);
-        addCustomGitIgnoreRules = EditorGUILayout.Toggle("Add Custom GitIgnore Rules", addCustomGitIgnoreRules);
-
-        if (addCustomGitIgnoreRules)
-        {
-            EditorGUILayout.LabelField("Custom Rules:");
-            customGitIgnoreRules = EditorGUILayout.TextArea(customGitIgnoreRules, GUILayout.Height(100));
-        }
-        EditorGUI.indentLevel--;
-    }
-
-    private void DrawButtons()
-    {
-        EditorGUILayout.Space(10);
-
-        EditorGUI.BeginDisabledGroup(isProcessing);
-
-        if (GUILayout.Button("Застосувати налаштування", GUILayout.Height(40)))
-        {
-            ApplySettings();
-        }
-
-        EditorGUILayout.Space(5);
-
-        if (GUILayout.Button("Відновити налаштування за замовчуванням"))
-        {
-            ResetToDefaults();
-        }
-
-        EditorGUILayout.Space(5);
-
-        if (GUILayout.Button("Перейти до налаштування структури проекту"))
+        if (GUILayout.Button("Перейти до налаштування структури проекту", GUILayout.Height(40)))
         {
             ShowProjectStructureWizard();
         }
 
-        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.Space(10);
+
+        if (GUILayout.Button("Закрити", GUILayout.Height(30)))
+        {
+            Close();
+        }
+
+        DrawSetupLog();
     }
 
     private void DrawProgressBar()
@@ -308,10 +483,14 @@ public class MythHunterSetupWizard : EditorWindow
             if (showSetupLog)
             {
                 EditorGUILayout.BeginVertical("box");
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
+
                 foreach (var logEntry in setupLog)
                 {
                     EditorGUILayout.LabelField(logEntry);
                 }
+
+                EditorGUILayout.EndScrollView();
                 EditorGUILayout.EndVertical();
 
                 if (GUILayout.Button("Очистити лог"))
@@ -319,6 +498,64 @@ public class MythHunterSetupWizard : EditorWindow
                     setupLog.Clear();
                 }
             }
+        }
+    }
+
+    private void ValidateUrls()
+    {
+        // Очищаємо попередні результати
+        urlValidationResults.Clear();
+
+        // Перевіряємо URL для UniTask
+        if (installUniTask && validateUniTaskUrl)
+        {
+            CheckUrl(uniTaskGitUrl, "UniTask");
+        }
+
+        // Перевіряємо URL для NuGetForUnity
+        if (installNuGetForUnity && validateNuGetUrl)
+        {
+            CheckUrl(nuGetForUnityUrl, "NuGet");
+        }
+    }
+
+    private void CheckUrl(string url, string key)
+    {
+        // Відправляємо HEAD запит, щоб визначити, чи доступний URL
+        WebRequest request = WebRequest.Create(url);
+        request.Method = "HEAD";
+
+        try
+        {
+            request.BeginGetResponse(ar =>
+            {
+                try
+                {
+                    WebResponse response = request.EndGetResponse(ar);
+                    // URL доступний
+                    urlValidationResults[key] = true;
+                    AddLog($"URL {key} доступний");
+
+                    // Закриваємо з'єднання
+                    response.Close();
+                }
+                catch (WebException e)
+                {
+                    // URL недоступний
+                    urlValidationResults[key] = false;
+                    AddLog($"Помилка доступу до URL {key}: {e.Message}");
+                }
+
+                // Необхідно перемалювати вікно, оскільки запит асинхронний
+                Repaint();
+            }, null);
+        }
+        catch (Exception ex)
+        {
+            // Помилка при створенні запиту
+            urlValidationResults[key] = false;
+            AddLog($"Помилка запиту URL {key}: {ex.Message}");
+            Repaint();
         }
     }
 
@@ -341,7 +578,8 @@ public class MythHunterSetupWizard : EditorWindow
             (setupProjectSettings ? 1 : 0) +
             (setupGitIgnore ? 1 : 0) +
             (installRequiredPackages ? 1 : 0) +
-            (installUniTask ? 1 : 0)
+            (installUniTask ? 1 : 0) +
+            (installNuGetForUnity ? 1 : 0)
         );
 
         float currentProgress = 0f;
@@ -400,12 +638,24 @@ public class MythHunterSetupWizard : EditorWindow
             progressBarValue = currentProgress;
         }
 
+        // NuGetForUnity
+        if (installNuGetForUnity)
+        {
+            UpdateStatus("Встановлення NuGetForUnity...");
+            InstallNuGetForUnity();
+            currentProgress += progressStep;
+            progressBarValue = currentProgress;
+        }
+
         UpdateStatus("Налаштування завершено");
         AddLog("Всі налаштування застосовано успішно");
 
         progressBarValue = 1f;
         isProcessing = false;
         AssetDatabase.Refresh();
+
+        // Перехід до екрану завершення
+        currentMode = WizardMode.Complete;
 
         EditorUtility.DisplayDialog("Успіх", "Налаштування проекту завершено успішно!", "OK");
     }
@@ -417,50 +667,79 @@ public class MythHunterSetupWizard : EditorWindow
             PlayerSettings.companyName = companyName;
             PlayerSettings.productName = productName;
 
-#if UNITY_ANDROID
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, bundleIdentifier);
-#elif UNITY_IOS
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, bundleIdentifier);
-#else
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Standalone, bundleIdentifier);
+            // Налаштування для різних платформ
+            switch (targetPlatform)
+            {
+                case TargetPlatform.PC:
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, bundleIdentifier);
+                    break;
+
+                case TargetPlatform.Mobile:
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, bundleIdentifier);
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, bundleIdentifier);
+                    // Додаткові налаштування для мобільних
+                    PlayerSettings.MTRendering = true;
+                    PlayerSettings.SetMobileMTRendering(NamedBuildTarget.Android, true);
+                    PlayerSettings.SetMobileMTRendering(NamedBuildTarget.Android, true);
+                    PlayerSettings.SetMobileMTRendering(NamedBuildTarget.iOS, true);
+                    AddLog("Оптимізовано настройки для мобільних платформ");
+                    break;
+
+                case TargetPlatform.WebGL:
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.WebGL, bundleIdentifier);
+                    // Специфічні налаштування WebGL
+#if UNITY_2020_1_OR_NEWER
+                    PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+                    PlayerSettings.WebGL.dataCaching = true;
+                    PlayerSettings.WebGL.threadsSupport = false;
+                    PlayerSettings.WebGL.linkerTarget = WebGLLinkerTarget.Wasm;
+                    PlayerSettings.WebGL.memorySize = 512;
 #endif
+                    AddLog("Оптимізовано настройки для WebGL");
+                    break;
+
+              
+            }
 
             if (setScriptingBackend)
             {
-#if UNITY_ANDROID
-                PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, scriptingBackend);
-#elif UNITY_IOS
-                PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, scriptingBackend);
-#else
-                PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, scriptingBackend);
-#endif
+                switch (targetPlatform)
+                {
+                    case TargetPlatform.PC:
+                        PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, scriptingBackend);
+                        break;
+                    case TargetPlatform.Mobile:
+                        PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, scriptingBackend);
+                        PlayerSettings.SetScriptingBackend(NamedBuildTarget.iOS, scriptingBackend);
+                        break;
+                    case TargetPlatform.WebGL:
+                        // WebGL має тільки IL2CPP
+                        PlayerSettings.SetScriptingBackend(NamedBuildTarget.WebGL, ScriptingImplementation.IL2CPP);
+                        break;
+                    
+                }
 
                 AddLog($"Встановлено Scripting Backend: {scriptingBackend}");
             }
 
             if (setApiCompatibility)
             {
-#if UNITY_ANDROID
-                PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.Android, apiCompatibility);
-#elif UNITY_IOS
-                PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.iOS, apiCompatibility);
-#else
-                PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.Standalone, apiCompatibility);
-#endif
+                switch (targetPlatform)
+                {
+                    case TargetPlatform.PC:
+                        PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.Standalone, apiCompatibility);
+                        break;
+                    case TargetPlatform.Mobile:
+                        PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.Android, apiCompatibility);
+                        PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.iOS, apiCompatibility);
+                        break;
+                    case TargetPlatform.WebGL:
+                        PlayerSettings.SetApiCompatibilityLevel(NamedBuildTarget.WebGL, apiCompatibility);
+                        break;
+                   
+                }
 
                 AddLog($"Встановлено API Compatibility Level: {apiCompatibility}");
-            }
-
-            if (optimizeForMobile)
-            {
-#if UNITY_ANDROID || UNITY_IOS
-                // Оптимізація для мобільних платформ
-                PlayerSettings.MTRendering = true;
-                PlayerSettings.mobileMTRendering = true;
-                PlayerSettings.SetMobileMTRendering(BuildTargetGroup.Android, true);
-                PlayerSettings.SetMobileMTRendering(BuildTargetGroup.iOS, true);
-                AddLog("Встановлено оптимізації для мобільних платформ");
-#endif
             }
 
             AddLog("Налаштування Player Settings успішно застосовані");
@@ -475,38 +754,72 @@ public class MythHunterSetupWizard : EditorWindow
     {
         try
         {
+            QualitySettings.SetQualityLevel(defaultQualityLevel);
+            AddLog($"Встановлено рівень якості за замовчуванням: {QualitySettings.names[defaultQualityLevel]}");
+
             if (setupPCQuality)
             {
                 // Налаштування для PC
-                QualitySettings.SetQualityLevel(defaultQualityLevel);
-
-                // High Quality
                 QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
                 QualitySettings.antiAliasing = 4;
                 QualitySettings.softParticles = true;
                 QualitySettings.realtimeReflectionProbes = true;
+                QualitySettings.shadows = ShadowQuality.All;
+                QualitySettings.shadowResolution = ShadowResolution.High;
+                QualitySettings.shadowDistance = 150f;
+                QualitySettings.lodBias = 1f;
 
                 AddLog("Налаштовано якість для PC");
             }
 
             if (setupMobileQuality)
             {
-                // Специфічні налаштування для мобільних
-#if UNITY_ANDROID || UNITY_IOS
-                QualitySettings.vSyncCount = 0; // FPS не обмежений vsync
-                QualitySettings.antiAliasing = 0; // Без Anti-aliasing для продуктивності
-                QualitySettings.softParticles = false;
-                QualitySettings.realtimeReflectionProbes = false;
-                QualitySettings.shadows = ShadowQuality.HardOnly;
-                QualitySettings.shadowResolution = ShadowResolution.Low;
-                QualitySettings.shadowDistance = 50f;
-                QualitySettings.lodBias = 0.7f;
-                
+                // Налаштування для мобільних
+                int mobileQualityIndex = QualitySettings.names.ToList().IndexOf("Low");
+                if (mobileQualityIndex != -1)
+                {
+                    // Встановлюємо специфічні налаштування для мобільної платформи
+                    QualitySettings.SetQualityLevel(mobileQualityIndex);
+                    QualitySettings.vSyncCount = 0; // FPS не обмежений vsync
+                    QualitySettings.antiAliasing = 0; // Без Anti-aliasing для продуктивності
+                    QualitySettings.softParticles = false;
+                    QualitySettings.realtimeReflectionProbes = false;
+                    QualitySettings.shadows = ShadowQuality.HardOnly;
+                    QualitySettings.shadowResolution = ShadowResolution.Low;
+                    QualitySettings.shadowDistance = 50f;
+                    QualitySettings.lodBias = 0.7f;
+
+                    // Повертаємося до початкового рівня якості
+                    QualitySettings.SetQualityLevel(defaultQualityLevel);
+                }
+
                 AddLog("Налаштовано якість для мобільних платформ");
-#endif
             }
 
-            AddLog($"Встановлено рівень якості за замовчуванням: {QualitySettings.names[defaultQualityLevel]}");
+            if (setupWebGLQuality)
+            {
+                // Налаштування для WebGL
+                int webGLQualityIndex = QualitySettings.names.ToList().IndexOf("Medium");
+                if (webGLQualityIndex != -1)
+                {
+                    QualitySettings.SetQualityLevel(webGLQualityIndex);
+                    QualitySettings.vSyncCount = 0;
+                    QualitySettings.antiAliasing = 2;
+                    QualitySettings.softParticles = false;
+                    QualitySettings.realtimeReflectionProbes = false;
+                    QualitySettings.shadows = ShadowQuality.HardOnly;
+                    QualitySettings.shadowResolution = ShadowResolution.Medium;
+                    QualitySettings.shadowDistance = 80f;
+                    QualitySettings.lodBias = 0.8f;
+
+                    // Повертаємося до початкового рівня якості
+                    QualitySettings.SetQualityLevel(defaultQualityLevel);
+                }
+
+                AddLog("Налаштовано якість для WebGL");
+            }
+
+           
         }
         catch (Exception ex)
         {
@@ -522,12 +835,41 @@ public class MythHunterSetupWizard : EditorWindow
             PlayerSettings.colorSpace = colorSpace;
             AddLog($"Встановлено Color Space: {colorSpace}");
 
-            // New Input System налаштовується через Package Manager автоматично
+            // Physics and other project settings 
+            Physics.simulationMode = SimulationMode.FixedUpdate;
 
-            // Physics and other project settings can be set here
-            Physics.autoSimulation = true;
             Physics.defaultContactOffset = 0.01f;
             Physics.sleepThreshold = 0.005f;
+
+            // Lightmapping налаштування для цільової платформи
+            switch (targetPlatform)
+            {
+                case TargetPlatform.PC:
+                    LightmapSettings.lightmapsMode = LightmapsMode.CombinedDirectional;
+                    break;
+                case TargetPlatform.Mobile:
+                    LightmapSettings.lightmapsMode = LightmapsMode.NonDirectional;
+                    break;
+                case TargetPlatform.WebGL:
+                    LightmapSettings.lightmapsMode = LightmapsMode.NonDirectional;
+                    break;
+               
+            }
+
+            // Створення стартової сцени, якщо її ще не існує
+            string scenesFolder = "Assets/_MythHunter/Scenes";
+            if (!Directory.Exists(scenesFolder))
+            {
+                Directory.CreateDirectory(scenesFolder);
+                AddLog($"Створено папку для сцен: {scenesFolder}");
+            }
+
+            string startScenePath = Path.Combine(scenesFolder, $"{startSceneName}.unity");
+            if (!File.Exists(startScenePath))
+            {
+                AddLog($"Потрібно створити стартову сцену: {startScenePath}");
+                // Примітка: фактичне створення сцени потребує додаткового коду
+            }
 
             AddLog("Налаштування Project Settings успішно застосовані");
         }
@@ -547,13 +889,28 @@ public class MythHunterSetupWizard : EditorWindow
             {
                 string standardGitIgnore = GetStandardGitIgnore();
 
+                // Додаємо специфічні правила в залежності від платформи
+                switch (targetPlatform)
+                {
+                    case TargetPlatform.PC:
+                        standardGitIgnore += "\n\n# PC Specific\n*.exe\n*.pdb\n";
+                        break;
+                    case TargetPlatform.Mobile:
+                        standardGitIgnore += "\n\n# Mobile Specific\n*.apk\n*.aab\n*.ipa\n/[Kk]eystore/\n";
+                        break;
+                    case TargetPlatform.WebGL:
+                        standardGitIgnore += "\n\n# WebGL Specific\n/WebGL/\n*.wasm\n";
+                        break;
+                   
+                }
+
                 if (addCustomGitIgnoreRules && !string.IsNullOrEmpty(customGitIgnoreRules))
                 {
                     standardGitIgnore += "\n\n# Custom Rules\n" + customGitIgnoreRules;
                 }
 
                 File.WriteAllText(gitIgnorePath, standardGitIgnore);
-                AddLog("Створено стандартний .gitignore файл для Unity");
+                AddLog("Створено .gitignore файл з налаштуваннями для платформи " + targetPlatform.ToString());
             }
             else if (addCustomGitIgnoreRules && !string.IsNullOrEmpty(customGitIgnoreRules))
             {
@@ -589,7 +946,7 @@ public class MythHunterSetupWizard : EditorWindow
     {
         try
         {
-            // Спочатку отримаємо список встановлених пакетів
+            // Отримуємо список встановлених пакетів
             packageListRequest = Client.List();
             EditorApplication.update += OnPackageListComplete;
             AddLog("Запит списку встановлених пакетів...");
@@ -631,6 +988,26 @@ public class MythHunterSetupWizard : EditorWindow
                 {
                     packagesToInstall.Add(package.Key);
                 }
+            }
+
+            // Додаємо платформозалежні пакети
+            switch (targetPlatform)
+            {
+                case TargetPlatform.PC:
+                    if (!installedPackages.Contains("com.unity.probuilder") && !packagesToInstall.Contains("com.unity.probuilder"))
+                        packagesToInstall.Add("com.unity.probuilder");
+                    break;
+
+                case TargetPlatform.Mobile:
+                    if (!installedPackages.Contains("com.unity.mobile.android-logcat") && !packagesToInstall.Contains("com.unity.mobile.android-logcat"))
+                        packagesToInstall.Add("com.unity.mobile.android-logcat");
+                    break;
+
+                case TargetPlatform.WebGL:
+                    // Пакети специфічні для WebGL
+                    break;
+
+               
             }
 
             if (packagesToInstall.Count > 0)
@@ -699,6 +1076,13 @@ public class MythHunterSetupWizard : EditorWindow
                 return;
             }
 
+            // Перевірка URL перед встановленням, якщо потрібно
+            if (validateUniTaskUrl && (!urlValidationResults.ContainsKey("UniTask") || !urlValidationResults["UniTask"]))
+            {
+                AddLog("URL для UniTask недоступний або не валідований. Пропускаємо встановлення.");
+                return;
+            }
+
             AddLog("Встановлення UniTask з Git...");
 
             packageAddRequest = Client.Add(uniTaskGitUrl);
@@ -727,49 +1111,49 @@ public class MythHunterSetupWizard : EditorWindow
         }
     }
 
-    private void ResetToDefaults()
+    private void InstallNuGetForUnity()
     {
-        // Reset all settings to their defaults
-        setupPlayerSettings = true;
-        setupQualitySettings = true;
-        setupProjectSettings = true;
-        setupGitIgnore = true;
-        installRequiredPackages = true;
-        installUniTask = true;
-
-        companyName = "YourCompany";
-        productName = "MythHunter";
-        bundleIdentifier = "com.yourcompany.mythhunter";
-        setScriptingBackend = true;
-        scriptingBackend = ScriptingImplementation.IL2CPP;
-        setApiCompatibility = true;
-        apiCompatibility = ApiCompatibilityLevel.NET_4_6;
-        optimizeForMobile = true;
-
-        setupPCQuality = true;
-        setupMobileQuality = true;
-        defaultQualityLevel = 3;
-
-        colorSpace = ColorSpace.Linear;
-        enableNewInputSystem = true;
-        enableAddressables = true;
-
-        useStandardGitIgnore = true;
-        addCustomGitIgnoreRules = true;
-        customGitIgnoreRules = "# Custom rules\n/Assets/Temp/\n/Assets/Builds/\n*.log";
-
-        uniTaskGitUrl = "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask";
-
-        // Reset optional packages
-        foreach (var key in optionalPackages.Keys.ToList())
+        try
         {
-            if (key == "com.unity.postprocessing" || key == "com.unity.render-pipelines.universal" || key == "com.unity.animation" || key == "com.unity.timeline")
-                optionalPackages[key] = true;
-            else
-                optionalPackages[key] = false;
-        }
+            if (string.IsNullOrEmpty(nuGetForUnityUrl))
+            {
+                AddLog("URL для NuGetForUnity не вказано");
+                return;
+            }
 
-        AddLog("Налаштування скинуто до значень за замовчуванням");
+            // Перевірка URL перед встановленням, якщо потрібно
+            if (validateNuGetUrl && (!urlValidationResults.ContainsKey("NuGet") || !urlValidationResults["NuGet"]))
+            {
+                AddLog("URL для NuGetForUnity недоступний або не валідований. Пропускаємо встановлення.");
+                return;
+            }
+
+            AddLog("Встановлення NuGetForUnity з Git...");
+
+            packageAddRequest = Client.Add(nuGetForUnityUrl);
+            EditorApplication.update += OnNuGetForUnityInstallComplete;
+        }
+        catch (Exception ex)
+        {
+            AddLog($"Помилка при встановленні NuGetForUnity: {ex.Message}");
+        }
+    }
+
+    private void OnNuGetForUnityInstallComplete()
+    {
+        if (packageAddRequest == null || !packageAddRequest.IsCompleted)
+            return;
+
+        EditorApplication.update -= OnNuGetForUnityInstallComplete;
+
+        if (packageAddRequest.Status == StatusCode.Success)
+        {
+            AddLog("NuGetForUnity успішно встановлено");
+        }
+        else
+        {
+            AddLog($"Помилка при встановленні NuGetForUnity: {packageAddRequest.Error.message}");
+        }
     }
 
     private void ShowProjectStructureWizard()
