@@ -7,7 +7,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Реалізація логера через файл
     /// </summary>
-    public class FileLogger : ILogger
+    public class FileLogger : IMythLogger
     {
         private readonly string _logFilePath;
         private LogLevel _logLevel = LogLevel.Info;

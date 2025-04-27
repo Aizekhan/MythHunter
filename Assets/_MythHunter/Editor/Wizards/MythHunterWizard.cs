@@ -398,10 +398,10 @@ public class MythHunterWizard : EditorWindow
         List<string> body = new List<string>
         {
             "private readonly IEventBus _eventBus;",
-            "private readonly ILogger _logger;",
+            "private readonly IMythLogger _logger;",
             "",
             "[Inject]",
-            $"public {systemName}(IEventBus eventBus, ILogger logger)",
+            $"public {systemName}(IEventBus eventBus, IMythLogger logger)",
             "{",
             "    _eventBus = eventBus;",
             "    _logger = logger;",
@@ -611,10 +611,10 @@ public class MythHunterWizard : EditorWindow
         List<string> body = new List<string>
         {
             "private readonly IEntityManager _entityManager;",
-            "private readonly ILogger _logger;",
+            "private readonly IMythLogger _logger;",
             "",
             "[Inject]",
-            $"public {factoryName}(IEntityManager entityManager, ILogger logger)",
+            $"public {factoryName}(IEntityManager entityManager, IMythLogger logger)",
             "{",
             "    _entityManager = entityManager;",
             "    _logger = logger;",
@@ -1052,7 +1052,7 @@ namespace MythHunter.UI.Core
     {{
         public static {name}View FindView()
         {{
-            {name}View view = Object.FindObjectOfType<{name}View>();
+            {name}View view = Object.FindFirstObjectByType<{name}View>();
             
             if (view == null)
                 Debug.LogWarning($""{name}View not found in scene."");
@@ -1314,7 +1314,7 @@ using NSubstitute;
 public class {systemName}Tests
 {{
     private IEventBus _eventBus;
-    private ILogger _logger;
+    private IMythLogger _logger;
     private {systemName} _system;
 
     [SetUp]
@@ -1322,7 +1322,7 @@ public class {systemName}Tests
     {{
         // Create mocks
         _eventBus = Substitute.For<IEventBus>();
-        _logger = Substitute.For<ILogger>();
+        _logger = Substitute.For<IMythLogger>();
 
         // Create system with mocks
         _system = new {systemName}(_eventBus, _logger);
@@ -1430,14 +1430,14 @@ using NSubstitute;
 public class {factoryName}Tests
 {{
     private IEntityManager _entityManager;
-    private ILogger _logger;
+    private IMythLogger _logger;
     private {factoryName} _factory;
 
     [SetUp]
     public void SetUp()
     {{
         _entityManager = Substitute.For<IEntityManager>();
-        _logger = Substitute.For<ILogger>();
+        _logger = Substitute.For<IMythLogger>();
         _entityManager.CreateEntity().Returns(1);
         _factory = new {factoryName}(_entityManager, _logger);
     }}
@@ -1487,11 +1487,11 @@ namespace {namespaceName}
     public class {systemName} : {baseType}, IEventSubscriber
     {{
         private readonly IEventBus _eventBus;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private readonly I{networkType} _network;
 
         [Inject]
-        public {systemName}(IEventBus eventBus, ILogger logger, I{networkType} network)
+        public {systemName}(IEventBus eventBus, IMythLogger logger, I{networkType} network)
         {{
             _eventBus = eventBus;
             _logger = logger;

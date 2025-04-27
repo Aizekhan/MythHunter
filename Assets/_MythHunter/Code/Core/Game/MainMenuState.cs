@@ -10,13 +10,13 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class MainMenuState : BaseState<GameStateType>
     {
-        private ILogger _logger;
+        private IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.MainMenu;
         
         public MainMenuState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
         }
         
         public override void Enter()

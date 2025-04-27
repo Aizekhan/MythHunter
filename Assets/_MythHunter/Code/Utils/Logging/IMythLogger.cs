@@ -3,7 +3,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Інтерфейс логування
     /// </summary>
-    public interface ILogger
+    public interface IMythLogger
     {
         void LogInfo(string message);
         void LogWarning(string message);

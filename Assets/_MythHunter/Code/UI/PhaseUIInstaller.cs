@@ -38,7 +38,7 @@ namespace MythHunter.UI
 
             var container = bootstrapper.Container;
             var eventBus = container.Resolve<IEventBus>();
-            var logger = container.Resolve<MythHunter.Utils.Logging.ILogger>();
+            var logger = container.Resolve<IMythLogger>();
 
             // Створення презентера
             _phasePresenter = new PhasePresenter(_phaseView, eventBus, logger);

@@ -6,22 +6,22 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Комбінований логер, який використовує кілька логерів
     /// </summary>
-    public class CompositeLogger : ILogger
+    public class CompositeLogger : IMythLogger
     {
-        private readonly List<ILogger> _loggers = new List<ILogger>();
+        private readonly List<IMythLogger> _loggers = new List<IMythLogger>();
         private LogLevel _logLevel = LogLevel.Info;
         
-        public CompositeLogger(params ILogger[] loggers)
+        public CompositeLogger(params IMythLogger[] loggers)
         {
             _loggers.AddRange(loggers);
         }
         
-        public void AddLogger(ILogger logger)
+        public void AddLogger(IMythLogger logger)
         {
             _loggers.Add(logger);
         }
         
-        public void RemoveLogger(ILogger logger)
+        public void RemoveLogger(IMythLogger logger)
         {
             _loggers.Remove(logger);
         }

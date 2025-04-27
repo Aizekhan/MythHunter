@@ -5,21 +5,21 @@ namespace MythHunter.Utils.Logging
     /// </summary>
     public static class LoggerFactory
     {
-        public static ILogger CreateUnityLogger(LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateUnityLogger(LogLevel level = LogLevel.Info)
         {
             var logger = new UnityLogger();
             logger.SetLogLevel(level);
             return logger;
         }
         
-        public static ILogger CreateFileLogger(string fileName = "MythHunter.log", LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateFileLogger(string fileName = "MythHunter.log", LogLevel level = LogLevel.Info)
         {
             var logger = new FileLogger(fileName);
             logger.SetLogLevel(level);
             return logger;
         }
         
-        public static ILogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
         {
             var unityLogger = CreateUnityLogger(level);
             var fileLogger = CreateFileLogger("MythHunter.log", level);
@@ -27,7 +27,7 @@ namespace MythHunter.Utils.Logging
             return new CompositeLogger(unityLogger, fileLogger);
         }
         
-        public static ILogger CreateDefaultLogger()
+        public static IMythLogger CreateDefaultLogger()
         {
             #if UNITY_EDITOR
             return CreateUnityLogger();

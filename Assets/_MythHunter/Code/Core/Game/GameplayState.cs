@@ -12,14 +12,14 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameplayState : BaseState<GameStateType>
     {
-        private ILogger _logger;
+        private IMythLogger _logger;
         private IEventBus _eventBus;
         
         public override GameStateType StateId => GameStateType.Game;
         
         public GameplayState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
         }
         

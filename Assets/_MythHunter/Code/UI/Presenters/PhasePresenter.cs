@@ -16,9 +16,9 @@ namespace MythHunter.UI.Presenters
     {
         private readonly PhaseView _view;
         private readonly IEventBus _eventBus;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
 
-        public PhasePresenter(PhaseView view, IEventBus eventBus, ILogger logger)
+        public PhasePresenter(PhaseView view, IEventBus eventBus, IMythLogger logger)
         {
             _view = view;
             _eventBus = eventBus;

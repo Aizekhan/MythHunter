@@ -5,7 +5,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Інтерфейс телеметричного логера
     /// </summary>
-    public interface ITelemetryLogger : ILogger
+    public interface ITelemetryLogger : IMythLogger
     {
         void TrackMetric(string name, float value);
         void TrackEvent(string name, Dictionary<string, string> properties = null);

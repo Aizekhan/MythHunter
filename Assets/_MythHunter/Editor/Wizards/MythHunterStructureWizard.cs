@@ -1167,15 +1167,15 @@ namespace MythHunter.Cloud.Analytics
     }
     private void CreateUtilInterfaces()
     {
-        // ILogger - інтерфейс системи логування
-        string iLoggerPath = $"{CODE_PATH}/Utils/Logging/ILogger.cs";
+        // IMythLogger - інтерфейс системи логування
+        string iLoggerPath = $"{CODE_PATH}/Utils/Logging/IMythLogger.cs";
         string iLoggerContent =
     @"namespace MythHunter.Utils.Logging
 {
     /// <summary>
     /// Інтерфейс логування
     /// </summary>
-    public interface ILogger
+    public interface IMythLogger
     {
         void LogInfo(string message);
         void LogWarning(string message);
@@ -1208,7 +1208,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Інтерфейс телеметричного логера
     /// </summary>
-    public interface ITelemetryLogger : ILogger
+    public interface ITelemetryLogger : IMythLogger
     {
         void TrackMetric(string name, float value);
         void TrackEvent(string name, Dictionary<string, string> properties = null);
@@ -1455,7 +1455,7 @@ namespace MythHunter.Core.Game
     {
         private IDIContainer _container;
         private IEventBus _eventBus;
-        private ILogger _logger;
+        private IMythLogger _logger;
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         
@@ -1480,7 +1480,7 @@ namespace MythHunter.Core.Game
             
             // Реєстрація базових сервісів
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<ILogger, UnityLogger>();
+            _container.RegisterSingleton<IMythLogger, UnityLogger>();
             
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
@@ -1488,7 +1488,7 @@ namespace MythHunter.Core.Game
         
         private void InitializeLogging()
         {
-            _logger = _container.Resolve<ILogger>();
+            _logger = _container.Resolve<IMythLogger>();
             _logger.LogInfo(""Logging system initialized"");
         }
         
@@ -1578,13 +1578,13 @@ namespace MythHunter.Core.Game
     public class GameStateMachine
     {
         private readonly IStateMachine<GameStateType> _stateMachine;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
         
         public GameStateMachine(IDIContainer container)
         {
             _container = container;
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _stateMachine = new StateMachine<GameStateType>();
         }
         
@@ -1821,10 +1821,10 @@ namespace MythHunter.Entities
     public abstract class EntityFactory
     {
         protected readonly IEntityManager EntityManager;
-        protected readonly ILogger Logger;
+        protected readonly IMythLogger Logger;
         
         [Inject]
-        public EntityFactory(IEntityManager entityManager, ILogger logger)
+        public EntityFactory(IEntityManager entityManager, IMythLogger logger)
         {
             EntityManager = entityManager;
             Logger = logger;
@@ -2115,11 +2115,11 @@ namespace MythHunter.Events.Debugging
     public class EventLogger : IEventSubscriber
     {
         private readonly IEventBus _eventBus;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private bool _isEnabled = false;
         
         [Inject]
-        public EventLogger(IEventBus eventBus, ILogger logger)
+        public EventLogger(IEventBus eventBus, IMythLogger logger)
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -2417,14 +2417,14 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameplayState : BaseState<GameStateType>
     {
-        private ILogger _logger;
+        private IMythLogger _logger;
         private IEventBus _eventBus;
         
         public override GameStateType StateId => GameStateType.Game;
         
         public GameplayState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
         }
         
@@ -2493,13 +2493,13 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class {stateName}State : BaseState<GameStateType>
     {{
-        private ILogger _logger;
+        private IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.{stateTypeName};
         
         public {stateName}State(IDIContainer container) : base(container)
         {{
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
         }}
         
         public override void Enter()
@@ -2554,7 +2554,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Реалізація логера через Unity Debug
     /// </summary>
-    public class UnityLogger : ILogger
+    public class UnityLogger : IMythLogger
     {
         private LogLevel _logLevel = LogLevel.Info;
         
@@ -2610,7 +2610,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Реалізація логера через файл
     /// </summary>
-    public class FileLogger : ILogger
+    public class FileLogger : IMythLogger
     {
         private readonly string _logFilePath;
         private LogLevel _logLevel = LogLevel.Info;
@@ -2690,22 +2690,22 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Комбінований логер, який використовує кілька логерів
     /// </summary>
-    public class CompositeLogger : ILogger
+    public class CompositeLogger : IMythLogger
     {
-        private readonly List<ILogger> _loggers = new List<ILogger>();
+        private readonly List<IMythLogger> _loggers = new List<IMythLogger>();
         private LogLevel _logLevel = LogLevel.Info;
         
-        public CompositeLogger(params ILogger[] loggers)
+        public CompositeLogger(params IMythLogger[] loggers)
         {
             _loggers.AddRange(loggers);
         }
         
-        public void AddLogger(ILogger logger)
+        public void AddLogger(IMythLogger logger)
         {
             _loggers.Add(logger);
         }
         
-        public void RemoveLogger(ILogger logger)
+        public void RemoveLogger(IMythLogger logger)
         {
             _loggers.Remove(logger);
         }
@@ -2778,21 +2778,21 @@ namespace MythHunter.Utils.Logging
     /// </summary>
     public static class LoggerFactory
     {
-        public static ILogger CreateUnityLogger(LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateUnityLogger(LogLevel level = LogLevel.Info)
         {
             var logger = new UnityLogger();
             logger.SetLogLevel(level);
             return logger;
         }
         
-        public static ILogger CreateFileLogger(string fileName = ""MythHunter.log"", LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateFileLogger(string fileName = ""MythHunter.log"", LogLevel level = LogLevel.Info)
         {
             var logger = new FileLogger(fileName);
             logger.SetLogLevel(level);
             return logger;
         }
         
-        public static ILogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
+        public static IMythLogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
         {
             var unityLogger = CreateUnityLogger(level);
             var fileLogger = CreateFileLogger(""MythHunter.log"", level);
@@ -2800,7 +2800,7 @@ namespace MythHunter.Utils.Logging
             return new CompositeLogger(unityLogger, fileLogger);
         }
         
-        public static ILogger CreateDefaultLogger()
+        public static IMythLogger CreateDefaultLogger()
         {
             #if UNITY_EDITOR
             return CreateUnityLogger();

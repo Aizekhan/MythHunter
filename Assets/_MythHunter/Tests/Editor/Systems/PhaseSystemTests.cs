@@ -10,7 +10,7 @@ using UnityEngine;
 public class PhaseSystemTests
 {
     private IEventBus _eventBus;
-    private MythHunter.Utils.Logging.ILogger _logger;
+    private IMythLogger _logger;
     private PhaseSystem _system;
     private PhaseConfig _config;
 
@@ -21,7 +21,7 @@ public class PhaseSystemTests
         _config = ScriptableObject.CreateInstance<PhaseConfig>();
 
         _eventBus = Substitute.For<IEventBus>();
-        _logger = Substitute.For<MythHunter.Utils.Logging.ILogger>();
+        _logger = Substitute.For<IMythLogger>();
 
         // Create system with mocks
         _system = new PhaseSystem(_eventBus, _logger, _config);

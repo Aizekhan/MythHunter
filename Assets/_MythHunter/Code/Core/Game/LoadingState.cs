@@ -10,13 +10,13 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class LoadingState : BaseState<GameStateType>
     {
-        private ILogger _logger;
+        private IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.Loading;
         
         public LoadingState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
         }
         
         public override void Enter()

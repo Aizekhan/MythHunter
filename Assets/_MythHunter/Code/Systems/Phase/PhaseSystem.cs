@@ -19,7 +19,7 @@ namespace MythHunter.Systems.Phase
     public class PhaseSystem : SystemBase, IEventSubscriber
     {
         private readonly IEventBus _eventBus;
-        private readonly MythHunter.Utils.Logging.ILogger _logger;
+        private readonly IMythLogger _logger;
         private readonly PhaseConfig _config;
 
         private GamePhase _currentPhase = GamePhase.None;
@@ -28,7 +28,7 @@ namespace MythHunter.Systems.Phase
         private CancellationTokenSource _timerCts;
 
         [Inject]
-        public PhaseSystem(IEventBus eventBus, MythHunter.Utils.Logging.ILogger logger, PhaseConfig config)
+        public PhaseSystem(IEventBus eventBus, IMythLogger logger, PhaseConfig config)
         {
             _eventBus = eventBus;
             _logger = logger;

@@ -10,11 +10,11 @@ namespace MythHunter.Events.Debugging
     public class EventLogger : IEventSubscriber
     {
         private readonly IEventBus _eventBus;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private bool _isEnabled = false;
         
         [Inject]
-        public EventLogger(IEventBus eventBus, ILogger logger)
+        public EventLogger(IEventBus eventBus, IMythLogger logger)
         {
             _eventBus = eventBus;
             _logger = logger;

@@ -10,13 +10,13 @@ namespace MythHunter.Core.Game
     public class GameStateMachine
     {
         private readonly IStateMachine<GameStateType> _stateMachine;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
         
         public GameStateMachine(IDIContainer container)
         {
             _container = container;
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _stateMachine = new StateMachine<GameStateType>();
         }
         

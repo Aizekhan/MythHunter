@@ -5,7 +5,7 @@ namespace MythHunter.Utils.Logging
     /// <summary>
     /// Реалізація логера через Unity Debug
     /// </summary>
-    public class UnityLogger : ILogger
+    public class UnityLogger : IMythLogger
     {
         private LogLevel _logLevel = LogLevel.Info;
         

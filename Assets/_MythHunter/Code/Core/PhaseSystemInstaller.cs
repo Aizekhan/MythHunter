@@ -1,10 +1,9 @@
-// Файл: Assets/_MythHunter/Code/Core/PhaseSystemInstaller.cs
-
+using UnityEngine;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
 using MythHunter.Data.ScriptableObjects;
 using MythHunter.Systems.Phase;
-using UnityEngine;
+using System.Collections;
 
 namespace MythHunter.Core
 {
@@ -15,21 +14,34 @@ namespace MythHunter.Core
     {
         [SerializeField] private PhaseConfig _phaseConfig;
 
-        private void Awake()
+        private void Start()
+        {
+            StartCoroutine(InitializeWhenBootstrapperReady());
+        }
+
+        private IEnumerator InitializeWhenBootstrapperReady()
         {
             if (_phaseConfig == null)
             {
-                Debug.LogError("PhaseConfig not assigned in PhaseSystemInstaller");
-                return;
+                Debug.LogError("[PhaseSystemInstaller] PhaseConfig not assigned!");
+                yield break;
             }
 
-            // Отримання DI контейнера
+            // Отримання GameBootstrapper
             var bootstrapper = FindFirstObjectByType<GameBootstrapper>();
-
             if (bootstrapper == null)
             {
-                Debug.LogError("GameBootstrapper not found in scene");
-                return;
+                Debug.LogError("[PhaseSystemInstaller] GameBootstrapper not found in scene!");
+                yield break;
+            }
+
+            // Чекаємо завершення ініціалізації GameBootstrapper
+            yield return bootstrapper.WaitForInitializationCoroutine();
+
+            if (!bootstrapper.IsInitialized)
+            {
+                Debug.LogError("[PhaseSystemInstaller] GameBootstrapper initialization failed!");
+                yield break;
             }
 
             // Реєстрація конфігурації фаз
@@ -37,16 +49,21 @@ namespace MythHunter.Core
             container.RegisterInstance(_phaseConfig);
 
             // Реєстрація системи фаз
-            var systemRegistry = container.Resolve<Systems.Core.SystemRegistry>();
-            var phaseSystem = new PhaseSystem(
-                container.Resolve<Events.IEventBus>(),
-                container.Resolve<Utils.Logging.ILogger>(),
-                _phaseConfig
-            );
+            try
+            {
+                var systemRegistry = container.Resolve<Systems.Core.SystemRegistry>();
+                var eventBus = container.Resolve<Events.IEventBus>();
+                var logger = container.Resolve<Utils.Logging.IMythLogger>();
 
-            systemRegistry.RegisterSystem(phaseSystem);
+                var phaseSystem = new PhaseSystem(eventBus, logger, _phaseConfig);
+                systemRegistry.RegisterSystem(phaseSystem);
 
-            Debug.Log("PhaseSystem registered successfully");
+                Debug.Log("[PhaseSystemInstaller] PhaseSystem registered successfully");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[PhaseSystemInstaller] Failed to register PhaseSystem: {ex.Message}");
+            }
         }
     }
 }
