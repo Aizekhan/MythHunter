@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>

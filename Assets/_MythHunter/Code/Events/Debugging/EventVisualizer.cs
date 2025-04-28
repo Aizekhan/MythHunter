@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using MythHunter.Core.DI;
 
@@ -16,6 +17,7 @@ namespace MythHunter.Events.Debugging
         private readonly int _maxEvents = 100;
         private bool _isVisible = false;
         private Vector2 _scrollPosition;
+        private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
         
         private void OnEnable()
         {
@@ -26,18 +28,99 @@ namespace MythHunter.Events.Debugging
         {
             UnsubscribeFromEvents();
         }
-
+        
         public void SubscribeToEvents()
         {
-            _eventBus?.SubscribeAny(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                // Отримуємо всі завантажені збірки
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        // Знаходимо всі структури, які реалізують IEvent
+                       var allTypes = assembly.GetTypes();
+                         var eventTypes = new List<Type>();
+                            foreach (var type in allTypes)
+                                    {
+                                       if (type.IsValueType && typeof(IEvent).IsAssignableFrom(type))
+                                                     {
+                                                          eventTypes.Add(type);
+                                                     }
+                                    }
+                        
+                        foreach (var eventType in eventTypes)
+                        {
+                            SubscribeToEventType(eventType);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Failed to scan assembly {assembly.FullName}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error subscribing to events: {ex.Message}");
+            }
         }
-
+        
+        private void SubscribeToEventType(Type eventType)
+        {
+            try
+            {
+                // Отримуємо метод Subscribe з правильним типом
+                var methodInfo = typeof(IEventBus).GetMethod("Subscribe").MakeGenericMethod(eventType);
+                
+                // Створюємо типізований делегат для обробки події
+                var handlerType = typeof(Action<>).MakeGenericType(eventType);
+                var handler = Delegate.CreateDelegate(handlerType, this, 
+                    GetType().GetMethod("OnEventReceived", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(eventType));
+                
+                // Зберігаємо делегат для подальшої відписки
+                _handlers[eventType] = handler;
+                
+                // Викликаємо метод Subscribe
+                methodInfo.Invoke(_eventBus, new object[] { handler });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to subscribe to event type {eventType.Name}: {ex.Message}");
+            }
+        }
+        
         public void UnsubscribeFromEvents()
         {
-            _eventBus?.UnsubscribeAny(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                foreach (var pair in _handlers)
+                {
+                    var eventType = pair.Key;
+                    var handler = pair.Value;
+                    
+                    // Отримуємо метод Unsubscribe з правильним типом
+                    var methodInfo = typeof(IEventBus).GetMethod("Unsubscribe").MakeGenericMethod(eventType);
+                    
+                    // Викликаємо метод Unsubscribe
+                    methodInfo.Invoke(_eventBus, new object[] { handler });
+                }
+                
+                _handlers.Clear();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error unsubscribing from events: {ex.Message}");
+            }
         }
-
-        private void OnEventReceived(IEvent evt)
+        
+        private void OnEventReceived<T>(T evt) where T : struct, IEvent
         {
             _eventHistory.Add(new EventRecord
             {

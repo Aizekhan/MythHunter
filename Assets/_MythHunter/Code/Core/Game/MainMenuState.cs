@@ -2,6 +2,7 @@ using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {
@@ -10,18 +11,18 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class MainMenuState : BaseState<GameStateType>
     {
-        private ILogger _logger;
+        private readonly IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.MainMenu;
         
         public MainMenuState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
         }
         
         public override void Enter()
         {
-            _logger.LogInfo("Entering MainMenu state");
+            _logger.LogInfo("Entering MainMenu state", "GameState");
             
             // Асинхронна ініціалізація
             InitializeAsync().Forget();
@@ -29,10 +30,17 @@ namespace MythHunter.Core.Game
         
         private async UniTaskVoid InitializeAsync()
         {
-            // Приклад асинхронної ініціалізації
-            await UniTask.Delay(100);
-            
-            _logger.LogInfo("MainMenu state initialized asynchronously");
+            try
+            {
+                // Приклад асинхронної ініціалізації
+                await UniTask.Delay(100);
+                
+                _logger.LogInfo("MainMenu state initialized asynchronously", "GameState");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in MainMenu initialization: {ex.Message}", "GameState", ex);
+            }
         }
         
         public override void Update()
@@ -42,7 +50,7 @@ namespace MythHunter.Core.Game
         
         public override void Exit()
         {
-            _logger.LogInfo("Exiting MainMenu state");
+            _logger.LogInfo("Exiting MainMenu state", "GameState");
         }
     }
 }

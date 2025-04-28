@@ -2,17 +2,18 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
-using static PlasticGui.WorkspaceWindow.Merge.MergeInProgress;
 using System;
-using UnityEditor.PackageManager;
-using System.Diagnostics;
-using UnityEditor.Build.Pipeline.Interfaces;
+
 
 /// <summary>
 /// Повний візард для створення структури проекту MythHunter.
 /// </summary>
 public class MythHunterStructureWizard : EditorWindow
 {
+    private string rootFolderName = "_MythHunter";
+    private string ROOT_PATH => $"Assets/{rootFolderName}";
+    private string CODE_PATH => $"{ROOT_PATH}/Code";
+
     private bool createTestFolders = true;
     private bool createResourceFolders = true;
     private bool createEditorFolders = true;
@@ -23,8 +24,7 @@ public class MythHunterStructureWizard : EditorWindow
 
     private Vector2 scrollPosition;
 
-    private static readonly string ROOT_PATH = "Assets/_MythHunter";
-    private static readonly string CODE_PATH = ROOT_PATH + "/Code";
+    
 
     [MenuItem("MythHunter Tools/Project Structure Wizard")]
     public static void ShowWindow()
@@ -34,10 +34,14 @@ public class MythHunterStructureWizard : EditorWindow
 
     private void OnGUI()
     {
+
         GUILayout.Label("Створення структури проекту MythHunter", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox("Цей візард створить повну структуру папок і базові файли для проекту MythHunter.", MessageType.Info);
-
+        
         EditorGUILayout.Space(10);
+
+        // Додати поле для назви кореневої папки
+        rootFolderName = EditorGUILayout.TextField("Назва кореневої папки:", rootFolderName);
 
         EditorGUILayout.LabelField("Опції створення:", EditorStyles.boldLabel);
         createTestFolders = EditorGUILayout.Toggle("Створити папки для тестів", createTestFolders);
@@ -47,6 +51,7 @@ public class MythHunterStructureWizard : EditorWindow
 
         EditorGUILayout.Space(10);
 
+        GUI.enabled = !string.IsNullOrEmpty(rootFolderName);
         if (GUILayout.Button("Створити структуру проекту", GUILayout.Height(30)))
         {
             createdPaths.Clear();
@@ -96,13 +101,19 @@ public class MythHunterStructureWizard : EditorWindow
             CreateResourceInterfaces();
             CreateCloudInterfaces();
             CreateUtilInterfaces();
-
+            CreateDataInterfaces();
+            CreateValidationInterfaces();
             // Створення імплементацій
             CreateCoreImplementations();
             CreateEcsImplementations();
             CreateEventImplementations();
             CreateSystemImplementations();
             CreateUtilImplementations();
+
+            // Додавання нових систем
+           
+            CreateReplaySystem();
+            
         }
     }
 
@@ -371,8 +382,12 @@ namespace MythHunter.Core
     /// </summary>
     public static class UniTaskHelper
     {
-        // Додайте Cysharp.Threading.Tasks як залежність до проекту
-        // Завантажте пакет з: https://github.com/Cysharp/UniTask
+        // ВАЖЛИВО: Для роботи цього проекту необхідно встановити пакет UniTask від Cysharp
+        // Встановіть його через Package Manager з GitHub URL: https://github.com/Cysharp/UniTask.git
+        // Або через меню Window > Package Manager > + > Add package from git URL...
+        
+        // Приклади використання асинхронних методів можна знайти на сторінці:
+        // https://github.com/Cysharp/UniTask/blob/master/README.md
     }
 }";
         WriteFile(uniTaskPath, uniTaskContent);
@@ -822,7 +837,8 @@ namespace MythHunter.Networking.Messages
         // INetworkSerializer - інтерфейс мережевого серіалізатора
         string iNetworkSerializerPath = $"{CODE_PATH}/Networking/Serialization/INetworkSerializer.cs";
         string iNetworkSerializerContent =
-    @"namespace MythHunter.Networking.Serialization
+    @"using MythHunter.Networking.Messages;
+namespace MythHunter.Networking.Serialization
 {
     /// <summary>
     /// Інтерфейс мережевого серіалізатора
@@ -1041,7 +1057,143 @@ namespace MythHunter.Resources.SceneManagement
 }";
         WriteFile(sceneReferencePath, sceneReferenceContent);
     }
+    // Додати в метод CreateBaseFiles() або створити окремий метод
 
+    // Data
+    private void CreateDataInterfaces()
+    {
+        // ISerializable - інтерфейс для об'єктів, які можна серіалізувати
+        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
+        string iSerializableContent =
+    @"using System;
+
+namespace MythHunter.Data.Serialization
+{
+    /// <summary>
+    /// Інтерфейс для об'єктів, які можна серіалізувати
+    /// </summary>
+    public interface ISerializable
+    {
+        byte[] Serialize();
+        void Deserialize(byte[] data);
+    }
+}";
+        WriteFile(iSerializablePath, iSerializableContent);
+
+        // StaticData - базовий клас для статичних даних
+        string staticDataPath = $"{CODE_PATH}/Data/StaticData/StaticData.cs";
+        string staticDataContent =
+    @"using System;
+using UnityEngine;
+
+namespace MythHunter.Data.StaticData
+{
+    /// <summary>
+    /// Базовий клас для статичних даних
+    /// </summary>
+    [Serializable]
+    public abstract class StaticData
+    {
+        [SerializeField] private string id;
+        
+        public string Id => id;
+        
+        public virtual void Initialize() { }
+        
+        public virtual void Validate()
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                Debug.LogWarning($""StaticData ID is empty for {GetType().Name}"");
+            }
+        }
+    }
+}";
+        WriteFile(staticDataPath, staticDataContent);
+    }
+
+    // Replay
+    private void CreateReplaySystem()
+    {
+        string iReplaySystemPath = $"{CODE_PATH}/Replay/IReplaySystem.cs";
+        string iReplaySystemContent =
+    @"using System;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using MythHunter.Events;
+
+namespace MythHunter.Replay
+{
+    /// <summary>
+    /// Інтерфейс для системи реплеїв
+    /// </summary>
+    public interface IReplaySystem
+    {
+        void StartRecording();
+        void StopRecording();
+        bool IsRecording { get; }
+        
+        UniTask SaveReplayAsync(string fileName);
+        UniTask<bool> LoadReplayAsync(string fileName);
+        
+        void StartPlayback();
+        void PausePlayback();
+        void ResumePlayback();
+        void StopPlayback();
+        bool IsPlayingBack { get; }
+        
+        float PlaybackSpeed { get; set; }
+        float CurrentTime { get; }
+        float TotalDuration { get; }
+        
+        void RegisterEventType<T>() where T : struct, IEvent;
+        void UnregisterEventType<T>() where T : struct, IEvent;
+        
+        event Action<IEvent> OnEventPlayback;
+        event Action OnPlaybackStarted;
+        event Action OnPlaybackPaused;
+        event Action OnPlaybackResumed;
+        event Action OnPlaybackStopped;
+        event Action OnPlaybackCompleted;
+    }
+    
+    /// <summary>
+    /// Запис події для реплею
+    /// </summary>
+    public struct ReplayEventRecord
+    {
+        public float Timestamp;
+        public string EventTypeId;
+        public byte[] SerializedEvent;
+        
+        public ReplayEventRecord(float timestamp, string eventTypeId, byte[] serializedEvent)
+        {
+            Timestamp = timestamp;
+            EventTypeId = eventTypeId;
+            SerializedEvent = serializedEvent;
+        }
+    }
+}";
+        WriteFile(iReplaySystemPath, iReplaySystemContent);
+    }
+
+    // Utils/Validation
+    private void CreateValidationInterfaces()
+    {
+        string iValidatorPath = $"{CODE_PATH}/Utils/Validation/IValidator.cs";
+        string iValidatorContent =
+    @"namespace MythHunter.Utils.Validation
+{
+    /// <summary>
+    /// Інтерфейс для валідації об'єктів
+    /// </summary>
+    public interface IValidator<T>
+    {
+        ValidationResult Validate(T obj);
+    }
+}";
+        WriteFile(iValidatorPath, iValidatorContent);
+    }
     private void CreateCloudInterfaces()
     {
         // ICloudService - інтерфейс хмарного сервісу
@@ -1112,7 +1264,7 @@ namespace MythHunter.Cloud.Core
         string iAnalyticsServiceContent =
     @"using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>
@@ -1134,7 +1286,7 @@ namespace MythHunter.Cloud.Analytics
         string analyticsEventContent =
     @"using System;
 using System.Collections.Generic;
-
+using MythHunter.Cloud.Core;
 namespace MythHunter.Cloud.Analytics
 {
     /// <summary>
@@ -1167,134 +1319,48 @@ namespace MythHunter.Cloud.Analytics
     }
     private void CreateUtilInterfaces()
     {
-        // ILogger - інтерфейс системи логування
-        string iLoggerPath = $"{CODE_PATH}/Utils/Logging/ILogger.cs";
+        // Створюємо тільки IMythLogger інтерфейс
+        string iLoggerPath = $"{CODE_PATH}/Utils/Logging/IMythLogger.cs";
         string iLoggerContent =
-    @"namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Інтерфейс логування
-    /// </summary>
-    public interface ILogger
-    {
-        void LogInfo(string message);
-        void LogWarning(string message);
-        void LogError(string message, System.Exception exception = null);
-        void LogDebug(string message);
-        void SetLogLevel(LogLevel level);
-    }
-    
-    /// <summary>
-    /// Рівні логування
-    /// </summary>
-    public enum LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Error,
-        None
-    }
-}";
-        WriteFile(iLoggerPath, iLoggerContent);
-
-        // ITelemetryLogger - інтерфейс телеметрії
-        string iTelemetryLoggerPath = $"{CODE_PATH}/Utils/Logging/ITelemetryLogger.cs";
-        string iTelemetryLoggerContent =
-    @"using System.Collections.Generic;
+    @"using System;
 
 namespace MythHunter.Utils.Logging
 {
     /// <summary>
-    /// Інтерфейс телеметричного логера
+    /// Рівні логування, від найменш до найбільш важливого
     /// </summary>
-    public interface ITelemetryLogger : ILogger
+    public enum LogLevel
     {
-        void TrackMetric(string name, float value);
-        void TrackEvent(string name, Dictionary<string, string> properties = null);
-        void TrackException(System.Exception exception, Dictionary<string, string> properties = null);
+        Trace = 0,
+        Debug = 1,
+        Info = 2,
+        Warning = 3,
+        Error = 4,
+        Fatal = 5,
+        Off = 6 // Вимкнути логування
     }
-}";
-        WriteFile(iTelemetryLoggerPath, iTelemetryLoggerContent);
 
-        // ISerializer - інтерфейс серіалізатора
-        string iSerializerPath = $"{CODE_PATH}/Data/Serialization/ISerializer.cs";
-        string iSerializerContent =
-    @"namespace MythHunter.Data.Serialization
-{
     /// <summary>
-    /// Інтерфейс серіалізатора
+    /// Інтерфейс для системи логування проекту MythHunter.
+    /// Забезпечує методи для логування повідомлень різних рівнів важливості.
     /// </summary>
-    public interface ISerializer
+    public interface IMythLogger
     {
-        byte[] Serialize<T>(T obj);
-        T Deserialize<T>(byte[] data);
-        string SerializeToString<T>(T obj);
-        T DeserializeFromString<T>(string data);
+        void LogInfo(string message, string category = null);
+        void LogWarning(string message, string category = null);
+        void LogError(string message, string category = null, Exception exception = null);
+        void LogFatal(string message, string category = null);
+        void LogDebug(string message, string category = null);
+        void LogTrace(string message, string category = null);
+        void WithContext(string key, object value);
+        void ClearContext();
+        void SetDefaultCategory(string category);
+        void SetMinLogLevel(LogLevel level);
+        void EnableFileLogging(bool enable);
     }
-}";
-        WriteFile(iSerializerPath, iSerializerContent);
-
-        // ISerializable - інтерфейс для серіалізовуваних об'єктів
-        string iSerializablePath = $"{CODE_PATH}/Data/Serialization/ISerializable.cs";
-        string iSerializableContent =
-    @"namespace MythHunter.Data.Serialization
-{
-    /// <summary>
-    /// Інтерфейс для серіалізації об'єктів
-    /// </summary>
-    public interface ISerializable
-    {
-        byte[] Serialize();
-        void Deserialize(byte[] data);
-    }
-}";
-        WriteFile(iSerializablePath, iSerializableContent);
-
-        // IReplaySystem - інтерфейс системи реплеїв
-        string iReplaySystemPath = $"{CODE_PATH}/Replay/IReplaySystem.cs";
-        string iReplaySystemContent =
-    @"using System;
-using System.Threading.Tasks;
-
-namespace MythHunter.Replay
-{
-    /// <summary>
-    /// Інтерфейс системи реплеїв
-    /// </summary>
-    public interface IReplaySystem
-    {
-        void StartRecording();
-        void StopRecording();
-        Task<string> SaveReplayAsync(string name);
-        Task<bool> LoadReplayAsync(string replayId);
-        Task<string[]> GetAvailableReplaysAsync();
-        bool IsRecording { get; }
-        bool IsPlaying { get; }
-        void PlayReplay();
-        void PauseReplay();
-        void StopReplay();
-        event Action<float> OnReplayProgress;
-    }
-}";
-        WriteFile(iReplaySystemPath, iReplaySystemContent);
-
-        // IConfigProvider - інтерфейс провайдера конфігурацій
-        string iConfigProviderPath = $"{CODE_PATH}/Core/Config/IConfigProvider.cs";
-        string iConfigProviderContent =
-    @"namespace MythHunter.Core.Config
-{
-    /// <summary>
-    /// Інтерфейс провайдера конфігурацій
-    /// </summary>
-    public interface IConfigProvider
-    {
-        T GetConfig<T>() where T : class;
-        void SetConfig<T>(T config) where T : class;
-        bool HasConfig<T>() where T : class;
-    }
-}";
-        WriteFile(iConfigProviderPath, iConfigProviderContent);
+}"
+        ;
+        WriteFile(iLoggerPath, iLoggerContent);
     }
     private void CreateCoreImplementations()
     {
@@ -1455,7 +1521,7 @@ namespace MythHunter.Core.Game
     {
         private IDIContainer _container;
         private IEventBus _eventBus;
-        private ILogger _logger;
+        private IMythLogger _logger;
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         
@@ -1480,7 +1546,7 @@ namespace MythHunter.Core.Game
             
             // Реєстрація базових сервісів
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<ILogger, UnityLogger>();
+            _container.RegisterSingleton<IMythLogger, MythLogger>();
             
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
@@ -1488,7 +1554,7 @@ namespace MythHunter.Core.Game
         
         private void InitializeLogging()
         {
-            _logger = _container.Resolve<ILogger>();
+            _logger = _container.Resolve<IMythLogger>();
             _logger.LogInfo(""Logging system initialized"");
         }
         
@@ -1578,13 +1644,13 @@ namespace MythHunter.Core.Game
     public class GameStateMachine
     {
         private readonly IStateMachine<GameStateType> _stateMachine;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
         
         public GameStateMachine(IDIContainer container)
         {
             _container = container;
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _stateMachine = new StateMachine<GameStateType>();
         }
         
@@ -1809,9 +1875,11 @@ namespace MythHunter.Core.ECS
         // BaseEntityFactory - базова фабрика сутностей
         string baseEntityFactoryPath = $"{CODE_PATH}/Entities/EntityFactory.cs";
         string baseEntityFactoryContent =
-    @"using MythHunter.Core.ECS;
+    @"
+using MythHunter.Core.ECS;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using MythHunter.Components.Core;
 
 namespace MythHunter.Entities
 {
@@ -1821,10 +1889,10 @@ namespace MythHunter.Entities
     public abstract class EntityFactory
     {
         protected readonly IEntityManager EntityManager;
-        protected readonly ILogger Logger;
+        protected readonly IMythLogger Logger;
         
         [Inject]
-        public EntityFactory(IEntityManager entityManager, ILogger logger)
+        public EntityFactory(IEntityManager entityManager, IMythLogger logger)
         {
             EntityManager = entityManager;
             Logger = logger;
@@ -2099,11 +2167,13 @@ namespace MythHunter.Events
     }
 }";
         WriteFile(eventBusPath, eventBusContent);
-
-        // EventLogger - логер подій для дебагу
+        // EventLogger - для візуалізації подій в редакторі
         string eventLoggerPath = $"{CODE_PATH}/Events/Debugging/EventLogger.cs";
         string eventLoggerContent =
-    @"using System;
+        @"using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 
@@ -2115,14 +2185,57 @@ namespace MythHunter.Events.Debugging
     public class EventLogger : IEventSubscriber
     {
         private readonly IEventBus _eventBus;
-        private readonly ILogger _logger;
+        private readonly IMythLogger _logger;
         private bool _isEnabled = false;
+        private readonly List<Type> _eventTypes = new List<Type>();
+        private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
         
         [Inject]
-        public EventLogger(IEventBus eventBus, ILogger logger)
+        public EventLogger(IEventBus eventBus, IMythLogger logger)
         {
             _eventBus = eventBus;
             _logger = logger;
+            
+            // Знаходимо всі типи подій при створенні
+            FindAllEventTypes();
+        }
+        
+        private void FindAllEventTypes()
+        {
+            try
+            {
+                // Отримуємо всі завантажені збірки
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        // Знаходимо всі структури, які реалізують IEvent
+                       var allTypes = assembly.GetTypes();
+var eventTypes = new List<Type>();
+foreach (var type in allTypes)
+{
+    if (type.IsValueType && typeof(IEvent).IsAssignableFrom(type))
+    {
+        eventTypes.Add(type);
+    }
+}
+                        
+                        _eventTypes.AddRange(eventTypes);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($""Failed to scan assembly {assembly.FullName}: {ex.Message}"", ""EventLogger"");
+                    }
+                }
+                
+                _logger.LogInfo($""Found {_eventTypes.Count} event types"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error finding event types: {ex.Message}"", ""EventLogger"", ex);
+            }
         }
         
         public void Enable()
@@ -2131,7 +2244,7 @@ namespace MythHunter.Events.Debugging
             {
                 SubscribeToEvents();
                 _isEnabled = true;
-                _logger.LogInfo(""Event logger enabled"");
+                _logger.LogInfo(""Event logger enabled"", ""EventLogger"");
             }
         }
         
@@ -2141,24 +2254,81 @@ namespace MythHunter.Events.Debugging
             {
                 UnsubscribeFromEvents();
                 _isEnabled = false;
-                _logger.LogInfo(""Event logger disabled"");
+                _logger.LogInfo(""Event logger disabled"", ""EventLogger"");
             }
         }
         
         public void SubscribeToEvents()
         {
-            // Підписка на всі події (можна замінити на конкретний список)
-            _eventBus.Subscribe<IEvent>(OnAnyEvent);
+            try
+            {
+                foreach (var eventType in _eventTypes)
+                {
+                    // Створюємо типізований метод підписки для кожного типу події
+                    SubscribeToEventType(eventType);
+                }
+                
+                _logger.LogInfo($""Subscribed to {_handlers.Count} event types"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error subscribing to events: {ex.Message}"", ""EventLogger"", ex);
+            }
+        }
+        
+        private void SubscribeToEventType(Type eventType)
+        {
+            try
+            {
+                // Отримуємо метод Subscribe з правильним типом
+                var methodInfo = typeof(IEventBus).GetMethod(""Subscribe"").MakeGenericMethod(eventType);
+                
+                // Створюємо типізований делегат для обробки події
+                var handlerType = typeof(Action<>).MakeGenericType(eventType);
+                var handler = Delegate.CreateDelegate(handlerType, this, 
+                    GetType().GetMethod(""OnAnyEvent"", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(eventType));
+                
+                // Зберігаємо делегат для подальшої відписки
+                _handlers[eventType] = handler;
+                
+                // Викликаємо метод Subscribe
+                methodInfo.Invoke(_eventBus, new object[] { handler });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($""Failed to subscribe to event type {eventType.Name}: {ex.Message}"", ""EventLogger"");
+            }
         }
         
         public void UnsubscribeFromEvents()
         {
-            _eventBus.Unsubscribe<IEvent>(OnAnyEvent);
+            try
+            {
+                foreach (var pair in _handlers)
+                {
+                    var eventType = pair.Key;
+                    var handler = pair.Value;
+                    
+                    // Отримуємо метод Unsubscribe з правильним типом
+                    var methodInfo = typeof(IEventBus).GetMethod(""Unsubscribe"").MakeGenericMethod(eventType);
+                    
+                    // Викликаємо метод Unsubscribe
+                    methodInfo.Invoke(_eventBus, new object[] { handler });
+                }
+                
+                _handlers.Clear();
+                _logger.LogInfo(""Unsubscribed from all events"", ""EventLogger"");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($""Error unsubscribing from events: {ex.Message}"", ""EventLogger"", ex);
+            }
         }
         
-        private void OnAnyEvent(IEvent evt)
+        // Універсальний метод обробки будь-якої події
+        private void OnAnyEvent<T>(T evt) where T : struct, IEvent
         {
-            _logger.LogDebug($""Event: {evt.GetType().Name}, ID: {evt.GetEventId()}"");
+            _logger.LogDebug($""Event: {typeof(T).Name}, ID: {evt.GetEventId()}"", ""EventDebug"");
         }
     }
 }";
@@ -2167,8 +2337,9 @@ namespace MythHunter.Events.Debugging
         // EventVisualizer - для візуалізації подій в редакторі
         string eventVisualizerPath = $"{CODE_PATH}/Events/Debugging/EventVisualizer.cs";
         string eventVisualizerContent =
-    @"using System;
+        @"using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using MythHunter.Core.DI;
 
@@ -2185,6 +2356,7 @@ namespace MythHunter.Events.Debugging
         private readonly int _maxEvents = 100;
         private bool _isVisible = false;
         private Vector2 _scrollPosition;
+        private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
         
         private void OnEnable()
         {
@@ -2198,15 +2370,96 @@ namespace MythHunter.Events.Debugging
         
         public void SubscribeToEvents()
         {
-            _eventBus?.Subscribe<IEvent>(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                // Отримуємо всі завантажені збірки
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        // Знаходимо всі структури, які реалізують IEvent
+                       var allTypes = assembly.GetTypes();
+                         var eventTypes = new List<Type>();
+                            foreach (var type in allTypes)
+                                    {
+                                       if (type.IsValueType && typeof(IEvent).IsAssignableFrom(type))
+                                                     {
+                                                          eventTypes.Add(type);
+                                                     }
+                                    }
+                        
+                        foreach (var eventType in eventTypes)
+                        {
+                            SubscribeToEventType(eventType);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($""Failed to scan assembly {assembly.FullName}: {ex.Message}"");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($""Error subscribing to events: {ex.Message}"");
+            }
+        }
+        
+        private void SubscribeToEventType(Type eventType)
+        {
+            try
+            {
+                // Отримуємо метод Subscribe з правильним типом
+                var methodInfo = typeof(IEventBus).GetMethod(""Subscribe"").MakeGenericMethod(eventType);
+                
+                // Створюємо типізований делегат для обробки події
+                var handlerType = typeof(Action<>).MakeGenericType(eventType);
+                var handler = Delegate.CreateDelegate(handlerType, this, 
+                    GetType().GetMethod(""OnEventReceived"", BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(eventType));
+                
+                // Зберігаємо делегат для подальшої відписки
+                _handlers[eventType] = handler;
+                
+                // Викликаємо метод Subscribe
+                methodInfo.Invoke(_eventBus, new object[] { handler });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($""Failed to subscribe to event type {eventType.Name}: {ex.Message}"");
+            }
         }
         
         public void UnsubscribeFromEvents()
         {
-            _eventBus?.Unsubscribe<IEvent>(OnEventReceived);
+            if (_eventBus == null) return;
+            
+            try
+            {
+                foreach (var pair in _handlers)
+                {
+                    var eventType = pair.Key;
+                    var handler = pair.Value;
+                    
+                    // Отримуємо метод Unsubscribe з правильним типом
+                    var methodInfo = typeof(IEventBus).GetMethod(""Unsubscribe"").MakeGenericMethod(eventType);
+                    
+                    // Викликаємо метод Unsubscribe
+                    methodInfo.Invoke(_eventBus, new object[] { handler });
+                }
+                
+                _handlers.Clear();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($""Error unsubscribing from events: {ex.Message}"");
+            }
         }
         
-        private void OnEventReceived(IEvent evt)
+        private void OnEventReceived<T>(T evt) where T : struct, IEvent
         {
             _eventHistory.Add(new EventRecord
             {
@@ -2409,6 +2662,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {
@@ -2417,14 +2671,14 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameplayState : BaseState<GameStateType>
     {
-        private ILogger _logger;
-        private IEventBus _eventBus;
+        private readonly IMythLogger _logger;
+        private readonly IEventBus _eventBus;
         
         public override GameStateType StateId => GameStateType.Game;
         
         public GameplayState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
         }
         
@@ -2435,7 +2689,7 @@ namespace MythHunter.Core.Game
             // Публікуємо подію старту гри
             _eventBus.Publish(new GameStartedEvent
             {
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
             
             // Асинхронна ініціалізація
@@ -2465,7 +2719,7 @@ namespace MythHunter.Core.Game
             _eventBus.Publish(new GameEndedEvent
             {
                 IsVictory = false,
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
         }
     }
@@ -2485,6 +2739,7 @@ namespace MythHunter.Core.Game
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {{
@@ -2493,18 +2748,18 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class {stateName}State : BaseState<GameStateType>
     {{
-        private ILogger _logger;
+        private readonly IMythLogger _logger;
         
         public override GameStateType StateId => GameStateType.{stateTypeName};
         
         public {stateName}State(IDIContainer container) : base(container)
         {{
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
         }}
         
         public override void Enter()
         {{
-            _logger.LogInfo(""Entering {stateName} state"");
+            _logger.LogInfo(""Entering {stateName} state"", ""GameState"");
             
             // Асинхронна ініціалізація
             InitializeAsync().Forget();
@@ -2512,10 +2767,17 @@ namespace MythHunter.Core.Game
         
         private async UniTaskVoid InitializeAsync()
         {{
-            // Приклад асинхронної ініціалізації
-            await UniTask.Delay(100);
-            
-            _logger.LogInfo(""{stateName} state initialized asynchronously"");
+            try
+            {{
+                // Приклад асинхронної ініціалізації
+                await UniTask.Delay(100);
+                
+                _logger.LogInfo(""{stateName} state initialized asynchronously"", ""GameState"");
+            }}
+            catch (Exception ex)
+            {{
+                _logger.LogError($""Error in {stateName} initialization: {{ex.Message}}"", ""GameState"", ex);
+            }}
         }}
         
         public override void Update()
@@ -2525,7 +2787,7 @@ namespace MythHunter.Core.Game
         
         public override void Exit()
         {{
-            _logger.LogInfo(""Exiting {stateName} state"");
+            _logger.LogInfo(""Exiting {stateName} state"", ""GameState"");
         }}
     }}
 }}";
@@ -2537,281 +2799,639 @@ namespace MythHunter.Core.Game
     private void CreateUtilImplementations()
     {
         CreateUnityLogger();
-        CreateFileLogger();
-        CreateCompositeLogger();
-        CreateLoggerFactory();
+       
         CreateEnsureHelper();
         CreateValidator();
     }
     private void CreateUnityLogger()
     {
-        string unityLoggerPath = $"{CODE_PATH}/Utils/Logging/UnityLogger.cs";
-        string unityLoggerContent =
+        // Створюємо тільки MythLogger реалізацію
+        string mythLoggerPath = $"{CODE_PATH}/Utils/Logging/MythLogger.cs";
+        string mythLoggerContent =
     @"using UnityEngine;
-
-namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Реалізація логера через Unity Debug
-    /// </summary>
-    public class UnityLogger : ILogger
-    {
-        private LogLevel _logLevel = LogLevel.Info;
-        
-        public void LogInfo(string message)
-        {
-            if (_logLevel <= LogLevel.Info)
-                Debug.Log($""[INFO] {message}"");
-        }
-        
-        public void LogWarning(string message)
-        {
-            if (_logLevel <= LogLevel.Warning)
-                Debug.LogWarning($""[WARNING] {message}"");
-        }
-        
-        public void LogError(string message, System.Exception exception = null)
-        {
-            if (_logLevel <= LogLevel.Error)
-            {
-                if (exception != null)
-                    Debug.LogError($""[ERROR] {message}\nException: {exception}"");
-                else
-                    Debug.LogError($""[ERROR] {message}"");
-            }
-        }
-        
-        public void LogDebug(string message)
-        {
-            if (_logLevel <= LogLevel.Debug)
-                Debug.Log($""[DEBUG] {message}"");
-        }
-        
-        public void SetLogLevel(LogLevel level)
-        {
-            _logLevel = level;
-        }
-    }
-}";
-        WriteFile(unityLoggerPath, unityLoggerContent);
-    }
-    ////////////////////////////////////FILE LOGER SYSTEM//////////////////////////
-
-    //////////////
-    private void CreateFileLogger()
-    {
-        string fileLoggerPath = $"{CODE_PATH}/Utils/Logging/FileLogger.cs";
-        string fileLoggerContent = @"using System;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Diagnostics;
 using System.IO;
-using UnityEngine;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace MythHunter.Utils.Logging
 {
+    
+
     /// <summary>
-    /// Реалізація логера через файл
+    /// Сигнатура для методів, що будуть вставлятися в логи для додаткової обробки
     /// </summary>
-    public class FileLogger : ILogger
+    public delegate string LogEnricher(Dictionary<string, object> properties);
+
+    /// <summary>
+    /// Розширена реалізація логера для проекту MythHunter з підтримкою кольорів, категорій та контексту.
+    /// </summary>
+    public class MythLogger : IMythLogger
     {
-        private readonly string _logFilePath;
-        private LogLevel _logLevel = LogLevel.Info;
-        
-        public FileLogger(string fileName = ""MythHunter.log"")
+        #region Fields and Properties
+
+        private const string DEFAULT_CATEGORY = ""General"";
+        private const string LOG_FILE_PREFIX = ""mythgame_log_"";
+        private const string LOG_FILE_EXT = "".log"";
+        private const int MAX_LOG_FILES = 5;
+        private const float MB = 1024 * 1024;
+        private const float MAX_LOG_SIZE_MB = 10;
+
+        // Статичні значки для різних типів логів
+        private static readonly Dictionary<LogLevel, string> LogIcons = new Dictionary<LogLevel, string>
         {
-            _logFilePath = Path.Combine(Application.persistentDataPath, fileName);
-            
-            // Створення файлу та запис заголовка
-            using (StreamWriter writer = new StreamWriter(_logFilePath, false))
+            { LogLevel.Trace, ""🔍"" },
+            { LogLevel.Debug, ""🐞"" },
+            { LogLevel.Info, ""ℹ️"" },
+            { LogLevel.Warning, ""⚠️"" },
+            { LogLevel.Error, ""❌"" },
+            { LogLevel.Fatal, ""☠️"" }
+        };
+
+        // Статичні кольори для різних типів логів (кольори у форматі для Unity Console)
+        private static readonly Dictionary<LogLevel, string> LogColors = new Dictionary<LogLevel, string>
+        {
+            { LogLevel.Trace, ""#AAAAAA"" },  // Світло-сірий
+            { LogLevel.Debug, ""#DDDDDD"" },  // Сірий
+            { LogLevel.Info, ""#FFFFFF"" },   // Білий
+            { LogLevel.Warning, ""#FFCC00"" },// Жовтий
+            { LogLevel.Error, ""#FF6666"" },  // Червоний
+            { LogLevel.Fatal, ""#FF0000"" }   // Яскраво-червоний
+        };
+
+        // Колекція категорій логів з їхніми назвами та ярликами
+        private static readonly Dictionary<string, string> LogCategories = new Dictionary<string, string>
+        {
+            { ""General"", ""🌐"" },
+            { ""Network"", ""🌍"" },
+            { ""Combat"", ""⚔️"" },
+            { ""Movement"", ""🏃"" },
+            { ""AI"", ""🧠"" },
+            { ""UI"", ""🖥️"" },
+            { ""Performance"", ""⚡"" },
+            { ""Physics"", ""🔄"" },
+            { ""Audio"", ""🔊"" },
+            { ""Input"", ""🎮"" },
+            { ""Resource"", ""📦"" },
+            { ""Database"", ""💾"" },
+            { ""Replay"", ""📼"" },
+            { ""Analytics"", ""📊"" },
+            { ""Phase"", ""⏱️"" },
+            { ""Rune"", ""🔮"" },
+            { ""Item"", ""🎒"" },
+            { ""Character"", ""👤"" },
+            { ""Startup"", ""🚀"" },
+            { ""Cloud"", ""☁️"" }
+        };
+
+        // Мінімальний рівень логування
+        private LogLevel _minLogLevel;
+
+        // Флаг для файлового логування
+        private bool _logToFile;
+
+        // Шлях до файлу логу
+        private string _logFilePath;
+
+        // Збагачувачі логу
+        private List<LogEnricher> _enrichers = new List<LogEnricher>();
+
+        // Контекст логування
+        private Dictionary<string, object> _context = new Dictionary<string, object>();
+
+        // Категорія за замовчуванням
+        private string _defaultCategory = DEFAULT_CATEGORY;
+
+        // Об'єкт блокування для потокобезпечного запису у файл
+        private readonly object _fileLock = new object();
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Створює новий екземпляр MythLogger
+        /// </summary>
+        /// <param name=""minLogLevel"">Мінімальний рівень логування</param>
+        /// <param name=""logToFile"">Чи потрібно писати логи у файл</param>
+        /// <param name=""defaultCategory"">Категорія за замовчуванням</param>
+        public MythLogger(LogLevel minLogLevel = LogLevel.Info, bool logToFile = false, string defaultCategory = DEFAULT_CATEGORY)
+        {
+            _minLogLevel = minLogLevel;
+            _logToFile = logToFile;
+            _defaultCategory = defaultCategory;
+
+            if (logToFile)
             {
-                writer.WriteLine($""=== MythHunter Log Started {DateTime.Now} ==="");
+                InitializeFileLogging();
             }
         }
-        
-        public void LogInfo(string message)
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Логує інформаційне повідомлення
+        /// </summary>
+        public void LogInfo(string message, string category = null)
         {
-            if (_logLevel <= LogLevel.Info)
-                WriteToFile(""INFO"", message);
+            Log(LogLevel.Info, message, category ?? _defaultCategory);
         }
-        
-        public void LogWarning(string message)
+
+        /// <summary>
+        /// Логує попередження
+        /// </summary>
+        public void LogWarning(string message, string category = null)
         {
-            if (_logLevel <= LogLevel.Warning)
-                WriteToFile(""WARNING"", message);
+            Log(LogLevel.Warning, message, category ?? _defaultCategory);
         }
-        
-        public void LogError(string message, Exception exception = null)
+
+        /// <summary>
+        /// Логує помилку
+        /// </summary>
+        public void LogError(string message, string category = null, Exception exception = null)
+{
+    if (_minLogLevel <= LogLevel.Error)
+    {
+        string errorMsg = message;
+        if (exception != null)
         {
-            if (_logLevel <= LogLevel.Error)
+            errorMsg += $""\nException: {exception.Message}"";
+            if (exception.StackTrace != null)
             {
-                if (exception != null)
-                    WriteToFile(""ERROR"", $""{message}\nException: {exception}"");
-                else
-                    WriteToFile(""ERROR"", message);
+                errorMsg += $""\nStackTrace: {exception.StackTrace}"";
             }
         }
-        
-        public void LogDebug(string message)
+        Log(LogLevel.Error, errorMsg, category ?? _defaultCategory);
+    }
+}
+
+        /// <summary>
+        /// Логує фатальну помилку
+        /// </summary>
+        public void LogFatal(string message, string category = null)
         {
-            if (_logLevel <= LogLevel.Debug)
-                WriteToFile(""DEBUG"", message);
+            Log(LogLevel.Fatal, message, category ?? _defaultCategory);
         }
-        
-        public void SetLogLevel(LogLevel level)
+
+        /// <summary>
+        /// Логує відлагоджувальне повідомлення
+        /// </summary>
+        public void LogDebug(string message, string category = null)
         {
-            _logLevel = level;
+            Log(LogLevel.Debug, message, category ?? _defaultCategory);
         }
-        
-        private void WriteToFile(string level, string message)
+
+        /// <summary>
+        /// Логує трасувальне повідомлення
+        /// </summary>
+        public void LogTrace(string message, string category = null)
         {
+            Log(LogLevel.Trace, message, category ?? _defaultCategory);
+        }
+
+        /// <summary>
+        /// Асоціює контекстні дані з логером
+        /// </summary>
+        public void WithContext(string key, object value)
+        {
+            if (_context.ContainsKey(key))
+            {
+                _context[key] = value;
+            }
+            else
+            {
+                _context.Add(key, value);
+            }
+        }
+
+        /// <summary>
+        /// Очищує всі контекстні дані
+        /// </summary>
+        public void ClearContext()
+        {
+            _context.Clear();
+        }
+
+        /// <summary>
+        /// Додає збагачувач до логера
+        /// </summary>
+        public void AddEnricher(LogEnricher enricher)
+        {
+            if (enricher != null && !_enrichers.Contains(enricher))
+            {
+                _enrichers.Add(enricher);
+            }
+        }
+
+        /// <summary>
+        /// Видаляє збагачувач з логера
+        /// </summary>
+        public void RemoveEnricher(LogEnricher enricher)
+        {
+            if (enricher != null)
+            {
+                _enrichers.Remove(enricher);
+            }
+        }
+
+        /// <summary>
+        /// Встановлює категорію за замовчуванням
+        /// </summary>
+        public void SetDefaultCategory(string category)
+        {
+            _defaultCategory = !string.IsNullOrEmpty(category) ? category : DEFAULT_CATEGORY;
+        }
+
+        /// <summary>
+        /// Змінює мінімальний рівень логування
+        /// </summary>
+        public void SetMinLogLevel(LogLevel level)
+        {
+            _minLogLevel = level;
+        }
+
+        /// <summary>
+        /// Включає або виключає файлове логування
+        /// </summary>
+        public void EnableFileLogging(bool enable)
+        {
+            if (enable && !_logToFile)
+            {
+                _logToFile = true;
+                InitializeFileLogging();
+            }
+            else if (!enable && _logToFile)
+            {
+                _logToFile = false;
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Основний метод логування
+        /// </summary>
+        private void Log(
+            LogLevel level,
+            string message,
+            string category,
+            [CallerMemberName] string callerMember = """",
+            [CallerFilePath] string callerFilePath = """",
+            [CallerLineNumber] int callerLineNumber = 0
+        )
+        {
+            if (level < _minLogLevel)
+                return;
+
+            string callerFile = Path.GetFileName(callerFilePath);
+
+            // Підготовка контексту для збагачувачів
+            var properties = new Dictionary<string, object>(_context)
+            {
+                { ""level"", level },
+                { ""message"", message },
+                { ""category"", category },
+                { ""timestamp"", DateTime.Now },
+                { ""caller"", $""{callerFile}:{callerMember}:{callerLineNumber}"" }
+            };
+
+            // Застосування збагачувачів
+            foreach (var enricher in _enrichers)
+            {
+                try
+                {
+                    string enrichment = enricher(properties);
+                    if (!string.IsNullOrEmpty(enrichment))
+                    {
+                        message += "" "" + enrichment;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    string errorMsg = $""Error in log enricher: {ex.Message}"";
+                    UnityEngine.Debug.LogError(errorMsg);
+                }
+            }
+
+            // Отримання значка для категорії
+            string categoryIcon = GetCategoryIcon(category);
+
+            // Отримання значка для рівня логування
+            string levelIcon = LogIcons.ContainsKey(level) ? LogIcons[level] : """";
+
+            // Форматування повідомлення з часом, категорією, рівнем та значками
+            string timeStr = DateTime.Now.ToString(""HH:mm:ss.fff"");
+            string colorTag = GetColorTag(level);
+
+            // Форматування повного повідомлення для логу
+            string fullMessage = $""{timeStr} {categoryIcon} {levelIcon} <b>[{category}]</b> {message}"";
+
+            // Якщо є детальний контекст, додати його
+            if (properties.Count > 5) // Базовий контекст містить 5 елементів
+            {
+                StringBuilder contextStr = new StringBuilder("" {"");
+                bool first = true;
+
+                foreach (var kv in properties.Where(p =>
+                   p.Key != ""level"" &&
+                   p.Key != ""message"" &&
+                   p.Key != ""category"" &&
+                   p.Key != ""timestamp"" &&
+                   p.Key != ""caller""))
+                {
+                    if (!first)
+                        contextStr.Append("", "");
+                    first = false;
+
+                    contextStr.Append($""{kv.Key}={FormatContextValue(kv.Value)}"");
+                }
+
+                contextStr.Append(""}"");
+                fullMessage += contextStr.ToString();
+            }
+
+            // Додавання інформації про виклик для рівнів Debug та Trace
+            if (level <= LogLevel.Debug)
+            {
+                fullMessage += $"" [{callerFile}:{callerMember}():{callerLineNumber}]"";
+            }
+
+            // Виведення у консоль Unity
+            LogToUnityConsole(level, $""{colorTag}{fullMessage}</color>"");
+
+            // Виведення у файл, якщо увімкнено
+            if (_logToFile)
+            {
+                LogToFile(level, $""{timeStr} [{level}] [{category}] {message}"");
+            }
+        }
+
+        /// <summary>
+        /// Отримує відповідний значок для категорії логу
+        /// </summary>
+        private string GetCategoryIcon(string category)
+        {
+            return LogCategories.ContainsKey(category) ? LogCategories[category] : ""📝"";
+        }
+
+        /// <summary>
+        /// Повертає тег кольору для рівня логування
+        /// </summary>
+        private string GetColorTag(LogLevel level)
+        {
+            return LogColors.ContainsKey(level) ? $""<color={LogColors[level]}>"" : ""<color=white>"";
+        }
+
+        /// <summary>
+        /// Виводить повідомлення у консоль Unity з відповідним рівнем логування
+        /// </summary>
+        private void LogToUnityConsole(LogLevel level, string message)
+        {
+            switch (level)
+            {
+                case LogLevel.Error:
+                case LogLevel.Fatal:
+                    UnityEngine.Debug.LogError(message);
+                    break;
+                case LogLevel.Warning:
+                    UnityEngine.Debug.LogWarning(message);
+                    break;
+                default:
+                    UnityEngine.Debug.Log(message);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Записує повідомлення у файл логу
+        /// </summary>
+        private void LogToFile(LogLevel level, string message)
+        {
+            if (string.IsNullOrEmpty(_logFilePath))
+                return;
+
             try
             {
-                using (StreamWriter writer = new StreamWriter(_logFilePath, true))
+                lock (_fileLock)
                 {
-                    writer.WriteLine($""[{DateTime.Now.ToString(""yyyy-MM-dd HH:mm:ss.fff"")}] [{level}] {message}"");
+                    File.AppendAllText(_logFilePath, message + Environment.NewLine);
+
+                    // Перевірка розміру файлу
+                    FileInfo logFile = new FileInfo(_logFilePath);
+                    if (logFile.Length > MAX_LOG_SIZE_MB * MB)
+                    {
+                        RotateLogFiles();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($""Failed to write to log file: {ex.Message}"");
+                UnityEngine.Debug.LogError($""Помилка при записі в файл логу: {ex.Message}"");
+                _logToFile = false;
             }
         }
-    }
-}";
-        WriteFile(fileLoggerPath, fileLoggerContent);
-    }
-    private void CreateCompositeLogger()
-    {
-        string compositeLoggerPath = $"{CODE_PATH}/Utils/Logging/CompositeLogger.cs";
-        string compositeLoggerContent =
-    @"using System;
-using System.Collections.Generic;
 
-namespace MythHunter.Utils.Logging
-{
-    /// <summary>
-    /// Комбінований логер, який використовує кілька логерів
-    /// </summary>
-    public class CompositeLogger : ILogger
-    {
-        private readonly List<ILogger> _loggers = new List<ILogger>();
-        private LogLevel _logLevel = LogLevel.Info;
-        
-        public CompositeLogger(params ILogger[] loggers)
+        /// <summary>
+        /// Ініціалізує файлове логування
+        /// </summary>
+        private void InitializeFileLogging()
         {
-            _loggers.AddRange(loggers);
-        }
-        
-        public void AddLogger(ILogger logger)
-        {
-            _loggers.Add(logger);
-        }
-        
-        public void RemoveLogger(ILogger logger)
-        {
-            _loggers.Remove(logger);
-        }
-        
-        public void LogInfo(string message)
-        {
-            if (_logLevel <= LogLevel.Info)
+            try
             {
-                foreach (var logger in _loggers)
+                string logsDir = Path.Combine(Application.persistentDataPath, ""Logs"");
+
+                if (!Directory.Exists(logsDir))
                 {
-                    logger.LogInfo(message);
+                    Directory.CreateDirectory(logsDir);
+                }
+
+                // Створення нового файлу логу з поточною датою та часом
+                string timestamp = DateTime.Now.ToString(""yyyyMMdd_HHmmss"");
+                _logFilePath = Path.Combine(logsDir, $""{LOG_FILE_PREFIX}{timestamp}{LOG_FILE_EXT}"");
+
+                // Запис заголовка логу
+                File.WriteAllText(_logFilePath, $""=== MythHunter Log Started at {DateTime.Now} ===\n"" +
+                    $""Application Version: {Application.version}\n"" +
+                    $""Unity Version: {Application.unityVersion}\n"" +
+                    $""Platform: {Application.platform}\n"" +
+                    $""System Language: {Application.systemLanguage}\n"" +
+                    $""Device Model: {SystemInfo.deviceModel}\n"" +
+                    $""Device Name: {SystemInfo.deviceName}\n"" +
+                    $""Operating System: {SystemInfo.operatingSystem}\n"" +
+                    $""Processor: {SystemInfo.processorType}\n"" +
+                    $""Memory: {SystemInfo.systemMemorySize} MB\n"" +
+                    $""Graphics Device: {SystemInfo.graphicsDeviceName}\n"" +
+                    $""Graphics Memory: {SystemInfo.graphicsMemorySize} MB\n"" +
+                    $""=== Log Entries ===\n\n"");
+
+                // Очищення старих логів
+                CleanupOldLogs(logsDir);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($""Не вдалося ініціалізувати файлове логування: {ex.Message}"");
+                _logToFile = false;
+            }
+        }
+
+        /// <summary>
+        /// Ротація файлів логу при досягненні максимального розміру
+        /// </summary>
+        private void RotateLogFiles()
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(_logFilePath);
+                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(_logFilePath);
+                string extension = Path.GetExtension(_logFilePath);
+
+                // Створення нового файлу з номером
+                string timestamp = DateTime.Now.ToString(""yyyyMMdd_HHmmss"");
+                string newLogPath = Path.Combine(directory, $""{fileNameWithoutExt}_{timestamp}{extension}"");
+
+                // Закриття поточного файлу і створення нового
+                _logFilePath = newLogPath;
+
+                // Запис заголовка у новий файл
+                File.WriteAllText(_logFilePath, $""=== MythHunter Log Continued at {DateTime.Now} ===\n\n"");
+
+                // Очищення старих логів
+                CleanupOldLogs(directory);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($""Помилка при ротації файлів логу: {ex.Message}"");
+            }
+        }
+
+        /// <summary>
+        /// Видаляє старі файли логів, залишаючи тільки останні
+        /// </summary>
+        private void CleanupOldLogs(string directory)
+        {
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(directory);
+                FileInfo[] logFiles = di.GetFiles($""{LOG_FILE_PREFIX}*{LOG_FILE_EXT}"")
+                                      .OrderByDescending(f => f.LastWriteTime)
+                                      .ToArray();
+
+                // Залишаємо тільки останні MAX_LOG_FILES файлів
+                for (int i = MAX_LOG_FILES; i < logFiles.Length; i++)
+                {
+                    logFiles[i].Delete();
                 }
             }
-        }
-        
-        public void LogWarning(string message)
-        {
-            if (_logLevel <= LogLevel.Warning)
+            catch (Exception ex)
             {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogWarning(message);
-                }
+                UnityEngine.Debug.LogError($""Помилка при очищенні старих логів: {ex.Message}"");
             }
         }
-        
-        public void LogError(string message, Exception exception = null)
+
+        /// <summary>
+        /// Форматує значення для контексту логу
+        /// </summary>
+        private string FormatContextValue(object value)
         {
-            if (_logLevel <= LogLevel.Error)
-            {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogError(message, exception);
-                }
-            }
+            if (value == null)
+                return ""null"";
+
+            if (value is string)
+                return $""\""{value}\"""";
+
+            if (value is DateTime dt)
+                return dt.ToString(""yyyy-MM-dd HH:mm:ss.fff"");
+
+            return value.ToString();
         }
-        
-        public void LogDebug(string message)
+
+        #endregion
+
+        #region Static Methods
+
+        /// <summary>
+        /// Створює стандартний логер з конфігурацією за замовчуванням
+        /// </summary>
+        public static MythLogger CreateDefaultLogger()
         {
-            if (_logLevel <= LogLevel.Debug)
+            // В режимі редактора використовуємо розширений режим з файловим логуванням
+            if (Application.isEditor)
             {
-                foreach (var logger in _loggers)
-                {
-                    logger.LogDebug(message);
-                }
+                return new MythLogger(LogLevel.Debug, true, ""General"");
             }
+
+            // В релізній збірці використовуємо більш обмежений режим
+            bool isDevelopmentBuild = UnityEngine.Debug.isDebugBuild;
+            LogLevel level = isDevelopmentBuild ? LogLevel.Info : LogLevel.Warning;
+            bool logToFile = isDevelopmentBuild;
+
+            return new MythLogger(level, logToFile, ""General"");
         }
-        
-        public void SetLogLevel(LogLevel level)
-        {
-            _logLevel = level;
-            
-            foreach (var logger in _loggers)
-            {
-                logger.SetLogLevel(level);
-            }
-        }
+
+        #endregion
     }
-}";
-        WriteFile(compositeLoggerPath, compositeLoggerContent);
-    }
-    private void CreateLoggerFactory()
-    {
-        string loggerFactoryPath = $"{CODE_PATH}/Utils/Logging/LoggerFactory.cs";
-        string loggerFactoryContent =
-    @"namespace MythHunter.Utils.Logging
-{
+
     /// <summary>
-    /// Фабрика логерів
+    /// Фабрика для створення логерів з різними налаштуваннями
     /// </summary>
-    public static class LoggerFactory
+    public static class MythLoggerFactory
     {
-        public static ILogger CreateUnityLogger(LogLevel level = LogLevel.Info)
+        private static IMythLogger _defaultLogger;
+        private static Dictionary<string, IMythLogger> _loggers = new Dictionary<string, IMythLogger>();
+
+        /// <summary>
+        /// Створює або повертає логер за замовчуванням
+        /// </summary>
+        public static IMythLogger GetDefaultLogger()
         {
-            var logger = new UnityLogger();
-            logger.SetLogLevel(level);
+            if (_defaultLogger == null)
+            {
+                _defaultLogger = MythLogger.CreateDefaultLogger();
+            }
+
+            return _defaultLogger;
+        }
+
+        /// <summary>
+        /// Створює або повертає логер для конкретної підсистеми
+        /// </summary>
+        public static IMythLogger GetLogger(string subsystem)
+        {
+            if (string.IsNullOrEmpty(subsystem))
+            {
+                return GetDefaultLogger();
+            }
+
+            if (!_loggers.TryGetValue(subsystem, out var logger))
+            {
+                logger = new MythLogger(defaultCategory: subsystem);
+                _loggers[subsystem] = logger;
+            }
+
             return logger;
         }
-        
-        public static ILogger CreateFileLogger(string fileName = ""MythHunter.log"", LogLevel level = LogLevel.Info)
+
+        /// <summary>
+        /// Створює спеціалізований логер з конкретними параметрами
+        /// </summary>
+        public static IMythLogger CreateCustomLogger(LogLevel level, bool logToFile, string category)
         {
-            var logger = new FileLogger(fileName);
-            logger.SetLogLevel(level);
-            return logger;
-        }
-        
-        public static ILogger CreateCompositeLogger(LogLevel level = LogLevel.Info)
-        {
-            var unityLogger = CreateUnityLogger(level);
-            var fileLogger = CreateFileLogger(""MythHunter.log"", level);
-            
-            return new CompositeLogger(unityLogger, fileLogger);
-        }
-        
-        public static ILogger CreateDefaultLogger()
-        {
-            #if UNITY_EDITOR
-            return CreateUnityLogger();
-            #else
-            return CreateCompositeLogger();
-            #endif
+            return new MythLogger(level, logToFile, category);
         }
     }
-}";
-        WriteFile(loggerFactoryPath, loggerFactoryContent);
+}
+"
+    ;
+        WriteFile(mythLoggerPath, mythLoggerContent);
     }
+
 
     private void CreateEnsureHelper()
     {

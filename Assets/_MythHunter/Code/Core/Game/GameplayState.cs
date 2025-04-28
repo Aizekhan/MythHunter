@@ -4,6 +4,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {
@@ -12,14 +13,14 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameplayState : BaseState<GameStateType>
     {
-        private ILogger _logger;
-        private IEventBus _eventBus;
+        private readonly IMythLogger _logger;
+        private readonly IEventBus _eventBus;
         
         public override GameStateType StateId => GameStateType.Game;
         
         public GameplayState(IDIContainer container) : base(container)
         {
-            _logger = container.Resolve<ILogger>();
+            _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
         }
         
@@ -30,7 +31,7 @@ namespace MythHunter.Core.Game
             // Публікуємо подію старту гри
             _eventBus.Publish(new GameStartedEvent
             {
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
             
             // Асинхронна ініціалізація
@@ -40,7 +41,7 @@ namespace MythHunter.Core.Game
         private async UniTaskVoid InitializeAsync()
         {
             _logger.LogInfo("Starting async gameplay initialization");
-
+            
             // Приклад асинхронної ініціалізації
             await UniTask.Delay(100);
             
@@ -60,7 +61,7 @@ namespace MythHunter.Core.Game
             _eventBus.Publish(new GameEndedEvent
             {
                 IsVictory = false,
-                Timestamp = System.DateTime.UtcNow
+                Timestamp = DateTime.UtcNow
             });
         }
     }
