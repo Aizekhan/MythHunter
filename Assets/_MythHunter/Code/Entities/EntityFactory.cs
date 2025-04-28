@@ -1,7 +1,9 @@
+
 using MythHunter.Core.ECS;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.Components.Core;
+
 namespace MythHunter.Entities
 {
     /// <summary>
@@ -10,10 +12,10 @@ namespace MythHunter.Entities
     public abstract class EntityFactory
     {
         protected readonly IEntityManager EntityManager;
-        protected readonly ILogger Logger;
+        protected readonly IMythLogger Logger;
         
         [Inject]
-        public EntityFactory(IEntityManager entityManager, ILogger logger)
+        public EntityFactory(IEntityManager entityManager, IMythLogger logger)
         {
             EntityManager = entityManager;
             Logger = logger;

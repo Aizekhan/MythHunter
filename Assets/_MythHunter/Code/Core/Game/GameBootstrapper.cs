@@ -14,7 +14,7 @@ namespace MythHunter.Core.Game
     {
         private IDIContainer _container;
         private IEventBus _eventBus;
-        private MythHunter.Utils.Logging.ILogger _logger;
+        private IMythLogger _logger;
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         
@@ -39,7 +39,7 @@ namespace MythHunter.Core.Game
             
             // Реєстрація базових сервісів
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<MythHunter.Utils.Logging.ILogger, UnityLogger>();
+            _container.RegisterSingleton<IMythLogger, MythLogger>();
             
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
@@ -47,7 +47,7 @@ namespace MythHunter.Core.Game
         
         private void InitializeLogging()
         {
-            _logger = _container.Resolve<MythHunter.Utils.Logging.ILogger>();
+            _logger = _container.Resolve<IMythLogger>();
             _logger.LogInfo("Logging system initialized");
         }
         

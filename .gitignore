@@ -70,3 +70,14 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# MythHunter specific
+/[Aa]ssets/_MythHunter/[Tt]emp/
+/[Aa]ssets/_MythHunter/[Bb]uilds/
+*.log
+
+# Custom Rules
+# Custom rules
+/Assets/Temp/
+/Assets/Builds/
+*.log
