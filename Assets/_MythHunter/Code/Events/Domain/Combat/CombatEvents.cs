@@ -1,12 +1,17 @@
 using System;
+using MythHunter.Events;
 
-namespace MythHunter.Events.Domain
+namespace MythHunter.Events.Domain.Combat
 {
     /// <summary>
-    /// Подія запуску гри
+    /// Подія нанесення пошкодження
     /// </summary>
-    public struct GameStartedEvent : IEvent
+    public struct DamageAppliedEvent : IEvent
     {
+        public int SourceEntityId;
+        public int TargetEntityId;
+        public float DamageAmount;
+        public string DamageType;
         public DateTime Timestamp;
 
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
@@ -15,11 +20,13 @@ namespace MythHunter.Events.Domain
     }
 
     /// <summary>
-    /// Подія паузи гри
+    /// Подія застосування лікування
     /// </summary>
-    public struct GamePausedEvent : IEvent
+    public struct HealingAppliedEvent : IEvent
     {
-        public bool IsPaused;
+        public int SourceEntityId;
+        public int TargetEntityId;
+        public float HealingAmount;
         public DateTime Timestamp;
 
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
@@ -28,11 +35,11 @@ namespace MythHunter.Events.Domain
     }
 
     /// <summary>
-    /// Подія завершення гри
+    /// Подія смерті сутності
     /// </summary>
-    public struct GameEndedEvent : IEvent
+    public struct EntityDeathEvent : IEvent
     {
-        public bool IsVictory;
+        public int EntityId;
         public DateTime Timestamp;
 
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";

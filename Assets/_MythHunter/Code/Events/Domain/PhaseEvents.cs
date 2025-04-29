@@ -14,7 +14,20 @@ namespace MythHunter.Events.Domain
         Combat,
         Freeze
     }
-    
+
+    /// <summary>
+    /// Подія запиту на зміну фази
+    /// </summary>
+    public struct PhaseChangeRequestEvent : IEvent
+    {
+        public GamePhase RequestedPhase;
+        public DateTime Timestamp;
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+
+        public EventPriority GetPriority() => EventPriority.Critical;
+    }
+
     /// <summary>
     /// Подія зміни фази
     /// </summary>
@@ -23,10 +36,12 @@ namespace MythHunter.Events.Domain
         public GamePhase PreviousPhase;
         public GamePhase CurrentPhase;
         public DateTime Timestamp;
-        
+
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+
+        public EventPriority GetPriority() => EventPriority.High;
     }
-    
+
     /// <summary>
     /// Подія початку фази
     /// </summary>
@@ -35,10 +50,12 @@ namespace MythHunter.Events.Domain
         public GamePhase Phase;
         public float Duration;
         public DateTime Timestamp;
-        
+
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+
+        public EventPriority GetPriority() => EventPriority.High;
     }
-    
+
     /// <summary>
     /// Подія завершення фази
     /// </summary>
@@ -46,7 +63,9 @@ namespace MythHunter.Events.Domain
     {
         public GamePhase Phase;
         public DateTime Timestamp;
-        
+
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+
+        public EventPriority GetPriority() => EventPriority.High;
     }
 }

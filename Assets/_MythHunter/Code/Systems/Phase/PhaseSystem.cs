@@ -1,128 +1,217 @@
-// PhaseSystem.cs
+using Cysharp.Threading.Tasks;
+using MythHunter.Core.DI;
+using MythHunter.Core.ECS;
+using MythHunter.Events;
+using MythHunter.Systems.Core;
+using MythHunter.Utils.Logging;
+
 namespace MythHunter.Systems.Phase
 {
     /// <summary>
-    /// Система керування фазами гри
+    /// Система для керування фазами гри з асинхронною обробкою подій
     /// </summary>
-    public class PhaseSystem : MythHunter.Core.ECS.SystemBase, IPhaseSystem, MythHunter.Events.IEventSubscriber
+    public class PhaseSystem : SystemBase, IPhaseSystem
     {
-        private readonly MythHunter.Events.IEventBus _eventBus;
-        private readonly MythHunter.Utils.Logging.IMythLogger _logger;
-        private MythHunter.Events.Domain.GamePhase _currentPhase = MythHunter.Events.Domain.GamePhase.None;
-        private float _phaseTimeRemaining = 0f;
+        private readonly IEventBus _eventBus;
+        private readonly IEventQueue _eventQueue;
+        private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
-        public PhaseSystem(MythHunter.Events.IEventBus eventBus, MythHunter.Utils.Logging.IMythLogger logger)
+       
+        private Events.Domain.GamePhase _currentPhase;
+        private float _phaseTimer;
+        private float _phaseDuration;
+        public Events.Domain.GamePhase CurrentPhase => _currentPhase;
+        [Inject]
+        public PhaseSystem(
+            IEventBus eventBus,
+            IEventQueue eventQueue,
+            IMythLogger logger)
         {
             _eventBus = eventBus;
+            _eventQueue = eventQueue;
             _logger = logger;
+
+            _currentPhase = Events.Domain.GamePhase.None;
+            _phaseTimer = 0;
+            _phaseDuration = 0;
         }
 
         public override void Initialize()
         {
-            SubscribeToEvents();
-            _logger.LogInfo("PhaseSystem initialized", "Phase");
+            // Підписка на синхронні події
+            _eventBus.Subscribe<Events.Domain.PhaseChangeRequestEvent>(OnPhaseChangeRequest);
+
+            // Підписка на асинхронні події
+            _eventBus.SubscribeAsync<Events.Domain.GameStartedEvent>(OnGameStartedAsync);
+            _eventBus.SubscribeAsync<Events.Domain.GameEndedEvent>(OnGameEndedAsync);
+
+            _logger.LogInfo("PhaseSystem initialized");
         }
-
-        public void SubscribeToEvents()
-        {
-            // Підписка на події
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            // Відписка від подій
-        }
-
-        public void StartPhase(MythHunter.Events.Domain.GamePhase phase)
-        {
-            _currentPhase = phase;
-            _logger.LogInfo($"Starting phase: {phase}", "Phase");
-
-            // Публікація події початку фази
-            _eventBus.Publish(new MythHunter.Events.Domain.PhaseStartedEvent
-            {
-                Phase = phase,
-                Duration = GetPhaseDuration(phase),
-                Timestamp = System.DateTime.Now
-            });
-        }
-
-        public void EndPhase(MythHunter.Events.Domain.GamePhase phase)
-        {
-            _logger.LogInfo($"Ending phase: {phase}", "Phase");
-
-            // Публікація події завершення фази
-            _eventBus.Publish(new MythHunter.Events.Domain.PhaseEndedEvent
-            {
-                Phase = phase,
-                Timestamp = System.DateTime.Now
-            });
-
-            // Перехід до наступної фази
-            _currentPhase = GetNextPhase(phase);
-            StartPhase(_currentPhase);
-        }
-
-        public MythHunter.Events.Domain.GamePhase CurrentPhase => _currentPhase;
-
-        public float GetPhaseTimeRemaining() => _phaseTimeRemaining;
 
         public override void Update(float deltaTime)
         {
-            if (_currentPhase != MythHunter.Events.Domain.GamePhase.None)
-            {
-                _phaseTimeRemaining -= deltaTime;
+            if (_currentPhase == Events.Domain.GamePhase.None)
+                return;
 
-                if (_phaseTimeRemaining <= 0)
+            // Оновлення таймера фази
+            _phaseTimer += deltaTime;
+
+            // Перевірка завершення фази
+            if (_phaseTimer >= _phaseDuration)
+            {
+                // Завершення поточної фази
+                Events.Domain.GamePhase previousPhase = _currentPhase;
+
+                // Визначення наступної фази
+                Events.Domain.GamePhase nextPhase = GetNextPhase(_currentPhase);
+
+                // Запуск нової фази
+                StartPhase(nextPhase);
+
+                // Публікація події завершення фази
+                var evt = new Events.Domain.PhaseEndedEvent
                 {
-                    EndPhase(_currentPhase);
-                }
+                    Phase = previousPhase,
+                    Timestamp = System.DateTime.UtcNow
+                };
+
+                // Використовуємо чергу для публікації
+                _eventQueue.Enqueue(evt);
             }
         }
 
+        private void OnPhaseChangeRequest(Events.Domain.PhaseChangeRequestEvent evt)
+        {
+            _logger.LogInfo($"Phase change requested from {_currentPhase} to {evt.RequestedPhase}");
+
+            // Завершення поточної фази
+            Events.Domain.GamePhase previousPhase = _currentPhase;
+
+            // Запуск нової фази
+            StartPhase(evt.RequestedPhase);
+
+            // Публікація події зміни фази
+            var phaseChangedEvent = new Events.Domain.PhaseChangedEvent
+            {
+                PreviousPhase = previousPhase,
+                CurrentPhase = evt.RequestedPhase,
+                Timestamp = System.DateTime.UtcNow
+            };
+
+            // Використовуємо чергу для публікації
+            _eventQueue.Enqueue(phaseChangedEvent);
+        }
+
+        private async UniTask OnGameStartedAsync(Events.Domain.GameStartedEvent evt)
+        {
+            _logger.LogInfo("Game started, initializing phases");
+
+            // Асинхронна ініціалізація даних для фаз
+            await PreparePhaseDataAsync();
+
+            // Запуск першої фази
+            StartPhase(Events.Domain.GamePhase.Rune);
+        }
+
+        private async UniTask OnGameEndedAsync(Events.Domain.GameEndedEvent evt)
+        {
+            _logger.LogInfo("Game ended, cleaning up phases");
+
+            // Асинхронне очищення даних фаз
+            await CleanupPhaseDataAsync();
+
+            // Скидання фази
+            _currentPhase = Events.Domain.GamePhase.None;
+            _phaseTimer = 0;
+            _phaseDuration = 0;
+        }
+
+        private async UniTask PreparePhaseDataAsync()
+        {
+            // Симуляція асинхронного завантаження даних
+            await UniTask.Delay(100);
+
+            _logger.LogDebug("Phase data prepared");
+        }
+
+        private async UniTask CleanupPhaseDataAsync()
+        {
+            // Симуляція асинхронного очищення даних
+            await UniTask.Delay(100);
+
+            _logger.LogDebug("Phase data cleaned up");
+        }
+
+        public void StartPhase(Events.Domain.GamePhase phase)
+        {
+            _currentPhase = phase;
+            _phaseTimer = 0;
+
+            // Встановлення тривалості фази
+            _phaseDuration = GetPhaseDuration(phase);
+
+            _logger.LogInfo($"Started phase {phase} with duration {_phaseDuration}s");
+
+            // Публікація події початку фази
+            var evt = new Events.Domain.PhaseStartedEvent
+            {
+                Phase = phase,
+                Duration = _phaseDuration,
+                Timestamp = System.DateTime.UtcNow
+            };
+
+            // Використовуємо чергу для публікації
+            _eventQueue.Enqueue(evt);
+        }
+        public void EndPhase(Events.Domain.GamePhase phase)
+        {
+            _logger.LogInfo($"Phase {phase} ended manually");
+
+            var evt = new Events.Domain.PhaseEndedEvent
+            {
+                Phase = phase,
+                Timestamp = System.DateTime.UtcNow
+            };
+
+            _eventQueue.Enqueue(evt);
+        }
+        private Events.Domain.GamePhase GetNextPhase(Events.Domain.GamePhase currentPhase)
+        {
+            return currentPhase switch
+            {
+                Events.Domain.GamePhase.Rune => Events.Domain.GamePhase.Planning,
+                Events.Domain.GamePhase.Planning => Events.Domain.GamePhase.Movement,
+                Events.Domain.GamePhase.Movement => Events.Domain.GamePhase.Combat,
+                Events.Domain.GamePhase.Combat => Events.Domain.GamePhase.Freeze,
+                Events.Domain.GamePhase.Freeze => Events.Domain.GamePhase.Rune,
+                _ => Events.Domain.GamePhase.Rune
+            };
+        }
+
+        private float GetPhaseDuration(Events.Domain.GamePhase phase)
+        {
+            return phase switch
+            {
+                Events.Domain.GamePhase.Rune => 5f,
+                Events.Domain.GamePhase.Planning => 15f,
+                Events.Domain.GamePhase.Movement => 10f,
+                Events.Domain.GamePhase.Combat => 8f,
+                Events.Domain.GamePhase.Freeze => 3f,
+                _ => 0f
+            };
+        }
+        public float GetPhaseTimeRemaining()
+        {
+            return _phaseDuration - _phaseTimer;
+        }
         public override void Dispose()
         {
-            UnsubscribeFromEvents();
-            _logger.LogInfo("PhaseSystem disposed", "Phase");
-        }
+            // Відписка від подій
+            _eventBus.Unsubscribe<Events.Domain.PhaseChangeRequestEvent>(OnPhaseChangeRequest);
+            _eventBus.UnsubscribeAsync<Events.Domain.GameStartedEvent>(OnGameStartedAsync);
+            _eventBus.UnsubscribeAsync<Events.Domain.GameEndedEvent>(OnGameEndedAsync);
 
-        private float GetPhaseDuration(MythHunter.Events.Domain.GamePhase phase)
-        {
-            switch (phase)
-            {
-                case MythHunter.Events.Domain.GamePhase.Rune:
-                    return 5f;
-                case MythHunter.Events.Domain.GamePhase.Planning:
-                    return 15f;
-                case MythHunter.Events.Domain.GamePhase.Movement:
-                    return 30f;
-                case MythHunter.Events.Domain.GamePhase.Combat:
-                    return 20f;
-                case MythHunter.Events.Domain.GamePhase.Freeze:
-                    return 5f;
-                default:
-                    return 10f;
-            }
-        }
-
-        private MythHunter.Events.Domain.GamePhase GetNextPhase(MythHunter.Events.Domain.GamePhase currentPhase)
-        {
-            switch (currentPhase)
-            {
-                case MythHunter.Events.Domain.GamePhase.Rune:
-                    return MythHunter.Events.Domain.GamePhase.Planning;
-                case MythHunter.Events.Domain.GamePhase.Planning:
-                    return MythHunter.Events.Domain.GamePhase.Movement;
-                case MythHunter.Events.Domain.GamePhase.Movement:
-                    return MythHunter.Events.Domain.GamePhase.Combat;
-                case MythHunter.Events.Domain.GamePhase.Combat:
-                    return MythHunter.Events.Domain.GamePhase.Freeze;
-                case MythHunter.Events.Domain.GamePhase.Freeze:
-                    return MythHunter.Events.Domain.GamePhase.Rune;
-                default:
-                    return MythHunter.Events.Domain.GamePhase.Rune;
-            }
+            _logger.LogInfo("PhaseSystem disposed");
         }
     }
 }

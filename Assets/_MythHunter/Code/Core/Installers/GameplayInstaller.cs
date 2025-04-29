@@ -9,6 +9,8 @@ using MythHunter.Systems.AI;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.UI.Core;
+using MythHunter.Systems.Gameplay;
+using MythHunter.Entities;
 
 namespace MythHunter.Core.Installers
 {
@@ -41,7 +43,8 @@ namespace MythHunter.Core.Installers
             // Створення та реєстрація основних ігрових систем
 
             // Фазова система
-            var phaseSystem = new PhaseSystem(eventBus, logger);
+            var eventQueue = container.Resolve<IEventQueue>();
+            var phaseSystem = new PhaseSystem(eventBus, eventQueue, logger);
             container.RegisterInstance<IPhaseSystem>(phaseSystem);
             systemRegistry.RegisterSystem(phaseSystem);
 
@@ -64,6 +67,14 @@ namespace MythHunter.Core.Installers
             var runeSystem = new RuneSystem(entityManager, eventBus, logger);
             container.RegisterInstance<IRuneSystem>(runeSystem);
             systemRegistry.RegisterSystem(runeSystem);
+
+            // Система створення сутностей
+            var archetypeRegistry = new EntityArchetypeRegistry(entityManager);
+            var entityFactory = new EntityFactory(entityManager, archetypeRegistry, logger);
+            var entitySpawnSystem = new EntitySpawnSystem(entityFactory, archetypeRegistry, eventBus, logger);
+            container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);
+            systemRegistry.RegisterSystem(entitySpawnSystem);
+
 
             logger.LogInfo("Встановлення залежностей GameplaySystem завершено", "Installer");
         }
