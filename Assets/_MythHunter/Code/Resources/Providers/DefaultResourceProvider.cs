@@ -16,6 +16,7 @@ namespace MythHunter.Resources.Providers
         {
             _logger = logger;
         }
+       
 
         public async UniTask<T> LoadAsync<T>(string key) where T : Object
         {

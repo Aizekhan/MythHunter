@@ -1,4 +1,9 @@
 // PoolManager.cs
+using System.Collections.Generic;
+using MythHunter.Utils.Logging;
+using MythHunter.Core.DI;
+using UnityEngine;
+
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
@@ -6,12 +11,11 @@ namespace MythHunter.Resources.Pool
     /// </summary>
     public class PoolManager : IPoolManager
     {
-        private readonly System.Collections.Generic.Dictionary<string, IObjectPool<UnityEngine.Object>> _pools =
-            new System.Collections.Generic.Dictionary<string, IObjectPool<UnityEngine.Object>>();
-        private readonly MythHunter.Utils.Logging.IMythLogger _logger;
+        private readonly Dictionary<string, ObjectPool> _pools = new Dictionary<string, ObjectPool>();
+        private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
-        public PoolManager(MythHunter.Utils.Logging.IMythLogger logger)
+        [Inject]
+        public PoolManager(IMythLogger logger)
         {
             _logger = logger;
         }
@@ -27,8 +31,11 @@ namespace MythHunter.Resources.Pool
             return pool.Get() as T;
         }
 
-        public void ReturnToPool<T>(string key, T instance) where T : UnityEngine.Object
+        public void ReturnToPool(string key, UnityEngine.Object instance)
         {
+            if (instance == null)
+                return;
+
             if (!_pools.TryGetValue(key, out var pool))
             {
                 _logger.LogWarning($"Pool with key '{key}' does not exist", "Pool");
@@ -46,8 +53,16 @@ namespace MythHunter.Resources.Pool
                 return;
             }
 
-            var pool = new ObjectPool<T>(prefab, initialSize);
-            _pools[key] = pool as IObjectPool<UnityEngine.Object>;
+            Transform poolParent = null;
+            if (prefab is GameObject)
+            {
+                var poolContainer = new GameObject($"Pool_{key}");
+                UnityEngine.Object.DontDestroyOnLoad(poolContainer);
+                poolParent = poolContainer.transform;
+            }
+
+            var pool = new ObjectPool(prefab, initialSize, poolParent);
+            _pools[key] = pool;
             _logger.LogInfo($"Created pool with key '{key}' of type {typeof(T).Name}", "Pool");
         }
 

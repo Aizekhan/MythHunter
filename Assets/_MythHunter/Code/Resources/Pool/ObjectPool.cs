@@ -1,86 +1,143 @@
 // ObjectPool.cs
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Реалізація пулу об'єктів
+    /// Універсальний пул для об'єктів UnityEngine.Object
     /// </summary>
-    public class ObjectPool<T> : IObjectPool<T> where T : UnityEngine.Object
+    public class ObjectPool : IObjectPool<UnityEngine.Object>
     {
-        private readonly System.Collections.Generic.Stack<T> _inactiveObjects;
-        private readonly System.Collections.Generic.HashSet<T> _activeObjects;
-        private readonly T _prefab;
+        private readonly UnityEngine.Object _prefab;
+        private readonly Stack<UnityEngine.Object> _inactiveObjects;
+        private readonly HashSet<UnityEngine.Object> _activeObjects;
+        private readonly Transform _parent;
 
-        public ObjectPool(T prefab, int initialSize)
+        /// <summary>
+        /// Кількість активних об'єктів у пулі
+        /// </summary>
+        public int CountActive => _activeObjects.Count;
+
+        /// <summary>
+        /// Кількість неактивних об'єктів у пулі
+        /// </summary>
+        public int CountInactive => _inactiveObjects.Count;
+
+        /// <summary>
+        /// Створює новий пул об'єктів
+        /// </summary>
+        public ObjectPool(UnityEngine.Object prefab, int initialSize = 10, Transform parent = null)
         {
             _prefab = prefab;
-            _inactiveObjects = new System.Collections.Generic.Stack<T>(initialSize);
-            _activeObjects = new System.Collections.Generic.HashSet<T>();
+            _parent = parent;
+            _inactiveObjects = new Stack<UnityEngine.Object>(initialSize);
+            _activeObjects = new HashSet<UnityEngine.Object>();
 
-            // Створення початкового пулу об'єктів
-            for (int i = 0; i < initialSize; i++)
+            // Попереднє створення об'єктів
+            PreWarm(initialSize);
+        }
+
+        /// <summary>
+        /// Попереднє створення об'єктів у пулі
+        /// </summary>
+        private void PreWarm(int count)
+        {
+            for (int i = 0; i < count; i++)
             {
-                T obj = UnityEngine.Object.Instantiate(_prefab);
+                UnityEngine.Object obj = null;
 
-                if (obj is UnityEngine.GameObject gameObject)
-                    gameObject.SetActive(false);
+                if (_prefab is GameObject prefabGO)
+                {
+                    obj = UnityEngine.Object.Instantiate(prefabGO, _parent);
+                    (obj as GameObject).SetActive(false);
+                }
+                else
+                {
+                    obj = UnityEngine.Object.Instantiate(_prefab);
+                }
 
                 _inactiveObjects.Push(obj);
             }
         }
 
-        public T Get()
+        /// <summary>
+        /// Отримати об'єкт з пулу
+        /// </summary>
+        public UnityEngine.Object Get()
         {
-            T obj;
+            UnityEngine.Object obj;
 
             if (_inactiveObjects.Count > 0)
             {
+                // Використовуємо існуючий об'єкт із пулу
                 obj = _inactiveObjects.Pop();
             }
             else
             {
-                obj = UnityEngine.Object.Instantiate(_prefab);
+                // Створюємо новий об'єкт, якщо пул порожній
+                if (_prefab is GameObject prefabGO)
+                {
+                    obj = UnityEngine.Object.Instantiate(prefabGO, _parent);
+                }
+                else
+                {
+                    obj = UnityEngine.Object.Instantiate(_prefab);
+                }
+            }
+
+            // Активуємо GameObject, якщо це можливо
+            if (obj is GameObject gameObject)
+            {
+                gameObject.SetActive(true);
             }
 
             _activeObjects.Add(obj);
-
-            // Активуємо об'єкт, якщо це GameObject
-            if (obj is UnityEngine.GameObject gameObject)
-                gameObject.SetActive(true);
-
             return obj;
         }
 
-        public void Return(T instance)
+        /// <summary>
+        /// Повернути об'єкт у пул
+        /// </summary>
+        public void Return(UnityEngine.Object obj)
         {
-            if (_activeObjects.Remove(instance))
-            {
-                // Деактивуємо об'єкт, якщо це GameObject
-                if (instance is UnityEngine.GameObject gameObject)
-                    gameObject.SetActive(false);
+            if (obj == null)
+                return;
 
-                _inactiveObjects.Push(instance);
+            if (!_activeObjects.Remove(obj))
+            {
+                Debug.LogWarning($"Trying to return an object that wasn't created from this pool");
+                return;
             }
+
+            // Деактивуємо GameObject, якщо це можливо
+            if (obj is GameObject gameObject)
+            {
+                gameObject.SetActive(false);
+            }
+
+            _inactiveObjects.Push(obj);
         }
 
+        /// <summary>
+        /// Очистити пул, видаливши всі об'єкти
+        /// </summary>
         public void Clear()
         {
-            // Знищуємо всі активні об'єкти
+            // Видаляємо всі активні об'єкти
             foreach (var obj in _activeObjects)
             {
                 UnityEngine.Object.Destroy(obj);
             }
+            _activeObjects.Clear();
 
-            // Знищуємо всі неактивні об'єкти
-            foreach (var obj in _inactiveObjects)
+            // Видаляємо всі неактивні об'єкти
+            while (_inactiveObjects.Count > 0)
             {
+                var obj = _inactiveObjects.Pop();
                 UnityEngine.Object.Destroy(obj);
             }
-
-            _activeObjects.Clear();
-            _inactiveObjects.Clear();
         }
-
-        public int CountActive => _activeObjects.Count;
-        public int CountInactive => _inactiveObjects.Count;
     }
 }
