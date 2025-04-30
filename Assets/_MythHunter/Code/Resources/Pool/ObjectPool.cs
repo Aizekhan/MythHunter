@@ -1,6 +1,8 @@
 // ObjectPool.cs
 using System;
 using System.Collections.Generic;
+using MythHunter.Core.DI;
+using MythHunter.Utils.Logging;
 using UnityEngine;
 
 namespace MythHunter.Resources.Pool
@@ -14,7 +16,7 @@ namespace MythHunter.Resources.Pool
         private readonly Stack<UnityEngine.Object> _inactiveObjects;
         private readonly HashSet<UnityEngine.Object> _activeObjects;
         private readonly Transform _parent;
-
+        [Inject] private IMythLogger _logger; // Додаємо логер через DI
         /// <summary>
         /// Кількість активних об'єктів у пулі
         /// </summary>
@@ -107,7 +109,7 @@ namespace MythHunter.Resources.Pool
 
             if (!_activeObjects.Remove(obj))
             {
-                Debug.LogWarning($"Trying to return an object that wasn't created from this pool");
+                _logger.LogWarning($"Trying to return an object that wasn't created from this pool");
                 return;
             }
 

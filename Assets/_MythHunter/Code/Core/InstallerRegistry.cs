@@ -31,6 +31,10 @@ namespace MythHunter.Core
             var gameplayInstaller = new GameplayInstaller();
             gameplayInstaller.InstallBindings(container);
 
+            // Debug tools installer (додано)
+            var debugToolsInstaller = new DebugToolsInstaller();
+            debugToolsInstaller.InstallBindings(container);
+
             // TODO: Wizard will automatically add installers here
 
         }

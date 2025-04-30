@@ -1,4 +1,6 @@
 using System;
+using MythHunter.Core.DI;
+using MythHunter.Utils.Logging;
 using UnityEngine;
 
 namespace MythHunter.Data.StaticData
@@ -10,7 +12,7 @@ namespace MythHunter.Data.StaticData
     public abstract class StaticData
     {
         [SerializeField] private string id;
-        
+        [Inject] private IMythLogger _logger; // Додаємо логер через DI
         public string Id => id;
         
         public virtual void Initialize() { }
@@ -19,7 +21,7 @@ namespace MythHunter.Data.StaticData
         {
             if (string.IsNullOrEmpty(id))
             {
-                Debug.LogWarning($"StaticData ID is empty for {GetType().Name}");
+                _logger.LogWarning($"StaticData ID is empty for {GetType().Name}");
             }
         }
     }
