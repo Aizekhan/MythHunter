@@ -1,15 +1,16 @@
-// DebugToolsInstaller.cs
+// Шлях: Assets/_MythHunter/Code/Core/Installers/DebugToolsInstaller.cs
 using MythHunter.Core.DI;
+using MythHunter.Debug.Core;
 using MythHunter.Debug.Profiling;
+using MythHunter.Debug.Events;
 using MythHunter.Debug.UI;
-using MythHunter.Networking.Security;
-using MythHunter.Data.Serialization;
 using MythHunter.Utils.Logging;
+using MythHunter.Events;
 
 namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор для інструментів відлагодження та розширених систем
+    /// Інсталятор для інструментів відлагодження
     /// </summary>
     public class DebugToolsInstaller : DIInstaller
     {
@@ -18,17 +19,23 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей DebugTools...", "Installer");
 
-            // Серіалізація з версіонуванням
-            container.RegisterSingleton<VersionedSerializer, VersionedSerializer>();
+            // Реєстрація фабрики інструментів
+            BindSingleton<DebugToolFactory, DebugToolFactory>(container);
 
-            // Мережева безпека
-            container.RegisterSingleton<INetworkSecurityProvider, NetworkSecurityProvider>();
+            // Реєстрація профайлера системи
+            BindSingleton<SystemProfiler, SystemProfiler>(container);
 
-            // Профілювання
-            container.RegisterSingleton<SystemProfiler, SystemProfiler>();
+            // Реєстрація монітора продуктивності
+            BindSingleton<PerformanceMonitor, PerformanceMonitor>(container);
 
-            // Панель відлагодження (не реєструємо як сінглтон, бо це MonoBehaviour)
-            // Панель буде створена в сцені як GameObject з компонентом
+            // Реєстрація інструменту відстеження подій
+            var eventBus = container.Resolve<IEventBus>();
+            container.RegisterInstance<EventDebugTool>(new EventDebugTool(eventBus, logger));
+
+            // Реєстрація центрального дашборду
+            container.Register<DebugDashboard, DebugDashboard>();
+            // Примітка: дашборд буде створений під час завантаження сцени
+            // через MonoBehaviour, тому просто реєструємо тип
 
             logger.LogInfo("Встановлення залежностей DebugTools завершено", "Installer");
         }

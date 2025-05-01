@@ -337,7 +337,7 @@ namespace MythHunter.Resources.Pool
 
             foreach (var obj in objects)
             {
-                pool.Return(obj);
+                pool.Release(obj);
             }
         }
     }

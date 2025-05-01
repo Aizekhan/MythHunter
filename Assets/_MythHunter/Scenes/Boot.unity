@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 321277997}
-  - component: {fileID: 321277999}
   - component: {fileID: 321277998}
   m_Layer: 0
   m_Name: DebugTools
@@ -161,23 +160,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 321277996}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed3b9fe43929da249906beee1883df94, type: 3}
+  m_Script: {fileID: 11500000, guid: 7b7ddf22423dff7459466eb530365099, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &321277999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 321277996}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d5f5230615cf6844b4a4bba674fdd90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _showOnStart: 1
-  _toggleKey: 290
+  _createOnStart: 1
 --- !u!1 &370772448
 GameObject:
   m_ObjectHideFlags: 0
