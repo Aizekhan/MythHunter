@@ -4,7 +4,8 @@ using MythHunter.Core.ECS;
 using MythHunter.Entities;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
-using MythHunter.Entities.Archetypes; // Для ArchetypeSystem
+using MythHunter.Entities.Archetypes;
+using MythHunter.Systems.Gameplay;
 
 namespace MythHunter.Core.Installers
 {
@@ -19,18 +20,12 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення залежностей Entities System...", "Installer");
 
             // Отримуємо необхідні залежності
-          
+            var entityManager = container.Resolve<IEntityManager>();
             var eventBus = container.Resolve<IEventBus>();
 
             // Реєстрація кешу компонентів
-            var entityManager = container.Resolve<IEntityManager>();
             var componentCacheRegistry = new ComponentCacheRegistry(entityManager, logger);
             container.RegisterInstance<ComponentCacheRegistry>(componentCacheRegistry);
-
-            // Реєстрація оптимізатора ECS
-            var ecsOptimizer = new EcsOptimizer(entityManager, logger);
-            container.RegisterInstance<EcsOptimizer>(ecsOptimizer);
-
 
             // Реєстрація фабрики компонентів
             var componentFactory = new ComponentFactory(entityManager, logger);
@@ -43,7 +38,7 @@ namespace MythHunter.Core.Installers
             // Реєстрація системи архетипів
             var archetypeSystem = new ArchetypeSystem(
                 entityManager,
-            eventBus,
+                eventBus,
                 logger,
                 archetypeTemplateRegistry
             );
@@ -57,9 +52,19 @@ namespace MythHunter.Core.Installers
             );
             container.RegisterInstance<EntityFactory>(entityFactory);
 
-            // Реєстрація компонентів за допомогою SystemRegistry
+            // Реєстрація системи створення сутностей
+            var entitySpawnSystem = new EntitySpawnSystem(
+                entityFactory,
+                archetypeSystem,
+                eventBus,
+                logger
+            );
+            container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);
+
+            // Реєстрація компонентів у SystemRegistry
             var systemRegistry = container.Resolve<Systems.Core.SystemRegistry>();
             systemRegistry.RegisterSystem(archetypeSystem);
+            systemRegistry.RegisterSystem(entitySpawnSystem);
 
             logger.LogInfo("Встановлення залежностей Entities System завершено", "Installer");
         }

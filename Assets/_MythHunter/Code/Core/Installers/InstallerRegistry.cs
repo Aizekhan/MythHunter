@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/InstallerRegistry.cs
 using MythHunter.Core.DI;
 using MythHunter.Core.Installers;
 using MythHunter.Utils.Logging;
@@ -20,7 +21,7 @@ namespace MythHunter.Core
                 // 1. Ядро системи
                 new CoreInstaller(),
 
-               // 2. Система подій
+                // 2. Система подій
                 new EventsInstaller(),
                 
                 // 3. Система ресурсів
