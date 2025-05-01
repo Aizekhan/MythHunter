@@ -1,27 +1,36 @@
 using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Events.Debugging;
+using MythHunter.Utils.Logging;
 
-namespace MythHunter.Core
+namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор для подійної системи
+    /// Інсталятор для оновленої подійної системи
     /// </summary>
     public class EventsInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)
         {
-            // Реєстрація пулу подій
-            container.RegisterSingleton<IEventPool, EventPool>();
+            var logger = container.Resolve<IMythLogger>();
+            logger.LogInfo("Installing Event System", "Installer");
+
+            // Реєстрація пулу подій з підтримкою пріоритетів
+            BindSingleton<IEventPool, PrioritizedEventPool>(container);
 
             // Реєстрація шини подій
-            container.RegisterSingleton<IEventBus, EventBus>();
+            BindSingleton<IEventBus, EventBus>(container);
 
             // Реєстрація черги подій
-            container.RegisterSingleton<IEventQueue, EventQueue>();
+            BindSingleton<IEventQueue, AsyncEventQueue>(container);
+
+            // Реєстрація оптимізатора обробки подій
+            BindSingleton<PrioritizedEventProcessing, PrioritizedEventProcessing>(container);
 
             // Реєстрація логеру подій для відлагодження
-            container.Register<EventLogger, EventLogger>();
+            Bind<EventLogger, EventLogger>(container);
+
+            logger.LogInfo("Event System installed", "Installer");
         }
     }
 }

@@ -4,16 +4,17 @@ using System.Reflection;
 using UnityEngine;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.Events.Debugging
 {
     /// <summary>
     /// Візуалізатор подій для відлагодження
     /// </summary>
-    public class EventVisualizer : MonoBehaviour, IEventSubscriber
+    public class EventVisualizer : InjectableMonoBehaviour, IEventSubscriber
     {
-        [Inject] private IEventBus _eventBus;
-        [Inject] private IMythLogger _logger; // Додаємо логер через DI
+        private IEventBus _eventBus;
+        private IMythLogger _logger;
 
         private readonly List<EventRecord> _eventHistory = new List<EventRecord>();
         private readonly int _maxEvents = 100;
@@ -21,9 +22,22 @@ namespace MythHunter.Events.Debugging
         private Vector2 _scrollPosition;
         private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
 
+        [Inject]
+        protected override void Construct(IEventBus eventBus, IMythLogger logger)
+        {
+            _eventBus = eventBus;
+            _logger = logger;
+
+            // Підписуємося на події після успішної ін'єкції
+            SubscribeToEvents();
+        }
+
         private void OnEnable()
         {
-            SubscribeToEvents();
+            if (_eventBus != null)
+            {
+                SubscribeToEvents();
+            }
         }
 
         private void OnDisable()
@@ -89,7 +103,7 @@ namespace MythHunter.Events.Debugging
                 _handlers[eventType] = handler;
 
                 // Викликаємо метод Subscribe
-                methodInfo.Invoke(_eventBus, new object[] { handler });
+                methodInfo.Invoke(_eventBus, new object[] { handler, EventPriority.Low });
             }
             catch (Exception ex)
             {
@@ -124,6 +138,7 @@ namespace MythHunter.Events.Debugging
             }
         }
 
+        // Універсальний метод для обробки подій будь-якого типу
         private void OnEventReceived<T>(T evt) where T : struct, IEvent
         {
             _eventHistory.Add(new EventRecord

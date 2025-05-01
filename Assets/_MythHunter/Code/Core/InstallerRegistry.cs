@@ -1,42 +1,65 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.Installers;
+using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core
 {
     /// <summary>
-    /// Реєстр інсталяторів для DI
+    /// Реєстр всіх інсталяторів для DI
     /// </summary>
     public static class InstallerRegistry
     {
         public static void RegisterInstallers(IDIContainer container)
         {
-            // Core installers
-           
-            var coreInstaller = new Installers.CoreInstaller();
-            coreInstaller.InstallBindings(container);
+            // Базовий логер (до ін'єкції)
+            var logger = MythHunter.Utils.Logging.MythLoggerFactory.GetDefaultLogger();
 
-            // Resource installer
-            var resourceInstaller = new ResourceInstaller();
-            resourceInstaller.InstallBindings(container);
+            // Інсталятори в порядку залежностей
+            var installers = new DIInstaller[]
+            {
+                // 1. Ядро системи
+                new CoreInstaller(),
 
-            // Networking installer
-            var networkingInstaller = new NetworkingInstaller();
-            networkingInstaller.InstallBindings(container);
+               // 2. Система подій
+                new EventsInstaller(),
+                
+                // 3. Система ресурсів
+                new ResourceInstaller(),
+                
+                // 4. Система пулінгу
+                new Resources.PoolSystemInstaller(),
+                
+                // 5. Система сутностей
+                new EntitiesInstaller(),
+                
+                // 6. Мережева система
+                new NetworkingInstaller(),
+                
+                // 7. UI система
+                new UIInstaller(),
+                
+                // 8. Ігрова система
+                new GameplayInstaller(),
+                
+                // 9. Інструменти відлагодження
+                new DebugToolsInstaller()
+            };
 
-            // UI installer
-            var uiInstaller = new UIInstaller();
-            uiInstaller.InstallBindings(container);
+            // Встановлюємо залежності для кожного інсталятора
+            foreach (var installer in installers)
+            {
+                try
+                {
+                    installer.InstallBindings(container);
+                }
+                catch (System.Exception ex)
+                {
+                    logger.LogError($"Failed to install {installer.GetType().Name}: {ex.Message}", "Installer", ex);
+                }
+            }
 
-            // Gameplay installer (в останню чергу, оскільки він залежить від інших)
-            var gameplayInstaller = new GameplayInstaller();
-            gameplayInstaller.InstallBindings(container);
-
-            // Debug tools installer (додано)
-            var debugToolsInstaller = new DebugToolsInstaller();
-            debugToolsInstaller.InstallBindings(container);
-
-            // TODO: Wizard will automatically add installers here
-
+            // Аналіз залежностей для виявлення помилок
+            container.AnalyzeDependencies();
         }
     }
 }

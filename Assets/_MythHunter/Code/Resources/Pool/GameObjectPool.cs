@@ -1,17 +1,14 @@
-// Шлях: Assets/_MythHunter/Code/Resources/Pool/GameObjectPool.cs
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
 
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Спеціалізований пул для GameObject з підтримкою префабів
+    /// Оптимізований пул для GameObject з розширеною функціональністю
     /// </summary>
-    public class GameObjectPool : IObjectPool<GameObject>
+    public class GameObjectPool : IObjectPool<GameObject>, IObjectPool
     {
         private readonly GameObject _prefab;
         private readonly Stack<GameObject> _inactiveObjects;
@@ -32,15 +29,13 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public int CountInactive => _inactiveObjects.Count;
 
-        [Inject]
         public GameObjectPool(
             GameObject prefab,
             int initialSize = 10,
             Transform parent = null,
             Action<GameObject> onGet = null,
             Action<GameObject> onRelease = null,
-            IMythLogger logger = null,
-            string poolName = null)
+            IMythLogger logger = null)
         {
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
@@ -51,7 +46,7 @@ namespace MythHunter.Resources.Pool
             _onGet = onGet;
             _onRelease = onRelease;
             _logger = logger;
-            _poolName = poolName ?? prefab.name;
+            _poolName = prefab.name;
 
             // Створення контейнера для об'єктів
             if (parent == null)
@@ -72,7 +67,7 @@ namespace MythHunter.Resources.Pool
         /// <summary>
         /// Попереднє створення об'єктів у пулі
         /// </summary>
-        private void PreWarm(int count)
+        public void PreWarm(int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -134,6 +129,17 @@ namespace MythHunter.Resources.Pool
             _inactiveObjects.Push(obj);
 
             _logger?.LogTrace($"Returned object to pool '{_poolName}', now contains: {_inactiveObjects.Count}", "Pool");
+        }
+
+        /// <summary>
+        /// Реалізація IObjectPool.ReturnObject
+        /// </summary>
+        public void ReturnObject(UnityEngine.Object obj)
+        {
+            if (obj is GameObject gameObj)
+            {
+                Return(gameObj);
+            }
         }
 
         /// <summary>
