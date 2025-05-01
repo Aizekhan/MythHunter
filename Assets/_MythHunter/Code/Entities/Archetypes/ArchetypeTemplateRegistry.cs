@@ -19,17 +19,14 @@ namespace MythHunter.Entities.Archetypes
         /// <summary>
         /// Шаблон архетипу, який містить типи компонентів і їх значення за замовчуванням
         /// </summary>
-        // Зробіть клас internal замість private (за замовчуванням)
-      
-             public class ArchetypeTemplate
+        public class ArchetypeTemplate
+        {
+            public string ArchetypeId
             {
-                public string ArchetypeId
-                {
-                    get; set;
-                }
-                public Dictionary<Type, object> DefaultComponents { get; } = new Dictionary<Type, object>();
+                get; set;
             }
-        
+            public Dictionary<Type, object> DefaultComponents { get; } = new Dictionary<Type, object>();
+        }
 
         [MythHunter.Core.DI.Inject]
         public ArchetypeTemplateRegistry(IEntityManager entityManager, IMythLogger logger)
@@ -121,6 +118,39 @@ namespace MythHunter.Entities.Archetypes
         }
 
         /// <summary>
+        /// Перевіряє, чи відповідає сутність шаблону архетипу
+        /// </summary>
+        public bool MatchesTemplate(int entityId, string archetypeId)
+        {
+            if (!_templates.TryGetValue(archetypeId, out var template))
+            {
+                return false;
+            }
+
+            foreach (var componentType in template.DefaultComponents.Keys)
+            {
+                // Перевіряємо наявність компонента через рефлексію
+                var hasComponentMethod = typeof(IEntityManager).GetMethod("HasComponent").MakeGenericMethod(componentType);
+                bool hasComponent = (bool)hasComponentMethod.Invoke(_entityManager, new object[] { entityId });
+
+                if (!hasComponent)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Отримує всі зареєстровані шаблони архетипів
+        /// </summary>
+        public IEnumerable<string> GetAllTemplateIds()
+        {
+            return _templates.Keys;
+        }
+
+        /// <summary>
         /// Перевіряє, чи зареєстрований шаблон архетипу
         /// </summary>
         public bool HasTemplate(string archetypeId)
@@ -140,11 +170,16 @@ namespace MythHunter.Entities.Archetypes
         }
 
         /// <summary>
-        /// Отримує всі зареєстровані шаблони архетипів
+        /// Отримує всі типи компонентів для архетипу
         /// </summary>
-        public IEnumerable<string> GetAllTemplateIds()
+        public IEnumerable<Type> GetArchetypeComponentTypes(string archetypeId)
         {
-            return _templates.Keys;
+            if (_templates.TryGetValue(archetypeId, out var template))
+            {
+                return template.DefaultComponents.Keys;
+            }
+
+            return Array.Empty<Type>();
         }
     }
 

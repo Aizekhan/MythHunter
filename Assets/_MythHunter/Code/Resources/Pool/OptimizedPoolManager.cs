@@ -107,10 +107,19 @@ namespace MythHunter.Resources.Pool
             }
             else
             {
-                // Для будь-яких інших типів використовуємо ObjectPool, адаптований до IObjectPool
-                var objPool = new ObjectPool(prefab, initialSize);
-                // Тут потрібен адаптер або переконатися, що ObjectPool реалізує IObjectPool
-                pool = new ObjectPoolAdapter<T>(objPool); // Створюємо адаптер для ObjectPool
+                // Для будь-яких інших типів використовуємо GenericObjectPool, адаптований до IObjectPool
+                var objPool = new GenericObjectPool<T>(
+     () => UnityEngine.Object.Instantiate(prefab),
+     null,
+     null,
+     null,
+     initialSize,
+     100,
+     _logger,
+     key
+ );
+                // Тут потрібен адаптер або переконатися, що GenericObjectPool реалізує IObjectPool
+                pool = new ObjectPoolAdapter<T>(objPool); // Створюємо адаптер для GenericObjectPool
             }
 
             // Додаємо пул до словників

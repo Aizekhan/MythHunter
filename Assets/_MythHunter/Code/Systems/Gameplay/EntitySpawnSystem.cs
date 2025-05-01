@@ -14,28 +14,26 @@ namespace MythHunter.Systems.Gameplay
     public class EntitySpawnSystem : SystemBase, IEntitySpawnSystem
     {
         private readonly EntityFactory _entityFactory;
-        private readonly EntityArchetypeRegistry _archetypeRegistry;
+        private readonly ArchetypeSystem _archetypeSystem;
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
 
         [Inject]
         public EntitySpawnSystem(
             EntityFactory entityFactory,
-            EntityArchetypeRegistry archetypeRegistry,
+            ArchetypeSystem archetypeRegistry,
             IEventBus eventBus,
             IMythLogger logger)
         {
             _entityFactory = entityFactory;
-            _archetypeRegistry = archetypeRegistry;
+            _archetypeSystem = archetypeRegistry;
             _eventBus = eventBus;
             _logger = logger;
         }
 
         public override void Initialize()
         {
-            // Реєстрація архетипів
-            _archetypeRegistry.RegisterArchetype(new CharacterArchetype());
-            _archetypeRegistry.RegisterArchetype(new EnemyArchetype());
+            
 
             // Підписка на події
             _eventBus.Subscribe<Events.Domain.Gameplay.SpawnCharacterEvent>(OnSpawnCharacter);

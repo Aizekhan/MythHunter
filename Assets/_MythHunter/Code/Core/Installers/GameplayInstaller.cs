@@ -11,6 +11,7 @@ using MythHunter.Events;
 using MythHunter.UI.Core;
 using MythHunter.Systems.Gameplay;
 using MythHunter.Entities;
+using MythHunter.Entities.Archetypes;
 
 namespace MythHunter.Core.Installers
 {
@@ -68,10 +69,10 @@ namespace MythHunter.Core.Installers
             container.RegisterInstance<IRuneSystem>(runeSystem);
             systemRegistry.RegisterSystem(runeSystem);
 
-            // Система створення сутностей
-            var archetypeRegistry = new EntityArchetypeRegistry(entityManager);
-            var entityFactory = new EntityFactory(entityManager, archetypeRegistry, logger);
-            var entitySpawnSystem = new EntitySpawnSystem(entityFactory, archetypeRegistry, eventBus, logger);
+            var archetypeTemplateRegistry = new ArchetypeTemplateRegistry(entityManager, logger);
+            var archetypeSystem = new ArchetypeSystem(entityManager, eventBus, logger, archetypeTemplateRegistry);
+            var entityFactory = new EntityFactory(entityManager, archetypeSystem, logger);
+            var entitySpawnSystem = new EntitySpawnSystem(entityFactory, archetypeSystem, eventBus, logger);
             container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);
             systemRegistry.RegisterSystem(entitySpawnSystem);
 

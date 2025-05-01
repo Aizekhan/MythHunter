@@ -14,7 +14,6 @@ namespace MythHunter.Core.ECS
 
         // Кеш масивів сутностей для зменшення алокацій
         private readonly Dictionary<int, int[]> _entityArraysCache = new Dictionary<int, int[]>();
-        private readonly Dictionary<System.Type, int[]> _componentEntityArraysCache = new Dictionary<System.Type, int[]>();
 
         [Inject]
         public EcsOptimizer(IEntityManager entityManager, IMythLogger logger)
@@ -24,13 +23,12 @@ namespace MythHunter.Core.ECS
         }
 
         /// <summary>
-        /// Виконує оптимізацію роботи ECS системи
+        /// Виконує основну оптимізацію роботи ECS системи
         /// </summary>
         public void Optimize()
         {
             // Очищення кешу для запобігання витокам пам'яті
             _entityArraysCache.Clear();
-            _componentEntityArraysCache.Clear();
 
             _logger.LogInfo("ECS system optimized", "ECS");
         }
@@ -51,27 +49,6 @@ namespace MythHunter.Core.ECS
         }
 
         /// <summary>
-        /// Кешує масив сутностей для конкретного типу компонента
-        /// </summary>
-        public void CacheEntitiesWithComponent<T>(int[] entities) where T : struct, IComponent
-        {
-            _componentEntityArraysCache[typeof(T)] = entities;
-        }
-
-        /// <summary>
-        /// Отримує кешований масив сутностей з компонентом заданого типу
-        /// </summary>
-        public int[] GetCachedEntitiesWithComponent<T>() where T : struct, IComponent
-        {
-            if (_componentEntityArraysCache.TryGetValue(typeof(T), out var entities))
-            {
-                return entities;
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Оптимізує структуру сутностей
         /// </summary>
         public void OptimizeEntityStructure()
@@ -81,6 +58,21 @@ namespace MythHunter.Core.ECS
 
             // Заглушка для майбутньої реалізації
             _logger.LogInfo("Entity structure optimization performed", "ECS");
+        }
+
+        /// <summary>
+        /// Виконує аналіз продуктивності ECS системи
+        /// </summary>
+        public Dictionary<string, object> AnalyzePerformance()
+        {
+            var result = new Dictionary<string, object>();
+
+            // Статистика Entity Manager
+            result["EntityCount"] = _entityManager.GetAllEntities().Length;
+
+            // Додаткові метрики можуть бути додані тут
+
+            return result;
         }
     }
 }

@@ -1,4 +1,3 @@
-using MythHunter.Core.ECS;
 using System.Collections.Generic;
 
 namespace MythHunter.Core.ECS
@@ -12,6 +11,11 @@ namespace MythHunter.Core.ECS
         private readonly HashSet<int> _entityIds = new HashSet<int>();
         private readonly IEntityManager _entityManager;
 
+        // Додаємо статистику
+        public int UpdateCount { get; private set; } = 0;
+        public int HitCount { get; private set; } = 0;
+        public int MissCount { get; private set; } = 0;
+
         public ComponentCache(IEntityManager entityManager)
         {
             _entityManager = entityManager;
@@ -22,6 +26,8 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public void Update()
         {
+            UpdateCount++;
+
             // Очищення кешу перед оновленням
             _components.Clear();
             _entityIds.Clear();
@@ -61,7 +67,14 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public T Get(int entityId)
         {
-            return _components.TryGetValue(entityId, out T component) ? component : default;
+            if (_components.TryGetValue(entityId, out T component))
+            {
+                HitCount++;
+                return component;
+            }
+
+            MissCount++;
+            return default;
         }
 
         /// <summary>
@@ -84,5 +97,34 @@ namespace MythHunter.Core.ECS
         /// Отримує кількість кешованих компонентів
         /// </summary>
         public int Count => _components.Count;
+
+        /// <summary>
+        /// Повертає статистику кешу
+        /// </summary>
+        public CacheStatistics GetStatistics()
+        {
+            return new CacheStatistics
+            {
+                ComponentType = typeof(T).Name,
+                CachedCount = Count,
+                UpdateCount = UpdateCount,
+                HitCount = HitCount,
+                MissCount = MissCount,
+                HitRatio = HitCount + MissCount > 0 ? (float)HitCount / (HitCount + MissCount) : 0
+            };
+        }
+    }
+
+    /// <summary>
+    /// Статистика кешу компонентів
+    /// </summary>
+    public struct CacheStatistics
+    {
+        public string ComponentType;
+        public int CachedCount;
+        public int UpdateCount;
+        public int HitCount;
+        public int MissCount;
+        public float HitRatio;
     }
 }

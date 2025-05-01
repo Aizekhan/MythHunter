@@ -35,7 +35,7 @@ namespace MythHunter.Core.Installers
             }
 
             // Pool Manager для управління пулами об'єктів
-            BindSingleton<IPoolManager, PoolManager>(container);
+            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
 
             logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
         }

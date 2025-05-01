@@ -16,7 +16,7 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Installing Event System", "Installer");
 
             // Реєстрація пулу подій з підтримкою пріоритетів
-            BindSingleton<IEventPool, PrioritizedEventPool>(container);
+            BindSingleton<IEventPool, EventPool>(container);
 
             // Реєстрація шини подій
             BindSingleton<IEventBus, EventBus>(container);

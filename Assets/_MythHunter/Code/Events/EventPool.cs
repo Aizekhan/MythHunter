@@ -1,3 +1,5 @@
+// Шлях: Assets/_MythHunter/Code/Events/EventPool.cs
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,13 +8,16 @@ using MythHunter.Utils.Logging;
 namespace MythHunter.Events
 {
     /// <summary>
-    /// Реалізація пулу подій з кешуванням та аналітикою використання
+    /// Реалізація пулу подій з кешуванням, аналітикою та підтримкою пріоритетів
     /// </summary>
     public class EventPool : IEventPool
     {
         private readonly Dictionary<Type, Queue<object>> _pools = new Dictionary<Type, Queue<object>>();
         private readonly int _maxPoolSize;
         private readonly IMythLogger _logger;
+
+        // Додаємо словник для пріоритетів типів подій
+        private readonly Dictionary<Type, EventPriority> _priorities = new Dictionary<Type, EventPriority>();
 
         // Аналітика використання пулу
         private readonly Dictionary<Type, EventPoolStatistics> _statistics = new Dictionary<Type, EventPoolStatistics>();
@@ -76,6 +81,12 @@ namespace MythHunter.Events
                 }
             }
 
+            // Запам'ятовуємо пріоритет, якщо він ще не зареєстрований
+            if (!_priorities.ContainsKey(eventType))
+            {
+                _priorities[eventType] = eventObject.GetPriority();
+            }
+
             // Очищення кешу, якщо необхідно
             CheckPoolCleanup();
 
@@ -128,12 +139,33 @@ namespace MythHunter.Events
         }
 
         /// <summary>
+        /// Отримує пріоритет для типу події
+        /// </summary>
+        public EventPriority GetPriority<T>() where T : struct, IEvent
+        {
+            Type eventType = typeof(T);
+
+            if (_priorities.TryGetValue(eventType, out var priority))
+            {
+                return priority;
+            }
+
+            // Якщо пріоритет не зареєстрований, створюємо тимчасову подію для отримання пріоритету
+            var tempEvent = new T();
+            var eventPriority = tempEvent.GetPriority();
+            _priorities[eventType] = eventPriority;
+
+            return eventPriority;
+        }
+
+        /// <summary>
         /// Очищає пул
         /// </summary>
         public void Clear()
         {
             _pools.Clear();
             _lastAccessTime.Clear();
+            _priorities.Clear(); // Очищаємо також пріоритети
 
             // Зберігаємо статистику, але скидаємо лічильники
             foreach (var stats in _statistics.Values)
@@ -187,6 +219,7 @@ namespace MythHunter.Events
             {
                 _pools.Remove(type);
                 _lastAccessTime.Remove(type);
+                _priorities.Remove(type); // Видаляємо також пріоритети
 
                 if (_logger != null)
                 {

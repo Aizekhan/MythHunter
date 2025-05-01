@@ -18,7 +18,7 @@ namespace MythHunter.Resources
             logger.LogInfo("Installing Resource System", "Installer");
 
             // Базовий менеджер пулів
-            BindSingleton<IPoolManager, PoolManager>(container);
+            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
 
             // Встановлюємо правильний ресурсний провайдер
             // В залежності від налаштувань проекту
@@ -32,7 +32,7 @@ namespace MythHunter.Resources
             BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
 
             // Менеджер пулів
-            BindSingleton<IPoolManager, PoolManager>(container);
+            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
 
             // Провайдер пулінгу як обгортка над базовим провайдером
             var baseProvider = container.Resolve<IResourceProvider>();

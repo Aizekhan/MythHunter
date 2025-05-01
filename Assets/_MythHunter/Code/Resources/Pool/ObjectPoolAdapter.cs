@@ -1,15 +1,19 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/ObjectPoolAdapter.cs
+
+using MythHunter.Resources.Pool;
+using UnityEngine;
+
 /// <summary>
-/// Адаптер для ObjectPool, що реалізує IObjectPool
+/// Адаптер для GenericObjectPool, що реалізує IObjectPool
 /// </summary>
- using MythHunter.Resources.Pool; 
 public class ObjectPoolAdapter<T> : IObjectPool where T : UnityEngine.Object
 {
-    private readonly ObjectPool _pool;
+    private readonly GenericObjectPool<T> _pool;
 
-    public int CountActive => 0; // Заглушка або реалізація
-    public int CountInactive => 0; // Заглушка або реалізація
+    public int CountActive => _pool.ActiveCount;
+    public int CountInactive => _pool.InactiveCount;
 
-    public ObjectPoolAdapter(ObjectPool pool)
+    public ObjectPoolAdapter(GenericObjectPool<T> pool)
     {
         _pool = pool;
     }
@@ -23,7 +27,7 @@ public class ObjectPoolAdapter<T> : IObjectPool where T : UnityEngine.Object
     {
         if (obj is T typedObj)
         {
-            _pool.Return(typedObj);
+            _pool.Release(typedObj);
         }
     }
 }
