@@ -89,7 +89,8 @@ namespace MythHunter.Core.DI
             }
         }
 
-        public void InjectDependencies(object target)
+        // Базовий метод ін'єкції - для внутрішнього використання
+        internal void InjectDependenciesInternal(object target, bool logInjections)
         {
             if (target == null)
                 return;
@@ -103,9 +104,9 @@ namespace MythHunter.Core.DI
             foreach (var field in fields)
             {
                 Type serviceType = field.FieldType;
-                if (!IsRegistered(serviceType))
+                if (!IsRegisteredType(serviceType))
                 {
-                    if (_logger != null)
+                    if (_logger != null && logInjections)
                     {
                         _logger.LogWarning($"Cannot inject field {field.Name} of type {serviceType.Name}: service not registered", "DI");
                     }
@@ -114,8 +115,13 @@ namespace MythHunter.Core.DI
 
                 try
                 {
-                    object service = Resolve(serviceType);
+                    object service = ResolveType(serviceType);
                     field.SetValue(target, service);
+
+                    if (_logger != null && logInjections)
+                    {
+                        _logger.LogDebug($"Injected field {field.Name} of type {serviceType.Name}", "DI");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -133,9 +139,9 @@ namespace MythHunter.Core.DI
             foreach (var property in properties)
             {
                 Type serviceType = property.PropertyType;
-                if (!IsRegistered(serviceType))
+                if (!IsRegisteredType(serviceType))
                 {
-                    if (_logger != null)
+                    if (_logger != null && logInjections)
                     {
                         _logger.LogWarning($"Cannot inject property {property.Name} of type {serviceType.Name}: service not registered", "DI");
                     }
@@ -144,8 +150,13 @@ namespace MythHunter.Core.DI
 
                 try
                 {
-                    object service = Resolve(serviceType);
+                    object service = ResolveType(serviceType);
                     property.SetValue(target, service);
+
+                    if (_logger != null && logInjections)
+                    {
+                        _logger.LogDebug($"Injected property {property.Name} of type {serviceType.Name}", "DI");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -170,9 +181,9 @@ namespace MythHunter.Core.DI
                 for (int i = 0; i < parameters.Length; i++)
                 {
                     Type serviceType = parameters[i].ParameterType;
-                    if (!IsRegistered(serviceType))
+                    if (!IsRegisteredType(serviceType))
                     {
-                        if (_logger != null)
+                        if (_logger != null && logInjections)
                         {
                             _logger.LogWarning($"Cannot inject parameter {parameters[i].Name} of type {serviceType.Name}: service not registered", "DI");
                         }
@@ -182,7 +193,7 @@ namespace MythHunter.Core.DI
 
                     try
                     {
-                        args[i] = Resolve(serviceType);
+                        args[i] = ResolveType(serviceType);
                     }
                     catch (Exception ex)
                     {
@@ -200,6 +211,11 @@ namespace MythHunter.Core.DI
                     try
                     {
                         method.Invoke(target, args);
+
+                        if (_logger != null && logInjections)
+                        {
+                            _logger.LogDebug($"Invoked method {method.Name} with {args.Length} parameters", "DI");
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -212,14 +228,19 @@ namespace MythHunter.Core.DI
             }
         }
 
-        // Допоміжний метод для запиту з певним типом
-        private bool IsRegistered(Type serviceType)
+        // Публічний інтерфейс для ін'єкції
+        public void InjectDependencies(object target)
+        {
+            InjectDependenciesInternal(target, true);
+        }
+
+        // Допоміжні методи для роботи з типами
+        private bool IsRegisteredType(Type serviceType)
         {
             return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
         }
 
-        // Допоміжний метод для запиту з певним типом
-        private object Resolve(Type serviceType)
+        private object ResolveType(Type serviceType)
         {
             // Перевірка наявності синглтону
             if (_instances.TryGetValue(serviceType, out var instance))

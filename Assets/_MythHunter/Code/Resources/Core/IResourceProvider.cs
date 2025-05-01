@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Core/IResourceProvider.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;

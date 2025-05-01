@@ -21,11 +21,7 @@ namespace MythHunter.Core.Installers
             // Реєстрація шини подій
             BindSingleton<IEventBus, EventBus>(container);
 
-            // Реєстрація черги подій
-            BindSingleton<IEventQueue, AsyncEventQueue>(container);
-
-            // Реєстрація оптимізатора обробки подій
-            BindSingleton<PrioritizedEventProcessing, PrioritizedEventProcessing>(container);
+       
 
             // Реєстрація логеру подій для відлагодження
             Bind<EventLogger, EventLogger>(container);

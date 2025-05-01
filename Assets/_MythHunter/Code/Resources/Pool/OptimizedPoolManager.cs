@@ -311,19 +311,7 @@ namespace MythHunter.Resources.Pool
     /// <summary>
     /// Розширений інтерфейс для всіх об'єктних пулів
     /// </summary>
-    public interface IObjectPool
-    {
-        int CountActive
-        {
-            get;
-        }
-        int CountInactive
-        {
-            get;
-        }
-        void Clear();
-        void ReturnObject(UnityEngine.Object obj);
-    }
+  
 
     /// <summary>
     /// Розширення GameObject пулу для підтримки додаткових функцій

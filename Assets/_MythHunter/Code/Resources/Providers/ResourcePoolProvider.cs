@@ -1,4 +1,4 @@
-// ResourcePoolProvider.cs
+// Шлях: Assets/_MythHunter/Code/Resources/Providers/ResourcePoolProvider.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
@@ -12,19 +12,18 @@ namespace MythHunter.Resources.Providers
     /// <summary>
     /// Провайдер ресурсів з підтримкою пулінгу
     /// </summary>
-    public class ResourcePoolProvider : IResourceProvider
+    public class ResourcePoolProvider : BaseResourceProvider, IResourceProvider
     {
         private readonly IResourceProvider _baseProvider;
         private readonly IPoolManager _poolManager;
-        private readonly IMythLogger _logger;
         private readonly Dictionary<string, bool> _poolInitialized = new Dictionary<string, bool>();
 
         [Inject]
         public ResourcePoolProvider(IResourceProvider baseProvider, IPoolManager poolManager, IMythLogger logger)
+            : base(logger)
         {
             _baseProvider = baseProvider;
             _poolManager = poolManager;
-            _logger = logger;
         }
 
         public async UniTask<T> LoadAsync<T>(string key) where T : UnityEngine.Object
@@ -52,7 +51,7 @@ namespace MythHunter.Resources.Providers
             // Перевіряємо, чи пул ініціалізовано
             if (!_poolInitialized.TryGetValue(key, out bool initialized) || !initialized)
             {
-                _logger.LogInfo($"Pool for key '{key}' is not initialized. Initializing it now.", "PoolResource");
+                Log($"Pool for key '{key}' is not initialized. Initializing it now.", LogLevel.Info);
                 InitializePool<T>(key).Forget();
                 return null; // Повертаємо null на перший раз, поки пул ініціалізується
             }
@@ -61,7 +60,7 @@ namespace MythHunter.Resources.Providers
             T instance = _poolManager.GetFromPool<T>(key);
             if (instance == null)
             {
-                _logger.LogWarning($"Failed to get object from pool '{key}'", "PoolResource");
+                Log($"Failed to get object from pool '{key}'", LogLevel.Warning);
             }
 
             return instance;
@@ -71,14 +70,14 @@ namespace MythHunter.Resources.Providers
         {
             if (instance == null)
             {
-                _logger.LogWarning("Trying to return null instance to pool", "PoolResource");
+                Log("Trying to return null instance to pool", LogLevel.Warning);
                 return;
             }
 
             // Перевіряємо, чи пул ініціалізовано
             if (!_poolInitialized.TryGetValue(key, out bool initialized) || !initialized)
             {
-                _logger.LogWarning($"Pool for key '{key}' is not initialized. Cannot return object.", "PoolResource");
+                Log($"Pool for key '{key}' is not initialized. Cannot return object.", LogLevel.Warning);
                 return;
             }
 
@@ -105,18 +104,18 @@ namespace MythHunter.Resources.Providers
                 T prefab = await _baseProvider.LoadAsync<T>(key);
                 if (prefab == null)
                 {
-                    _logger.LogError($"Failed to load prefab for pool '{key}'", "PoolResource");
+                    Log($"Failed to load prefab for pool '{key}'", LogLevel.Error);
                     return;
                 }
 
                 // Створюємо пул
                 _poolManager.CreatePool(key, prefab, 10);
                 _poolInitialized[key] = true;
-                _logger.LogInfo($"Pool for key '{key}' initialized successfully", "PoolResource");
+                Log($"Pool for key '{key}' initialized successfully", LogLevel.Info);
             }
             catch (System.Exception ex)
             {
-                _logger.LogError($"Error initializing pool for key '{key}': {ex.Message}", "PoolResource", ex);
+                Log($"Error initializing pool for key '{key}': {ex.Message}", LogLevel.Error);
             }
         }
 
@@ -128,7 +127,7 @@ namespace MythHunter.Resources.Providers
             // Перевіряємо, чи пул вже ініціалізовано
             if (_poolInitialized.TryGetValue(key, out bool initialized) && initialized)
             {
-                _logger.LogInfo($"Pool for key '{key}' is already initialized", "PoolResource");
+                Log($"Pool for key '{key}' is already initialized", LogLevel.Info);
                 return;
             }
 
@@ -141,42 +140,19 @@ namespace MythHunter.Resources.Providers
                 T prefab = await _baseProvider.LoadAsync<T>(key);
                 if (prefab == null)
                 {
-                    _logger.LogError($"Failed to load prefab for pool '{key}'", "PoolResource");
+                    Log($"Failed to load prefab for pool '{key}'", LogLevel.Error);
                     return;
                 }
 
                 // Створюємо пул
                 _poolManager.CreatePool(key, prefab, poolSize);
                 _poolInitialized[key] = true;
-                _logger.LogInfo($"Pool for key '{key}' initialized successfully with {poolSize} instances", "PoolResource");
+                Log($"Pool for key '{key}' initialized successfully with {poolSize} instances", LogLevel.Info);
             }
             catch (System.Exception ex)
             {
-                _logger.LogError($"Error initializing pool for key '{key}': {ex.Message}", "PoolResource", ex);
+                Log($"Error initializing pool for key '{key}': {ex.Message}", LogLevel.Error);
             }
-        }
-
-        /// <summary>
-        /// Очищає пул для вказаного ключа
-        /// </summary>
-        public void ClearPool(string key)
-        {
-            if (_poolInitialized.TryGetValue(key, out bool initialized) && initialized)
-            {
-                _poolManager.ClearPool(key);
-                _poolInitialized.Remove(key);
-                _logger.LogInfo($"Cleared pool for key '{key}'", "PoolResource");
-            }
-        }
-
-        /// <summary>
-        /// Очищає всі пули
-        /// </summary>
-        public void ClearAllPools()
-        {
-            _poolManager.ClearAllPools();
-            _poolInitialized.Clear();
-            _logger.LogInfo("Cleared all pools", "PoolResource");
         }
     }
 }

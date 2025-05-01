@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Providers/FallbackResourceProvider.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
@@ -8,21 +9,20 @@ namespace MythHunter.Resources.Providers
     /// <summary>
     /// Запасний провайдер замість Addressables, що використовує стандартні Resources
     /// </summary>
-    public class FallbackResourceProvider : IAddressablesProvider
+    public class FallbackResourceProvider : BaseResourceProvider, IAddressablesProvider
     {
-        private readonly IMythLogger _logger;
         private readonly DefaultResourceProvider _resourceProvider;
 
         [MythHunter.Core.DI.Inject]
         public FallbackResourceProvider(IMythLogger logger, DefaultResourceProvider resourceProvider)
+            : base(logger)
         {
-            _logger = logger;
             _resourceProvider = resourceProvider;
         }
 
         public async UniTask<T> LoadAssetAsync<T>(string key) where T : Object
         {
-            _logger.LogDebug($"Fallback loading asset: {key}", "Resource");
+            Log($"Fallback loading asset: {key}");
             return await _resourceProvider.LoadAsync<T>(key);
         }
 
@@ -44,7 +44,7 @@ namespace MythHunter.Resources.Providers
 
         public async UniTask<IList<T>> LoadAssetsAsync<T>(string label) where T : Object
         {
-            _logger.LogDebug($"Fallback loading assets with label: {label}", "Resource");
+            Log($"Fallback loading assets with label: {label}");
             // Спрощена версія - шукаємо в підпапці з назвою мітки
             var assets = await _resourceProvider.LoadAllAsync<T>(label);
             return new List<T>(assets);

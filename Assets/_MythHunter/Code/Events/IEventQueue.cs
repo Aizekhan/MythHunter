@@ -10,7 +10,7 @@ namespace MythHunter.Events
     public interface IEventQueue
     {
         void Enqueue<TEvent>(TEvent eventData) where TEvent : struct, IEvent;
-        void EnqueueAsync<TEvent>(TEvent eventData) where TEvent : struct, IEvent;
+   
         void Clear();
     }
 }

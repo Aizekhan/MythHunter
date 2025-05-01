@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/GameObjectPool.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace MythHunter.Resources.Pool
     /// <summary>
     /// Оптимізований пул для GameObject з розширеною функціональністю
     /// </summary>
-    public class GameObjectPool : IObjectPool<GameObject>, IObjectPool
+    public class GameObjectPool : BaseObjectPool, IObjectPool<GameObject>
     {
         private readonly GameObject _prefab;
         private readonly Stack<GameObject> _inactiveObjects;
@@ -16,18 +17,11 @@ namespace MythHunter.Resources.Pool
         private readonly Transform _poolParent;
         private readonly Action<GameObject> _onGet;
         private readonly Action<GameObject> _onRelease;
-        private readonly IMythLogger _logger;
-        private readonly string _poolName;
-
-        /// <summary>
-        /// Кількість активних об'єктів у пулі
-        /// </summary>
-        public int CountActive => _activeObjects.Count;
 
         /// <summary>
         /// Кількість неактивних об'єктів у пулі
         /// </summary>
-        public int CountInactive => _inactiveObjects.Count;
+        public override int CountInactive => _inactiveObjects.Count;
 
         public GameObjectPool(
             GameObject prefab,
@@ -35,7 +29,7 @@ namespace MythHunter.Resources.Pool
             Transform parent = null,
             Action<GameObject> onGet = null,
             Action<GameObject> onRelease = null,
-            IMythLogger logger = null)
+            IMythLogger logger = null) : base(logger, prefab?.name ?? "UnnamedGameObjectPool")
         {
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
@@ -45,8 +39,6 @@ namespace MythHunter.Resources.Pool
             _activeObjects = new HashSet<GameObject>();
             _onGet = onGet;
             _onRelease = onRelease;
-            _logger = logger;
-            _poolName = prefab.name;
 
             // Створення контейнера для об'єктів
             if (parent == null)
@@ -77,7 +69,7 @@ namespace MythHunter.Resources.Pool
                 _inactiveObjects.Push(obj);
             }
 
-            _logger?.LogDebug($"Pre-warmed pool '{_poolName}' with {count} objects", "Pool");
+            LogTrace($"Pre-warmed pool with {count} objects");
         }
 
         /// <summary>
@@ -91,17 +83,18 @@ namespace MythHunter.Resources.Pool
             {
                 obj = _inactiveObjects.Pop();
                 obj.transform.SetParent(null);
-                _logger?.LogTrace($"Got object from pool '{_poolName}', remaining: {_inactiveObjects.Count}", "Pool");
+                LogTrace($"Got object from pool, remaining: {_inactiveObjects.Count}");
             }
             else
             {
                 obj = UnityEngine.Object.Instantiate(_prefab);
                 obj.name = $"{_prefab.name}_Pooled_{_activeObjects.Count}";
-                _logger?.LogTrace($"Created new object for pool '{_poolName}', pool was empty", "Pool");
+                LogTrace($"Created new object for pool, pool was empty");
             }
 
             obj.SetActive(true);
             _activeObjects.Add(obj);
+            _activeCount++;
             _onGet?.Invoke(obj);
 
             return obj;
@@ -110,14 +103,14 @@ namespace MythHunter.Resources.Pool
         /// <summary>
         /// Повертає об'єкт у пул
         /// </summary>
-        public void Return(GameObject obj)
+        public void Release(GameObject obj)
         {
             if (obj == null)
                 return;
 
             if (!_activeObjects.Contains(obj))
             {
-                _logger?.LogWarning($"Object {obj.name} was not created from this pool '{_poolName}'", "Pool");
+                LogWarning($"Object {obj.name} was not created from this pool");
                 return;
             }
 
@@ -127,25 +120,30 @@ namespace MythHunter.Resources.Pool
 
             _activeObjects.Remove(obj);
             _inactiveObjects.Push(obj);
+            _activeCount--;
 
-            _logger?.LogTrace($"Returned object to pool '{_poolName}', now contains: {_inactiveObjects.Count}", "Pool");
+            LogTrace($"Returned object to pool, now contains: {_inactiveObjects.Count}");
         }
 
         /// <summary>
-        /// Реалізація IObjectPool.ReturnObject
+        /// Реалізація повернення об'єкту для базового класу
         /// </summary>
-        public void ReturnObject(UnityEngine.Object obj)
+        protected override void ReturnObjectInternal(UnityEngine.Object obj)
         {
             if (obj is GameObject gameObj)
             {
-                Return(gameObj);
+                Release(gameObj);
+            }
+            else
+            {
+                LogWarning($"Cannot return object of type {obj.GetType().Name} to GameObject pool");
             }
         }
 
         /// <summary>
         /// Очищає пул, знищуючи всі об'єкти
         /// </summary>
-        public void Clear()
+        public override void Clear()
         {
             // Знищуємо всі активні об'єкти
             foreach (var obj in _activeObjects)
@@ -154,6 +152,7 @@ namespace MythHunter.Resources.Pool
                     UnityEngine.Object.Destroy(obj);
             }
             _activeObjects.Clear();
+            _activeCount = 0;
 
             // Знищуємо всі неактивні об'єкти
             while (_inactiveObjects.Count > 0)
@@ -163,7 +162,7 @@ namespace MythHunter.Resources.Pool
                     UnityEngine.Object.Destroy(obj);
             }
 
-            _logger?.LogInfo($"Cleared pool '{_poolName}'", "Pool");
+            LogInfo("Pool cleared");
         }
 
         /// <summary>
@@ -181,7 +180,7 @@ namespace MythHunter.Resources.Pool
                     UnityEngine.Object.Destroy(obj);
             }
 
-            _logger?.LogInfo($"Trimmed pool '{_poolName}' to {_inactiveObjects.Count} inactive objects", "Pool");
+            LogInfo($"Trimmed pool to {_inactiveObjects.Count} inactive objects");
         }
     }
 }

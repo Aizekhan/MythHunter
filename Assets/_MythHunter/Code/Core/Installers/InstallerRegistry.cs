@@ -1,7 +1,8 @@
-// Шлях: Assets/_MythHunter/Code/Core/InstallerRegistry.cs
+// Шлях: Assets/_MythHunter/Code/Core/Installers/InstallerRegistry.cs
 using MythHunter.Core.DI;
 using MythHunter.Core.Installers;
 using MythHunter.Utils.Logging;
+using MythHunter.Resources;
 
 namespace MythHunter.Core
 {
@@ -27,8 +28,8 @@ namespace MythHunter.Core
                 // 3. Система ресурсів
                 new ResourceInstaller(),
                 
-                // 4. Система пулінгу
-                new Resources.PoolSystemInstaller(),
+                // 4. Система пулінгу об'єктів
+                new PoolSystemInstaller(),
                 
                 // 5. Система сутностей
                 new EntitiesInstaller(),
@@ -55,7 +56,7 @@ namespace MythHunter.Core
                 }
                 catch (System.Exception ex)
                 {
-                    logger.LogError($"Failed to install {installer.GetType().Name}: {ex.Message}", "Installer", ex);
+                    logger.LogError($"Помилка встановлення {installer.GetType().Name}: {ex.Message}", "Installer", ex);
                 }
             }
 

@@ -1,13 +1,11 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/IObjectPool.cs
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Інтерфейс пулу об'єктів
+    /// Загальний інтерфейс пулу об'єктів
     /// </summary>
-    public interface IObjectPool<T> where T : UnityEngine.Object
+    public interface IObjectPool
     {
-        T Get();
-        void Return(T instance);
-        void Clear();
         int CountActive
         {
             get;
@@ -16,5 +14,16 @@ namespace MythHunter.Resources.Pool
         {
             get;
         }
+        void Clear();
+        void ReturnObject(UnityEngine.Object obj);
+    }
+
+    /// <summary>
+    /// Типізований інтерфейс пулу об'єктів
+    /// </summary>
+    public interface IObjectPool<T> : IObjectPool where T : class
+    {
+        T Get();
+        void Release(T instance);
     }
 }

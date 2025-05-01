@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/MonoBehaviours/DependencyInjector.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -66,7 +67,14 @@ namespace MythHunter.Core.MonoBehaviours
         {
             if (_container == null)
             {
-                _logger.LogError("DependencyInjector: Container is not available");
+                if (_logger != null)
+                {
+                    _logger.LogError("DependencyInjector: Container is not available", "DI");
+                }
+                else
+                {
+                    _logger.LogError("DependencyInjector: Container is not available");
+                }
                 return;
             }
 
@@ -95,7 +103,7 @@ namespace MythHunter.Core.MonoBehaviours
                 _container.InjectInto(injectable, _logInjections ? _logger : null);
             }
 
-            if (_logInjections)
+            if (_logInjections && _logger != null)
             {
                 _logger.LogInfo($"Injected dependencies into {injectables.Count} components", "DI");
             }
@@ -136,6 +144,21 @@ namespace MythHunter.Core.MonoBehaviours
             foreach (var field in fields)
             {
                 var attributes = field.GetCustomAttributes(typeof(InjectAttribute), true);
+                if (attributes.Length > 0)
+                {
+                    return true;
+                }
+            }
+
+            // Перевіряємо властивості
+            var properties = type.GetProperties(
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic);
+
+            foreach (var property in properties)
+            {
+                var attributes = property.GetCustomAttributes(typeof(InjectAttribute), true);
                 if (attributes.Length > 0)
                 {
                     return true;
