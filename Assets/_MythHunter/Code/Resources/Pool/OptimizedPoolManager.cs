@@ -101,15 +101,21 @@ namespace MythHunter.Resources.Pool
                 var poolParent = new GameObject($"Pool_{key}");
                 UnityEngine.Object.DontDestroyOnLoad(poolParent);
 
-                pool = new GameObjectPool(prefab as GameObject, initialSize, poolParent.transform, null, null, _logger);
+                // Явно приводимо до IObjectPool після створення
+                var goPool = new GameObjectPool(prefab as GameObject, initialSize, poolParent.transform, null, null, _logger);
+                pool = goPool; // Явне приведення типу, якщо GameObjectPool реалізує IObjectPool
             }
             else
             {
-                // Для будь-яких інших типів використовуємо ObjectPool
-                pool = new ObjectPool(prefab, initialSize);
+                // Для будь-яких інших типів використовуємо ObjectPool, адаптований до IObjectPool
+                var objPool = new ObjectPool(prefab, initialSize);
+                // Тут потрібен адаптер або переконатися, що ObjectPool реалізує IObjectPool
+                pool = new ObjectPoolAdapter<T>(objPool); // Створюємо адаптер для ObjectPool
             }
 
+            // Додаємо пул до словників
             _pools[key] = pool;
+
 
             // Додаємо в кеш за типом
             var type = typeof(T);

@@ -1,8 +1,10 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/EntitiesInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
+using MythHunter.Entities.Archetypes; // Для ArchetypeSystem
 
 namespace MythHunter.Core.Installers
 {
@@ -21,23 +23,25 @@ namespace MythHunter.Core.Installers
             var componentCacheRegistry = new ComponentCacheRegistry(entityManager, logger);
             container.RegisterInstance<ComponentCacheRegistry>(componentCacheRegistry);
 
-            // Реєстрація системи архетипів
+            // Реєстрація реєстру архетипів
+            var entityArchetypeRegistry = new EntityArchetypeRegistry(entityManager);
+            container.RegisterInstance<EntityArchetypeRegistry>(entityArchetypeRegistry);
+
+            // Реєстрація системи архетипів (після реєстру)
             var archetypeSystem = new ArchetypeSystem(
                 entityManager,
                 container.Resolve<IEventBus>(),
                 logger,
                 componentCacheRegistry
             );
-
             container.RegisterInstance<ArchetypeSystem>(archetypeSystem);
 
             // Реєстрація фабрики сутностей
             var entityFactory = new EntityFactory(
                 entityManager,
-                archetypeSystem,
+                entityArchetypeRegistry, // Використовуємо EntityArchetypeRegistry замість ArchetypeSystem
                 logger
             );
-
             container.RegisterInstance<EntityFactory>(entityFactory);
 
             // Реєстрація фабрики компонентів

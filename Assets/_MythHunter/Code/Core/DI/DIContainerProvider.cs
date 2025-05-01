@@ -1,6 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainerProvider.cs
 using UnityEngine;
 using MythHunter.Utils.Logging;
+
 namespace MythHunter.Core.DI
 {
     /// <summary>
@@ -8,7 +9,6 @@ namespace MythHunter.Core.DI
     /// </summary>
     public static class DIContainerProvider
     {
-
         private static IDIContainer _container;
 
         /// <summary>
@@ -26,7 +26,8 @@ namespace MythHunter.Core.DI
         {
             if (_container == null)
             {
-                Debug.LogWarning("DI container is not initialized");
+                // Використання статичного методу з нашої фабрики логерів
+                MythLoggerFactory.GetDefaultLogger().LogWarning("DI container is not initialized", "DI");
             }
             return _container;
         }

@@ -1,7 +1,9 @@
+// Шлях: Assets/_MythHunter/Code/Core/MonoBehaviours/InjectableMonoBehaviour.cs
 using UnityEngine;
 using MythHunter.Core.Game;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+
 namespace MythHunter.Core.MonoBehaviours
 {
     /// <summary>
@@ -13,7 +15,10 @@ namespace MythHunter.Core.MonoBehaviours
         {
             get; private set;
         }
-        private readonly IMythLogger _logger;
+
+        // Поле для логера, яке буде заповнено через ін'єкцію
+        [Inject] protected IMythLogger _logger;
+
         protected virtual void Awake()
         {
             // Автоматично реєструємо для ін'єкції
@@ -26,18 +31,21 @@ namespace MythHunter.Core.MonoBehaviours
             {
                 GameBootstrapper.Instance.RegisterForInjection(this);
                 IsInjected = true;
+
+                // Викликаємо метод після успішної ін'єкції
+                OnInjectionsCompleted();
             }
             else
             {
-                _logger.LogError($"Failed to inject dependencies into {GetType().Name}: GameBootstrapper instance not found");
+                // Використання статичного методу з нашої фабрики логерів
+                MythLoggerFactory.GetDefaultLogger().LogError($"Failed to inject dependencies into {GetType().Name}: GameBootstrapper instance not found", "DI");
             }
         }
 
         /// <summary>
-        /// Цей метод має бути імплементований з атрибутом [Inject] для ін'єкції залежностей
+        /// Викликається після успішної ін'єкції всіх залежностей
         /// </summary>
-        [Inject]
-        protected virtual void Construct()
+        protected virtual void OnInjectionsCompleted()
         {
             // Порожня реалізація, яку можна перевизначити в дочірніх класах
         }
