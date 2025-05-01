@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Events/Debugging/EventVisualizer.cs
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -13,8 +14,8 @@ namespace MythHunter.Events.Debugging
     /// </summary>
     public class EventVisualizer : InjectableMonoBehaviour, IEventSubscriber
     {
-        private IEventBus _eventBus;
-        private IMythLogger _logger;
+        [Inject] private IEventBus _eventBus;
+        [Inject] private IMythLogger _logger;
 
         private readonly List<EventRecord> _eventHistory = new List<EventRecord>();
         private readonly int _maxEvents = 100;
@@ -22,13 +23,9 @@ namespace MythHunter.Events.Debugging
         private Vector2 _scrollPosition;
         private readonly Dictionary<Type, Delegate> _handlers = new Dictionary<Type, Delegate>();
 
-        [Inject]
-        protected override void Construct(IEventBus eventBus, IMythLogger logger)
+        protected override void OnInjectionsCompleted()
         {
-            _eventBus = eventBus;
-            _logger = logger;
-
-            // Підписуємося на події після успішної ін'єкції
+            base.OnInjectionsCompleted();
             SubscribeToEvents();
         }
 

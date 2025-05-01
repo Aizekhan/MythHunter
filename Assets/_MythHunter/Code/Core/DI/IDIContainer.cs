@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/DI/IDIContainer.cs
 namespace MythHunter.Core.DI
 {
     /// <summary>
@@ -11,5 +12,8 @@ namespace MythHunter.Core.DI
         TService Resolve<TService>();
         bool IsRegistered<TService>();
         void AnalyzeDependencies();
+
+        // Новий метод для ін'єкції залежностей у об'єкт
+        void InjectDependencies(object target);
     }
 }

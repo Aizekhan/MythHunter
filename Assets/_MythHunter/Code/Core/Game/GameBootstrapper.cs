@@ -61,6 +61,9 @@ namespace MythHunter.Core.Game
 
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
+
+            // Встановлюємо глобальний контейнер
+            DIContainerProvider.SetContainer(_container);
         }
 
         private void InitializeLogging()
@@ -87,7 +90,7 @@ namespace MythHunter.Core.Game
 
             _logger.LogInfo("ECS world initialized", "Bootstrapper");
         }
-
+      
         private void InitializeStateMachine()
         {
             _stateMachine = new GameStateMachine(_container);

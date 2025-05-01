@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace MythHunter.Core.DI
@@ -73,6 +74,87 @@ namespace MythHunter.Core.DI
             {
                 Console.WriteLine($"Singleton: {instance.Key.Name}");
             }
+        }
+
+        // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs (доповнюємо)
+        public void InjectDependencies(object target)
+        {
+            if (target == null)
+                return;
+
+            Type targetType = target.GetType();
+
+            // Пошук полів з атрибутом [Inject]
+            var fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(f => f.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
+
+            foreach (var field in fields)
+            {
+                Type serviceType = field.FieldType;
+                if (!IsRegistered(serviceType))
+                {
+                    _logger.LogWarning($"Cannot inject field {field.Name} of type {serviceType.Name}: service not registered", "DI");
+                    continue;
+                }
+
+                try
+                {
+                    object service = Resolve(serviceType);
+                    field.SetValue(target, service);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error injecting field {field.Name}: {ex.Message}", "DI", ex);
+                }
+            }
+
+            // Пошук властивостей з атрибутом [Inject]
+            var properties = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(p => p.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
+
+            foreach (var property in properties)
+            {
+                Type serviceType = property.PropertyType;
+                if (!IsRegistered(serviceType))
+                {
+                    _logger.LogWarning($"Cannot inject property {property.Name} of type {serviceType.Name}: service not registered", "DI");
+                    continue;
+                }
+
+                try
+                {
+                    object service = Resolve(serviceType);
+                    property.SetValue(target, service);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error injecting property {property.Name}: {ex.Message}", "DI", ex);
+                }
+            }
+        }
+
+        // Допоміжний метод для запиту з певним типом
+        private bool IsRegistered(Type serviceType)
+        {
+            return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
+        }
+
+        // Допоміжний метод для запиту з певним типом
+        private object Resolve(Type serviceType)
+        {
+            // Перевірка наявності синглтону
+            if (_instances.TryGetValue(serviceType, out var instance))
+            {
+                return instance;
+            }
+
+            // Перевірка наявності фабрики
+            if (_factories.TryGetValue(serviceType, out var factory))
+            {
+                return factory();
+            }
+
+            throw new Exception($"Type {serviceType.Name} is not registered");
         }
     }
 }
