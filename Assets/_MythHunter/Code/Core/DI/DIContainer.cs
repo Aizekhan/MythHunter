@@ -1,7 +1,9 @@
+// Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.DI
 {
@@ -12,71 +14,81 @@ namespace MythHunter.Core.DI
     {
         private readonly Dictionary<Type, Func<object>> _factories = new Dictionary<Type, Func<object>>();
         private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
-        
+        private readonly IMythLogger _logger;
+
+        public DIContainer(IMythLogger logger = null)
+        {
+            _logger = logger;
+        }
+
         public void Register<TService, TImplementation>() where TImplementation : TService
         {
             _factories[typeof(TService)] = () => Activator.CreateInstance(typeof(TImplementation));
         }
-        
+
         public void RegisterSingleton<TService, TImplementation>() where TImplementation : TService
         {
             var serviceType = typeof(TService);
-            
+
             if (!_instances.ContainsKey(serviceType))
             {
                 _instances[serviceType] = Activator.CreateInstance(typeof(TImplementation));
             }
         }
-        
+
         public void RegisterInstance<TService>(TService instance)
         {
             _instances[typeof(TService)] = instance;
         }
-        
+
         public TService Resolve<TService>()
         {
-            return (TService)Resolve(typeof(TService));
-        }
-        
-        private object Resolve(Type serviceType)
-        {
+            var serviceType = typeof(TService);
+
             // Перевірка наявності синглтону
             if (_instances.TryGetValue(serviceType, out var instance))
             {
-                return instance;
+                return (TService)instance;
             }
-            
+
             // Перевірка наявності фабрики
             if (_factories.TryGetValue(serviceType, out var factory))
             {
-                return factory();
+                return (TService)factory();
             }
-            
+
+            if (_logger != null)
+            {
+                _logger.LogError($"Type {serviceType.Name} is not registered", "DI");
+            }
+
             throw new Exception($"Type {serviceType.Name} is not registered");
         }
-        
+
         public bool IsRegistered<TService>()
         {
             var serviceType = typeof(TService);
             return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
         }
-        
+
         public void AnalyzeDependencies()
         {
-            Console.WriteLine("Analyzing dependencies...");
-            
-            foreach (var registration in _factories)
+            if (_logger != null)
             {
-                Console.WriteLine($"Service: {registration.Key.Name}");
-            }
-            
-            foreach (var instance in _instances)
-            {
-                Console.WriteLine($"Singleton: {instance.Key.Name}");
+                _logger.LogInfo("Analyzing dependencies...", "DI");
+
+                foreach (var registration in _factories)
+                {
+                    _logger.LogInfo($"Service: {registration.Key.Name}", "DI");
+                }
+
+                foreach (var instance in _instances)
+                {
+                    _logger.LogInfo($"Singleton: {instance.Key.Name}", "DI");
+                }
             }
         }
 
-        // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs (доповнюємо)
         public void InjectDependencies(object target)
         {
             if (target == null)
@@ -93,7 +105,10 @@ namespace MythHunter.Core.DI
                 Type serviceType = field.FieldType;
                 if (!IsRegistered(serviceType))
                 {
-                    _logger.LogWarning($"Cannot inject field {field.Name} of type {serviceType.Name}: service not registered", "DI");
+                    if (_logger != null)
+                    {
+                        _logger.LogWarning($"Cannot inject field {field.Name} of type {serviceType.Name}: service not registered", "DI");
+                    }
                     continue;
                 }
 
@@ -104,7 +119,10 @@ namespace MythHunter.Core.DI
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error injecting field {field.Name}: {ex.Message}", "DI", ex);
+                    if (_logger != null)
+                    {
+                        _logger.LogError($"Error injecting field {field.Name}: {ex.Message}", "DI", ex);
+                    }
                 }
             }
 
@@ -117,7 +135,10 @@ namespace MythHunter.Core.DI
                 Type serviceType = property.PropertyType;
                 if (!IsRegistered(serviceType))
                 {
-                    _logger.LogWarning($"Cannot inject property {property.Name} of type {serviceType.Name}: service not registered", "DI");
+                    if (_logger != null)
+                    {
+                        _logger.LogWarning($"Cannot inject property {property.Name} of type {serviceType.Name}: service not registered", "DI");
+                    }
                     continue;
                 }
 
@@ -128,7 +149,65 @@ namespace MythHunter.Core.DI
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error injecting property {property.Name}: {ex.Message}", "DI", ex);
+                    if (_logger != null)
+                    {
+                        _logger.LogError($"Error injecting property {property.Name}: {ex.Message}", "DI", ex);
+                    }
+                }
+            }
+
+            // Пошук методів з атрибутом [Inject]
+            var methods = targetType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(m => m.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
+
+            foreach (var method in methods)
+            {
+                var parameters = method.GetParameters();
+                var args = new object[parameters.Length];
+
+                bool allResolved = true;
+
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    Type serviceType = parameters[i].ParameterType;
+                    if (!IsRegistered(serviceType))
+                    {
+                        if (_logger != null)
+                        {
+                            _logger.LogWarning($"Cannot inject parameter {parameters[i].Name} of type {serviceType.Name}: service not registered", "DI");
+                        }
+                        allResolved = false;
+                        break;
+                    }
+
+                    try
+                    {
+                        args[i] = Resolve(serviceType);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (_logger != null)
+                        {
+                            _logger.LogError($"Error resolving parameter {parameters[i].Name}: {ex.Message}", "DI", ex);
+                        }
+                        allResolved = false;
+                        break;
+                    }
+                }
+
+                if (allResolved)
+                {
+                    try
+                    {
+                        method.Invoke(target, args);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (_logger != null)
+                        {
+                            _logger.LogError($"Error invoking method {method.Name}: {ex.Message}", "DI", ex);
+                        }
+                    }
                 }
             }
         }

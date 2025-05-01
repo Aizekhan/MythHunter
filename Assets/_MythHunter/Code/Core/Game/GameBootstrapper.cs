@@ -51,18 +51,25 @@ namespace MythHunter.Core.Game
             await InitializeServicesAsync();
         }
 
+        // Додаємо публічне посилання на DI контейнер
+        public IDIContainer DIContainer => _container;
         private void InitializeDependencyInjection()
         {
-            _container = new DIContainer();
+            // Створення логера перед усім іншим
+            var logger = MythLogger.CreateDefaultLogger();
+
+            // Створення контейнера з логером
+            _container = new DIContainer(logger);
 
             // Реєстрація базових сервісів
+            _container.RegisterInstance<IMythLogger>(logger);
             _container.RegisterSingleton<IEventBus, EventBus>();
-            _container.RegisterSingleton<IMythLogger, MythLogger>();
 
             // Реєстрація всіх інсталяторів
             InstallerRegistry.RegisterInstallers(_container);
 
             // Встановлюємо глобальний контейнер
+            DIContainerProvider.SetContainer(_container);
             DIContainerProvider.SetContainer(_container);
         }
 
@@ -134,11 +141,12 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Зареєструвати MonoBehaviour для подальшої ін'єкції
         /// </summary>
+        // Метод для ін'єкції залежностей у MonoBehaviour компоненти
         public void RegisterForInjection(MonoBehaviour component)
         {
-            if (component != null)
+            if (component != null && _container != null)
             {
-                _container.InjectInto(component, _logger);
+                _container.InjectDependencies(component);
             }
         }
 

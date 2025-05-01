@@ -1,6 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainerProvider.cs
 using UnityEngine;
-
+using MythHunter.Utils.Logging;
 namespace MythHunter.Core.DI
 {
     /// <summary>
@@ -8,6 +8,7 @@ namespace MythHunter.Core.DI
     /// </summary>
     public static class DIContainerProvider
     {
+
         private static IDIContainer _container;
 
         /// <summary>

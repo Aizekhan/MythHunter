@@ -13,7 +13,7 @@ namespace MythHunter.Core.DI
         bool IsRegistered<TService>();
         void AnalyzeDependencies();
 
-        // Новий метод для ін'єкції залежностей у об'єкт
+        // Метод для ін'єкції залежностей у об'єкт
         void InjectDependencies(object target);
     }
 }

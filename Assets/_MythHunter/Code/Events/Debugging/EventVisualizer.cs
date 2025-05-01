@@ -26,7 +26,16 @@ namespace MythHunter.Events.Debugging
         protected override void OnInjectionsCompleted()
         {
             base.OnInjectionsCompleted();
-            SubscribeToEvents();
+
+            // Підписуємося на події після успішної ін'єкції
+            if (_eventBus != null && _logger != null)
+            {
+                SubscribeToEvents();
+            }
+            else
+            {
+                _logger?.LogError("Failed to resolve dependencies for EventVisualizer");
+            }
         }
 
         private void OnEnable()
@@ -74,13 +83,13 @@ namespace MythHunter.Events.Debugging
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning($"Failed to scan assembly {assembly.FullName}: {ex.Message}", "EventVisualizer");
+                        _logger?.LogWarning($"Failed to scan assembly {assembly.FullName}: {ex.Message}", "EventVisualizer");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error subscribing to events: {ex.Message}", "EventVisualizer", ex);
+                _logger?.LogError($"Error subscribing to events: {ex.Message}", "EventVisualizer", ex);
             }
         }
 
@@ -104,7 +113,7 @@ namespace MythHunter.Events.Debugging
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"Failed to subscribe to event type {eventType.Name}: {ex.Message}", "EventVisualizer");
+                _logger?.LogWarning($"Failed to subscribe to event type {eventType.Name}: {ex.Message}", "EventVisualizer");
             }
         }
 
@@ -131,7 +140,7 @@ namespace MythHunter.Events.Debugging
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error unsubscribing from events: {ex.Message}", "EventVisualizer", ex);
+                _logger?.LogError($"Error unsubscribing from events: {ex.Message}", "EventVisualizer", ex);
             }
         }
 
@@ -149,7 +158,7 @@ namespace MythHunter.Events.Debugging
                 _eventHistory.RemoveAt(0);
 
             // Логуємо подію для відлагодження
-            _logger.LogDebug($"Event received: {evt.GetType().Name} (ID: {evt.GetEventId()})", "EventVisualizer");
+            _logger?.LogDebug($"Event received: {evt.GetType().Name} (ID: {evt.GetEventId()})", "EventVisualizer");
         }
 
         private void OnGUI()
@@ -166,7 +175,7 @@ namespace MythHunter.Events.Debugging
             if (GUILayout.Button("Clear", GUILayout.Width(80)))
             {
                 _eventHistory.Clear();
-                _logger.LogInfo("Event history cleared", "EventVisualizer");
+                _logger?.LogInfo("Event history cleared", "EventVisualizer");
             }
             if (GUILayout.Button("Close", GUILayout.Width(80)))
             {
@@ -194,7 +203,7 @@ namespace MythHunter.Events.Debugging
             if (Input.GetKeyDown(KeyCode.F8))
             {
                 _isVisible = !_isVisible;
-                _logger.LogInfo($"Event visualizer {(_isVisible ? "shown" : "hidden")}", "EventVisualizer");
+                _logger?.LogInfo($"Event visualizer {(_isVisible ? "shown" : "hidden")}", "EventVisualizer");
             }
         }
 
