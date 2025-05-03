@@ -3,7 +3,7 @@ using MythHunter.Core.ECS;
 using MythHunter.Core.Game;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
-using MythHunter.Systems.Combat;
+
 using MythHunter.Systems.Movement;
 using MythHunter.Systems.AI;
 using MythHunter.Utils.Logging;
@@ -44,7 +44,7 @@ namespace MythHunter.Core.Installers
             // Створення та реєстрація основних ігрових систем
 
             // Фазова система
-            var eventQueue = container.Resolve<IEventQueue>();
+           
             var phaseSystem = new PhaseSystem(eventBus, logger);
             container.RegisterInstance<IPhaseSystem>(phaseSystem);
             systemRegistry.RegisterSystem(phaseSystem);
@@ -55,9 +55,7 @@ namespace MythHunter.Core.Installers
             systemRegistry.RegisterSystem(movementSystem);
 
             // Бойова система
-            var combatSystem = new CombatSystem(entityManager, eventBus, logger);
-            container.RegisterInstance<ICombatSystem>(combatSystem);
-            systemRegistry.RegisterSystem(combatSystem);
+          
 
             // AI система
             var aiSystem = new AISystem(entityManager, eventBus, logger);
@@ -65,9 +63,7 @@ namespace MythHunter.Core.Installers
             systemRegistry.RegisterSystem(aiSystem);
 
             // Система рун
-            var runeSystem = new RuneSystem(entityManager, eventBus, logger);
-            container.RegisterInstance<IRuneSystem>(runeSystem);
-            systemRegistry.RegisterSystem(runeSystem);
+           
 
             var archetypeTemplateRegistry = new ArchetypeTemplateRegistry(entityManager, logger);
             var archetypeSystem = new ArchetypeSystem(entityManager, eventBus, logger, archetypeTemplateRegistry);

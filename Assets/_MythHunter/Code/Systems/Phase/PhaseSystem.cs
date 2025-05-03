@@ -1,7 +1,9 @@
+// Файл: Assets/_MythHunter/Code/Systems/Phase/PhaseSystem.cs
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Events;
+using MythHunter.Events.Extensions;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
 
@@ -13,24 +15,21 @@ namespace MythHunter.Systems.Phase
     public class PhaseSystem : SystemBase, IPhaseSystem
     {
         private readonly IEventBus _eventBus;
-      
         private readonly IMythLogger _logger;
 
-       
         private Events.Domain.GamePhase _currentPhase;
         private float _phaseTimer;
         private float _phaseDuration;
+
         public Events.Domain.GamePhase CurrentPhase => _currentPhase;
+
         [Inject]
         public PhaseSystem(
             IEventBus eventBus,
-           
             IMythLogger logger)
         {
             _eventBus = eventBus;
-         
             _logger = logger;
-
             _currentPhase = Events.Domain.GamePhase.None;
             _phaseTimer = 0;
             _phaseDuration = 0;
@@ -39,11 +38,11 @@ namespace MythHunter.Systems.Phase
         public override void Initialize()
         {
             // Підписка на синхронні події
-            _eventBus.Subscribe<Events.Domain.PhaseChangeRequestEvent>(OnPhaseChangeRequest);
+            this.Subscribe(_eventBus, OnPhaseChangeRequest);
 
             // Підписка на асинхронні події
-            _eventBus.SubscribeAsync<Events.Domain.GameStartedEvent>(OnGameStartedAsync);
-            _eventBus.SubscribeAsync<Events.Domain.GameEndedEvent>(OnGameEndedAsync);
+            this.SubscribeAsync(_eventBus, OnGameStartedAsync);
+            this.SubscribeAsync(_eventBus, OnGameEndedAsync);
 
             _logger.LogInfo("PhaseSystem initialized");
         }
@@ -75,7 +74,6 @@ namespace MythHunter.Systems.Phase
                     Timestamp = System.DateTime.UtcNow
                 };
 
-                // Використовуємо чергу для публікації
                 _eventBus.Publish(evt);
             }
         }
@@ -98,7 +96,6 @@ namespace MythHunter.Systems.Phase
                 Timestamp = System.DateTime.UtcNow
             };
 
-            // Використовуємо чергу для публікації
             _eventBus.Publish(phaseChangedEvent);
         }
 
@@ -160,9 +157,9 @@ namespace MythHunter.Systems.Phase
                 Timestamp = System.DateTime.UtcNow
             };
 
-            // Використовуємо чергу для публікації
             _eventBus.Publish(evt);
         }
+
         public void EndPhase(Events.Domain.GamePhase phase)
         {
             _logger.LogInfo($"Phase {phase} ended manually");
@@ -175,6 +172,7 @@ namespace MythHunter.Systems.Phase
 
             _eventBus.Publish(evt);
         }
+
         private Events.Domain.GamePhase GetNextPhase(Events.Domain.GamePhase currentPhase)
         {
             return currentPhase switch
@@ -200,16 +198,18 @@ namespace MythHunter.Systems.Phase
                 _ => 0f
             };
         }
+
         public float GetPhaseTimeRemaining()
         {
             return _phaseDuration - _phaseTimer;
         }
+
         public override void Dispose()
         {
             // Відписка від подій
-            _eventBus.Unsubscribe<Events.Domain.PhaseChangeRequestEvent>(OnPhaseChangeRequest);
-            _eventBus.UnsubscribeAsync<Events.Domain.GameStartedEvent>(OnGameStartedAsync);
-            _eventBus.UnsubscribeAsync<Events.Domain.GameEndedEvent>(OnGameEndedAsync);
+            this.Unsubscribe(_eventBus, OnPhaseChangeRequest);
+            this.UnsubscribeAsync(_eventBus, OnGameStartedAsync);
+            this.UnsubscribeAsync(_eventBus, OnGameEndedAsync);
 
             _logger.LogInfo("PhaseSystem disposed");
         }
