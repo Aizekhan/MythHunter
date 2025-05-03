@@ -37,12 +37,12 @@ namespace MythHunter.Systems.Phase
 
         public override void Initialize()
         {
-            // Підписка на синхронні події
-            this.Subscribe(_eventBus, OnPhaseChangeRequest);
+            // Підписка на синхронні події з явним вказуванням аргументів типу
+            this.Subscribe<Events.Domain.PhaseChangeRequestEvent>(_eventBus, OnPhaseChangeRequest);
 
             // Підписка на асинхронні події
-            this.SubscribeAsync(_eventBus, OnGameStartedAsync);
-            this.SubscribeAsync(_eventBus, OnGameEndedAsync);
+            this.SubscribeAsync<Events.Domain.GameStartedEvent>(_eventBus, OnGameStartedAsync);
+            this.SubscribeAsync<Events.Domain.GameEndedEvent>(_eventBus, OnGameEndedAsync);
 
             _logger.LogInfo("PhaseSystem initialized");
         }
@@ -206,10 +206,10 @@ namespace MythHunter.Systems.Phase
 
         public override void Dispose()
         {
-            // Відписка від подій
-            this.Unsubscribe(_eventBus, OnPhaseChangeRequest);
-            this.UnsubscribeAsync(_eventBus, OnGameStartedAsync);
-            this.UnsubscribeAsync(_eventBus, OnGameEndedAsync);
+            // Відписка від подій з явним вказуванням аргументів типу
+            this.Unsubscribe<Events.Domain.PhaseChangeRequestEvent>(_eventBus, OnPhaseChangeRequest);
+            this.UnsubscribeAsync<Events.Domain.GameStartedEvent>(_eventBus, OnGameStartedAsync);
+            this.UnsubscribeAsync<Events.Domain.GameEndedEvent>(_eventBus, OnGameEndedAsync);
 
             _logger.LogInfo("PhaseSystem disposed");
         }
