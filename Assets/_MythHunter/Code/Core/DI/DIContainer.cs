@@ -26,14 +26,64 @@ namespace MythHunter.Core.DI
             _factories[typeof(TService)] = () => Activator.CreateInstance(typeof(TImplementation));
         }
 
+        // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs
         public void RegisterSingleton<TService, TImplementation>() where TImplementation : TService
         {
             var serviceType = typeof(TService);
 
             if (!_instances.ContainsKey(serviceType))
             {
-                _instances[serviceType] = Activator.CreateInstance(typeof(TImplementation));
+                // Отримуємо інформацію про конструктори
+                var constructors = typeof(TImplementation).GetConstructors();
+                if (constructors.Length == 0)
+                {
+                    // Якщо немає явних конструкторів, спробуємо використати конструктор за замовчуванням
+                    _instances[serviceType] = Activator.CreateInstance(typeof(TImplementation));
+                }
+                else
+                {
+                    // Беремо перший конструктор (бажано з атрибутом [Inject])
+                    var constructor = constructors.FirstOrDefault(c =>
+                        c.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0) ?? constructors[0];
+
+                    // Отримуємо параметри конструктора
+                    var parameters = constructor.GetParameters();
+                    var args = new object[parameters.Length];
+
+                    // Розв'язуємо залежності для кожного параметра
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        var paramType = parameters[i].ParameterType;
+                        args[i] = ResolveType(paramType);
+                    }
+
+                    // Створюємо екземпляр з передачею залежностей
+                    _instances[serviceType] = constructor.Invoke(args);
+                }
             }
+        }
+
+        // Допоміжний метод для розв'язання типів
+        private object ResolveType(Type serviceType)
+        {
+            // Перевірка наявності синглтону
+            if (_instances.TryGetValue(serviceType, out var instance))
+            {
+                return instance;
+            }
+
+            // Перевірка наявності фабрики
+            if (_factories.TryGetValue(serviceType, out var factory))
+            {
+                return factory();
+            }
+
+            if (_logger != null)
+            {
+                _logger.LogError($"Type {serviceType.Name} is not registered", "DI");
+            }
+
+            throw new Exception($"Type {serviceType.Name} is not registered");
         }
 
         public void RegisterInstance<TService>(TService instance)
@@ -240,21 +290,6 @@ namespace MythHunter.Core.DI
             return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
         }
 
-        private object ResolveType(Type serviceType)
-        {
-            // Перевірка наявності синглтону
-            if (_instances.TryGetValue(serviceType, out var instance))
-            {
-                return instance;
-            }
-
-            // Перевірка наявності фабрики
-            if (_factories.TryGetValue(serviceType, out var factory))
-            {
-                return factory();
-            }
-
-            throw new Exception($"Type {serviceType.Name} is not registered");
-        }
+       
     }
 }

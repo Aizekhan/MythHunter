@@ -13,7 +13,7 @@ namespace MythHunter.Systems.Phase
     public class PhaseSystem : SystemBase, IPhaseSystem
     {
         private readonly IEventBus _eventBus;
-        private readonly IEventQueue _eventQueue;
+      
         private readonly IMythLogger _logger;
 
        
@@ -24,11 +24,11 @@ namespace MythHunter.Systems.Phase
         [Inject]
         public PhaseSystem(
             IEventBus eventBus,
-            IEventQueue eventQueue,
+           
             IMythLogger logger)
         {
             _eventBus = eventBus;
-            _eventQueue = eventQueue;
+         
             _logger = logger;
 
             _currentPhase = Events.Domain.GamePhase.None;
@@ -76,7 +76,7 @@ namespace MythHunter.Systems.Phase
                 };
 
                 // Використовуємо чергу для публікації
-                _eventQueue.Enqueue(evt);
+                _eventBus.Publish(evt);
             }
         }
 
@@ -99,7 +99,7 @@ namespace MythHunter.Systems.Phase
             };
 
             // Використовуємо чергу для публікації
-            _eventQueue.Enqueue(phaseChangedEvent);
+            _eventBus.Publish(phaseChangedEvent);
         }
 
         private async UniTask OnGameStartedAsync(Events.Domain.GameStartedEvent evt)
@@ -161,7 +161,7 @@ namespace MythHunter.Systems.Phase
             };
 
             // Використовуємо чергу для публікації
-            _eventQueue.Enqueue(evt);
+            _eventBus.Publish(evt);
         }
         public void EndPhase(Events.Domain.GamePhase phase)
         {
@@ -173,7 +173,7 @@ namespace MythHunter.Systems.Phase
                 Timestamp = System.DateTime.UtcNow
             };
 
-            _eventQueue.Enqueue(evt);
+            _eventBus.Publish(evt);
         }
         private Events.Domain.GamePhase GetNextPhase(Events.Domain.GamePhase currentPhase)
         {

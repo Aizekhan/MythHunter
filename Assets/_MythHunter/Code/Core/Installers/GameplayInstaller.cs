@@ -45,7 +45,7 @@ namespace MythHunter.Core.Installers
 
             // Фазова система
             var eventQueue = container.Resolve<IEventQueue>();
-            var phaseSystem = new PhaseSystem(eventBus, eventQueue, logger);
+            var phaseSystem = new PhaseSystem(eventBus, logger);
             container.RegisterInstance<IPhaseSystem>(phaseSystem);
             systemRegistry.RegisterSystem(phaseSystem);
 
