@@ -28,7 +28,7 @@ namespace MythHunter.Core.MonoBehaviours
             // Отримуємо контейнер
             if (GameBootstrapper.Instance != null)
             {
-                _container = GameBootstrapper.Instance.Container;
+                _container = GameBootstrapper.Instance.GetContainerInternal();
                 _logger = _container.Resolve<IMythLogger>();
 
                 if (_searchOnAwake)
@@ -43,7 +43,8 @@ namespace MythHunter.Core.MonoBehaviours
             }
             else
             {
-                _logger.LogError("DependencyInjector cannot find GameBootstrapper instance");
+                var fallbackLogger = MythLoggerFactory.GetDefaultLogger();
+                fallbackLogger.LogError("DependencyInjector cannot find GameBootstrapper instance", "DI");
             }
         }
 

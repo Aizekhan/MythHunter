@@ -19,13 +19,7 @@ namespace MythHunter.Debug.UI
         {
             base.OnInjectionsCompleted();
 
-            // Перевірте ініціалізацію
-            var container = DIContainerProvider.GetContainer();
-            if (container == null)
-            {
-                _logger?.LogError("DI Container not found", "Debug");
-                return;
-            }
+          
 
             if (_createOnStart)
             {
@@ -38,20 +32,20 @@ namespace MythHunter.Debug.UI
         /// </summary>
         public void CreateDebugDashboard()
         {
-            // Перевіряємо, чи не існує вже дашборд
             if (FindObjectOfType<DebugDashboard>() != null)
             {
                 _logger?.LogWarning("Debug dashboard already exists", "Debug");
                 return;
             }
 
-            // Створюємо новий GameObject
             var dashboardObject = new GameObject("MythHunter_DebugDashboard");
 
-            // Додаємо компонент дашборду
+            // Додаємо DependencyScope
+            var scope = dashboardObject.AddComponent<DependencyScope>();
+
+            // Додаємо компонент дашборду  
             var dashboard = dashboardObject.AddComponent<DebugDashboard>();
 
-            // Переконуємося, що об'єкт не буде знищений при зміні сцени
             DontDestroyOnLoad(dashboardObject);
 
             _logger?.LogInfo("Debug dashboard created", "Debug");

@@ -13,12 +13,13 @@ namespace MythHunter.Systems.AI
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
 
+        
+        private readonly EventHandlerBase _eventHandler;
         [MythHunter.Core.DI.Inject]
         public AISystem(IEntityManager entityManager, IEventBus eventBus, IMythLogger logger)
         {
             _entityManager = entityManager;
-            _eventBus = eventBus;
-            _logger = logger;
+            _eventHandler = new AIEventHandler(eventBus, logger);
         }
 
         public override void Initialize()
@@ -63,6 +64,35 @@ namespace MythHunter.Systems.AI
         {
             UnsubscribeFromEvents();
             _logger.LogInfo("AISystem disposed", "AI");
+        }
+    }
+
+    /// <summary>
+    /// Обробник подій для AI системи
+    /// </summary>
+    internal class AIEventHandler : EventHandlerBase
+    {
+        public AIEventHandler(IEventBus eventBus, IMythLogger logger) : base(eventBus, logger)
+        {
+        }
+
+        public override void SubscribeToEvents()
+        {
+            base.SubscribeToEvents();
+
+            // Підписка на конкретні події
+            Subscribe<Events.Domain.Combat.CombatStartedEvent>(OnCombatStarted);
+            Subscribe<Events.Domain.EntityCreatedEvent>(OnEntityCreated);
+        }
+
+        private void OnCombatStarted(Events.Domain.Combat.CombatStartedEvent evt)
+        {
+            // Обробка події
+        }
+
+        private void OnEntityCreated(Events.Domain.EntityCreatedEvent evt)
+        {
+            // Обробка події
         }
     }
 }

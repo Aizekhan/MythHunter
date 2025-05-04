@@ -14,6 +14,8 @@ namespace MythHunter.Core.Game
     public class GameBootstrapper : MonoBehaviour
     {
         private static GameBootstrapper _instance;
+        public static GameBootstrapper Instance => _instance;
+        private IDIContainer Container => _container;
 
         [SerializeField] private bool _injectOnAwake = true;
 
@@ -25,9 +27,8 @@ namespace MythHunter.Core.Game
         private DependencyInjector _dependencyInjector;
 
         // Singleton для доступу
-        public static GameBootstrapper Instance => _instance;
-        public IDIContainer Container => _container;
-
+  
+    
         private async void Awake()
         {
             if (_instance != null && _instance != this)
@@ -67,7 +68,7 @@ namespace MythHunter.Core.Game
             InstallerRegistry.RegisterInstallers(_container);
 
             // Встановлюємо глобальний контейнер
-            DIContainerProvider.SetContainer(_container);
+           // DIContainerProvider.SetContainer(_container); ????????????????????????????????????????чи добре шо я тут скрив це
         }
 
         private void InitializeLogging()
@@ -162,6 +163,12 @@ namespace MythHunter.Core.Game
             _ecsWorld?.Dispose();
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
             _instance = null;
+        }
+
+        // Додаємо внутрішній метод для DependencyScope
+        internal IDIContainer GetContainerInternal()
+        {
+            return _container;
         }
     }
 }

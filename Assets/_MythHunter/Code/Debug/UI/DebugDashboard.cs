@@ -15,6 +15,7 @@ namespace MythHunter.Debug.UI
     public class DebugDashboard : InjectableMonoBehaviour
     {
         [Inject] private IMythLogger _logger;
+        [Inject] private DebugToolFactory _toolFactory;
 
         [SerializeField] private bool _showOnStart = false;
         [SerializeField] private KeyCode _toggleKey = KeyCode.F9;
@@ -39,27 +40,15 @@ namespace MythHunter.Debug.UI
         {
             try
             {
-                // Отримати контейнер DI
-                var container = DIContainerProvider.GetContainer();
+                // Створюємо всі інструменти через фабрику
+                var tools = _toolFactory.CreateAllTools();
 
-                // Знайти всі реалізації IDebugTool
-                var toolTypes = FindDebugToolTypes();
-
-                foreach (var toolType in toolTypes)
+                foreach (var tool in tools)
                 {
-                    try
-                    {
-                        // Створити кожний інструмент через контейнер
-                        var tool = (IDebugTool)container.Resolve(toolType);
-                        RegisterTool(tool);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogWarning($"Failed to create debug tool {toolType.Name}: {ex.Message}", "Debug");
-                    }
+                    RegisterTool(tool);
                 }
 
-                // Оновити вкладки
+                // Оновлюємо вкладки
                 UpdateTabNames();
 
                 _logger?.LogInfo($"Collected {_registeredTools.Count} debug tools", "Debug");
@@ -68,32 +57,6 @@ namespace MythHunter.Debug.UI
             {
                 _logger?.LogError($"Error collecting debug tools: {ex.Message}", "Debug", ex);
             }
-        }
-
-        private Type[] FindDebugToolTypes()
-        {
-            var toolTypes = new List<Type>();
-
-            try
-            {
-                // Шукаємо в усіх збірках
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    foreach (var type in assembly.GetTypes())
-                    {
-                        if (typeof(IDebugTool).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
-                        {
-                            toolTypes.Add(type);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError($"Error finding debug tool types: {ex.Message}", "Debug", ex);
-            }
-
-            return toolTypes.ToArray();
         }
 
         /// <summary>
