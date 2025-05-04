@@ -1,3 +1,4 @@
+// Файл: Assets/_MythHunter/Code/Core/Installers/EventsInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Events.Debugging;
@@ -15,13 +16,11 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Installing Event System", "Installer");
 
-            // Реєстрація пулу подій з підтримкою пріоритетів
-            BindSingleton<IEventPool, EventPool>(container);
+            // Правильна реєстрація EventPool
+            container.RegisterSingleton<IEventPool, EventPool>();
 
             // Реєстрація шини подій
             BindSingleton<IEventBus, EventBus>(container);
-
-       
 
             // Реєстрація логеру подій для відлагодження
             Bind<EventLogger, EventLogger>(container);

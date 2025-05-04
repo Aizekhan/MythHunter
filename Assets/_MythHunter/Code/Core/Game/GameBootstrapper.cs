@@ -51,8 +51,6 @@ namespace MythHunter.Core.Game
             await InitializeServicesAsync();
         }
 
-        // Додаємо публічне посилання на DI контейнер
-        public IDIContainer DIContainer => _container;
         private void InitializeDependencyInjection()
         {
             // Створення логера перед усім іншим
@@ -69,7 +67,6 @@ namespace MythHunter.Core.Game
             InstallerRegistry.RegisterInstallers(_container);
 
             // Встановлюємо глобальний контейнер
-            DIContainerProvider.SetContainer(_container);
             DIContainerProvider.SetContainer(_container);
         }
 
@@ -97,7 +94,7 @@ namespace MythHunter.Core.Game
 
             _logger.LogInfo("ECS world initialized", "Bootstrapper");
         }
-      
+
         private void InitializeStateMachine()
         {
             _stateMachine = new GameStateMachine(_container);
@@ -141,12 +138,16 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Зареєструвати MonoBehaviour для подальшої ін'єкції
         /// </summary>
-        // Метод для ін'єкції залежностей у MonoBehaviour компоненти
         public void RegisterForInjection(MonoBehaviour component)
         {
             if (component != null && _container != null)
             {
                 _container.InjectDependencies(component);
+                _logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
+            }
+            else
+            {
+                _logger?.LogWarning($"Cannot inject dependencies - component is {(component == null ? "null" : "valid")} and container is {(_container == null ? "null" : "valid")}", "DI");
             }
         }
 

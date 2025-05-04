@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Events
@@ -27,6 +28,8 @@ namespace MythHunter.Events
         private readonly TimeSpan _poolCleanupInterval = TimeSpan.FromMinutes(5);
         private DateTime _lastCleanupTime = DateTime.Now;
 
+
+        [MythHunter.Core.DI.Inject]
         public EventPool(int maxPoolSize = 100, IMythLogger logger = null)
         {
             _maxPoolSize = maxPoolSize;

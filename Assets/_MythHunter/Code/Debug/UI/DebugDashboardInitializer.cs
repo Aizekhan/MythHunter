@@ -19,6 +19,14 @@ namespace MythHunter.Debug.UI
         {
             base.OnInjectionsCompleted();
 
+            // Перевірте ініціалізацію
+            var container = DIContainerProvider.GetContainer();
+            if (container == null)
+            {
+                _logger?.LogError("DI Container not found", "Debug");
+                return;
+            }
+
             if (_createOnStart)
             {
                 CreateDebugDashboard();
