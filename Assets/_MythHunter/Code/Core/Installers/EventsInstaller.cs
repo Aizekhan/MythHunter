@@ -9,6 +9,7 @@ namespace MythHunter.Core.Installers
     /// <summary>
     /// Інсталятор для оновленої подійної системи
     /// </summary>
+    // Шлях: Assets/_MythHunter/Code/Core/Installers/EventsInstaller.cs
     public class EventsInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)

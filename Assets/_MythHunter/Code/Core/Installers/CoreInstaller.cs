@@ -17,7 +17,7 @@ namespace MythHunter.Core.Installers
         {
             // Базові системи ядра
             BindSingleton<IMythLogger, MythLogger>(container);
-            BindSingleton<IEventBus, EventBus>(container);
+         
 
             // ECS компоненти
             BindSingleton<IEntityManager, EntityManager>(container);

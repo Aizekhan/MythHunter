@@ -11,7 +11,7 @@ namespace MythHunter.Debug.UI
     /// </summary>
     public class DebugDashboardInitializer : InjectableMonoBehaviour
     {
-        [Inject] private IMythLogger _logger;
+        [Inject] protected new readonly IMythLogger _logger;
 
         [SerializeField] private bool _createOnStart = true;
 
@@ -32,7 +32,7 @@ namespace MythHunter.Debug.UI
         /// </summary>
         public void CreateDebugDashboard()
         {
-            if (FindObjectOfType<DebugDashboard>() != null)
+            if (FindFirstObjectByType<DebugDashboard>() != null)
             {
                 _logger?.LogWarning("Debug dashboard already exists", "Debug");
                 return;

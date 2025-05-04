@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_MythHunter/Scenes/Boot.unity
+    path: Assets/_MythHunter/Scenes/Bootstrap.unity
     guid: cab9b99b84c0f274da5109a9691dbd28
   - enabled: 1
     path: Assets/_MythHunter/Scenes/MainMenu.unity

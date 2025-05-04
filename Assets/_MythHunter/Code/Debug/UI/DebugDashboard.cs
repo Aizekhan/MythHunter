@@ -14,7 +14,7 @@ namespace MythHunter.Debug.UI
     /// </summary>
     public class DebugDashboard : InjectableMonoBehaviour
     {
-        [Inject] private IMythLogger _logger;
+        [Inject] protected new readonly IMythLogger _logger;
         [Inject] private DebugToolFactory _toolFactory;
 
         [SerializeField] private bool _showOnStart = false;

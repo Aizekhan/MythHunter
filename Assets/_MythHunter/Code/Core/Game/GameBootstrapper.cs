@@ -5,6 +5,7 @@ using MythHunter.Events;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.ECS;
 using MythHunter.Core.MonoBehaviours;
+using MythHunter.Systems.Core;
 
 namespace MythHunter.Core.Game
 {
@@ -13,88 +14,120 @@ namespace MythHunter.Core.Game
     /// </summary>
     public class GameBootstrapper : MonoBehaviour
     {
+        #region Singleton Pattern
+
         private static GameBootstrapper _instance;
         public static GameBootstrapper Instance => _instance;
-        private IDIContainer Container => _container;
+
+        #endregion
+
+        #region Inspector Fields
 
         [SerializeField] private bool _injectOnAwake = true;
 
+        #endregion
+
+        #region Core Services
+
         private IDIContainer _container;
-        private IEventBus _eventBus;
         private IMythLogger _logger;
+        private IEventBus _eventBus;
+
+        #endregion
+
+        #region Game Systems
+
         private IEcsWorld _ecsWorld;
         private GameStateMachine _stateMachine;
         private DependencyInjector _dependencyInjector;
 
-        // Singleton для доступу
-  
-    
+        #endregion
+
+        #region Unity Lifecycle
+
         private async void Awake()
+        {
+            if (!TryInitializeSingleton())
+                return;
+
+            DontDestroyOnLoad(gameObject);
+
+            InitializeCore();
+            InitializeGameSystems();
+
+            _logger.LogInfo("GameBootstrapper initialized successfully");
+
+            await InitializeServicesAsync();
+        }
+
+        private void Update()
+        {
+            _ecsWorld?.Update(Time.deltaTime);
+            _stateMachine?.Update();
+        }
+
+        private void OnDestroy()
+        {
+            Cleanup();
+        }
+
+        #endregion
+
+        #region Initialization Methods
+
+        private bool TryInitializeSingleton()
         {
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
-                return;
+                return false;
             }
 
             _instance = this;
-            DontDestroyOnLoad(gameObject);
+            return true;
+        }
 
+        private void InitializeCore()
+        {
             InitializeDependencyInjection();
-            InitializeLogging();
+            _logger = _container.Resolve<IMythLogger>();
+        }
+
+        private void InitializeGameSystems()
+        {
             InitializeEcs();
             InitializeStateMachine();
             InitializeDependencyInjector();
-
-            _logger.LogInfo("GameBootstrapper initialized successfully");
-
-            // Асинхронна ініціалізація сервісів
-            await InitializeServicesAsync();
         }
 
         private void InitializeDependencyInjection()
         {
-            // Створення логера перед усім іншим
             var logger = MythLogger.CreateDefaultLogger();
-
-            // Створення контейнера з логером
             _container = new DIContainer(logger);
 
-            // Реєстрація базових сервісів
+            // ТІЛЬКИ логер як початкова залежність
             _container.RegisterInstance<IMythLogger>(logger);
-            _container.RegisterSingleton<IEventBus, EventBus>();
 
-            // Реєстрація всіх інсталяторів
+            // Всі інші сервіси реєструються через інсталери
             InstallerRegistry.RegisterInstallers(_container);
-
-            // Встановлюємо глобальний контейнер
-           // DIContainerProvider.SetContainer(_container); ????????????????????????????????????????чи добре шо я тут скрив це
         }
 
-        private void InitializeLogging()
-        {
-            _logger = _container.Resolve<IMythLogger>();
-            _logger.LogInfo("Logging system initialized", "Bootstrapper");
-        }
+
+        
 
         private void InitializeEcs()
         {
+            // Просто отримуємо вже зареєстровані сервіси
             _eventBus = _container.Resolve<IEventBus>();
-
-            // Створення ECS світу
-            var entityManager = new EntityManager();
-            var systemRegistry = new Systems.Core.SystemRegistry();
+            var entityManager = _container.Resolve<IEntityManager>();
+            var systemRegistry = _container.Resolve<SystemRegistry>();
 
             _ecsWorld = new EcsWorld(entityManager, systemRegistry);
-            _container.RegisterInstance<IEntityManager>(entityManager);
-            _container.RegisterInstance<IEcsWorld>(_ecsWorld);
-
-            // Створення оптимізатора ECS
-            var ecsOptimizer = new EcsOptimizer(entityManager, _logger);
-            _container.RegisterInstance<EcsOptimizer>(ecsOptimizer);
 
             _logger.LogInfo("ECS world initialized", "Bootstrapper");
         }
+
+       
 
         private void InitializeStateMachine()
         {
@@ -106,12 +139,9 @@ namespace MythHunter.Core.Game
 
         private void InitializeDependencyInjector()
         {
-            // Створення інжектора на сцені
-            var injectorObject = new GameObject("DependencyInjector");
-            injectorObject.transform.SetParent(transform);
+            var injectorObject = CreateDependencyInjectorObject();
             _dependencyInjector = injectorObject.AddComponent<DependencyInjector>();
 
-            // Ін'єкція компонентів на сцені, якщо потрібно
             if (_injectOnAwake)
             {
                 _dependencyInjector.InjectDependenciesInScene();
@@ -120,55 +150,76 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Dependency injector initialized", "Bootstrapper");
         }
 
+        private GameObject CreateDependencyInjectorObject()
+        {
+            var injectorObject = new GameObject("DependencyInjector");
+            injectorObject.transform.SetParent(transform);
+            return injectorObject;
+        }
+
         private async UniTask InitializeServicesAsync()
         {
             _logger.LogInfo("Starting async services initialization", "Bootstrapper");
 
-            // Тут можна ініціалізувати сервіси, які потребують асинхронності
-            // Наприклад, завантаження конфігурацій, підключення до серверів тощо
-
-            // Імітація асинхронної операції
-            await UniTask.Delay(100);
+            // Асинхронна ініціалізація сервісів
+            await PerformAsyncInitialization();
 
             _logger.LogInfo("Async services initialization completed", "Bootstrapper");
-
-            // Перехід до початкового стану
             _stateMachine.ChangeState(GameStateType.Boot);
         }
 
-        /// <summary>
-        /// Зареєструвати MonoBehaviour для подальшої ін'єкції
-        /// </summary>
+        private async UniTask PerformAsyncInitialization()
+        {
+            // Тут можна додати асинхронну логіку ініціалізації
+            await UniTask.Delay(100);
+        }
+
+        #endregion
+
+        #region Public Methods
+
         public void RegisterForInjection(MonoBehaviour component)
         {
-            if (component != null && _container != null)
-            {
-                _container.InjectDependencies(component);
-                _logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
-            }
-            else
-            {
-                _logger?.LogWarning($"Cannot inject dependencies - component is {(component == null ? "null" : "valid")} and container is {(_container == null ? "null" : "valid")}", "DI");
-            }
+            if (!ValidateInjectionParameters(component))
+                return;
+
+            _container.InjectDependencies(component);
+            _logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
         }
 
-        private void Update()
+        #endregion
+
+        #region Internal Methods
+
+        internal IDIContainer GetContainerInternal()
         {
-            _ecsWorld?.Update(Time.deltaTime);
-            _stateMachine?.Update();
+            return _container;
         }
 
-        private void OnDestroy()
+        #endregion
+
+        #region Private Helper Methods
+
+        private bool ValidateInjectionParameters(MonoBehaviour component)
+        {
+            if (component != null && _container != null)
+                return true;
+
+            _logger?.LogWarning(
+                $"Cannot inject dependencies - component is {(component == null ? "null" : "valid")} " +
+                $"and container is {(_container == null ? "null" : "valid")}",
+                "DI"
+            );
+            return false;
+        }
+
+        private void Cleanup()
         {
             _ecsWorld?.Dispose();
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
             _instance = null;
         }
 
-        // Додаємо внутрішній метод для DependencyScope
-        internal IDIContainer GetContainerInternal()
-        {
-            return _container;
-        }
+        #endregion
     }
 }
