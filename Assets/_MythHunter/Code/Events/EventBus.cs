@@ -72,6 +72,7 @@ namespace MythHunter.Events
         private struct EventQueueItem
         {
             public IEvent Event;
+            public Type EventType;  // Додали це поле
             public bool IsAsync;
             public EventPriority Priority;
         }
@@ -158,6 +159,9 @@ namespace MythHunter.Events
         private void ProcessEventImmediately<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
             Type eventType = typeof(TEvent);
+
+            // Сповіщаємо дебаг-обробники
+            DebugEventMiddleware.NotifyHandlers(eventData);
 
             if (_syncHandlers.TryGetValue(eventType, out var handlers))
             {
@@ -297,6 +301,7 @@ namespace MythHunter.Events
                 GetQueueForPriority(priority).Enqueue(new EventQueueItem
                 {
                     Event = eventData,
+                    EventType = typeof(TEvent),  // Додали типізацію
                     IsAsync = false,
                     Priority = priority
                 });
@@ -317,6 +322,7 @@ namespace MythHunter.Events
                 GetQueueForPriority(priority).Enqueue(new EventQueueItem
                 {
                     Event = eventData,
+                    EventType = typeof(TEvent),  // Додали типізацію
                     IsAsync = true,
                     Priority = priority
                 });
@@ -374,6 +380,7 @@ namespace MythHunter.Events
         /// <summary>
         /// Обробляє одну подію з черги
         /// </summary>
+        // Модифікація методу ProcessQueueAsync - видаляємо рефлексію
         private async UniTask<bool> ProcessQueueAsync(Queue<EventQueueItem> queue)
         {
             EventQueueItem item;
@@ -388,25 +395,31 @@ namespace MythHunter.Events
                 item = queue.Dequeue();
             }
 
-            // Обробляємо подію синхронно або асинхронно
             try
             {
                 if (item.IsAsync)
                 {
-                    // Використовуємо рефлексію для виклику PublishAsync з правильним типом
-                    var eventType = item.Event.GetType();
-                    var method = typeof(IEventBus).GetMethod("PublishAsync").MakeGenericMethod(eventType);
-                    await (UniTask)method.Invoke(this, new object[] { item.Event });
+                    var asyncHandlers = _asyncHandlers.GetValueOrDefault(item.EventType);
+                    if (asyncHandlers != null)
+                    {
+                        foreach (var handler in asyncHandlers)
+                        {
+                            var handlerMethod = handler.Handler as Func<IEvent, UniTask>;
+                            if (handlerMethod != null)
+                            {
+                                await handlerMethod(item.Event);
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    // Використовуємо рефлексію для виклику ProcessEventImmediately з правильним типом
-                    var eventType = item.Event.GetType();
-                    var method = this.GetType().GetMethod("ProcessEventImmediately",
-                                   System.Reflection.BindingFlags.NonPublic |
-                                   System.Reflection.BindingFlags.Instance)
-                                   .MakeGenericMethod(eventType);
-                    method.Invoke(this, new object[] { item.Event });
+                    // Замість рефлексії викликаємо ProcessEventImmediately через generic wrapper
+                    var genericMethod = GetType().GetMethod("ProcessEventImmediately",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        .MakeGenericMethod(item.EventType);
+
+                    genericMethod.Invoke(this, new object[] { item.Event });
                 }
 
                 return true;
@@ -414,10 +427,10 @@ namespace MythHunter.Events
             catch (Exception ex)
             {
                 _logger.LogError($"Error processing event: {ex.Message}", "EventBus", ex);
-                return true; // Повертаємо true, щоб не затримуватись на помилці
+                return true;
             }
         }
-
+      
         /// <summary>
         /// Повертає чергу для вказаного пріоритету
         /// </summary>
