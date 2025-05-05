@@ -25,6 +25,7 @@ namespace MythHunter.Resources.Providers
             // Спроба завантажити з кешу
             if (_loadedResources.TryGetValue(key, out var cached) && cached is T cachedTyped)
             {
+                await UniTask.Yield();
                 return cachedTyped;
             }
 
@@ -45,6 +46,7 @@ namespace MythHunter.Resources.Providers
         {
             // Використовуємо наш статичний клас
             T[] resources = MythResourceUtils.LoadAll<T>(pattern);
+            await UniTask.Yield();
             return resources;
         }
 

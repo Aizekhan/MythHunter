@@ -27,7 +27,8 @@ namespace MythHunter.Core
         
         // 3. Система ресурсів
         new ResourceInstaller(),
-        
+        // 3. Система серіалізації компонентів
+        new SerializationInstaller(), 
         // 4. Система пулінгу об'єктів
         new PoolSystemInstaller(),
         

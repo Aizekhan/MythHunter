@@ -33,23 +33,7 @@ namespace MythHunter.Core.ECS
         {
             // Тут можна додати значення за замовчуванням для всіх компонентів
             // Наприклад:
-            RegisterDefaultValue<Components.Character.HealthComponent>(new Components.Character.HealthComponent
-            {
-                CurrentHealth = 100,
-                MaxHealth = 100,
-                IsDead = false,
-                HasRegeneration = false,
-                RegenAmount = 0,
-                RegenInterval = 0,
-                RegenTimer = 0
-            });
-
-            RegisterDefaultValue<Components.Movement.MovementComponent>(new Components.Movement.MovementComponent
-            {
-                Speed = 5.0f,
-                Direction = UnityEngine.Vector3.zero,
-                IsMoving = false
-            });
+           
 
             // Решту типів компонентів можна додати за необхідності
         }

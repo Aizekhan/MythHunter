@@ -43,8 +43,7 @@ namespace MythHunter.Entities
 
             if (entityId >= 0)
             {
-                // Додаємо тег гравця
-                _entityManager.AddComponent(entityId, new Components.Tags.PlayerControlledTag());
+               
 
                 _logger.LogInfo($"Created player character '{name}' with ID {entityId}", "Entity");
             }
@@ -60,8 +59,7 @@ namespace MythHunter.Entities
             var overrides = new Dictionary<Type, object>
             {
                 { typeof(Components.Core.NameComponent), new Components.Core.NameComponent { Name = name } },
-                { typeof(Components.Character.HealthComponent), new Components.Character.HealthComponent { CurrentHealth = health, MaxHealth = health } },
-                { typeof(Components.Combat.CombatStatsComponent), new Components.Combat.CombatStatsComponent { AttackPower = attackPower } }
+               
             };
 
             int entityId = _archetypeSystem.CreateEntityFromArchetype("Enemy", overrides);
@@ -149,17 +147,7 @@ namespace MythHunter.Entities
             if (_entityManager.HasComponent<Components.Core.NameComponent>(entityId))
                 result.Add(typeof(Components.Core.NameComponent));
 
-            if (_entityManager.HasComponent<Components.Character.HealthComponent>(entityId))
-                result.Add(typeof(Components.Character.HealthComponent));
-
-            if (_entityManager.HasComponent<Components.Movement.MovementComponent>(entityId))
-                result.Add(typeof(Components.Movement.MovementComponent));
-
-            if (_entityManager.HasComponent<Components.Combat.CombatStatsComponent>(entityId))
-                result.Add(typeof(Components.Combat.CombatStatsComponent));
-
-            if (_entityManager.HasComponent<Components.Character.InventoryComponent>(entityId))
-                result.Add(typeof(Components.Character.InventoryComponent));
+            
 
             if (_entityManager.HasComponent<Components.Core.DescriptionComponent>(entityId))
                 result.Add(typeof(Components.Core.DescriptionComponent));

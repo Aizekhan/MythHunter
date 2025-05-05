@@ -4,11 +4,10 @@ using MythHunter.Core.Game;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
 
-using MythHunter.Systems.Movement;
-using MythHunter.Systems.AI;
+
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
-using MythHunter.UI.Core;
+
 using MythHunter.Systems.Gameplay;
 using MythHunter.Entities;
 using MythHunter.Entities.Archetypes;
@@ -50,17 +49,13 @@ namespace MythHunter.Core.Installers
             systemRegistry.RegisterSystem(phaseSystem);
 
             // Система руху
-            var movementSystem = new MovementSystem(entityManager, eventBus, logger);
-            container.RegisterInstance<IMovementSystem>(movementSystem);
-            systemRegistry.RegisterSystem(movementSystem);
+          
 
             // Бойова система
           
 
             // AI система
-            var aiSystem = new AISystem(entityManager, eventBus, logger);
-            container.RegisterInstance<IAISystem>(aiSystem);
-            systemRegistry.RegisterSystem(aiSystem);
+           
 
             // Система рун
            

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Events
@@ -75,6 +76,7 @@ namespace MythHunter.Events
             public EventPriority Priority;
         }
 
+        [Inject]
         public EventBus(IEventPool eventPool, IMythLogger logger)
         {
             _eventPool = eventPool;

@@ -43,22 +43,7 @@ namespace MythHunter.Entities.Archetypes
         /// </summary>
         private void RegisterDefaultArchetypes()
         {
-            // Архетип персонажа
-            RegisterArchetypeTemplate("Character")
-                .WithComponent(new Components.Core.NameComponent { Name = "Character" })
-                .WithComponent(new Components.Character.HealthComponent { CurrentHealth = 100, MaxHealth = 100 })
-                .WithComponent(new Components.Movement.MovementComponent { Speed = 5f })
-                .WithComponent(new Components.Combat.CombatStatsComponent { AttackPower = 10, Defense = 5 })
-                .WithComponent(new Components.Character.InventoryComponent { Capacity = 20 });
-
-            // Архетип ворога
-            RegisterArchetypeTemplate("Enemy")
-                .WithComponent(new Components.Core.NameComponent { Name = "Enemy" })
-                .WithComponent(new Components.Character.HealthComponent { CurrentHealth = 50, MaxHealth = 50 })
-                .WithComponent(new Components.Movement.MovementComponent { Speed = 3f })
-                .WithComponent(new Components.Combat.CombatStatsComponent { AttackPower = 8, Defense = 3 })
-                .WithComponent(new Components.Tags.AIControlledTag());
-
+           
             // Архетип предмета
             RegisterArchetypeTemplate("Item")
                 .WithComponent(new Components.Core.NameComponent { Name = "Item" })

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
 using UnityEngine;
 using MythHunter.Core.DI;
+using UnityEngine.AddressableAssets;
 namespace MythHunter.Resources.Providers
 {
     /// <summary>
@@ -24,19 +25,21 @@ namespace MythHunter.Resources.Providers
 
             // Заглушка для роботи з Addressables
             // Реальна реалізація буде використовувати Addressables API
-
+            var asset = await Addressables.LoadAssetAsync<T>(key);
             return null;
         }
 
         public async UniTask<IList<T>> LoadAssetsAsync<T>(IEnumerable<string> keys) where T : Object
         {
             // Заглушка для завантаження колекції ресурсів
+            await UniTask.Yield();
             return new List<T>();
         }
 
         public async UniTask<IList<T>> LoadAssetsAsync<T>(string label) where T : Object
         {
             // Заглушка для завантаження за міткою
+            await UniTask.Yield();
             return new List<T>();
         }
 
@@ -53,6 +56,7 @@ namespace MythHunter.Resources.Providers
         public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null)
         {
             // Заглушка для створення GameObject з Addressables
+            await UniTask.Yield();
             return null;
         }
 
