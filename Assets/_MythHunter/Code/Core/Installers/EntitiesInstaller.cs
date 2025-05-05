@@ -2,10 +2,10 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities;
-using MythHunter.Utils.Logging;
-using MythHunter.Events;
 using MythHunter.Entities.Archetypes;
+using MythHunter.Events;
 using MythHunter.Systems.Gameplay;
+using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
 {
@@ -35,12 +35,25 @@ namespace MythHunter.Core.Installers
             var archetypeTemplateRegistry = new ArchetypeTemplateRegistry(entityManager, logger);
             container.RegisterInstance<ArchetypeTemplateRegistry>(archetypeTemplateRegistry);
 
+            // Реєстрація реєстру архетипів
+            var archetypeRegistry = new ArchetypeRegistry(logger);
+            container.RegisterInstance<ArchetypeRegistry>(archetypeRegistry);
+
+            // Реєстрація детектора архетипів
+            var archetypeDetector = new ArchetypeDetector(
+                entityManager,
+                archetypeTemplateRegistry,
+                archetypeRegistry,
+                logger);
+            container.RegisterInstance<ArchetypeDetector>(archetypeDetector);
+
             // Реєстрація системи архетипів
             var archetypeSystem = new ArchetypeSystem(
-     entityManager,
-     logger,
-     eventBus,
-     archetypeTemplateRegistry);
+                archetypeRegistry,
+                archetypeDetector,
+                archetypeTemplateRegistry,
+                logger,
+                eventBus);
             container.RegisterInstance<ArchetypeSystem>(archetypeSystem);
 
             // Реєстрація фабрики сутностей

@@ -26,7 +26,7 @@ namespace MythHunter.Core.MonoBehaviours
 
             if (GameBootstrapper.Instance != null)
             {
-                // Просто зберігаємо логер без отримання контейнера
+                // Отримуємо логер без контейнера
                 if (_logger == null)
                 {
                     _logger = MythLoggerFactory.GetDefaultLogger();
@@ -72,7 +72,9 @@ namespace MythHunter.Core.MonoBehaviours
             }
 
             var injectables = new List<MonoBehaviour>();
-            var gameObjects = FindObjectsOfType<GameObject>();
+
+            // Використовуємо сучасний API для пошуку об'єктів
+            var gameObjects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
 
             foreach (var go in gameObjects)
             {

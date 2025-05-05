@@ -1,5 +1,4 @@
 // Шлях: Assets/_MythHunter/Code/Entities/Archetypes/ArchetypeSystem.cs
-
 using System;
 using System.Collections.Generic;
 using MythHunter.Core.DI;
@@ -15,20 +14,21 @@ namespace MythHunter.Entities.Archetypes
     /// </summary>
     public class ArchetypeSystem : Core.ECS.SystemBase, IEventSubscriber
     {
-        private readonly IEntityManager _entityManager;
+        private readonly ArchetypeRegistry _archetypeRegistry;
+        private readonly ArchetypeDetector _archetypeDetector;
         private readonly ArchetypeTemplateRegistry _templateRegistry;
-        private readonly Dictionary<int, string> _entityToArchetype = new Dictionary<int, string>();
-        private readonly Dictionary<string, List<int>> _archetypeToEntities = new Dictionary<string, List<int>>();
 
         [Inject]
         public ArchetypeSystem(
-            IEntityManager entityManager,
+            ArchetypeRegistry archetypeRegistry,
+            ArchetypeDetector archetypeDetector,
+            ArchetypeTemplateRegistry templateRegistry,
             IMythLogger logger,
-            IEventBus eventBus,
-            ArchetypeTemplateRegistry templateRegistry)
+            IEventBus eventBus)
             : base(logger, eventBus)
         {
-            _entityManager = entityManager;
+            _archetypeRegistry = archetypeRegistry;
+            _archetypeDetector = archetypeDetector;
             _templateRegistry = templateRegistry;
         }
 
@@ -44,124 +44,26 @@ namespace MythHunter.Entities.Archetypes
             Unsubscribe<EntityDestroyedEvent>(OnEntityDestroyed);
         }
 
-        private void OnEntityCreated(Events.Domain.EntityCreatedEvent evt)
+        private void OnEntityCreated(EntityCreatedEvent evt)
         {
             // При створенні сутності перевіряємо, до якого архетипу вона належить
             string archetypeId = evt.ArchetypeId;
 
             if (!string.IsNullOrEmpty(archetypeId))
             {
-                RegisterEntityArchetype(evt.EntityId, archetypeId);
+                _archetypeRegistry.RegisterEntityArchetype(evt.EntityId, archetypeId);
             }
             else
             {
                 // Якщо архетип не вказано, пробуємо визначити його
-                DetectAndRegisterArchetype(evt.EntityId);
+                _archetypeDetector.DetectAndRegisterArchetype(evt.EntityId);
             }
         }
 
-        private void OnEntityDestroyed(Events.Domain.EntityDestroyedEvent evt)
+        private void OnEntityDestroyed(EntityDestroyedEvent evt)
         {
             // При видаленні сутності видаляємо її з кешу архетипів
-            UnregisterEntityArchetype(evt.EntityId);
-        }
-
-        /// <summary>
-        /// Визначає архетип сутності на основі її компонентів
-        /// </summary>
-        public void DetectAndRegisterArchetype(int entityId)
-        {
-            foreach (string archetypeId in _templateRegistry.GetAllTemplateIds())
-            {
-                if (_templateRegistry.MatchesTemplate(entityId, archetypeId))
-                {
-                    RegisterEntityArchetype(entityId, archetypeId);
-                    _logger.LogDebug($"Auto-detected archetype '{archetypeId}' for entity {entityId}", "Entity");
-                    return;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Реєструє архетип сутності у кеші
-        /// </summary>
-        public void RegisterEntityArchetype(int entityId, string archetypeId)
-        {
-            if (string.IsNullOrEmpty(archetypeId))
-            {
-                _logger.LogWarning($"Cannot register entity {entityId} with empty archetype ID", "Entity");
-                return;
-            }
-
-            // Видаляємо сутність з попереднього архетипу, якщо вона була зареєстрована
-            if (_entityToArchetype.TryGetValue(entityId, out var oldArchetypeId))
-            {
-                if (_archetypeToEntities.TryGetValue(oldArchetypeId, out var entities))
-                {
-                    entities.Remove(entityId);
-                }
-            }
-
-            // Реєструємо сутність у новому архетипі
-            _entityToArchetype[entityId] = archetypeId;
-
-            if (!_archetypeToEntities.TryGetValue(archetypeId, out var archetypeEntities))
-            {
-                archetypeEntities = new List<int>();
-                _archetypeToEntities[archetypeId] = archetypeEntities;
-            }
-
-            archetypeEntities.Add(entityId);
-            _logger.LogDebug($"Registered entity {entityId} with archetype '{archetypeId}'", "Entity");
-        }
-
-        /// <summary>
-        /// Видаляє реєстрацію архетипу сутності
-        /// </summary>
-        public void UnregisterEntityArchetype(int entityId)
-        {
-            if (_entityToArchetype.TryGetValue(entityId, out var archetypeId))
-            {
-                if (_archetypeToEntities.TryGetValue(archetypeId, out var entities))
-                {
-                    entities.Remove(entityId);
-                }
-
-                _entityToArchetype.Remove(entityId);
-                _logger.LogDebug($"Unregistered entity {entityId} from archetype '{archetypeId}'", "Entity");
-            }
-        }
-
-        /// <summary>
-        /// Отримує архетип сутності
-        /// </summary>
-        public string GetEntityArchetype(int entityId)
-        {
-            return _entityToArchetype.TryGetValue(entityId, out var archetypeId)
-                ? archetypeId
-                : null;
-        }
-
-        /// <summary>
-        /// Отримує всі сутності заданого архетипу
-        /// </summary>
-        public List<int> GetEntitiesByArchetype(string archetypeId)
-        {
-            if (_archetypeToEntities.TryGetValue(archetypeId, out var entities))
-            {
-                return new List<int>(entities);
-            }
-
-            return new List<int>();
-        }
-
-        /// <summary>
-        /// Перевіряє, чи відповідає сутність заданому архетипу
-        /// </summary>
-        public bool IsEntityOfArchetype(int entityId, string archetypeId)
-        {
-            return _entityToArchetype.TryGetValue(entityId, out var currentArchetypeId) &&
-                   currentArchetypeId == archetypeId;
+            _archetypeRegistry.UnregisterEntityArchetype(evt.EntityId);
         }
 
         /// <summary>
@@ -173,10 +75,10 @@ namespace MythHunter.Entities.Archetypes
 
             if (entityId >= 0)
             {
-                RegisterEntityArchetype(entityId, archetypeId);
+                _archetypeRegistry.RegisterEntityArchetype(entityId, archetypeId);
 
                 // Публікуємо подію створення сутності
-                _eventBus.Publish(new Events.Domain.EntityCreatedEvent
+                _eventBus.Publish(new EntityCreatedEvent
                 {
                     EntityId = entityId,
                     ArchetypeId = archetypeId,
@@ -187,6 +89,38 @@ namespace MythHunter.Entities.Archetypes
             return entityId;
         }
 
+        /// <summary>
+        /// Отримує архетип сутності
+        /// </summary>
+        public string GetEntityArchetype(int entityId)
+        {
+            return _archetypeRegistry.GetEntityArchetype(entityId);
+        }
+
+        /// <summary>
+        /// Отримує всі сутності заданого архетипу
+        /// </summary>
+        public List<int> GetEntitiesByArchetype(string archetypeId)
+        {
+            return _archetypeRegistry.GetEntitiesByArchetype(archetypeId);
+        }
+
+        /// <summary>
+        /// Перевіряє, чи відповідає сутність заданому архетипу
+        /// </summary>
+        public bool IsEntityOfArchetype(int entityId, string archetypeId)
+        {
+            return _archetypeRegistry.IsEntityOfArchetype(entityId, archetypeId);
+        }
+
+        /// <summary>
+        /// Реєструє архетип сутності
+        /// </summary>
+        public void RegisterEntityArchetype(int entityId, string archetypeId)
+        {
+            _archetypeRegistry.RegisterEntityArchetype(entityId, archetypeId);
+        }
+
         public override void Update(float deltaTime)
         {
             // Тут може бути логіка періодичного оновлення
@@ -195,8 +129,7 @@ namespace MythHunter.Entities.Archetypes
         public override void Dispose()
         {
             UnsubscribeFromEvents();
-            _entityToArchetype.Clear();
-            _archetypeToEntities.Clear();
+            _archetypeRegistry.Clear();
             _logger.LogInfo("ArchetypeSystem disposed", "Entity");
         }
     }

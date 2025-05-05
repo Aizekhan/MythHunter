@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/Game/GameBootstrapper.cs
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
@@ -7,6 +8,7 @@ using MythHunter.Core.ECS;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Systems.Core;
 using MythHunter.Debug;
+using MythHunter.Utils;
 
 namespace MythHunter.Core.Game
 {
@@ -99,6 +101,7 @@ namespace MythHunter.Core.Game
             InitializeEcs();
             InitializeStateMachine();
             InitializeDependencyInjector();
+            InitializeDebugTools();
         }
 
         private void InitializeDependencyInjection()
@@ -113,12 +116,9 @@ namespace MythHunter.Core.Game
             InstallerRegistry.RegisterInstallers(_container);
         }
 
-
-        
-
         private void InitializeEcs()
         {
-            // Просто отримуємо вже зареєстровані сервіси
+            // Отримуємо вже зареєстровані сервіси
             _eventBus = _container.Resolve<IEventBus>();
             var entityManager = _container.Resolve<IEntityManager>();
             var systemRegistry = _container.Resolve<SystemRegistry>();
@@ -128,12 +128,12 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("ECS world initialized", "Bootstrapper");
         }
 
-
         private void InitializeDebugTools()
         {
             var debugService = _container.Resolve<IDebugService>();
             debugService.CreateDebugDashboard();
         }
+
         private void InitializeStateMachine()
         {
             _stateMachine = new GameStateMachine(_container);
@@ -194,7 +194,6 @@ namespace MythHunter.Core.Game
 
         #endregion
 
-        // Замість GetContainerInternal(), додайте спеціальний метод
         public void InjectInto(MonoBehaviour component)
         {
             if (component != null && _container != null)

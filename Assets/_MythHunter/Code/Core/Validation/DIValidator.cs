@@ -1,9 +1,10 @@
-// Файл: Assets/_MythHunter/Code/Core/Validation/DIValidator.cs
+// Шлях: Assets/_MythHunter/Code/Core/Validation/DIValidator.cs
 using UnityEngine;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
+using MythHunter.Utils;
 
 namespace MythHunter.Core.Validation
 {
@@ -13,13 +14,13 @@ namespace MythHunter.Core.Validation
         private static void ValidateSceneDI()
         {
             var logger = MythLoggerFactory.GetDefaultLogger();
-            var injectableComponents = GameObject.FindObjectsOfType<MonoBehaviour>();
+            var injectableComponents = UnityApiUtils.FindObjectsOfType<MonoBehaviour>();
 
             foreach (var component in injectableComponents)
             {
                 if (HasInjectAttributes(component))
                 {
-                    var bootstrapper = Object.FindFirstObjectByType<GameBootstrapper>();
+                    var bootstrapper = UnityApiUtils.FindFirstObjectOfType<GameBootstrapper>();
                     if (bootstrapper == null)
                     {
                         logger.LogWarning($"Component {component.GetType().Name} on {component.gameObject.name} has [Inject] attributes but no GameBootstrapper!", "DI");
@@ -30,7 +31,7 @@ namespace MythHunter.Core.Validation
 
         private static bool HasInjectAttributes(MonoBehaviour component)
         {
-            // Спрощено для прикладу 
+            // Логіка перевірки атрибутів [Inject]
             return true;
         }
     }

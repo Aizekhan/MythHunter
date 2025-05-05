@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/NetworkingInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Networking.Core;
 using MythHunter.Networking.Client;
@@ -17,19 +18,20 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей NetworkingSystem...", "Installer");
 
-            // Реєстрація основних мережевих сервісів
-            BindSingleton<INetworkSystem, NetworkSystem>(container);
+            // Реєстрація загальних мережевих сервісів
             BindSingleton<INetworkSerializer, BinaryNetworkSerializer>(container);
-
-            // Клієнтська частина
-            BindSingleton<INetworkClient, NetworkClient>(container);
-
-            // Серверна частина
-            BindSingleton<INetworkServer, NetworkServer>(container);
-            // Кліентна частина
-            BindSingleton<INetworkClient, NetworkClient>(container);
-            // Обробники повідомлень
             BindSingleton<INetworkMessageHandlerRegistry, NetworkMessageHandlerRegistry>(container);
+
+            // Реєстрація клієнтської частини
+            BindSingleton<INetworkClient, NetworkClient>(container);
+            BindSingleton<IClientNetworkSystem, ClientNetworkSystem>(container);
+
+            // Реєстрація серверної частини
+            BindSingleton<INetworkServer, NetworkServer>(container);
+            BindSingleton<IServerNetworkSystem, ServerNetworkSystem>(container);
+
+            // Реєстрація авторитету мережевої системи
+            BindSingleton<NetworkAuthority, NetworkAuthority>(container);
 
             logger.LogInfo("Встановлення залежностей NetworkingSystem завершено", "Installer");
         }
