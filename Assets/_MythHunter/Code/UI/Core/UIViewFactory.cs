@@ -1,4 +1,6 @@
 // UIViewFactory.cs
+
+using MythHunter.Core.DI;
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -9,7 +11,7 @@ namespace MythHunter.UI.Core
         private readonly MythHunter.Resources.Core.IResourceProvider _resourceProvider;
         private readonly MythHunter.Utils.Logging.IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public UIViewFactory(MythHunter.Resources.Core.IResourceProvider resourceProvider, MythHunter.Utils.Logging.IMythLogger logger)
         {
             _resourceProvider = resourceProvider;

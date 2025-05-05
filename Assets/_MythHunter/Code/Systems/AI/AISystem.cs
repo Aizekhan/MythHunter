@@ -1,7 +1,7 @@
 using MythHunter.Core.ECS;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Systems.AI
 {
     /// <summary>
@@ -15,7 +15,7 @@ namespace MythHunter.Systems.AI
 
         
         private readonly EventHandlerBase _eventHandler;
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public AISystem(IEntityManager entityManager, IEventBus eventBus, IMythLogger logger)
         {
             _entityManager = entityManager;

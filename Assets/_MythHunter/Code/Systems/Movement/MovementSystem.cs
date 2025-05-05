@@ -2,7 +2,7 @@ using MythHunter.Core.ECS;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
 using UnityEngine;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Systems.Movement
 {
     /// <summary>
@@ -14,7 +14,7 @@ namespace MythHunter.Systems.Movement
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public MovementSystem(IEntityManager entityManager, IEventBus eventBus, IMythLogger logger)
         {
             _entityManager = entityManager;

@@ -29,7 +29,7 @@ namespace MythHunter.Events
         private DateTime _lastCleanupTime = DateTime.Now;
 
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public EventPool(IMythLogger logger)
         {
             _maxPoolSize = 100; // Значення за замовчуванням

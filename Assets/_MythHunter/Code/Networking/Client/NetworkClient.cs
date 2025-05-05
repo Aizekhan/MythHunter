@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 using MythHunter.Networking.Serialization;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Networking.Client
 {
     /// <summary>
@@ -23,7 +23,7 @@ namespace MythHunter.Networking.Client
         public bool IsConnected => _isConnected;
         public bool IsActive => _isActive;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public NetworkClient(INetworkSerializer serializer, IMythLogger logger)
         {
             _serializer = serializer;

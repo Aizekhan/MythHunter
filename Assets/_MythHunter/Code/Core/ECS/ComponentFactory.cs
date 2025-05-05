@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Core.ECS
 {
     /// <summary>
@@ -16,7 +16,7 @@ namespace MythHunter.Core.ECS
         private readonly IMythLogger _logger;
         private readonly Dictionary<Type, object> _defaultValues = new Dictionary<Type, object>();
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public ComponentFactory(IEntityManager entityManager, IMythLogger logger)
         {
             _entityManager = entityManager;

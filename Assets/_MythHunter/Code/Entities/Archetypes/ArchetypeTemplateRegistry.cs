@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Entities.Archetypes
 {
     /// <summary>
@@ -28,7 +28,7 @@ namespace MythHunter.Entities.Archetypes
             public Dictionary<Type, object> DefaultComponents { get; } = new Dictionary<Type, object>();
         }
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public ArchetypeTemplateRegistry(IEntityManager entityManager, IMythLogger logger)
         {
             _entityManager = entityManager;

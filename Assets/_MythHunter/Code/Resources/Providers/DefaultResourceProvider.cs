@@ -3,7 +3,7 @@ using MythHunter.Utils.Logging;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Resources.Providers
 {
     public class DefaultResourceProvider : IResourceProvider
@@ -11,7 +11,7 @@ namespace MythHunter.Resources.Providers
         private readonly IMythLogger _logger;
         private readonly Dictionary<string, Object> _loadedResources = new Dictionary<string, Object>();
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public DefaultResourceProvider(IMythLogger logger)
         {
             _logger = logger;

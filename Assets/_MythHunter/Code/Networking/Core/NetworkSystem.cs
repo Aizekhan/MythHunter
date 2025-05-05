@@ -5,7 +5,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;
 using MythHunter.Networking.Serialization;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Networking.Core
 {
     /// <summary>
@@ -31,7 +31,7 @@ namespace MythHunter.Networking.Core
         }
         public bool IsConnected => IsClient && _client.IsConnected;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public NetworkSystem(INetworkClient client, INetworkServer server,
                             INetworkSerializer serializer, IMythLogger logger)
         {

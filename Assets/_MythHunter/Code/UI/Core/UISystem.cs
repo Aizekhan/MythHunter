@@ -4,7 +4,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -17,7 +17,7 @@ namespace MythHunter.UI.Core
         private readonly IUIViewFactory _viewFactory;
         private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public UISystem(IResourceProvider resourceProvider, IUIViewFactory viewFactory, IMythLogger logger)
         {
             _resourceProvider = resourceProvider;

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
 using UnityEngine;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Resources.Providers
 {
     /// <summary>
@@ -12,7 +12,7 @@ namespace MythHunter.Resources.Providers
     {
         private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public AddressablesProvider(IMythLogger logger)
         {
             _logger = logger;

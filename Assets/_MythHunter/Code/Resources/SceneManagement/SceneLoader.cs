@@ -2,14 +2,14 @@ using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Resources.SceneManagement
 {
     public class SceneLoader : ISceneLoader
     {
         private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public SceneLoader(IMythLogger logger)
         {
             _logger = logger;

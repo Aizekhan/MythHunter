@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
 using UnityEngine;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Resources.Providers
 {
     /// <summary>
@@ -13,7 +13,7 @@ namespace MythHunter.Resources.Providers
     {
         private readonly DefaultResourceProvider _resourceProvider;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public FallbackResourceProvider(IMythLogger logger, DefaultResourceProvider resourceProvider)
             : base(logger)
         {

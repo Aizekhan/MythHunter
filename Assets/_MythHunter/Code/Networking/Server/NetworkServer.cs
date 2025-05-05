@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 using MythHunter.Networking.Serialization;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Networking.Server
 {
     /// <summary>
@@ -25,7 +25,7 @@ namespace MythHunter.Networking.Server
         public bool IsRunning => _isRunning;
         public bool IsActive => _isRunning;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public NetworkServer(INetworkSerializer serializer, IMythLogger logger)
         {
             _serializer = serializer;

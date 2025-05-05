@@ -1,4 +1,5 @@
 using UnityEngine;
+using MythHunter.Core.DI;
 namespace MythHunter.Networking.Core
 {
     /// <summary>
@@ -10,7 +11,7 @@ namespace MythHunter.Networking.Core
             new System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.List<System.Delegate>>();
         private readonly MythHunter.Utils.Logging.IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public NetworkMessageHandlerRegistry(MythHunter.Utils.Logging.IMythLogger logger)
         {
             _logger = logger;

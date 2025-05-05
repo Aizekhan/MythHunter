@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using MythHunter.Networking.Messages;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Core.DI;
 namespace MythHunter.Networking.Serialization
 {
     /// <summary>
@@ -14,7 +14,7 @@ namespace MythHunter.Networking.Serialization
         private readonly Dictionary<string, Type> _messageTypes;
         private readonly IMythLogger _logger;
 
-        [MythHunter.Core.DI.Inject]
+        [Inject]
         public BinaryNetworkSerializer(IMythLogger logger)
         {
             _logger = logger;
