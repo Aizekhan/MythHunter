@@ -18,16 +18,11 @@ namespace MythHunter.Core.DI
             if (component == null)
                 return;
 
-            if (container is DIContainer diContainer)
-            {
-                // Використовуємо внутрішній метод з логуванням
-                diContainer.InjectDependenciesInternal(component, logger != null);
-            }
-            else
-            {
-                // Запасний варіант для інших реалізацій
-                container.InjectDependencies(component);
-            }
+            // Використовуємо публічний метод InjectDependencies
+            container.InjectDependencies(component);
+
+            // Логування, якщо потрібно
+            logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
         }
 
         /// <summary>

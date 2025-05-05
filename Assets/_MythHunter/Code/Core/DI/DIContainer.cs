@@ -1,20 +1,25 @@
 // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Collections.Generic;
 using System.Reflection;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.DI
 {
     /// <summary>
-    /// Реалізація DI контейнера
+    /// Реалізація DI контейнера з оптимізованим створенням об'єктів через Expression Trees
     /// </summary>
     public class DIContainer : IDIContainer
     {
         private readonly Dictionary<Type, Func<object>> _factories = new Dictionary<Type, Func<object>>();
         private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, Func<object>> _compiledFactories = new Dictionary<Type, Func<object>>();
         private readonly IMythLogger _logger;
+
+        // Кеш для методів ін'єкції в поля/властивості/методи
+        private readonly Dictionary<Type, List<Action<object>>> _injectors = new Dictionary<Type, List<Action<object>>>();
 
         public DIContainer(IMythLogger logger = null)
         {
@@ -23,67 +28,28 @@ namespace MythHunter.Core.DI
 
         public void Register<TService, TImplementation>() where TImplementation : TService
         {
-            _factories[typeof(TService)] = () => Activator.CreateInstance(typeof(TImplementation));
+            var serviceType = typeof(TService);
+            var implType = typeof(TImplementation);
+
+            // Створюємо та кешуємо фабрику для створення об'єктів
+            _factories[serviceType] = GetOrCreateFactory(implType);
         }
 
-        // Шлях: Assets/_MythHunter/Code/Core/DI/DIContainer.cs
         public void RegisterSingleton<TService, TImplementation>() where TImplementation : TService
         {
             var serviceType = typeof(TService);
 
             if (!_instances.ContainsKey(serviceType))
             {
-                // Отримуємо інформацію про конструктори
-                var constructors = typeof(TImplementation).GetConstructors();
-                if (constructors.Length == 0)
-                {
-                    // Якщо немає явних конструкторів, спробуємо використати конструктор за замовчуванням
-                    _instances[serviceType] = Activator.CreateInstance(typeof(TImplementation));
-                }
-                else
-                {
-                    // Беремо перший конструктор (бажано з атрибутом [Inject])
-                    var constructor = constructors.FirstOrDefault(c =>
-                        c.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0) ?? constructors[0];
+                var implType = typeof(TImplementation);
 
-                    // Отримуємо параметри конструктора
-                    var parameters = constructor.GetParameters();
-                    var args = new object[parameters.Length];
+                // Отримуємо фабрику або створюємо нову
+                var factory = GetOrCreateFactory(implType);
 
-                    // Розв'язуємо залежності для кожного параметра
-                    for (int i = 0; i < parameters.Length; i++)
-                    {
-                        var paramType = parameters[i].ParameterType;
-                        args[i] = ResolveType(paramType);
-                    }
-
-                    // Створюємо екземпляр з передачею залежностей
-                    _instances[serviceType] = constructor.Invoke(args);
-                }
+                // Створюємо екземпляр відразу і зберігаємо
+                _instances[serviceType] = factory();
+                _logger?.LogInfo($"Registered singleton {implType.Name} as {serviceType.Name}", "DI");
             }
-        }
-
-        // Допоміжний метод для розв'язання типів
-        private object ResolveType(Type serviceType)
-        {
-            // Перевірка наявності синглтону
-            if (_instances.TryGetValue(serviceType, out var instance))
-            {
-                return instance;
-            }
-
-            // Перевірка наявності фабрики
-            if (_factories.TryGetValue(serviceType, out var factory))
-            {
-                return factory();
-            }
-
-            if (_logger != null)
-            {
-                _logger.LogError($"Type {serviceType.Name} is not registered", "DI");
-            }
-
-            throw new Exception($"Type {serviceType.Name} is not registered");
         }
 
         public void RegisterInstance<TService>(TService instance)
@@ -95,13 +61,13 @@ namespace MythHunter.Core.DI
         {
             var serviceType = typeof(TService);
 
-            // Перевірка наявності синглтону
+            // Перевірка, чи є сінглтон
             if (_instances.TryGetValue(serviceType, out var instance))
             {
                 return (TService)instance;
             }
 
-            // Перевірка наявності фабрики
+            // Перевірка, чи є фабрика
             if (_factories.TryGetValue(serviceType, out var factory))
             {
                 return (TService)factory();
@@ -139,157 +105,209 @@ namespace MythHunter.Core.DI
             }
         }
 
-        // Базовий метод ін'єкції - для внутрішнього використання
-        internal void InjectDependenciesInternal(object target, bool logInjections)
+        public void InjectDependencies(object target)
         {
             if (target == null)
                 return;
 
             Type targetType = target.GetType();
 
-            // Пошук полів з атрибутом [Inject]
-            var fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(f => f.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
+            // Отримуємо або створюємо ін'єктори для даного типу
+            var targetInjectors = GetOrCreateInjectors(targetType);
 
-            foreach (var field in fields)
+            // Виконуємо всі ін'єктори для цього об'єкта
+            foreach (var injector in targetInjectors)
             {
-                Type serviceType = field.FieldType;
-                if (!IsRegisteredType(serviceType))
-                {
-                    if (_logger != null && logInjections)
-                    {
-                        _logger.LogWarning($"Cannot inject field {field.Name} of type {serviceType.Name}: service not registered", "DI");
-                    }
-                    continue;
-                }
-
-                try
-                {
-                    object service = ResolveType(serviceType);
-                    field.SetValue(target, service);
-
-                    if (_logger != null && logInjections)
-                    {
-                        _logger.LogDebug($"Injected field {field.Name} of type {serviceType.Name}", "DI");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (_logger != null)
-                    {
-                        _logger.LogError($"Error injecting field {field.Name}: {ex.Message}", "DI", ex);
-                    }
-                }
-            }
-
-            // Пошук властивостей з атрибутом [Inject]
-            var properties = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(p => p.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
-
-            foreach (var property in properties)
-            {
-                Type serviceType = property.PropertyType;
-                if (!IsRegisteredType(serviceType))
-                {
-                    if (_logger != null && logInjections)
-                    {
-                        _logger.LogWarning($"Cannot inject property {property.Name} of type {serviceType.Name}: service not registered", "DI");
-                    }
-                    continue;
-                }
-
-                try
-                {
-                    object service = ResolveType(serviceType);
-                    property.SetValue(target, service);
-
-                    if (_logger != null && logInjections)
-                    {
-                        _logger.LogDebug($"Injected property {property.Name} of type {serviceType.Name}", "DI");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (_logger != null)
-                    {
-                        _logger.LogError($"Error injecting property {property.Name}: {ex.Message}", "DI", ex);
-                    }
-                }
-            }
-
-            // Пошук методів з атрибутом [Inject]
-            var methods = targetType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(m => m.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0);
-
-            foreach (var method in methods)
-            {
-                var parameters = method.GetParameters();
-                var args = new object[parameters.Length];
-
-                bool allResolved = true;
-
-                for (int i = 0; i < parameters.Length; i++)
-                {
-                    Type serviceType = parameters[i].ParameterType;
-                    if (!IsRegisteredType(serviceType))
-                    {
-                        if (_logger != null && logInjections)
-                        {
-                            _logger.LogWarning($"Cannot inject parameter {parameters[i].Name} of type {serviceType.Name}: service not registered", "DI");
-                        }
-                        allResolved = false;
-                        break;
-                    }
-
-                    try
-                    {
-                        args[i] = ResolveType(serviceType);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (_logger != null)
-                        {
-                            _logger.LogError($"Error resolving parameter {parameters[i].Name}: {ex.Message}", "DI", ex);
-                        }
-                        allResolved = false;
-                        break;
-                    }
-                }
-
-                if (allResolved)
-                {
-                    try
-                    {
-                        method.Invoke(target, args);
-
-                        if (_logger != null && logInjections)
-                        {
-                            _logger.LogDebug($"Invoked method {method.Name} with {args.Length} parameters", "DI");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (_logger != null)
-                        {
-                            _logger.LogError($"Error invoking method {method.Name}: {ex.Message}", "DI", ex);
-                        }
-                    }
-                }
+                injector(target);
             }
         }
 
-        // Публічний інтерфейс для ін'єкції
-        public void InjectDependencies(object target)
+        // Отримує кешовану або створює нову фабрику для типу
+        private Func<object> GetOrCreateFactory(Type type)
         {
-            InjectDependenciesInternal(target, true);
+            // Перевірка в кеші
+            if (_compiledFactories.TryGetValue(type, out var factory))
+            {
+                return factory;
+            }
+
+            // Створюємо нову фабрику через Expression Trees
+            factory = BuildFactory(type);
+            _compiledFactories[type] = factory;
+
+            return factory;
         }
 
-        // Допоміжні методи для роботи з типами
-        private bool IsRegisteredType(Type serviceType)
+        // Будує фабрику для створення об'єктів через Expression Trees
+        private Func<object> BuildFactory(Type type)
         {
-            return _instances.ContainsKey(serviceType) || _factories.ContainsKey(serviceType);
+            // Отримуємо конструктор з атрибутом [Inject] або перший конструктор
+            var constructors = type.GetConstructors();
+            var constructor = constructors.FirstOrDefault(c =>
+                c.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0) ??
+                (constructors.Length > 0 ? constructors[0] : null);
+
+            if (constructor == null)
+            {
+                throw new Exception($"No suitable constructor found for {type.Name}");
+            }
+
+            // Отримуємо параметри конструктора
+            var parameters = constructor.GetParameters();
+
+            if (parameters.Length == 0)
+            {
+                // Простий випадок - немає параметрів, просто створюємо об'єкт
+                return () => Activator.CreateInstance(type);
+            }
+
+            // Створюємо параметри для лямбда-функції
+            var paramExpressions = new Expression[parameters.Length];
+
+            // Створюємо вирази для отримання залежностей
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var paramType = parameters[i].ParameterType;
+
+                // Створюємо вираз для виклику Resolve методу для отримання залежності
+                var resolveMethod = typeof(DIContainer).GetMethod("Resolve").MakeGenericMethod(paramType);
+                paramExpressions[i] = Expression.Call(Expression.Constant(this), resolveMethod);
+            }
+
+            // Створюємо вираз для виклику конструктора
+            var newExpression = Expression.New(constructor, paramExpressions);
+
+            // Перетворюємо на тип object для зберігання в словнику
+            var convertExpression = Expression.Convert(newExpression, typeof(object));
+
+            // Компілюємо вираз у функцію
+            return Expression.Lambda<Func<object>>(convertExpression).Compile();
         }
 
-       
+        // Отримує або створює список ін'єкторів для типу
+        private List<Action<object>> GetOrCreateInjectors(Type type)
+        {
+            if (_injectors.TryGetValue(type, out var injectors))
+            {
+                return injectors;
+            }
+
+            injectors = new List<Action<object>>();
+
+            // Додаємо ін'єктори для полів
+            foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(f => f.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0))
+            {
+                var fieldType = field.FieldType;
+
+                // Створюємо вираз для ін'єкції в поле
+                var targetParam = Expression.Parameter(typeof(object), "target");
+                var targetCast = Expression.Convert(targetParam, type);
+
+                // Створюємо вираз для отримання залежності
+                var resolveMethod = typeof(DIContainer).GetMethod("Resolve").MakeGenericMethod(fieldType);
+                var resolveCall = Expression.Call(Expression.Constant(this), resolveMethod);
+
+                // Створюємо вираз для присвоєння поля
+                var fieldAccess = Expression.Field(targetCast, field);
+                var assignExpr = Expression.Assign(fieldAccess, resolveCall);
+
+                // Компілюємо в делегат
+                var injector = Expression.Lambda<Action<object>>(assignExpr, targetParam).Compile();
+                injectors.Add(injector);
+            }
+
+            // Додаємо ін'єктори для властивостей
+            foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(p => p.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0 && p.CanWrite))
+            {
+                var propType = prop.PropertyType;
+
+                // Створюємо вираз для ін'єкції у властивість
+                var targetParam = Expression.Parameter(typeof(object), "target");
+                var targetCast = Expression.Convert(targetParam, type);
+
+                // Створюємо вираз для отримання залежності
+                var resolveMethod = typeof(DIContainer).GetMethod("Resolve").MakeGenericMethod(propType);
+                var resolveCall = Expression.Call(Expression.Constant(this), resolveMethod);
+
+                // Створюємо вираз для присвоєння властивості
+                var propAccess = Expression.Property(targetCast, prop);
+                var assignExpr = Expression.Assign(propAccess, resolveCall);
+
+                // Компілюємо в делегат
+                var injector = Expression.Lambda<Action<object>>(assignExpr, targetParam).Compile();
+                injectors.Add(injector);
+            }
+
+            // Додаємо ін'єктори для методів (складніше, тому використовуємо окремий метод)
+            foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+     .Where(m => m.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0))
+            {
+                // Створюємо оптимізований ін'єктор для методу
+                var methodInjector = CreateMethodInjector(type, method);
+                injectors.Add(methodInjector);
+            }
+
+            _injectors[type] = injectors;
+            return injectors;
+        }
+
+        // Додаємо у клас DIContainer новий метод для оптимізації ін'єкції в методи
+        private Action<object> CreateMethodInjector(Type targetType, MethodInfo method)
+        {
+            var parameters = method.GetParameters();
+
+            // Створюємо вираз для параметра target
+            var targetParam = Expression.Parameter(typeof(object), "target");
+            var targetCast = Expression.Convert(targetParam, targetType);
+
+            // Створюємо вирази для отримання параметрів методу
+            var paramExprs = new Expression[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var paramType = parameters[i].ParameterType;
+                var resolveMethod = typeof(DIContainer).GetMethod("Resolve").MakeGenericMethod(paramType);
+                paramExprs[i] = Expression.Call(Expression.Constant(this), resolveMethod);
+            }
+
+            // Створюємо вираз для виклику методу з параметрами
+            var methodCallExpr = Expression.Call(targetCast, method, paramExprs);
+
+            // Компілюємо вираз у делегат
+            return Expression.Lambda<Action<object>>(methodCallExpr, targetParam).Compile();
+        }
+        // Допоміжний метод для ін'єкції в метод (поки що через рефлексію)
+        private void InjectIntoMethod(object target, MethodInfo method)
+        {
+            var parameters = method.GetParameters();
+            var args = new object[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var paramType = parameters[i].ParameterType;
+                args[i] = ResolveByType(paramType);
+            }
+
+            method.Invoke(target, args);
+        }
+
+        // Допоміжний метод для отримання залежності за типом
+        private object ResolveByType(Type type)
+        {
+            // Перевірка, чи є синглтон
+            if (_instances.TryGetValue(type, out var instance))
+            {
+                return instance;
+            }
+
+            // Перевірка, чи є фабрика
+            if (_factories.TryGetValue(type, out var factory))
+            {
+                return factory();
+            }
+
+            throw new Exception($"Type {type.Name} is not registered");
+        }
     }
 }
