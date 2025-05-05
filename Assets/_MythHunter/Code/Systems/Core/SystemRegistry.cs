@@ -7,7 +7,7 @@ namespace MythHunter.Systems.Core
     /// <summary>
     /// Реєстр систем для керування їх життєвим циклом
     /// </summary>
-    public class SystemRegistry
+    public class SystemRegistry : ISystemRegistry
     {
         private readonly List<ISystem> _updateSystems = new List<ISystem>();
         private readonly List<IFixedUpdateSystem> _fixedUpdateSystems = new List<IFixedUpdateSystem>();

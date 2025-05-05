@@ -30,9 +30,9 @@ namespace MythHunter.Events
 
 
         [MythHunter.Core.DI.Inject]
-        public EventPool(int maxPoolSize = 100, IMythLogger logger = null)
+        public EventPool(IMythLogger logger)
         {
-            _maxPoolSize = maxPoolSize;
+            _maxPoolSize = 100; // Значення за замовчуванням
             _logger = logger;
         }
 

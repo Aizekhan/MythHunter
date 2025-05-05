@@ -17,13 +17,8 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Installing Event System", "Installer");
 
-            // Правильна реєстрація EventPool
-            container.RegisterSingleton<IEventPool, EventPool>();
-
-            // Реєстрація шини подій
-            BindSingleton<IEventBus, EventBus>(container);
-
-            // Реєстрація логеру подій для відлагодження
+            
+           
             Bind<EventLogger, EventLogger>(container);
 
             logger.LogInfo("Event System installed", "Installer");
