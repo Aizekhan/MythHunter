@@ -20,7 +20,10 @@ namespace MythHunter.Systems.Core
         {
             _logger = logger;
         }
-
+        public SystemRegistry()
+        {
+            // Пустий конструктор для випадків, коли логер ще недоступний
+        }
         public void RegisterSystem(ISystem system)
         {
             _allSystems.Add(system);

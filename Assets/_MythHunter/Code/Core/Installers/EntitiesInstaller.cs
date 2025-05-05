@@ -37,11 +37,10 @@ namespace MythHunter.Core.Installers
 
             // Реєстрація системи архетипів
             var archetypeSystem = new ArchetypeSystem(
-                entityManager,
-                eventBus,
-                logger,
-                archetypeTemplateRegistry
-            );
+     entityManager,
+     logger,
+     eventBus,
+     archetypeTemplateRegistry);
             container.RegisterInstance<ArchetypeSystem>(archetypeSystem);
 
             // Реєстрація фабрики сутностей

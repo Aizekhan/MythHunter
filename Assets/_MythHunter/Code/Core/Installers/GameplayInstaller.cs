@@ -43,7 +43,7 @@ namespace MythHunter.Core.Installers
             // Створення та реєстрація основних ігрових систем
 
             // Фазова система
-           
+
             var phaseSystem = new PhaseSystem(eventBus, logger);
             container.RegisterInstance<IPhaseSystem>(phaseSystem);
             systemRegistry.RegisterSystem(phaseSystem);
@@ -61,7 +61,7 @@ namespace MythHunter.Core.Installers
            
 
             var archetypeTemplateRegistry = new ArchetypeTemplateRegistry(entityManager, logger);
-            var archetypeSystem = new ArchetypeSystem(entityManager, eventBus, logger, archetypeTemplateRegistry);
+            var archetypeSystem = new ArchetypeSystem(entityManager,  logger, eventBus, archetypeTemplateRegistry);
             var entityFactory = new EntityFactory(entityManager, archetypeSystem, logger);
             var entitySpawnSystem = new EntitySpawnSystem(entityFactory, archetypeSystem, eventBus, logger);
             container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);

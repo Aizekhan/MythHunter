@@ -3,6 +3,7 @@ using UnityEngine;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.Core.Game;
 
 namespace MythHunter.Core.Validation
 {
@@ -18,10 +19,10 @@ namespace MythHunter.Core.Validation
             {
                 if (HasInjectAttributes(component))
                 {
-                    var scope = DIContainerExtensions.FindNearestScope(component.gameObject);
-                    if (scope == null)
+                    var bootstrapper = Object.FindFirstObjectByType<GameBootstrapper>();
+                    if (bootstrapper == null)
                     {
-                        logger.LogWarning($"Component {component.GetType().Name} on {component.gameObject.name} has [Inject] attributes but no DependencyScope!", "DI");
+                        logger.LogWarning($"Component {component.GetType().Name} on {component.gameObject.name} has [Inject] attributes but no GameBootstrapper!", "DI");
                     }
                 }
             }

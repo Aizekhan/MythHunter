@@ -20,15 +20,14 @@ namespace MythHunter.Systems.Gameplay
 
         [Inject]
         public EntitySpawnSystem(
-            EntityFactory entityFactory,
-            ArchetypeSystem archetypeRegistry,
-            IEventBus eventBus,
-            IMythLogger logger)
+     EntityFactory entityFactory,
+     ArchetypeSystem archetypeSystem,
+     IEventBus eventBus,
+     IMythLogger logger)
+     : base(logger, eventBus)
         {
             _entityFactory = entityFactory;
-            _archetypeSystem = archetypeRegistry;
-            _eventBus = eventBus;
-            _logger = logger;
+            _archetypeSystem = archetypeSystem;
         }
 
         public override void Initialize()

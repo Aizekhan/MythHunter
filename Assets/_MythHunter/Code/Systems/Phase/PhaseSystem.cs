@@ -22,8 +22,8 @@ namespace MythHunter.Systems.Phase
         public GamePhase CurrentPhase => _currentPhase;
 
         [Inject]
-        public PhaseSystem(IMythLogger logger, IEventBus eventBus)
-            : base(logger, eventBus)
+        public PhaseSystem(IEventBus eventBus, IMythLogger logger)
+    : base(logger, eventBus)
         {
             _currentPhase = GamePhase.None;
             _phaseTimer = 0;
