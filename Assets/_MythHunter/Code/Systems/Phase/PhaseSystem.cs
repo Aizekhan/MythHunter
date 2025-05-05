@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Events;
+using MythHunter.Events.Domain;
 using MythHunter.Events.Extensions;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
@@ -14,42 +15,44 @@ namespace MythHunter.Systems.Phase
     /// </summary>
     public class PhaseSystem : SystemBase, IPhaseSystem
     {
-        private readonly IEventBus _eventBus;
-        private readonly IMythLogger _logger;
-
-        private Events.Domain.GamePhase _currentPhase;
+        private GamePhase _currentPhase;
         private float _phaseTimer;
         private float _phaseDuration;
 
-        public Events.Domain.GamePhase CurrentPhase => _currentPhase;
+        public GamePhase CurrentPhase => _currentPhase;
 
         [Inject]
-        public PhaseSystem(
-            IEventBus eventBus,
-            IMythLogger logger)
+        public PhaseSystem(IMythLogger logger, IEventBus eventBus)
+            : base(logger, eventBus)
         {
-            _eventBus = eventBus;
-            _logger = logger;
-            _currentPhase = Events.Domain.GamePhase.None;
+            _currentPhase = GamePhase.None;
             _phaseTimer = 0;
             _phaseDuration = 0;
         }
 
-        public override void Initialize()
+        protected override void OnSubscribeToEvents()
         {
-            // Підписка на синхронні події з явним вказуванням аргументів типу
-            this.Subscribe<Events.Domain.PhaseChangeRequestEvent>(_eventBus, OnPhaseChangeRequest);
+            // Підписуємося на синхронні події
+            Subscribe<PhaseChangeRequestEvent>(OnPhaseChangeRequest);
 
-            // Підписка на асинхронні події
-            this.SubscribeAsync<Events.Domain.GameStartedEvent>(_eventBus, OnGameStartedAsync);
-            this.SubscribeAsync<Events.Domain.GameEndedEvent>(_eventBus, OnGameEndedAsync);
+            // Підписуємося на асинхронні події
+            _eventBus.SubscribeAsync<GameStartedEvent>(OnGameStartedAsync);
+            _eventBus.SubscribeAsync<GameEndedEvent>(OnGameEndedAsync);
+        }
 
-            _logger.LogInfo("PhaseSystem initialized");
+        protected override void OnUnsubscribeFromEvents()
+        {
+            // Відписуємося від синхронних подій
+            Unsubscribe<PhaseChangeRequestEvent>(OnPhaseChangeRequest);
+
+            // Відписуємося від асинхронних подій
+            _eventBus.UnsubscribeAsync<GameStartedEvent>(OnGameStartedAsync);
+            _eventBus.UnsubscribeAsync<GameEndedEvent>(OnGameEndedAsync);
         }
 
         public override void Update(float deltaTime)
         {
-            if (_currentPhase == Events.Domain.GamePhase.None)
+            if (_currentPhase == GamePhase.None)
                 return;
 
             // Оновлення таймера фази
@@ -58,23 +61,16 @@ namespace MythHunter.Systems.Phase
             // Перевірка завершення фази
             if (_phaseTimer >= _phaseDuration)
             {
-                // Завершення поточної фази
-                Events.Domain.GamePhase previousPhase = _currentPhase;
+                GamePhase previousPhase = _currentPhase;
+                GamePhase nextPhase = GetNextPhase(_currentPhase);
 
-                // Визначення наступної фази
-                Events.Domain.GamePhase nextPhase = GetNextPhase(_currentPhase);
-
-                // Запуск нової фази
                 StartPhase(nextPhase);
 
-                // Публікація події завершення фази
-                var evt = new Events.Domain.PhaseEndedEvent
+                Publish(new PhaseEndedEvent
                 {
                     Phase = previousPhase,
                     Timestamp = System.DateTime.UtcNow
-                };
-
-                _eventBus.Publish(evt);
+                });
             }
         }
 

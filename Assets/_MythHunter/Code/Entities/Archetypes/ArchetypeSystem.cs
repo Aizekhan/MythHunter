@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Events;
+using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Entities.Archetypes
@@ -15,8 +16,6 @@ namespace MythHunter.Entities.Archetypes
     public class ArchetypeSystem : Core.ECS.SystemBase, IEventSubscriber
     {
         private readonly IEntityManager _entityManager;
-        private readonly IEventBus _eventBus;
-        private readonly IMythLogger _logger;
         private readonly ArchetypeTemplateRegistry _templateRegistry;
         private readonly Dictionary<int, string> _entityToArchetype = new Dictionary<int, string>();
         private readonly Dictionary<string, List<int>> _archetypeToEntities = new Dictionary<string, List<int>>();
@@ -24,33 +23,25 @@ namespace MythHunter.Entities.Archetypes
         [Inject]
         public ArchetypeSystem(
             IEntityManager entityManager,
-            IEventBus eventBus,
             IMythLogger logger,
+            IEventBus eventBus,
             ArchetypeTemplateRegistry templateRegistry)
+            : base(logger, eventBus)
         {
             _entityManager = entityManager;
-            _eventBus = eventBus;
-            _logger = logger;
             _templateRegistry = templateRegistry;
         }
 
-        public override void Initialize()
+        protected override void OnSubscribeToEvents()
         {
-            SubscribeToEvents();
-            _logger.LogInfo("ArchetypeSystem initialized", "Entity");
+            Subscribe<EntityCreatedEvent>(OnEntityCreated);
+            Subscribe<EntityDestroyedEvent>(OnEntityDestroyed);
         }
 
-        public void SubscribeToEvents()
+        protected override void OnUnsubscribeFromEvents()
         {
-            // Підписуємося на події створення та видалення сутностей
-            _eventBus.Subscribe<Events.Domain.EntityCreatedEvent>(OnEntityCreated);
-            _eventBus.Subscribe<Events.Domain.EntityDestroyedEvent>(OnEntityDestroyed);
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            _eventBus.Unsubscribe<Events.Domain.EntityCreatedEvent>(OnEntityCreated);
-            _eventBus.Unsubscribe<Events.Domain.EntityDestroyedEvent>(OnEntityDestroyed);
+            Unsubscribe<EntityCreatedEvent>(OnEntityCreated);
+            Unsubscribe<EntityDestroyedEvent>(OnEntityDestroyed);
         }
 
         private void OnEntityCreated(Events.Domain.EntityCreatedEvent evt)

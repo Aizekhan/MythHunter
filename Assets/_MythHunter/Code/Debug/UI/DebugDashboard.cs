@@ -1,21 +1,17 @@
+// Шлях: Assets/_MythHunter/Code/Debug/UI/DebugDashboard.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MythHunter.Debug.Core;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
-using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.Debug.UI
 {
     /// <summary>
     /// Головний дашборд для всіх інструментів відлагодження
     /// </summary>
-    public class DebugDashboard : InjectableMonoBehaviour
+    public class DebugDashboard : MonoBehaviour
     {
-        [Inject] protected new readonly IMythLogger _logger;
-        [Inject] private readonly DebugToolFactory _toolFactory;
-
         [SerializeField] private bool _showOnStart = false;
         [SerializeField] private KeyCode _toggleKey = KeyCode.F9;
 
@@ -24,9 +20,17 @@ namespace MythHunter.Debug.UI
         private int _selectedTabIndex = 0;
         private string[] _tabNames = new string[0];
 
-        protected override void OnInjectionsCompleted()
+        // Залежності передаються явно
+        private IMythLogger _logger;
+        private DebugToolFactory _toolFactory;
+
+        /// <summary>
+        /// Ініціалізує дашборд з переданими залежностями
+        /// </summary>
+        public void Initialize(IMythLogger logger, DebugToolFactory toolFactory)
         {
-            base.OnInjectionsCompleted();
+            _logger = logger;
+            _toolFactory = toolFactory;
             _isVisible = _showOnStart;
 
             // Збираємо всі зареєстровані інструменти

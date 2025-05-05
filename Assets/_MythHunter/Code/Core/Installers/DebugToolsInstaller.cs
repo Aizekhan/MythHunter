@@ -4,7 +4,7 @@ using MythHunter.Debug.Events;
 using MythHunter.Debug.Profiling;
 using MythHunter.Debug.UI;
 using MythHunter.Utils.Logging;
-
+using MythHunter.Debug;
 public class DebugToolsInstaller : DIInstaller
 {
     public override void InstallBindings(IDIContainer container)
@@ -20,8 +20,9 @@ public class DebugToolsInstaller : DIInstaller
         // Реєструємо фабрику (вона отримає всі інструменти через конструктор)
         container.RegisterSingleton<DebugToolFactory, DebugToolFactory>();
 
-        // Реєструємо дашборд
-        container.Register<DebugDashboard, DebugDashboard>();
+        // Реєструємо Debug сервіс замість дашборду
+        BindSingleton<IDebugService, DebugService>(container);
+
 
         logger.LogInfo("Встановлення залежностей DebugTools завершено", "Installer");
     }

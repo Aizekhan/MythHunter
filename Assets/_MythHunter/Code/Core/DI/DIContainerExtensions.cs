@@ -2,12 +2,11 @@
 using System;
 using UnityEngine;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.Core.DI
 {
     /// <summary>
-    /// Розширення для DI контейнера для підтримки MonoBehaviour
+    /// Розширення для DI контейнера
     /// </summary>
     public static class DIContainerExtensions
     {
@@ -30,18 +29,7 @@ namespace MythHunter.Core.DI
                 container.InjectDependencies(component);
             }
         }
-        public static DependencyScope FindNearestScope(GameObject gameObject)
-        {
-            Transform current = gameObject.transform;
-            while (current != null)
-            {
-                var scope = current.GetComponent<DependencyScope>();
-                if (scope != null)
-                    return scope;
-                current = current.parent;
-            }
-            return null;
-        }
+
         /// <summary>
         /// Резолвить залежність вказаного типу
         /// </summary>

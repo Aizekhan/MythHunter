@@ -6,6 +6,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Core.ECS;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Systems.Core;
+using MythHunter.Debug;
 
 namespace MythHunter.Core.Game
 {
@@ -127,8 +128,12 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("ECS world initialized", "Bootstrapper");
         }
 
-       
 
+        private void InitializeDebugTools()
+        {
+            var debugService = _container.Resolve<IDebugService>();
+            debugService.CreateDebugDashboard();
+        }
         private void InitializeStateMachine()
         {
             _stateMachine = new GameStateMachine(_container);
