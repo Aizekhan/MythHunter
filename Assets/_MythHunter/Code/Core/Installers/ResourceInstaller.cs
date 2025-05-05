@@ -1,3 +1,5 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/ResourceInstaller.cs
+
 using MythHunter.Core.DI;
 using MythHunter.Resources.Core;
 using MythHunter.Resources.Pool;
@@ -18,24 +20,28 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей ResourceSystem...", "Installer");
 
-            // Реєстрація основних сервісів
-            BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
-            BindSingleton<ISceneLoader, SceneLoader>(container);
+            // Реєстрація провайдерів ресурсів
+            BindSingleton<DefaultResourceProvider, DefaultResourceProvider>(container);
 
             // Провайдер Addressables (якщо проект використовує Addressables)
             if (IsAddressablesAvailable())
             {
-                BindSingleton<IAddressablesProvider, AddressablesProvider>(container);
+                BindSingleton<AddressablesProvider, AddressablesProvider>(container);
                 logger.LogInfo("Addressables Provider зареєстровано", "Installer");
             }
             else
             {
-                BindSingleton<IAddressablesProvider, FallbackResourceProvider>(container);
+                BindSingleton<FallbackResourceProvider, FallbackResourceProvider>(container);
                 logger.LogInfo("Addressables недоступні, використовується FallbackResourceProvider", "Installer");
             }
 
             // Pool Manager для управління пулами об'єктів
             BindSingleton<IPoolManager, OptimizedPoolManager>(container);
+
+            // Реєстрація основних сервісів
+            BindSingleton<IResourceManager, ResourceManager>(container);
+            BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
+            BindSingleton<ISceneLoader, SceneLoader>(container);
 
             logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
         }
