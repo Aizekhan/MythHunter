@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
+using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Events
@@ -17,6 +18,10 @@ namespace MythHunter.Events
     {
         private readonly Dictionary<Type, List<SyncEventHandler>> _syncHandlers = new Dictionary<Type, List<SyncEventHandler>>();
         private readonly Dictionary<Type, List<AsyncEventHandler>> _asyncHandlers = new Dictionary<Type, List<AsyncEventHandler>>();
+        // Додаємо делегат для обробки подій різних типів
+        private readonly Dictionary<Type, Action<IEvent>> _eventProcessors = new Dictionary<Type, Action<IEvent>>();
+        private readonly Dictionary<Type, Func<IEvent, UniTask>> _asyncDispatchers = new();
+
         private readonly IEventPool _eventPool;
         private readonly IMythLogger _logger;
 
@@ -29,6 +34,7 @@ namespace MythHunter.Events
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isProcessing;
         private readonly object _syncLock = new object();
+
 
         // Клас обгортки для синхронного обробника подій
         private class SyncEventHandler
@@ -86,6 +92,7 @@ namespace MythHunter.Events
             // Ініціалізація асинхронної обробки
             _cancellationTokenSource = new CancellationTokenSource();
             StartProcessingAsync().Forget();
+            RegisterEventProcessors();
         }
 
         #region Sync Methods
@@ -192,22 +199,23 @@ namespace MythHunter.Events
         /// Підписується на асинхронну обробку події
         /// </summary>
         public void SubscribeAsync<TEvent>(Func<TEvent, UniTask> handler, EventPriority priority = EventPriority.Normal)
-            where TEvent : struct, IEvent
+     where TEvent : struct, IEvent
         {
-            Type eventType = typeof(TEvent);
+            var type = typeof(TEvent);
 
-            if (!_asyncHandlers.TryGetValue(eventType, out var handlers))
+            if (!_asyncHandlers.TryGetValue(type, out var handlers))
             {
                 handlers = new List<AsyncEventHandler>();
-                _asyncHandlers[eventType] = handlers;
+                _asyncHandlers[type] = handlers;
             }
 
             handlers.Add(new AsyncEventHandler(handler, priority));
+            _asyncHandlers[type] = handlers.OrderByDescending(h => h.Priority).ToList();
 
-            // Сортуємо обробники за пріоритетом (високий пріоритет першим)
-            _asyncHandlers[eventType] = handlers.OrderByDescending(h => h.Priority).ToList();
+            // 🧠 Додаємо в кеш універсальну обгортку
+            _asyncDispatchers[type] = async (evt) => await handler((TEvent)evt);
 
-            _logger.LogDebug($"Subscribed async to event {eventType.Name} with priority {priority}");
+            _logger.LogDebug($"Subscribed async to event {type.Name} with priority {priority}");
         }
 
         /// <summary>
@@ -388,9 +396,7 @@ namespace MythHunter.Events
             lock (_syncLock)
             {
                 if (queue.Count == 0)
-                {
                     return false;
-                }
 
                 item = queue.Dequeue();
             }
@@ -399,38 +405,38 @@ namespace MythHunter.Events
             {
                 if (item.IsAsync)
                 {
-                    var asyncHandlers = _asyncHandlers.GetValueOrDefault(item.EventType);
-                    if (asyncHandlers != null)
+                    // Обробка асинхронних подій через кешований делегат
+                    if (_asyncDispatchers.TryGetValue(item.EventType, out var dispatcher))
                     {
-                        foreach (var handler in asyncHandlers)
-                        {
-                            var handlerMethod = handler.Handler as Func<IEvent, UniTask>;
-                            if (handlerMethod != null)
-                            {
-                                await handlerMethod(item.Event);
-                            }
-                        }
+                        await dispatcher(item.Event);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"No async dispatcher found for {item.EventType.Name}");
                     }
                 }
                 else
                 {
-                    // Замість рефлексії викликаємо ProcessEventImmediately через generic wrapper
-                    var genericMethod = GetType().GetMethod("ProcessEventImmediately",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                        .MakeGenericMethod(item.EventType);
-
-                    genericMethod.Invoke(this, new object[] { item.Event });
+                    // Обробка синхронних подій через зареєстрований процесор
+                    if (_eventProcessors.TryGetValue(item.EventType, out var processor))
+                    {
+                        processor(item.Event);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"No processor registered for event type: {item.EventType.Name}");
+                    }
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error processing event: {ex.Message}", "EventBus", ex);
-                return true;
+                _logger.LogError($"Error processing event of type {item.EventType.Name}: {ex.Message}", "EventBus", ex);
+                return true; // подію вважаємо "обробленою", щоб не блокувати чергу
             }
         }
-      
+
         /// <summary>
         /// Повертає чергу для вказаного пріоритету
         /// </summary>
@@ -449,6 +455,20 @@ namespace MythHunter.Events
             }
         }
 
+        // Метод для реєстрації обробника подій конкретного типу
+        private void RegisterEventProcessor<T>(Action<T> processor) where T : struct, IEvent
+        {
+            _eventProcessors[typeof(T)] = (evt) => processor((T)evt);
+        }
+       
+        private void RegisterEventProcessors()
+        {
+            // Використовуємо метод для реєстрації обробників
+            RegisterEventProcessor<GameStartedEvent>((evt) => ProcessEventImmediately(evt));
+            RegisterEventProcessor<GamePausedEvent>((evt) => ProcessEventImmediately(evt));
+            RegisterEventProcessor<GameEndedEvent>((evt) => ProcessEventImmediately(evt));
+            // Додайте інші типи подій за потреби
+        }
         #endregion
 
         /// <summary>
