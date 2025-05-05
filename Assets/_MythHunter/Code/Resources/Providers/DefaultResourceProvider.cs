@@ -1,26 +1,26 @@
-using MythHunter.Resources.Core;
-using MythHunter.Utils.Logging;
+// Шлях: Assets/_MythHunter/Code/Resources/Providers/DefaultResourceProvider.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 using MythHunter.Core.DI;
+using MythHunter.Utils.Logging;
+using MythHunter.Resources.Core;
+using UnityEngine;
+
 namespace MythHunter.Resources.Providers
 {
-    public class DefaultResourceProvider : IResourceProvider
+    /// <summary>
+    /// Базовий провайдер ресурсів через Resources API
+    /// </summary>
+    public class DefaultResourceProvider : ResourceProviderBase
     {
-        private readonly IMythLogger _logger;
-        private readonly Dictionary<string, Object> _loadedResources = new Dictionary<string, Object>();
-
         [Inject]
-        public DefaultResourceProvider(IMythLogger logger)
+        public DefaultResourceProvider(IMythLogger logger) : base(logger)
         {
-            _logger = logger;
         }
-       
 
-        public async UniTask<T> LoadAsync<T>(string key) where T : Object
+        public override async UniTask<T> LoadAsync<T>(string key)
         {
-            _logger.LogDebug($"Loading resource: {key}", "Resource");
+            LogDebug($"Loading resource: {key}");
 
             // Спроба завантажити з кешу
             if (_loadedResources.TryGetValue(key, out var cached) && cached is T cachedTyped)
@@ -29,8 +29,8 @@ namespace MythHunter.Resources.Providers
                 return cachedTyped;
             }
 
-            // Завантаження через наш статичний клас
-            var resource = MythResourceUtils.Load<T>(key);
+            // Завантаження через MythResourceUtils
+            T resource = MythResourceUtils.Load<T>(key);
 
             if (resource != null)
             {
@@ -38,19 +38,19 @@ namespace MythHunter.Resources.Providers
                 return resource;
             }
 
-            _logger.LogWarning($"Failed to load resource: {key}", "Resource");
+            LogWarning($"Failed to load resource: {key}");
             return null;
         }
 
-        public async UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : Object
+        public override async UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern)
         {
-            // Використовуємо наш статичний клас
+            // Використовуємо статичний клас
             T[] resources = MythResourceUtils.LoadAll<T>(pattern);
             await UniTask.Yield();
             return resources;
         }
 
-        public void Unload(string key)
+        public override void Unload(string key)
         {
             if (_loadedResources.TryGetValue(key, out var resource))
             {
@@ -62,7 +62,7 @@ namespace MythHunter.Resources.Providers
             }
         }
 
-        public void UnloadAll()
+        public override void UnloadAll()
         {
             foreach (var resource in _loadedResources.Values)
             {
@@ -73,16 +73,6 @@ namespace MythHunter.Resources.Providers
             }
             _loadedResources.Clear();
             MythResourceUtils.UnloadUnusedAssets();
-        }
-
-        public T GetFromPool<T>(string key) where T : Object
-        {
-            return null;
-        }
-
-        public void ReturnToPool<T>(string key, T instance) where T : Object
-        {
-            // Заглушка
         }
     }
 }

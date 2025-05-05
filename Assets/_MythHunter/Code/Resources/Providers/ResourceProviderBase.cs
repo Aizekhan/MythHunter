@@ -1,5 +1,4 @@
 // Шлях: Assets/_MythHunter/Code/Resources/Providers/ResourceProviderBase.cs
-
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Resources.Core;
@@ -34,47 +33,34 @@ namespace MythHunter.Resources.Providers
             if (_loadedResources.TryGetValue(key, out var resource))
             {
                 _loadedResources.Remove(key);
-                Log($"Resource unloaded: {key}");
+                LogInfo($"Resource unloaded: {key}");
             }
         }
 
         public virtual void UnloadAll()
         {
             _loadedResources.Clear();
-            Log("All resources unloaded");
+            LogInfo("All resources unloaded");
         }
 
-        public virtual T GetFromPool<T>(string key) where T : Object
+        protected void LogDebug(string message)
         {
-            // Базова реалізація повертає null - провайдери можуть перевизначити
-            return null;
+            _logger?.LogDebug(message, "Resource");
         }
 
-        public virtual void ReturnToPool<T>(string key, T instance) where T : Object
+        protected void LogInfo(string message)
         {
-            // Базова реалізація нічого не робить - провайдери можуть перевизначити
+            _logger?.LogInfo(message, "Resource");
         }
 
-        protected void Log(string message, LogLevel level = LogLevel.Debug)
+        protected void LogWarning(string message)
         {
-            switch (level)
-            {
-                case LogLevel.Debug:
-                    _logger.LogDebug(message, "Resource");
-                    break;
-                case LogLevel.Info:
-                    _logger.LogInfo(message, "Resource");
-                    break;
-                case LogLevel.Warning:
-                    _logger.LogWarning(message, "Resource");
-                    break;
-                case LogLevel.Error:
-                    _logger.LogError(message, "Resource");
-                    break;
-                default:
-                    _logger.LogInfo(message, "Resource");
-                    break;
-            }
+            _logger?.LogWarning(message, "Resource");
+        }
+
+        protected void LogError(string message)
+        {
+            _logger?.LogError(message, "Resource");
         }
     }
 }

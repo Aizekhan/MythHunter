@@ -1,7 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Resources/Core/ResourceManager.cs
-
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
@@ -12,8 +12,7 @@ using UnityEngine;
 namespace MythHunter.Resources.Core
 {
     /// <summary>
-    /// Єдиний вхідний точка для роботи з ресурсами
-    /// Спрощує взаємодію з різними провайдерами
+    /// Центральний менеджер ресурсів
     /// </summary>
     public class ResourceManager : IResourceManager
     {
@@ -54,8 +53,12 @@ namespace MythHunter.Resources.Core
 
             _providers.Add(provider);
 
-            // Сортуємо провайдери за пріоритетом
-            _providers.Sort((a, b) => ((IPrioritizable)b).Priority.CompareTo(((IPrioritizable)a).Priority));
+            // Сортуємо провайдери за пріоритетом, якщо вони реалізують IPrioritizable
+            _providers.Sort((a, b) => {
+                var priorityA = a is IPrioritizable prioritizableA ? prioritizableA.Priority : 0;
+                var priorityB = b is IPrioritizable prioritizableB ? prioritizableB.Priority : 0;
+                return priorityB.CompareTo(priorityA);
+            });
 
             _logger.LogInfo($"Registered resource provider: {provider.GetType().Name} with priority {priority}", "Resource");
         }
@@ -105,7 +108,10 @@ namespace MythHunter.Resources.Core
                 try
                 {
                     var providerResults = await provider.LoadAllAsync<T>(pattern);
-                    results.AddRange(providerResults);
+                    if (providerResults != null && providerResults.Count > 0)
+                    {
+                        results.AddRange(providerResults);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -157,7 +163,7 @@ namespace MythHunter.Resources.Core
         {
             if (_useAddressables)
             {
-                var addressableProvider = _providers.Find(p => p is IAddressablesProvider) as IAddressablesProvider;
+                var addressableProvider = _providers.OfType<IAddressablesProvider>().FirstOrDefault();
                 if (addressableProvider != null)
                 {
                     return await addressableProvider.InstantiateAsync(key, parent);

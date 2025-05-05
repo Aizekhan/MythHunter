@@ -1,5 +1,4 @@
 // Шлях: Assets/_MythHunter/Code/Resources/Core/IResourceManager.cs
-
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -7,7 +6,7 @@ using UnityEngine;
 namespace MythHunter.Resources.Core
 {
     /// <summary>
-    /// Інтерфейс єдиної точки доступу до ресурсів
+    /// Інтерфейс менеджера ресурсів - єдиної точки доступу до ресурсів
     /// </summary>
     public interface IResourceManager
     {

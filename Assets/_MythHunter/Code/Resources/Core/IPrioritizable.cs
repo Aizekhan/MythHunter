@@ -1,5 +1,4 @@
 // Шлях: Assets/_MythHunter/Code/Resources/Core/IPrioritizable.cs
-
 namespace MythHunter.Resources.Core
 {
     /// <summary>

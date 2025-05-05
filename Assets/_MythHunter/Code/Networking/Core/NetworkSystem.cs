@@ -20,7 +20,8 @@ namespace MythHunter.Networking.Core
 
         public event Action<INetworkMessage> OnMessageReceived;
         public event Action<NetworkClientInfo, bool> OnClientConnectionChanged;
-
+        // Реалізація властивості IsActive
+        public bool IsActive => IsServer || IsClient;
         public bool IsServer
         {
             get; private set;

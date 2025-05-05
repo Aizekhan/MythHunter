@@ -3,11 +3,8 @@ using MythHunter.Core.ECS;
 using MythHunter.Core.Game;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
-
-
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
-
 using MythHunter.Systems.Gameplay;
 using MythHunter.Entities;
 using MythHunter.Entities.Archetypes;
@@ -32,7 +29,7 @@ namespace MythHunter.Core.Installers
             SystemRegistry systemRegistry;
             if (!container.IsRegistered<SystemRegistry>())
             {
-                systemRegistry = new SystemRegistry();
+                systemRegistry = new SystemRegistry(logger);
                 container.RegisterInstance<SystemRegistry>(systemRegistry);
             }
             else
@@ -43,30 +40,46 @@ namespace MythHunter.Core.Installers
             // Створення та реєстрація основних ігрових систем
 
             // Фазова система
-
             var phaseSystem = new PhaseSystem(eventBus, logger);
             container.RegisterInstance<IPhaseSystem>(phaseSystem);
             systemRegistry.RegisterSystem(phaseSystem);
 
             // Система руху
-          
 
             // Бойова система
-          
 
             // AI система
-           
 
             // Система рун
-           
 
+            // Система архетипів та сутностей
             var archetypeTemplateRegistry = new ArchetypeTemplateRegistry(entityManager, logger);
-            var archetypeSystem = new ArchetypeSystem(entityManager,  logger, eventBus, archetypeTemplateRegistry);
+
+            // Створюємо необхідні компоненти в правильному порядку
+            var archetypeRegistry = new ArchetypeRegistry(logger);
+
+            var archetypeDetector = new ArchetypeDetector(
+                entityManager,
+                archetypeTemplateRegistry,
+                archetypeRegistry,
+                logger);
+
+            // Створюємо систему архетипів з правильними аргументами
+            var archetypeSystem = new ArchetypeSystem(
+                archetypeRegistry,
+                archetypeDetector,
+                archetypeTemplateRegistry,
+                logger,
+                eventBus);
+
             var entityFactory = new EntityFactory(entityManager, archetypeSystem, logger);
             var entitySpawnSystem = new EntitySpawnSystem(entityFactory, archetypeSystem, eventBus, logger);
-            container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);
-            systemRegistry.RegisterSystem(entitySpawnSystem);
 
+            // Реєструємо системи
+            container.RegisterInstance<ArchetypeSystem>(archetypeSystem);
+            container.RegisterInstance<IEntitySpawnSystem>(entitySpawnSystem);
+            systemRegistry.RegisterSystem(archetypeSystem);
+            systemRegistry.RegisterSystem(entitySpawnSystem);
 
             logger.LogInfo("Встановлення залежностей GameplaySystem завершено", "Installer");
         }
