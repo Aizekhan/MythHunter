@@ -15,15 +15,15 @@ namespace MythHunter.Core.Installers
     {
         public override void InstallBindings(IDIContainer container)
         {
+            // Базові сервіси
             BindSingleton<IMythLogger, MythLogger>(container);
             BindSingleton<IEntityManager, EntityManager>(container);
-            // Додаємо залежності для EventBus
             BindSingleton<IEventPool, EventPool>(container);
             BindSingleton<IEventBus, EventBus>(container);
             BindSingleton<IEcsWorld, EcsWorld>(container);
             BindSingleton<IStateMachine<GameStateType>, StateMachine<GameStateType>>(container);
 
-            // Правильна реєстрація SystemRegistry
+            // Виправляємо реєстрацію SystemRegistry
             BindSingleton<ISystemRegistry, SystemRegistry>(container);
         }
     }

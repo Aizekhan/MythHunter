@@ -1,8 +1,10 @@
-// Шлях: Assets/_MythHunter/Code/Debug/Core/DebugToolFactory.cs
 using System;
 using System.Collections.Generic;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.Debug.Events;
+using MythHunter.Debug.Profiling;
+using MythHunter.Debug.UI;
 
 namespace MythHunter.Debug.Core
 {
@@ -11,60 +13,22 @@ namespace MythHunter.Debug.Core
     /// </summary>
     public class DebugToolFactory
     {
-        private readonly IDIContainer _container;
         private readonly IMythLogger _logger;
-        private readonly Dictionary<Type, Type> _implementationTypes = new Dictionary<Type, Type>();
+        private readonly Dictionary<Type, object> _registeredTools = new Dictionary<Type, object>();
 
         [Inject]
-        public DebugToolFactory(IDIContainer container, IMythLogger logger)
+        public DebugToolFactory(
+            IMythLogger logger,
+            SystemProfiler systemProfiler,
+            PerformanceMonitor performanceMonitor,
+            EventDebugTool eventDebugTool)
         {
-            _container = container;
             _logger = logger;
-        }
 
-        /// <summary>
-        /// Реєструє тип реалізації для інтерфейсу інструменту
-        /// </summary>
-        public void RegisterImplementation<TInterface, TImplementation>()
-            where TInterface : IDebugTool
-            where TImplementation : IDebugTool
-        {
-            _implementationTypes[typeof(TInterface)] = typeof(TImplementation);
-            _logger?.LogDebug($"Registered debug tool implementation: {typeof(TImplementation).Name}", "Debug");
-        }
-
-        /// <summary>
-        /// Створює інструмент вказаного типу
-        /// </summary>
-        public TInterface Create<TInterface>() where TInterface : IDebugTool
-        {
-            Type interfaceType = typeof(TInterface);
-
-            if (_implementationTypes.TryGetValue(interfaceType, out Type implementationType))
-            {
-                try
-                {
-                    return (TInterface)_container.Resolve(implementationType);
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError($"Error creating debug tool {implementationType.Name}: {ex.Message}", "Debug", ex);
-                }
-            }
-            else
-            {
-                _logger?.LogWarning($"No implementation registered for debug tool interface {interfaceType.Name}", "Debug");
-            }
-
-            return default;
-        }
-
-        /// <summary>
-        /// Перевіряє, чи зареєстрована реалізація для інтерфейсу
-        /// </summary>
-        public bool IsImplementationRegistered<TInterface>() where TInterface : IDebugTool
-        {
-            return _implementationTypes.ContainsKey(typeof(TInterface));
+            // Зберігаємо зареєстровані інструменти
+            _registeredTools[typeof(SystemProfiler)] = systemProfiler;
+            _registeredTools[typeof(PerformanceMonitor)] = performanceMonitor;
+            _registeredTools[typeof(EventDebugTool)] = eventDebugTool;
         }
 
         /// <summary>
@@ -74,17 +38,19 @@ namespace MythHunter.Debug.Core
         {
             List<IDebugTool> tools = new List<IDebugTool>();
 
-            foreach (var pair in _implementationTypes)
+            foreach (var tool in _registeredTools.Values)
             {
                 try
                 {
-                    var tool = (IDebugTool)_container.Resolve(pair.Value);
-                    tools.Add(tool);
-                    _logger?.LogDebug($"Created debug tool: {tool.ToolName}", "Debug");
+                    if (tool is IDebugTool debugTool)
+                    {
+                        tools.Add(debugTool);
+                        _logger?.LogDebug($"Added debug tool: {debugTool.ToolName}", "Debug");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogError($"Error creating debug tool {pair.Value.Name}: {ex.Message}", "Debug", ex);
+                    _logger?.LogError($"Error creating debug tool: {ex.Message}", "Debug", ex);
                 }
             }
 

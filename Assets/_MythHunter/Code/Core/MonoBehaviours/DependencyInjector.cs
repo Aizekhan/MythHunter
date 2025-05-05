@@ -22,14 +22,15 @@ namespace MythHunter.Core.MonoBehaviours
 
         private void Awake()
         {
-            // Зберігаємо цей об'єкт між сценами
             DontDestroyOnLoad(gameObject);
 
-            // Отримуємо контейнер
             if (GameBootstrapper.Instance != null)
             {
-                _container = GameBootstrapper.Instance.GetContainerInternal();
-                _logger = _container.Resolve<IMythLogger>();
+                // Просто зберігаємо логер без отримання контейнера
+                if (_logger == null)
+                {
+                    _logger = MythLoggerFactory.GetDefaultLogger();
+                }
 
                 if (_searchOnAwake)
                 {
@@ -40,11 +41,6 @@ namespace MythHunter.Core.MonoBehaviours
                 {
                     SceneManager.sceneLoaded += OnSceneLoaded;
                 }
-            }
-            else
-            {
-                var fallbackLogger = MythLoggerFactory.GetDefaultLogger();
-                fallbackLogger.LogError("DependencyInjector cannot find GameBootstrapper instance", "DI");
             }
         }
 
@@ -66,23 +62,16 @@ namespace MythHunter.Core.MonoBehaviours
         /// </summary>
         public void InjectDependenciesInScene()
         {
-            if (_container == null)
+            if (GameBootstrapper.Instance == null)
             {
                 if (_logger != null)
                 {
-                    _logger.LogError("DependencyInjector: Container is not available", "DI");
-                }
-                else
-                {
-                    _logger.LogError("DependencyInjector: Container is not available");
+                    _logger.LogError("DependencyInjector: GameBootstrapper is not available", "DI");
                 }
                 return;
             }
 
-            // Використовуємо MonoBehaviour[] для отримання всіх компонентів на сцені
             var injectables = new List<MonoBehaviour>();
-
-            // Знаходимо у активній сцені
             var gameObjects = FindObjectsOfType<GameObject>();
 
             foreach (var go in gameObjects)
@@ -90,7 +79,6 @@ namespace MythHunter.Core.MonoBehaviours
                 var components = go.GetComponents<MonoBehaviour>();
                 foreach (var component in components)
                 {
-                    // Перевіряємо, чи має компонент атрибут [Inject]
                     if (HasInjectAttribute(component))
                     {
                         injectables.Add(component);
@@ -98,10 +86,9 @@ namespace MythHunter.Core.MonoBehaviours
                 }
             }
 
-            // Виконуємо ін'єкцію
             foreach (var injectable in injectables)
             {
-                _container.InjectInto(injectable, _logInjections ? _logger : null);
+                GameBootstrapper.Instance.InjectInto(injectable);
             }
 
             if (_logInjections && _logger != null)

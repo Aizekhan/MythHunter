@@ -18,49 +18,41 @@ namespace MythHunter.Core.MonoBehaviours
 
         private void Awake()
         {
-            if (GameBootstrapper.Instance != null)
-            {
-                _container = GameBootstrapper.Instance.GetContainerInternal();
-            }
-        }
-
-        private void Start()
-        {
-            if (_injectOnStart)
+            if (_injectOnStart && GameBootstrapper.Instance != null)
             {
                 InjectComponents();
             }
         }
+
+       
 
         /// <summary>
         /// Ін'єктує залежності в компоненти
         /// </summary>
         public void InjectComponents()
         {
-            if (_container == null)
+            if (GameBootstrapper.Instance == null)
                 return;
 
             if (_injectChildren)
             {
-                // Проходимо по всіх дочірніх об'єктах
                 var components = GetComponentsInChildren<MonoBehaviour>(true);
                 foreach (var component in components)
                 {
-                    if (component != this) // Пропускаємо сам DependencyScope
+                    if (component != this)
                     {
-                        _container.InjectDependencies(component);
+                        GameBootstrapper.Instance.InjectInto(component);
                     }
                 }
             }
             else
             {
-                // Інжектуємо тільки на цьому GameObject
                 var components = GetComponents<MonoBehaviour>();
                 foreach (var component in components)
                 {
                     if (component != this)
                     {
-                        _container.InjectDependencies(component);
+                        GameBootstrapper.Instance.InjectInto(component);
                     }
                 }
             }

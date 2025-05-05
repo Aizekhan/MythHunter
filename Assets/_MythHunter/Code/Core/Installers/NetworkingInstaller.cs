@@ -26,7 +26,8 @@ namespace MythHunter.Core.Installers
 
             // Серверна частина
             BindSingleton<INetworkServer, NetworkServer>(container);
-
+            // Кліентна частина
+            BindSingleton<INetworkClient, NetworkClient>(container);
             // Обробники повідомлень
             BindSingleton<INetworkMessageHandlerRegistry, NetworkMessageHandlerRegistry>(container);
 

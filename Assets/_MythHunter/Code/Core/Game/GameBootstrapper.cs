@@ -189,14 +189,14 @@ namespace MythHunter.Core.Game
 
         #endregion
 
-        #region Internal Methods
-
-        internal IDIContainer GetContainerInternal()
+        // Замість GetContainerInternal(), додайте спеціальний метод
+        public void InjectInto(MonoBehaviour component)
         {
-            return _container;
+            if (component != null && _container != null)
+            {
+                _container.InjectDependencies(component);
+            }
         }
-
-        #endregion
 
         #region Private Helper Methods
 

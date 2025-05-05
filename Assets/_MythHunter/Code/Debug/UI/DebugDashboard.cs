@@ -1,4 +1,3 @@
-// Шлях: Assets/_MythHunter/Code/Debug/UI/DebugDashboard.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,7 +14,7 @@ namespace MythHunter.Debug.UI
     public class DebugDashboard : InjectableMonoBehaviour
     {
         [Inject] protected new readonly IMythLogger _logger;
-        [Inject] private DebugToolFactory _toolFactory;
+        [Inject] private readonly DebugToolFactory _toolFactory;
 
         [SerializeField] private bool _showOnStart = false;
         [SerializeField] private KeyCode _toggleKey = KeyCode.F9;
@@ -59,9 +58,6 @@ namespace MythHunter.Debug.UI
             }
         }
 
-        /// <summary>
-        /// Реєструє інструмент в дашборді
-        /// </summary>
         public void RegisterTool(IDebugTool tool)
         {
             if (tool == null)
@@ -91,28 +87,21 @@ namespace MythHunter.Debug.UI
             }
         }
 
-        /// <summary>
-        /// Видаляє інструмент з дашборду
-        /// </summary>
         public void UnregisterTool(IDebugTool tool)
         {
             if (tool == null)
                 return;
 
-            // Знаходимо інструмент
             int index = _registeredTools.IndexOf(tool);
             if (index >= 0)
             {
                 try
                 {
-                    // Звільняємо ресурси
                     _registeredTools[index].Dispose();
                     _registeredTools.RemoveAt(index);
 
-                    // Оновлюємо вкладки
                     UpdateTabNames();
 
-                    // Коригуємо індекс вкладки
                     if (_selectedTabIndex >= _registeredTools.Count)
                     {
                         _selectedTabIndex = Math.Max(0, _registeredTools.Count - 1);
