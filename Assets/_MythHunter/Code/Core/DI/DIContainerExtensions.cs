@@ -34,5 +34,16 @@ namespace MythHunter.Core.DI
             var method = typeof(IDIContainer).GetMethod("Resolve").MakeGenericMethod(type);
             return method.Invoke(container, null);
         }
+
+        public static void BindSingleton<TService>(this IDIContainer container, TService instance)
+        {
+            container.RegisterInstance<TService>(instance);
+        }
+
+        public static void BindSingleton<TService, TImplementation>(this IDIContainer container)
+           where TImplementation : TService, new()
+        {
+            container.RegisterSingleton<TService, TImplementation>();
+        }
     }
 }

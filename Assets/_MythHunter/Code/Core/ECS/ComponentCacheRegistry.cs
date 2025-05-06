@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MythHunter.Entities;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.ECS
@@ -7,12 +8,12 @@ namespace MythHunter.Core.ECS
     /// <summary>
     /// Глобальний реєстр кешів компонентів
     /// </summary>
-    public class ComponentCacheRegistry
+    public class ComponentCacheRegistry : IComponentCacheRegistry
     {
         private readonly Dictionary<Type, object> _caches = new Dictionary<Type, object>();
         private readonly IEntityManager _entityManager;
         private readonly IMythLogger _logger;
-        private readonly bool _autoUpdate;
+        private bool _autoUpdate = true;
 
         // Статистика
         private int _totalCacheCount = 0;
@@ -20,11 +21,10 @@ namespace MythHunter.Core.ECS
         private int _totalHitCount = 0;
         private int _totalMissCount = 0;
 
-        public ComponentCacheRegistry(IEntityManager entityManager, IMythLogger logger, bool autoUpdate = true)
+        public ComponentCacheRegistry(IEntityManager entityManager, IMythLogger logger)
         {
             _entityManager = entityManager;
             _logger = logger;
-            _autoUpdate = autoUpdate;
         }
 
         /// <summary>
@@ -62,7 +62,10 @@ namespace MythHunter.Core.ECS
             cache.Update();
             _totalUpdateCount++;
         }
-
+        public void SetAutoUpdate(bool value)
+        {
+            _autoUpdate = value;
+        }
         /// <summary>
         /// Оновлює всі кеші
         /// </summary>

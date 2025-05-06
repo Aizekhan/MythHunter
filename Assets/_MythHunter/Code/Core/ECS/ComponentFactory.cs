@@ -5,12 +5,13 @@ using System.Collections.Generic;
 using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.Entities;
 namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Фабрика для створення та реєстрації компонентів
     /// </summary>
-    public class ComponentFactory
+    public class ComponentFactory : IComponentFactory
     {
         private readonly IEntityManager _entityManager;
         private readonly IMythLogger _logger;

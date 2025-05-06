@@ -24,7 +24,8 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEntityManager, EntityManager>(container);
             
             BindSingleton<IEcsWorld, EcsWorld>(container);
-            BindSingleton<IStateMachine<GameStateType>, StateMachine<GameStateType>>(container);
+            BindSingleton<IGameStateMachine, GameStateMachine>(container);
+           
         }
     }
 }

@@ -21,10 +21,10 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення залежностей Entities System...", "Installer");
 
             // ComponentCacheRegistry
-            BindSingleton<ComponentCacheRegistry, ComponentCacheRegistry>(container);
+            BindSingleton<IComponentCacheRegistry, ComponentCacheRegistry>(container);
 
             // ComponentFactory
-            BindSingleton<ComponentFactory, ComponentFactory>(container);
+            BindSingleton<IComponentFactory, ComponentFactory>(container);
 
             // ArchetypeTemplateRegistry
             BindSingleton<IArchetypeTemplateRegistry, ArchetypeTemplateRegistry>(container);

@@ -11,7 +11,7 @@ namespace MythHunter.Core.MonoBehaviours
     /// <summary>
     /// Компонент для пошуку та ін'єкції залежностей в MonoBehaviour
     /// </summary>
-    public class DependencyInjector : MonoBehaviour
+    public class DependencyInjector : MonoBehaviour, IDependencyInjector    
     {
         [SerializeField] private bool _searchOnAwake = true;
         [SerializeField] private bool _searchOnSceneLoad = true;

@@ -7,7 +7,7 @@ namespace MythHunter.Core.Game
     /// <summary>
     /// Машина станів гри
     /// </summary>
-    public class GameStateMachine
+    public class GameStateMachine : IGameStateMachine   
     {
         private readonly IStateMachine<GameStateType> _stateMachine;
         private readonly IMythLogger _logger;

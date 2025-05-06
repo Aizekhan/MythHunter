@@ -1,4 +1,3 @@
-// Шлях: Assets/_MythHunter/Code/Core/Game/GameBootstrapper.cs
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
@@ -12,41 +11,20 @@ using MythHunter.Utils;
 
 namespace MythHunter.Core.Game
 {
-    /// <summary>
-    /// Точка входу в гру
-    /// </summary>
     public class GameBootstrapper : MonoBehaviour
     {
-        #region Singleton Pattern
-
         private static GameBootstrapper _instance;
         public static GameBootstrapper Instance => _instance;
 
-        #endregion
-
-        #region Inspector Fields
-
         [SerializeField] private bool _injectOnAwake = true;
-
-        #endregion
-
-        #region Core Services
 
         private IDIContainer _container;
         private IMythLogger _logger;
         private IEventBus _eventBus;
 
-        #endregion
-
-        #region Game Systems
-
         private IEcsWorld _ecsWorld;
-        private GameStateMachine _stateMachine;
-        private DependencyInjector _dependencyInjector;
-
-        #endregion
-
-        #region Unity Lifecycle
+        private IGameStateMachine _stateMachine;
+        private IDependencyInjector _dependencyInjector;
 
         private async void Awake()
         {
@@ -71,12 +49,10 @@ namespace MythHunter.Core.Game
 
         private void OnDestroy()
         {
-            Cleanup();
+            _ecsWorld?.Dispose();
+            _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
+            _instance = null;
         }
-
-        #endregion
-
-        #region Initialization Methods
 
         private bool TryInitializeSingleton()
         {
@@ -92,139 +68,63 @@ namespace MythHunter.Core.Game
 
         private void InitializeCore()
         {
-            InitializeDependencyInjection();
+            var logger = MythLogger.CreateDefaultLogger();
+            _container = new DIContainer(logger);
+
+            _container.BindSingleton<IMythLogger>(logger);
+            _container.BindSingleton<IDIContainer>(_container);
+
+            InstallerRegistry.RegisterInstallers(_container);
+
             _logger = _container.Resolve<IMythLogger>();
         }
 
         private void InitializeGameSystems()
         {
-            InitializeEcs();
-            InitializeStateMachine();
-            InitializeDependencyInjector();
-            InitializeDebugTools();
-        }
-
-        private void InitializeDependencyInjection()
-        {
-            var logger = MythLogger.CreateDefaultLogger();
-            _container = new DIContainer(logger);
-
-            // ТІЛЬКИ логер як початкова залежність
-            _container.RegisterInstance<IMythLogger>(logger);
-            // ✅ реєструємо сам контейнер у DI
-            _container.RegisterInstance<IDIContainer>(_container);
-            // Всі інші сервіси реєструються через інсталери
-            InstallerRegistry.RegisterInstallers(_container);
-        }
-
-        private void InitializeEcs()
-        {
-            // Отримуємо вже зареєстровані сервіси
             _eventBus = _container.Resolve<IEventBus>();
-            var entityManager = _container.Resolve<IEntityManager>();
-            var systemRegistry = _container.Resolve<ISystemRegistry>();
 
-            _ecsWorld = new EcsWorld(entityManager, systemRegistry);
+            _ecsWorld = _container.Resolve<IEcsWorld>();
+            _stateMachine = _container.Resolve<IGameStateMachine>();
+            _dependencyInjector = _container.Resolve<IDependencyInjector>();
 
-            _logger.LogInfo("ECS world initialized", "Bootstrapper");
-        }
-
-        private void InitializeDebugTools()
-        {
-            var debugService = _container.Resolve<IDebugService>();
-            debugService.CreateDebugDashboard();
-        }
-
-        private void InitializeStateMachine()
-        {
-            _stateMachine = new GameStateMachine(_container);
             _stateMachine.Initialize();
 
-            _logger.LogInfo("Game state machine initialized", "Bootstrapper");
-        }
-
-        private void InitializeDependencyInjector()
-        {
-            var injectorObject = CreateDependencyInjectorObject();
-            _dependencyInjector = injectorObject.AddComponent<DependencyInjector>();
-
             if (_injectOnAwake)
-            {
                 _dependencyInjector.InjectDependenciesInScene();
-            }
 
-            _logger.LogInfo("Dependency injector initialized", "Bootstrapper");
-        }
+            var debugService = _container.Resolve<IDebugService>();
+            debugService.CreateDebugDashboard();
 
-        private GameObject CreateDependencyInjectorObject()
-        {
-            var injectorObject = new GameObject("DependencyInjector");
-            injectorObject.transform.SetParent(transform);
-            return injectorObject;
+            _logger.LogInfo("Game systems initialized", "Bootstrapper");
         }
 
         private async UniTask InitializeServicesAsync()
         {
             _logger.LogInfo("Starting async services initialization", "Bootstrapper");
 
-            // Асинхронна ініціалізація сервісів
-            await PerformAsyncInitialization();
+            await UniTask.Delay(100); // Placeholder async init
 
             _logger.LogInfo("Async services initialization completed", "Bootstrapper");
             _stateMachine.ChangeState(GameStateType.Boot);
         }
 
-        private async UniTask PerformAsyncInitialization()
-        {
-            // Тут можна додати асинхронну логіку ініціалізації
-            await UniTask.Delay(100);
-        }
-
-        #endregion
-
-        #region Public Methods
-
         public void RegisterForInjection(MonoBehaviour component)
-        {
-            if (!ValidateInjectionParameters(component))
-                return;
-
-            _container.InjectDependencies(component);
-            _logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
-        }
-
-        #endregion
-
-        public void InjectInto(MonoBehaviour component)
         {
             if (component != null && _container != null)
             {
                 _container.InjectDependencies(component);
+                _logger?.LogDebug($"Injected dependencies into {component.GetType().Name}", "DI");
+            }
+            else
+            {
+                _logger?.LogWarning("Injection failed: component or container is null", "DI");
             }
         }
 
-        #region Private Helper Methods
-
-        private bool ValidateInjectionParameters(MonoBehaviour component)
+        public void InjectInto(MonoBehaviour component)
         {
             if (component != null && _container != null)
-                return true;
-
-            _logger?.LogWarning(
-                $"Cannot inject dependencies - component is {(component == null ? "null" : "valid")} " +
-                $"and container is {(_container == null ? "null" : "valid")}",
-                "DI"
-            );
-            return false;
+                _container.InjectDependencies(component);
         }
-
-        private void Cleanup()
-        {
-            _ecsWorld?.Dispose();
-            _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
-            _instance = null;
-        }
-
-        #endregion
     }
 }

@@ -19,36 +19,16 @@ namespace MythHunter.Core
             // Інсталятори в порядку залежностей
             var installers = new DIInstaller[]
    {
-        // 1. Ядро системи
-        new CoreInstaller(),
-
-        // 2. Система подій
-        new EventsInstaller(),
-        
-        // 3. Система ресурсів
-        new ResourceInstaller(),
-        // 3. Система серіалізації компонентів
-        new SerializationInstaller(), 
-        // 4. Система пулінгу об'єктів
-        new PoolSystemInstaller(),
-        
-        // 5. Мережева система
-        new NetworkingInstaller(),
-        
-         // 7. Система сутностей (перемістили в кінець!)
-        new EntitiesInstaller(),
-
-        // 6. UI система
-        new UIInstaller(),
-
-
-        // 8. Ігрова система
-        new GameplayInstaller(),
-        
-       
-        
-        // 9. Інструменти відлагодження
-        new DebugToolsInstaller()
+new CoreInstaller(),
+new EventsInstaller(),
+new ResourceInstaller(),
+new SerializationInstaller(),
+new UIInstaller(),           
+new PoolSystemInstaller(),
+new NetworkingInstaller(),
+new EntitiesInstaller(),
+new GameplayInstaller(),
+new DebugToolsInstaller()
    };
 
             // Встановлюємо залежності для кожного інсталятора
