@@ -5,6 +5,7 @@ using MythHunter.UI.Models;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
 using MythHunter.Resources.Core;
+using System;
 
 namespace MythHunter.Core.Installers
 {
@@ -18,10 +19,24 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей UISystem...", "Installer");
 
-            var eventBus = container.Resolve<IEventBus>();
-            var resourceProvider = container.Resolve<IResourceProvider>();
+            try
+            {
+                // Перевіряємо, що потрібні залежності вже зареєстровані
+                var resourceProvider = container.Resolve<IResourceProvider>();
 
-            // Реєстрація основної UI системи
+                // Створюємо UIViewFactory вручну і реєструємо його як інстанс
+                var viewFactory = new UIViewFactory(resourceProvider, logger);
+                container.RegisterInstance<IUIViewFactory>(viewFactory);
+
+                logger.LogInfo("IUIViewFactory успішно зареєстровано", "Installer");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Помилка реєстрації IUIViewFactory: {ex.Message}", "Installer", ex);
+                throw; // Перекидаємо помилку далі, щоб не приховувати її
+            }
+
+            // Реєстрація інших UI-залежностей, які можуть залежати від IUIViewFactory
             BindSingleton<IUISystem, UISystem>(container);
 
             // Реєстрація моделей
@@ -33,10 +48,6 @@ namespace MythHunter.Core.Installers
             Bind<IMainMenuPresenter, MainMenuPresenter>(container);
             Bind<IGameplayUIPresenter, GameplayUIPresenter>(container);
             Bind<IInventoryPresenter, InventoryPresenter>(container);
-
-
-            // Реєстрація фабрики представлень
-            BindSingleton<IUIViewFactory, UIViewFactory>(container);
 
             logger.LogInfo("Встановлення залежностей UISystem завершено", "Installer");
         }
