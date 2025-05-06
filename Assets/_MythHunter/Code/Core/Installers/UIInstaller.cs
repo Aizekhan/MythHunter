@@ -34,6 +34,7 @@ namespace MythHunter.Core.Installers
             Bind<IGameplayUIPresenter, GameplayUIPresenter>(container);
             Bind<IInventoryPresenter, InventoryPresenter>(container);
 
+
             // Реєстрація фабрики представлень
             BindSingleton<IUIViewFactory, UIViewFactory>(container);
 

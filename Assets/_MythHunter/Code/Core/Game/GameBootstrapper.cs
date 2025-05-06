@@ -73,12 +73,26 @@ namespace MythHunter.Core.Game
 
             _container.BindSingleton<IMythLogger>(logger);
             _container.BindSingleton<IDIContainer>(_container);
-
+            InitializeDependencyInjector();
             InstallerRegistry.RegisterInstallers(_container);
 
             _logger = _container.Resolve<IMythLogger>();
         }
-
+        private void InitializeDependencyInjector()
+        {
+            // Знаходимо або створюємо DependencyInjector
+            var dependencyInjector = UnityEngine.Object.FindFirstObjectByType<DependencyInjector>();
+            if (dependencyInjector == null)
+            {
+                var gameObject = new GameObject("MythHunter_DependencyInjector");
+                dependencyInjector = gameObject.AddComponent<DependencyInjector>();
+                DontDestroyOnLoad(gameObject);
+                _logger?.LogInfo("Created new DependencyInjector", "Bootstrapper");
+            }
+            // Реєструємо в контейнері
+            _container.RegisterInstance<IDependencyInjector>(dependencyInjector);
+            _dependencyInjector = dependencyInjector;
+        }
         private void InitializeGameSystems()
         {
             _eventBus = _container.Resolve<IEventBus>();
