@@ -36,6 +36,10 @@ namespace MythHunter.Systems.Core
                 get; set;
             }
             public bool IsActive { get; set; } = true;
+            public string SystemType
+            {
+                get; set;
+            } // ← Ось ця властивість потрібна
         }
 
         [Inject]

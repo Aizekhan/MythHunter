@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/ECS/ISystemFeatures.cs
 using MythHunter.Events;
 
 namespace MythHunter.Core.ECS
