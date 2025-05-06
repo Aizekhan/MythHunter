@@ -18,14 +18,17 @@ namespace MythHunter.Core.Installers
             // Логер з GameBotstrapper.cs
             var logger = container.Resolve<IMythLogger>();
            
-            // Реєстрація SystemRegistry
-             BindSingleton<ISystemRegistry, SystemRegistry>(container);
+            
             // Інші сервіси
             BindSingleton<IEntityManager, EntityManager>(container);
-            
-            BindSingleton<IEcsWorld, EcsWorld>(container);
-            BindSingleton<IGameStateMachine, GameStateMachine>(container);
+
+            BindSingleton<IEventPool, EventPool>(container);
+            BindSingleton<IEventBus, EventBus>(container);
            
+            BindSingleton<IGameStateMachine, GameStateMachine>(container);
+            // Реєстрація SystemRegistry
+            BindSingleton<ISystemRegistry, SystemRegistry>(container);
+            BindSingleton<IEcsWorld, EcsWorld>(container);
         }
     }
 }
