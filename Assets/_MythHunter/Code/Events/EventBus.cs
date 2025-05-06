@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
+using MythHunter.Utils.Extensions;
 
 namespace MythHunter.Events
 {
@@ -103,6 +104,11 @@ namespace MythHunter.Events
         public void Subscribe<TEvent>(Action<TEvent> handler, EventPriority priority = EventPriority.Normal)
             where TEvent : struct, IEvent
         {
+            if (handler == null)
+            {
+                _logger.LogWarning($"Trying to subscribe null handler for event {typeof(TEvent).Name}", "EventBus");
+                return;
+            }
             Type eventType = typeof(TEvent);
 
             if (!_syncHandlers.TryGetValue(eventType, out var handlers))
@@ -143,6 +149,12 @@ namespace MythHunter.Events
         /// </summary>
         public void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
+            // Перевірка на дефолтне значення структури (не є null, оскільки це структура, але може бути default)
+            if (EqualityComparer<TEvent>.Default.Equals(eventData, default))
+            {
+                _logger.LogWarning($"Trying to publish default event of type {typeof(TEvent).Name}", "EventBus");
+                return;
+            }
             Type eventType = typeof(TEvent);
 
             _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} " +
@@ -242,22 +254,34 @@ namespace MythHunter.Events
         /// </summary>
         public async UniTask PublishAsync<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
+            // Перевірка на default значення
+            if (EqualityComparer<TEvent>.Default.Equals(eventData, default))
+            {
+                _logger.LogWarning($"Trying to publish default async event of type {typeof(TEvent).Name}", "EventBus");
+                return;
+            }
             Type eventType = typeof(TEvent);
 
             _logger.LogDebug($"Publishing async event {eventType.Name} with ID {eventData.GetEventId()} " +
                            $"and priority {eventData.GetPriority()}");
-
-            // Для критичних подій виконуємо обробку відразу
-            if (eventData.GetPriority() == EventPriority.Critical)
+            try
             {
+                // Для критичних подій виконуємо обробку відразу
+                if (eventData.GetPriority() == EventPriority.Critical)
+                 {
                 await ProcessEventImmediatelyAsync(eventData);
-            }
+                 }
             else
-            {
+                 {
                 // Додаємо до черги асинхронних подій
                 EnqueueAsync(eventData);
+                 }
             }
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error publishing async event {eventType.Name}: {ex.Message}", "EventBus", ex);
+            }
+         }
 
         /// <summary>
         /// Негайно обробляє асинхронну подію, минаючи чергу
@@ -266,27 +290,59 @@ namespace MythHunter.Events
         {
             Type eventType = typeof(TEvent);
 
+            // Сповіщаємо дебаг-обробники
+            try
+            {
+                DebugEventMiddleware.NotifyHandlers(eventData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error in debug handlers for event {eventType.Name}: {ex.Message}", "EventBus");
+                // Продовжуємо обробку, оскільки дебаг-обробники не критичні
+            }
+
             if (_asyncHandlers.TryGetValue(eventType, out var handlers))
             {
                 // Список задач для очікування
                 List<UniTask> tasks = new List<UniTask>();
+                List<Exception> exceptions = new List<Exception>();
 
                 // Запускаємо обробники в порядку пріоритету
                 foreach (var handler in handlers)
                 {
                     try
                     {
-                        tasks.Add(((Func<TEvent, UniTask>)handler.Handler).Invoke(eventData));
+                        // Використовуємо SafeFireAndForget замість простого додавання до списку
+                        var task = ((Func<TEvent, UniTask>)handler.Handler).Invoke(eventData);
+                        tasks.Add(task);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error handling async event {eventType.Name}: {ex.Message}",
-                                       "EventBus", ex);
+                        exceptions.Add(ex);
+                        _logger.LogError($"Error starting async handler for event {eventType.Name}: {ex.Message}", "EventBus", ex);
                     }
                 }
 
-                // Чекаємо завершення всіх задач
-                await UniTask.WhenAll(tasks);
+                // Безпечне очікування всіх задач
+                try
+                {
+                    // Використання WithCancellation для можливості скасування за потреби
+                    await UniTask.WhenAll(tasks).AttachExceptionHandler(ex =>
+                    {
+                        exceptions.Add(ex);
+                        _logger.LogError($"Error in async event handler: {ex.Message}", "EventBus", ex);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error waiting for async handlers of event {eventType.Name}: {ex.Message}", "EventBus", ex);
+                }
+
+                // Логування всіх помилок
+                if (exceptions.Count > 0)
+                {
+                    _logger.LogWarning($"Event {eventType.Name} processed with {exceptions.Count} errors", "EventBus");
+                }
             }
 
             // Повертаємо подію в пул
