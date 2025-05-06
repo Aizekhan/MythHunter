@@ -1,9 +1,10 @@
-// Шлях: Assets/_MythHunter/Code/Resources/Providers/AddressablesProvider.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.Resources.Core;
 using UnityEngine;
+using System.Linq;
 
 namespace MythHunter.Resources.Providers
 {
@@ -13,8 +14,9 @@ namespace MythHunter.Resources.Providers
     public class AddressablesProvider : ResourceProviderBase, IAddressablesProvider
     {
         [Inject]
-        public AddressablesProvider(IMythLogger logger, int priority = 10) : base(logger, priority)
+        public AddressablesProvider(IMythLogger logger) : base(logger)
         {
+            SetPriority(10); // ✅ Безпечне встановлення пріоритету
         }
 
         public override async UniTask<T> LoadAsync<T>(string key)
@@ -23,12 +25,10 @@ namespace MythHunter.Resources.Providers
 
             try
             {
-                // Тут реальна реалізація для Addressables
                 var result = await LoadAddressableAssetAsync<T>(key);
                 if (result != null)
-                {
                     _loadedResources[key] = result;
-                }
+
                 return result;
             }
             catch (System.Exception ex)
@@ -44,7 +44,6 @@ namespace MythHunter.Resources.Providers
 
             try
             {
-                // Тут реальна реалізація для Addressables
                 var result = await LoadAddressableAssetsAsync<T>(pattern);
                 return result;
             }
@@ -61,7 +60,6 @@ namespace MythHunter.Resources.Providers
 
             try
             {
-                // Тут реальна реалізація для Addressables
                 var result = await InstantiateAddressableAsync(key, parent);
                 return result;
             }
@@ -74,13 +72,11 @@ namespace MythHunter.Resources.Providers
 
         public void ReleaseAsset<T>(T asset) where T : Object
         {
-            // Тут реальна реалізація для Addressables
             ReleaseAddressableAsset(asset);
         }
 
         public void ReleaseAssets<T>(IList<T> assets) where T : Object
         {
-            // Тут реальна реалізація для Addressables
             foreach (var asset in assets)
             {
                 ReleaseAddressableAsset(asset);
@@ -89,44 +85,42 @@ namespace MythHunter.Resources.Providers
 
         public void ReleaseInstance(GameObject instance)
         {
-            // Тут реальна реалізація для Addressables
             ReleaseAddressableInstance(instance);
         }
 
         public override void Unload(string key)
         {
             base.Unload(key);
-            // Додаткова логіка для Addressables, якщо потрібно
+            // Optional: add Addressables.Release(key) if needed
         }
 
         public override void UnloadAll()
         {
             base.UnloadAll();
-            // Додаткова логіка для Addressables, якщо потрібно
+            // Optional: clean up if needed
         }
 
-        #region Методи для роботи з Addressables
+        #region Addressables Implementation Stubs
 
         private async UniTask<T> LoadAddressableAssetAsync<T>(string key) where T : Object
         {
-            // Заглушка для реалізації
             await UniTask.Yield();
 
-            // В реальній реалізації тут буде:
+            // Real implementation:
             // return await Addressables.LoadAssetAsync<T>(key).ToUniTask();
             return null;
         }
 
         private async UniTask<List<T>> LoadAddressableAssetsAsync<T>(string pattern) where T : Object
         {
-            // Заглушка для реалізації
             await UniTask.Yield();
 
-            // В реальній реалізації тут буде:
+            // Real implementation:
             // var locations = await Addressables.LoadResourceLocationsAsync(pattern).ToUniTask();
-            // List<T> results = new List<T>();
-            // foreach (var location in locations) {
-            //     var asset = await Addressables.LoadAssetAsync<T>(location).ToUniTask();
+            // var results = new List<T>();
+            // foreach (var loc in locations)
+            // {
+            //     var asset = await Addressables.LoadAssetAsync<T>(loc).ToUniTask();
             //     results.Add(asset);
             // }
             return new List<T>();
@@ -134,26 +128,21 @@ namespace MythHunter.Resources.Providers
 
         private async UniTask<GameObject> InstantiateAddressableAsync(string key, Transform parent)
         {
-            // Заглушка для реалізації
             await UniTask.Yield();
 
-            // В реальній реалізації тут буде:
+            // Real implementation:
             // return await Addressables.InstantiateAsync(key, parent).ToUniTask();
             return null;
         }
 
         private void ReleaseAddressableAsset<T>(T asset) where T : Object
         {
-            // Заглушка для реалізації
-            // В реальній реалізації тут буде:
-            // Addressables.Release(asset);
+            // Real: Addressables.Release(asset);
         }
 
         private void ReleaseAddressableInstance(GameObject instance)
         {
-            // Заглушка для реалізації
-            // В реальній реалізації тут буде:
-            // Addressables.ReleaseInstance(instance);
+            // Real: Addressables.ReleaseInstance(instance);
         }
 
         #endregion

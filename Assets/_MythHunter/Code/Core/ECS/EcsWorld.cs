@@ -8,11 +8,11 @@ namespace MythHunter.Core.ECS
     public class EcsWorld : IEcsWorld
     {
         private readonly IEntityManager _entityManager;
-        private readonly SystemRegistry _systemRegistry;
+        private readonly ISystemRegistry _systemRegistry;
         
         public IEntityManager EntityManager => _entityManager;
         
-        public EcsWorld(IEntityManager entityManager, SystemRegistry systemRegistry)
+        public EcsWorld(IEntityManager entityManager, ISystemRegistry systemRegistry)
         {
             _entityManager = entityManager;
             _systemRegistry = systemRegistry;

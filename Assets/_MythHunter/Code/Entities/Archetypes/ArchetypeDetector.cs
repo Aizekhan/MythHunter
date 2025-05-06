@@ -8,18 +8,18 @@ namespace MythHunter.Entities.Archetypes
     /// <summary>
     /// Детектор архетипів для визначення архетипів сутностей на основі їх компонентів
     /// </summary>
-    public class ArchetypeDetector
+    public class ArchetypeDetector : IArchetypeDetector
     {
         private readonly IEntityManager _entityManager;
-        private readonly ArchetypeTemplateRegistry _templateRegistry;
-        private readonly ArchetypeRegistry _archetypeRegistry;
+        private readonly IArchetypeTemplateRegistry _templateRegistry;
+        private readonly IArchetypeRegistry _archetypeRegistry;
         private readonly IMythLogger _logger;
 
         [Inject]
         public ArchetypeDetector(
             IEntityManager entityManager,
-            ArchetypeTemplateRegistry templateRegistry,
-            ArchetypeRegistry archetypeRegistry,
+            IArchetypeTemplateRegistry templateRegistry,
+            IArchetypeRegistry archetypeRegistry,
             IMythLogger logger)
         {
             _entityManager = entityManager;

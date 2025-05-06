@@ -1,4 +1,3 @@
-// Шлях: Assets/_MythHunter/Code/Core/Installers/ResourceInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Resources.Core;
 using MythHunter.Resources.Pool;
@@ -18,23 +17,21 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей ResourceSystem...", "Installer");
 
-            // Реєстрація провайдерів ресурсів
-            BindSingleton<DefaultResourceProvider, DefaultResourceProvider>(container);
+            // DI автоматично створить з IMythLogger
+            BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
 
-            // Pool Manager для управління пулами об'єктів
+            // Pool Manager
             BindSingleton<IPoolManager, OptimizedPoolManager>(container);
 
-            // Провайдер Addressables (якщо проект використовує Addressables)
+            // Addressables — тепер без int в конструкторі
             if (IsAddressablesAvailable())
             {
-                BindSingleton<AddressablesProvider, AddressablesProvider>(container);
-                BindInstance<IAddressablesProvider>(container, container.Resolve<AddressablesProvider>());
+                BindSingleton<IAddressablesProvider, AddressablesProvider>(container);
                 logger.LogInfo("Addressables Provider зареєстровано", "Installer");
             }
 
-            // Реєстрація основних сервісів
+            // Основні сервіси
             BindSingleton<IResourceManager, ResourceManager>(container);
-            BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
             BindSingleton<ISceneLoader, SceneLoader>(container);
 
             logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
@@ -42,14 +39,11 @@ namespace MythHunter.Core.Installers
 
         private bool IsAddressablesAvailable()
         {
-            // Перевірка наявності системи Addressables
             var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
             {
                 if (assembly.GetName().Name == "Unity.Addressables")
-                {
                     return true;
-                }
             }
             return false;
         }

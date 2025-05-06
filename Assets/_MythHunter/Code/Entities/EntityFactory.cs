@@ -12,16 +12,16 @@ namespace MythHunter.Entities
     /// <summary>
     /// Фабрика для створення сутностей
     /// </summary>
-    public class EntityFactory
+    public class EntityFactory : IEntityFactory
     {
         private readonly IEntityManager _entityManager;
-        private readonly ArchetypeSystem _archetypeSystem;
+        private readonly IArchetypeSystem _archetypeSystem;
         private readonly IMythLogger _logger;
 
         [Inject]
         public EntityFactory(
             IEntityManager entityManager,
-            ArchetypeSystem archetypeSystem,
+            IArchetypeSystem archetypeSystem,
             IMythLogger logger)
         {
             _entityManager = entityManager;

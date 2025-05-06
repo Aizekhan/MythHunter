@@ -10,7 +10,7 @@ namespace MythHunter.Entities.Archetypes
     /// <summary>
     /// Реєстр шаблонів архетипів для швидкого створення сутностей
     /// </summary>
-    public class ArchetypeTemplateRegistry
+    public class ArchetypeTemplateRegistry : IArchetypeTemplateRegistry
     {
         private readonly Dictionary<string, ArchetypeTemplate> _templates = new Dictionary<string, ArchetypeTemplate>();
         private readonly IEntityManager _entityManager;

@@ -1,4 +1,3 @@
-// Assets/_MythHunter/Code/Core/Installers/SerializationInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Data.Serialization;
 using MythHunter.Utils.Logging;
@@ -12,8 +11,7 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей Serialization...", "Installer");
 
-            // Реєструємо реєстр серіалізаторів як синглтон
-            BindSingleton<ComponentSerializerRegistry, ComponentSerializerRegistry>(container);
+            BindSingleton<IComponentSerializerRegistry, ComponentSerializerRegistry>(container);
 
             logger.LogInfo("Встановлення залежностей Serialization завершено", "Installer");
         }

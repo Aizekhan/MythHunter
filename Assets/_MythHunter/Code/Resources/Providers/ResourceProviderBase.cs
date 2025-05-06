@@ -1,9 +1,9 @@
-// Шлях: Assets/_MythHunter/Code/Resources/Providers/ResourceProviderBase.cs
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using UnityEngine;
+using System;
 
 namespace MythHunter.Resources.Providers
 {
@@ -13,20 +13,32 @@ namespace MythHunter.Resources.Providers
     public abstract class ResourceProviderBase : IResourceProvider, IPrioritizable
     {
         protected readonly IMythLogger _logger;
-        protected readonly Dictionary<string, Object> _loadedResources = new Dictionary<string, Object>();
-        protected readonly int _priority;
+        protected readonly Dictionary<string, UnityEngine.Object> _loadedResources = new Dictionary<string, UnityEngine.Object>();
+
+        private int _priority;
+        private bool _prioritySet = false;
 
         public int Priority => _priority;
 
-        protected ResourceProviderBase(IMythLogger logger, int priority = 0)
+        protected ResourceProviderBase(IMythLogger logger)
         {
             _logger = logger;
-            _priority = priority;
         }
 
-        public abstract UniTask<T> LoadAsync<T>(string key) where T : Object;
+        /// <summary>
+        /// Безпечне однократне встановлення пріоритету
+        /// </summary>
+        protected void SetPriority(int value)
+        {
+            if (_prioritySet)
+                throw new InvalidOperationException("Priority has already been set.");
+            _priority = value;
+            _prioritySet = true;
+        }
 
-        public abstract UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : Object;
+        public abstract UniTask<T> LoadAsync<T>(string key) where T : UnityEngine.Object;
+
+        public abstract UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object;
 
         public virtual void Unload(string key)
         {

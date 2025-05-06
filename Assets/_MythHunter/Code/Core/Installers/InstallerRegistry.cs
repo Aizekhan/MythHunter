@@ -35,14 +35,17 @@ namespace MythHunter.Core
         // 5. Мережева система
         new NetworkingInstaller(),
         
+         // 7. Система сутностей (перемістили в кінець!)
+        new EntitiesInstaller(),
+
         // 6. UI система
         new UIInstaller(),
-        
-        // 7. Ігрова система
+
+
+        // 8. Ігрова система
         new GameplayInstaller(),
         
-        // 8. Система сутностей (перемістили в кінець!)
-        new EntitiesInstaller(),
+       
         
         // 9. Інструменти відлагодження
         new DebugToolsInstaller()

@@ -13,15 +13,13 @@ namespace MythHunter.Systems.Gameplay
     /// </summary>
     public class EntitySpawnSystem : SystemBase, IEntitySpawnSystem
     {
-        private readonly EntityFactory _entityFactory;
-        private readonly ArchetypeSystem _archetypeSystem;
-        private readonly IEventBus _eventBus;
-        private readonly IMythLogger _logger;
-
+        private readonly IEntityFactory _entityFactory;
+        private readonly IArchetypeSystem _archetypeSystem;
+       
         [Inject]
         public EntitySpawnSystem(
-     EntityFactory entityFactory,
-     ArchetypeSystem archetypeSystem,
+     IEntityFactory entityFactory,
+     IArchetypeSystem archetypeSystem,
      IEventBus eventBus,
      IMythLogger logger)
      : base(logger, eventBus)

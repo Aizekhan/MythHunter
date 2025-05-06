@@ -1,4 +1,3 @@
-// Файл: Assets/_MythHunter/Code/Core/Installers/UIInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.UI.Core;
 using MythHunter.UI.Presenters;
@@ -16,27 +15,29 @@ namespace MythHunter.Core.Installers
     {
         public override void InstallBindings(IDIContainer container)
         {
-            InstallWithLogging(container, "UISystem", (c) => {
-                // Базові залежності
-                var eventBus = c.Resolve<IEventBus>();
-                var resourceProvider = c.Resolve<IResourceProvider>();
+            var logger = container.Resolve<IMythLogger>();
+            logger.LogInfo("Встановлення залежностей UISystem...", "Installer");
 
-                // Реєстрація основної UI системи
-                BindSingleton<IUISystem, UISystem>(c);
+            var eventBus = container.Resolve<IEventBus>();
+            var resourceProvider = container.Resolve<IResourceProvider>();
 
-                // Реєстрація основних моделей
-                BindSingleton<IMainMenuModel, MainMenuModel>(c);
-                BindSingleton<IGameplayUIModel, GameplayUIModel>(c);
-                BindSingleton<IInventoryModel, InventoryModel>(c);
+            // Реєстрація основної UI системи
+            BindSingleton<IUISystem, UISystem>(container);
 
-                // Реєстрація основних презентерів
-                Bind<IMainMenuPresenter, MainMenuPresenter>(c);
-                Bind<IGameplayUIPresenter, GameplayUIPresenter>(c);
-                Bind<IInventoryPresenter, InventoryPresenter>(c);
+            // Реєстрація моделей
+            BindSingleton<IMainMenuModel, MainMenuModel>(container);
+            BindSingleton<IGameplayUIModel, GameplayUIModel>(container);
+            BindSingleton<IInventoryModel, InventoryModel>(container);
 
-                // Реєстрація фабрики представлень
-                BindSingleton<IUIViewFactory, UIViewFactory>(c);
-            });
+            // Реєстрація презентерів
+            Bind<IMainMenuPresenter, MainMenuPresenter>(container);
+            Bind<IGameplayUIPresenter, GameplayUIPresenter>(container);
+            Bind<IInventoryPresenter, InventoryPresenter>(container);
+
+            // Реєстрація фабрики представлень
+            BindSingleton<IUIViewFactory, UIViewFactory>(container);
+
+            logger.LogInfo("Встановлення залежностей UISystem завершено", "Installer");
         }
     }
 }

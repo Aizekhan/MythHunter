@@ -15,16 +15,16 @@ namespace MythHunter.Core.Installers
     {
         public override void InstallBindings(IDIContainer container)
         {
-            // Базові сервіси
-            BindSingleton<IMythLogger, MythLogger>(container);
+            // Логер з GameBotstrapper.cs
+            var logger = container.Resolve<IMythLogger>();
+           
+            // Реєстрація SystemRegistry
+             BindSingleton<ISystemRegistry, SystemRegistry>(container);
+            // Інші сервіси
             BindSingleton<IEntityManager, EntityManager>(container);
-            BindSingleton<IEventPool, EventPool>(container);
-            BindSingleton<IEventBus, EventBus>(container);
+            
             BindSingleton<IEcsWorld, EcsWorld>(container);
             BindSingleton<IStateMachine<GameStateType>, StateMachine<GameStateType>>(container);
-
-            // Виправляємо реєстрацію SystemRegistry
-            BindSingleton<ISystemRegistry, SystemRegistry>(container);
         }
     }
 }

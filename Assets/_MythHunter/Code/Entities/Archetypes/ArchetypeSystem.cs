@@ -12,17 +12,17 @@ namespace MythHunter.Entities.Archetypes
     /// <summary>
     /// Система для керування архетипами сутностей
     /// </summary>
-    public class ArchetypeSystem : Core.ECS.SystemBase, IEventSubscriber
+    public class ArchetypeSystem : Core.ECS.SystemBase, IEventSubscriber, IArchetypeSystem
     {
-        private readonly ArchetypeRegistry _archetypeRegistry;
-        private readonly ArchetypeDetector _archetypeDetector;
-        private readonly ArchetypeTemplateRegistry _templateRegistry;
+        private readonly IArchetypeRegistry _archetypeRegistry;
+        private readonly IArchetypeDetector _archetypeDetector;
+        private readonly IArchetypeTemplateRegistry _templateRegistry;
 
         [Inject]
         public ArchetypeSystem(
-            ArchetypeRegistry archetypeRegistry,
-            ArchetypeDetector archetypeDetector,
-            ArchetypeTemplateRegistry templateRegistry,
+            IArchetypeRegistry archetypeRegistry,
+            IArchetypeDetector archetypeDetector,
+            IArchetypeTemplateRegistry templateRegistry,
             IMythLogger logger,
             IEventBus eventBus)
             : base(logger, eventBus)

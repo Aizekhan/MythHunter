@@ -9,10 +9,11 @@ namespace MythHunter.Entities.Archetypes
     /// <summary>
     /// Реєстр для відстеження архетипів сутностей
     /// </summary>
-    public class ArchetypeRegistry
+    public class ArchetypeRegistry : IArchetypeRegistry
     {
         private readonly Dictionary<int, string> _entityToArchetype = new Dictionary<int, string>();
         private readonly Dictionary<string, List<int>> _archetypeToEntities = new Dictionary<string, List<int>>();
+
         private readonly IMythLogger _logger;
 
         [Inject]

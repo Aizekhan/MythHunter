@@ -24,7 +24,7 @@ namespace MythHunter.Resources.Core
 
         [Inject]
         public ResourceManager(
-            DefaultResourceProvider defaultProvider,
+            IResourceProvider defaultProvider,
             IPoolManager poolManager,
             IMythLogger logger)
         {

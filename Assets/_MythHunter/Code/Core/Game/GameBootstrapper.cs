@@ -111,7 +111,8 @@ namespace MythHunter.Core.Game
 
             // ТІЛЬКИ логер як початкова залежність
             _container.RegisterInstance<IMythLogger>(logger);
-
+            // ✅ реєструємо сам контейнер у DI
+            _container.RegisterInstance<IDIContainer>(_container);
             // Всі інші сервіси реєструються через інсталери
             InstallerRegistry.RegisterInstallers(_container);
         }
@@ -121,7 +122,7 @@ namespace MythHunter.Core.Game
             // Отримуємо вже зареєстровані сервіси
             _eventBus = _container.Resolve<IEventBus>();
             var entityManager = _container.Resolve<IEntityManager>();
-            var systemRegistry = _container.Resolve<SystemRegistry>();
+            var systemRegistry = _container.Resolve<ISystemRegistry>();
 
             _ecsWorld = new EcsWorld(entityManager, systemRegistry);
 

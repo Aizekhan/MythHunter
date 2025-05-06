@@ -10,7 +10,7 @@ namespace MythHunter.Data.Serialization
     /// <summary>
     /// Реєстр серіалізаторів компонентів
     /// </summary>
-    public class ComponentSerializerRegistry
+    public class ComponentSerializerRegistry : IComponentSerializerRegistry
     {
         private readonly Dictionary<Type, object> _serializers = new Dictionary<Type, object>();
         private readonly IMythLogger _logger;
