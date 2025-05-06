@@ -1,4 +1,4 @@
-// IPhaseSystem.cs
+// Файл: Assets/_MythHunter/Code/Systems/Phase/IPhaseSystem.cs (оновлений)
 namespace MythHunter.Systems.Phase
 {
     /// <summary>
@@ -13,5 +13,8 @@ namespace MythHunter.Systems.Phase
             get;
         }
         float GetPhaseTimeRemaining();
+        float GetPhaseDuration(MythHunter.Events.Domain.GamePhase phase);
+        float GetPhaseProgress();
+        void SetPhaseDuration(MythHunter.Events.Domain.GamePhase phase, float duration);
     }
 }
