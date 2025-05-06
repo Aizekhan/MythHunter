@@ -1,4 +1,5 @@
-// Файл: Assets/_MythHunter/Code/Systems/Core/IPhaseFilteredSystem.cs
+// Шлях: Assets/_MythHunter/Code/Systems/Core/IPhaseFilteredSystem.cs
+
 using MythHunter.Core.ECS;
 using MythHunter.Events.Domain;
 

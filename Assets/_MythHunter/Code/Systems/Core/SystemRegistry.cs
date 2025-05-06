@@ -9,6 +9,7 @@ using MythHunter.Core.DI;
 
 namespace MythHunter.Systems.Core
 {
+    
     /// <summary>
     /// Реєстр систем з підтримкою фаз та пріоритетів
     /// </summary>
@@ -54,18 +55,28 @@ namespace MythHunter.Systems.Core
 
         public void RegisterSystemWithPriority(ISystem system, int priority)
         {
+            var systemType = system.GetType();
+            var systemName = systemType.Name;
+
+            // Перевірка на повторну реєстрацію
+            if (_allSystems.Any(r => r.System.GetType() == systemType))
+            {
+                _logger.LogWarning($"System {systemName} is already registered, skipping", "Systems");
+                return;
+            }
+
             _allSystems.Add(new SystemRegistration
             {
                 System = system,
-                Priority = priority
+                Priority = priority,
+                SystemType = systemType.Name
             });
 
             // Сортуємо системи за пріоритетом
             _allSystems.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
-            _logger.LogInfo($"Registered system: {system.GetType().Name} with priority {priority}", "Systems");
+            _logger.LogInfo($"Registered system: {systemName} with priority {priority}", "Systems");
         }
-
         public void InitializeAll()
         {
             foreach (var reg in _allSystems)
@@ -173,6 +184,14 @@ namespace MythHunter.Systems.Core
         public IReadOnlyList<ISystem> GetAllSystems()
         {
             return _allSystems.Select(r => r.System).ToList();
+        }
+
+        /// <summary>
+        /// Записує інформаційне повідомлення в лог
+        /// </summary>
+        public void LogInfo(string message)
+        {
+            _logger?.LogInfo(message, "Systems");
         }
     }
 }
