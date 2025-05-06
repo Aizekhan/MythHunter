@@ -64,7 +64,7 @@ namespace MythHunter.Systems.Phase
         /// <summary>
         /// Реєструє компонент для конкретної фази
         /// </summary>
-        public void RegisterComponentForPhase<T>(GamePhase phase) where T : struct, IComponent
+        public void RegisterComponentForPhase<T>(GamePhase phase) where T : struct, MythHunter.Core.ECS.IComponent
         {
             _phaseComponentTypes[phase].Add(typeof(T));
             _logger.LogDebug($"Registered component {typeof(T).Name} for phase {phase}", "Phase");
@@ -81,7 +81,7 @@ namespace MythHunter.Systems.Phase
         /// <summary>
         /// Перевіряє, чи тип компонента активний у фазі
         /// </summary>
-        public bool IsComponentActiveInPhase<T>(GamePhase phase) where T : struct, IComponent
+        public bool IsComponentActiveInPhase<T>(GamePhase phase) where T : struct, MythHunter.Core.ECS.IComponent
         {
             return _phaseComponentTypes[phase].Contains(typeof(T));
         }
@@ -89,7 +89,7 @@ namespace MythHunter.Systems.Phase
         /// <summary>
         /// Перевіряє, чи тип компонента активний у поточній фазі
         /// </summary>
-        public bool IsComponentActiveInCurrentPhase<T>() where T : struct, IComponent
+        public bool IsComponentActiveInCurrentPhase<T>() where T : struct, MythHunter.Core.ECS.IComponent
         {
             return IsComponentActiveInPhase<T>(_phaseSystem.CurrentPhase);
         }

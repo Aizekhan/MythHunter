@@ -196,7 +196,12 @@ namespace MythHunter.Core.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityId)
         {
-            return _components.ContainsKey(entityId);
+            bool result = _components.ContainsKey(entityId);
+            if (result)
+                HitCount++;
+            else
+                MissCount++;
+            return result;
         }
 
         /// <summary>
