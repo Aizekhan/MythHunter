@@ -5,6 +5,7 @@ using MythHunter.Debug.Profiling;
 using MythHunter.Debug.UI;
 using MythHunter.Utils.Logging;
 using MythHunter.Debug;
+using MythHunter.Debug.Pool;
 
 public class DebugToolsInstaller : DIInstaller
 {
@@ -17,6 +18,7 @@ public class DebugToolsInstaller : DIInstaller
         BindSingleton<SystemProfiler, SystemProfiler>(container);
         BindSingleton<PerformanceMonitor, PerformanceMonitor>(container);
         BindSingleton<EventDebugTool, EventDebugTool>(container);
+        BindSingleton<PoolDebugTool, PoolDebugTool>(container); // Додаємо новий інструмент
 
         // Фабрика
         BindSingleton<DebugToolFactory, DebugToolFactory>(container);

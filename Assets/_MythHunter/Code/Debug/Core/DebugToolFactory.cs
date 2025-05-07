@@ -5,6 +5,7 @@ using MythHunter.Core.DI;
 using MythHunter.Debug.Events;
 using MythHunter.Debug.Profiling;
 using MythHunter.Debug.UI;
+using MythHunter.Debug.Pool;
 
 namespace MythHunter.Debug.Core
 {
@@ -18,10 +19,11 @@ namespace MythHunter.Debug.Core
 
         [Inject]
         public DebugToolFactory(
-            IMythLogger logger,
-            SystemProfiler systemProfiler,
-            PerformanceMonitor performanceMonitor,
-            EventDebugTool eventDebugTool)
+     IMythLogger logger,
+     SystemProfiler systemProfiler,
+     PerformanceMonitor performanceMonitor,
+     EventDebugTool eventDebugTool,
+     PoolDebugTool poolDebugTool) // Додаємо новий параметр
         {
             _logger = logger;
 
@@ -29,6 +31,7 @@ namespace MythHunter.Debug.Core
             _registeredTools[typeof(SystemProfiler)] = systemProfiler;
             _registeredTools[typeof(PerformanceMonitor)] = performanceMonitor;
             _registeredTools[typeof(EventDebugTool)] = eventDebugTool;
+            _registeredTools[typeof(PoolDebugTool)] = poolDebugTool; // Додаємо новий інструмент
         }
 
         /// <summary>
