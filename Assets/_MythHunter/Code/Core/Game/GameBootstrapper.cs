@@ -8,6 +8,7 @@ using MythHunter.Core.MonoBehaviours;
 using MythHunter.Systems.Core;
 using MythHunter.Debug;
 using MythHunter.Utils;
+using MythHunter.Resources.Pool;
 
 namespace MythHunter.Core.Game
 {
@@ -139,6 +140,10 @@ namespace MythHunter.Core.Game
         {
             if (component != null && _container != null)
                 _container.InjectDependencies(component);
+        }
+        public IPoolManager GetPoolManager()
+        {
+            return _container?.Resolve<IPoolManager>();
         }
     }
 }

@@ -1,34 +1,47 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/OptimizedPoolManager.cs
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Оптимізований менеджер пулів об'єктів
+    /// Оптимізований менеджер пулів об'єктів з розширеними можливостями
     /// </summary>
     public class OptimizedPoolManager : IPoolManager
     {
         private readonly Dictionary<string, IObjectPool> _pools = new Dictionary<string, IObjectPool>();
         private readonly IMythLogger _logger;
-
-        // Кеш типів для швидшого доступу
         private readonly Dictionary<Type, Dictionary<string, IObjectPool>> _typedPools = new Dictionary<Type, Dictionary<string, IObjectPool>>();
-
-        // Статистика використання пулів
         private readonly Dictionary<string, PoolStatistics> _statistics = new Dictionary<string, PoolStatistics>();
+
+        // Відстеження активних об'єктів
+        private readonly Dictionary<int, PooledObjectInfo> _activeObjects = new Dictionary<int, PooledObjectInfo>();
+        private float _autoCleanupInterval = 60f; // Секунд
+        private float _lastCleanupTime;
+
+        /// <summary>
+        /// Інформація про активний об'єкт пулу
+        /// </summary>
+        private struct PooledObjectInfo
+        {
+            public string PoolKey;
+            public UnityEngine.Object Instance;
+            public float ActivationTime;
+        }
 
         [Inject]
         public OptimizedPoolManager(IMythLogger logger)
         {
             _logger = logger;
+            _lastCleanupTime = Time.realtimeSinceStartup;
         }
 
         /// <summary>
-        /// Отримує об'єкт з пула
+        /// Отримує об'єкт з пулу
         /// </summary>
         public T GetFromPool<T>(string key) where T : UnityEngine.Object
         {
@@ -46,7 +59,27 @@ namespace MythHunter.Resources.Pool
 
             var instance = typedPool.Get();
 
-            // Оновлюємо статистику
+            // Перевірка наявності компонента PooledObject для GameObject
+            if (instance is GameObject go)
+            {
+                var pooledObj = go.GetComponent<PooledObject>();
+                if (pooledObj == null)
+                {
+                    pooledObj = go.AddComponent<PooledObject>();
+                }
+                pooledObj.Initialize(key, this);
+            }
+
+            // Відстеження активного об'єкта
+            int instanceId = instance.GetInstanceID();
+            _activeObjects[instanceId] = new PooledObjectInfo
+            {
+                PoolKey = key,
+                Instance = instance,
+                ActivationTime = Time.realtimeSinceStartup
+            };
+
+            // Оновлення статистики
             if (_statistics.TryGetValue(key, out var stats))
             {
                 stats.ActiveCount++;
@@ -70,10 +103,14 @@ namespace MythHunter.Resources.Pool
                 return;
             }
 
+            // Видалення з відстеження активних об'єктів
+            int instanceId = instance.GetInstanceID();
+            _activeObjects.Remove(instanceId);
+
             // Повертаємо у пул через IObjectPool.Return
             pool.ReturnObject(instance);
 
-            // Оновлюємо статистику
+            // Оновлення статистики
             if (_statistics.TryGetValue(key, out var stats))
             {
                 stats.ActiveCount--;
@@ -94,37 +131,32 @@ namespace MythHunter.Resources.Pool
 
             IObjectPool pool;
 
-            // Створюємо відповідний пул залежно від типу
             if (typeof(T) == typeof(GameObject))
             {
                 // Контейнер для об'єктів пулу
                 var poolParent = new GameObject($"Pool_{key}");
                 UnityEngine.Object.DontDestroyOnLoad(poolParent);
 
-                // Явно приводимо до IObjectPool після створення
                 var goPool = new GameObjectPool(prefab as GameObject, initialSize, poolParent.transform, null, null, _logger);
-                pool = goPool; // Явне приведення типу, якщо GameObjectPool реалізує IObjectPool
+                pool = goPool;
             }
             else
             {
-                // Для будь-яких інших типів використовуємо GenericObjectPool, адаптований до IObjectPool
                 var objPool = new GenericObjectPool<T>(
-     () => UnityEngine.Object.Instantiate(prefab),
-     null,
-     null,
-     null,
-     initialSize,
-     100,
-     _logger,
-     key
- );
-                // Тут потрібен адаптер або переконатися, що GenericObjectPool реалізує IObjectPool
-                pool = new ObjectPoolAdapter<T>(objPool); // Створюємо адаптер для GenericObjectPool
+                    () => UnityEngine.Object.Instantiate(prefab),
+                    null,
+                    null,
+                    null,
+                    initialSize,
+                    100,
+                    _logger,
+                    key
+                );
+                pool = new ObjectPoolAdapter<T>(objPool);
             }
 
             // Додаємо пул до словників
             _pools[key] = pool;
-
 
             // Додаємо в кеш за типом
             var type = typeof(T);
@@ -167,6 +199,14 @@ namespace MythHunter.Resources.Pool
                 typeDict.Remove(key);
             }
 
+            // Видаляємо активні об'єкти цього пулу
+            var keysToRemove = _activeObjects.Where(kvp => kvp.Value.PoolKey == key)
+                .Select(kvp => kvp.Key).ToList();
+            foreach (var key2 in keysToRemove)
+            {
+                _activeObjects.Remove(key2);
+            }
+
             // Видаляємо статистику
             _statistics.Remove(key);
 
@@ -186,14 +226,15 @@ namespace MythHunter.Resources.Pool
             _pools.Clear();
             _typedPools.Clear();
             _statistics.Clear();
+            _activeObjects.Clear();
 
             _logger.LogInfo("Cleared all pools", "Pool");
         }
 
         /// <summary>
-        /// Отримує статистику про використання пулів
+        /// Отримує статистику використання пулів
         /// </summary>
-        public Dictionary<string, PoolStatistics> GetPoolStatistics()
+        public Dictionary<string, PoolStatistics> GetAllPoolsStatistics()
         {
             // Оновлюємо актуальні дані для кожного пулу
             foreach (var pair in _pools)
@@ -204,6 +245,7 @@ namespace MythHunter.Resources.Pool
                 if (_statistics.TryGetValue(key, out var stats))
                 {
                     stats.InactiveCount = pool.CountInactive;
+                    stats.ActiveCount = pool.CountActive;
                     stats.TotalSize = pool.CountActive + pool.CountInactive;
                 }
             }
@@ -212,133 +254,70 @@ namespace MythHunter.Resources.Pool
         }
 
         /// <summary>
-        /// Змінює розмір пулу
+        /// Перевіряє наявність потенційних витоків об'єктів
         /// </summary>
-        public void ResizePool(string key, int newSize)
+        public void CheckForLeaks()
         {
-            if (!_pools.TryGetValue(key, out var pool))
-            {
-                _logger.LogWarning($"Pool with key '{key}' does not exist", "Pool");
-                return;
-            }
+            // Перевірка об'єктів, які активні занадто довго
+            float currentTime = Time.realtimeSinceStartup;
+            var suspiciousObjects = _activeObjects
+                .Where(kvp => currentTime - kvp.Value.ActivationTime > 300f) // 5+ хвилин активності
+                .Take(10) // Обмеження логу
+                .ToList();
 
-            // Лише для GameObjectPool поки що підтримується
-            if (pool is GameObjectPool gameObjectPool)
+            if (suspiciousObjects.Count > 0)
             {
-                gameObjectPool.Resize(newSize);
-                _logger.LogInfo($"Resized pool '{key}' to {newSize}", "Pool");
-
-                // Оновлюємо статистику
-                if (_statistics.TryGetValue(key, out var stats))
+                _logger.LogWarning($"Found {suspiciousObjects.Count} objects potentially leaked:", "Pool");
+                foreach (var obj in suspiciousObjects)
                 {
-                    stats.InitialSize = newSize;
+                    var info = obj.Value;
+                    _logger.LogWarning($"- Object ID: {obj.Key}, Pool: {info.PoolKey}, " +
+                        $"Active for: {currentTime - info.ActivationTime:F1} seconds", "Pool");
                 }
             }
-            else
+
+            // Автоматичне очищення, якщо пройшов інтервал
+            if (currentTime - _lastCleanupTime > _autoCleanupInterval)
             {
-                _logger.LogWarning($"Resizing not supported for pool type {pool.GetType().Name}", "Pool");
+                TrimExcessObjects();
+                _lastCleanupTime = currentTime;
             }
         }
 
         /// <summary>
-        /// Прерогрів пулу - створення додаткових об'єктів
+        /// Видаляє зайві неактивні об'єкти з пулів
         /// </summary>
-        public void WarmupPool(string key, int count)
+        public void TrimExcessObjects(int maxInactivePerPool = 20)
         {
-            if (!_pools.TryGetValue(key, out var pool))
+            foreach (var pair in _pools)
             {
-                _logger.LogWarning($"Pool with key '{key}' does not exist", "Pool");
-                return;
-            }
+                string key = pair.Key;
+                var pool = pair.Value;
 
-            // Для GameObject пулів можемо використати їх внутрішній метод
-            if (pool is GameObjectPool gameObjectPool)
-            {
-                gameObjectPool.Prewarm(count);
-                _logger.LogInfo($"Warmed up pool '{key}' with {count} additional objects", "Pool");
-            }
-            else
-            {
-                _logger.LogWarning($"Warmup not directly supported for pool type {pool.GetType().Name}", "Pool");
+                // Для GameObjectPool використовуємо спеціальний метод Trim
+                if (pool is GameObjectPool gameObjectPool && pool.CountInactive > maxInactivePerPool)
+                {
+                    gameObjectPool.Trim(maxInactivePerPool);
+                    _logger.LogInfo($"Trimmed pool '{key}' to {maxInactivePerPool} inactive objects", "Pool");
+                }
             }
         }
-    }
 
-    /// <summary>
-    /// Статистика використання пулу
-    /// </summary>
-    public class PoolStatistics
-    {
-        public string PoolType
+        /// <summary>
+        /// Отримує загальну кількість активних об'єктів у всіх пулах
+        /// </summary>
+        public int GetTotalActiveObjects()
         {
-            get; set;
-        }
-        public DateTime CreationTime
-        {
-            get; set;
-        }
-        public int InitialSize
-        {
-            get; set;
-        }
-        public int ActiveCount
-        {
-            get; set;
-        }
-        public int InactiveCount
-        {
-            get; set;
-        }
-        public int TotalSize
-        {
-            get; set;
-        }
-        public long TotalGetCount
-        {
-            get; set;
-        }
-        public long TotalReturnCount
-        {
-            get; set;
+            return _activeObjects.Count;
         }
 
-        public override string ToString()
+        /// <summary>
+        /// Встановлює інтервал для автоматичного очищення пулів
+        /// </summary>
+        public void SetAutoCleanupInterval(float seconds)
         {
-            return $"Pool: {PoolType}, Active: {ActiveCount}, Inactive: {InactiveCount}, Total: {TotalSize}, Get: {TotalGetCount}, Return: {TotalReturnCount}";
-        }
-    }
-
-    /// <summary>
-    /// Розширений інтерфейс для всіх об'єктних пулів
-    /// </summary>
-  
-
-    /// <summary>
-    /// Розширення GameObject пулу для підтримки додаткових функцій
-    /// </summary>
-    public static class GameObjectPoolExtensions
-    {
-        public static void Resize(this GameObjectPool pool, int newSize)
-        {
-            // Адаптер для виклику внутрішнього методу Trim
-            pool.Trim(newSize);
-        }
-
-        public static void Prewarm(this GameObjectPool pool, int count)
-        {
-            // Симуляція прерогріву через отримання та повернення об'єктів
-            var objects = new List<GameObject>();
-
-            for (int i = 0; i < count; i++)
-            {
-                var obj = pool.Get();
-                objects.Add(obj);
-            }
-
-            foreach (var obj in objects)
-            {
-                pool.Release(obj);
-            }
+            _autoCleanupInterval = Mathf.Max(10f, seconds);
+            _logger.LogInfo($"Auto cleanup interval set to {_autoCleanupInterval} seconds", "Pool");
         }
     }
 }

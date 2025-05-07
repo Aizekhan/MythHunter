@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/PoolSystemInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
 using MythHunter.Utils.Logging;
@@ -19,7 +20,6 @@ namespace MythHunter.Resources
 
             // Реєструємо фабрику для GameObjectPool
             container.RegisterFactory<GameObjectPool>((c) => {
-                // Створюємо порожній пул для подальшого налаштування
                 return new GameObjectPool(
                     UnityEngine.Resources.Load<UnityEngine.GameObject>("DefaultPoolPrefab"),
                     10,
@@ -29,6 +29,10 @@ namespace MythHunter.Resources
                     c.Resolve<IMythLogger>()
                 );
             });
+
+            // Реєструємо інсталятор PoolMonitor
+            var monitorInstaller = new PoolMonitorInstaller();
+            monitorInstaller.InstallBindings(container);
 
             logger.LogInfo("Pool System installed", "Installer");
         }
