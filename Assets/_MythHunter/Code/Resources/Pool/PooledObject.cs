@@ -1,4 +1,4 @@
-// Шлях: Assets/_MythHunter/Code/Resources/Pool/PooledObject.cs
+// Шлях: Assets/_MythHunter/Code/Editor/Tools/PooledObject.cs
 using UnityEngine;
 using MythHunter.Resources.Pool;
 using MythHunter.Core.DI;

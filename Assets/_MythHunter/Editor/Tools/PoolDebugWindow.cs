@@ -130,7 +130,7 @@ namespace MythHunter.Resources.Pool.Editor
             // Отримання посилання на менеджер пулів
             if (_poolManager == null)
             {
-                var gameBootstrapper = FindObjectOfType<MythHunter.Core.Game.GameBootstrapper>();
+                var gameBootstrapper = Object.FindFirstObjectByType<MythHunter.Core.Game.GameBootstrapper>();
                 if (gameBootstrapper != null)
                 {
                     // Якщо ми в редакторі і є доступ до GameBootstrapper
