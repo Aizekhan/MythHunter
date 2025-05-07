@@ -36,7 +36,9 @@ namespace MythHunter.Events
         private bool _isProcessing;
         private readonly object _syncLock = new object();
 
-
+       
+       
+       
         // Клас обгортки для синхронного обробника подій
         private class SyncEventHandler
         {
@@ -102,13 +104,14 @@ namespace MythHunter.Events
         /// Підписується на синхронну обробку події
         /// </summary>
         public void Subscribe<TEvent>(Action<TEvent> handler, EventPriority priority = EventPriority.Normal)
-            where TEvent : struct, IEvent
+     where TEvent : struct, IEvent
         {
             if (handler == null)
             {
                 _logger.LogWarning($"Trying to subscribe null handler for event {typeof(TEvent).Name}", "EventBus");
                 return;
             }
+
             Type eventType = typeof(TEvent);
 
             if (!_syncHandlers.TryGetValue(eventType, out var handlers))
@@ -122,7 +125,35 @@ namespace MythHunter.Events
             // Сортуємо обробники за пріоритетом (високий пріоритет першим)
             _syncHandlers[eventType] = handlers.OrderByDescending(h => h.Priority).ToList();
 
+            // Оновлюємо кешований процесор для цього типу події
+            // Зберігаємо оптимізований делегат, який викликає всі обробники за пріоритетами
+            RegisterProcessor(eventType);
+
             _logger.LogDebug($"Subscribed to event {eventType.Name} with priority {priority}");
+        }
+
+        // Оновити кеш процесорів для типу події
+        private void RegisterProcessor(Type eventType)
+        {
+            // Створюємо динамічний делегат, який викликатиме всі обробники за порядком пріоритету
+            _eventProcessors[eventType] = (evt) =>
+            {
+                if (_syncHandlers.TryGetValue(eventType, out var handlersToCall))
+                {
+                    foreach (var handler in handlersToCall)
+                    {
+                        try
+                        {
+                            // Викликаємо обробник через Delegate.DynamicInvoke для уникнення рефлексії на гарячому шляху
+                            handler.Handler.DynamicInvoke(evt);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error handling event {eventType.Name}: {ex.Message}", "EventBus", ex);
+                        }
+                    }
+                }
+            };
         }
 
         /// <summary>
@@ -461,26 +492,45 @@ namespace MythHunter.Events
             {
                 if (item.IsAsync)
                 {
-                    // Обробка асинхронних подій через кешований делегат
-                    if (_asyncDispatchers.TryGetValue(item.EventType, out var dispatcher))
+                    // Для асинхронних подій
+                    if (_asyncHandlers.TryGetValue(item.EventType, out var asyncHandlers))
                     {
-                        await dispatcher(item.Event);
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"No async dispatcher found for {item.EventType.Name}");
+                        var tasks = new List<UniTask>();
+                        foreach (var handler in asyncHandlers)
+                        {
+                            try
+                            {
+                                // Використовуємо безпечне виконання асинхронних обробників
+                                UniTask task = (UniTask)handler.Handler.DynamicInvoke(item.Event);
+                                tasks.Add(task);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError($"Error in async handler for {item.EventType.Name}: {ex.Message}", "EventBus", ex);
+                            }
+                        }
+
+                        try
+                        {
+                            // Безпечне очікування всіх задач
+                            await UniTask.WhenAll(tasks);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error awaiting handlers for {item.EventType.Name}: {ex.Message}", "EventBus", ex);
+                        }
                     }
                 }
                 else
                 {
-                    // Обробка синхронних подій через зареєстрований процесор
+                    // Для синхронних подій використовуємо кешований процесор
                     if (_eventProcessors.TryGetValue(item.EventType, out var processor))
                     {
                         processor(item.Event);
                     }
                     else
                     {
-                        _logger.LogWarning($"No processor registered for event type: {item.EventType.Name}");
+                        _logger.LogWarning($"No processor registered for event type: {item.EventType.Name}", "EventBus");
                     }
                 }
 
@@ -492,7 +542,26 @@ namespace MythHunter.Events
                 return true; // подію вважаємо "обробленою", щоб не блокувати чергу
             }
         }
-
+        // Запасний метод обробки, якщо немає кешованого делегата
+        private void ProcessEventFallback(IEvent eventData, Type eventType)
+        {
+            // Використовуємо рефлексію лише у крайньому випадку
+            if (_syncHandlers.TryGetValue(eventType, out var handlers))
+            {
+                foreach (var handler in handlers)
+                {
+                    try
+                    {
+                        var method = handler.Handler.GetType().GetMethod("Invoke");
+                        method.Invoke(handler.Handler, new object[] { eventData });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error in fallback event handling: {ex.Message}", "EventBus");
+                    }
+                }
+            }
+        }
         /// <summary>
         /// Повертає чергу для вказаного пріоритету
         /// </summary>
@@ -516,7 +585,16 @@ namespace MythHunter.Events
         {
             _eventProcessors[typeof(T)] = (evt) => processor((T)evt);
         }
-       
+        // Викликати в конструкторі або в окремому методі
+        private void RegisterCommonEventProcessors()
+        {
+            // Реєструємо найчастіші типи подій
+            RegisterEventProcessor<GameStartedEvent>((evt) => ProcessEventImmediately(evt));
+            RegisterEventProcessor<GamePausedEvent>((evt) => ProcessEventImmediately(evt));
+            RegisterEventProcessor<GameEndedEvent>((evt) => ProcessEventImmediately(evt));
+            RegisterEventProcessor<PhaseChangedEvent>((evt) => ProcessEventImmediately(evt));
+            // Додайте інші часто використовувані типи
+        }
         private void RegisterEventProcessors()
         {
             // Використовуємо метод для реєстрації обробників
