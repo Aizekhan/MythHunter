@@ -21,7 +21,7 @@ namespace MythHunter.Events
         private readonly Dictionary<Type, List<AsyncEventHandler>> _asyncHandlers = new Dictionary<Type, List<AsyncEventHandler>>();
         // Додаємо делегат для обробки подій різних типів
         private readonly Dictionary<Type, Action<IEvent>> _eventProcessors = new Dictionary<Type, Action<IEvent>>();
-        private readonly Dictionary<Type, Func<IEvent, UniTask>> _asyncDispatchers = new();
+        private readonly Dictionary<Type, Func<IEvent, UniTask>> _asyncDispatchers = new Dictionary<Type, Func<IEvent, UniTask>>();
 
         private readonly IEventPool _eventPool;
         private readonly IMythLogger _logger;
@@ -36,9 +36,6 @@ namespace MythHunter.Events
         private bool _isProcessing;
         private readonly object _syncLock = new object();
 
-       
-       
-       
         // Клас обгортки для синхронного обробника подій
         private class SyncEventHandler
         {
@@ -81,7 +78,7 @@ namespace MythHunter.Events
         private struct EventQueueItem
         {
             public IEvent Event;
-            public Type EventType;  // Додали це поле
+            public Type EventType;
             public bool IsAsync;
             public EventPriority Priority;
         }
@@ -104,7 +101,7 @@ namespace MythHunter.Events
         /// Підписується на синхронну обробку події
         /// </summary>
         public void Subscribe<TEvent>(Action<TEvent> handler, EventPriority priority = EventPriority.Normal)
-     where TEvent : struct, IEvent
+            where TEvent : struct, IEvent
         {
             if (handler == null)
             {
@@ -126,7 +123,6 @@ namespace MythHunter.Events
             _syncHandlers[eventType] = handlers.OrderByDescending(h => h.Priority).ToList();
 
             // Оновлюємо кешований процесор для цього типу події
-            // Зберігаємо оптимізований делегат, який викликає всі обробники за пріоритетами
             RegisterProcessor(eventType);
 
             _logger.LogDebug($"Subscribed to event {eventType.Name} with priority {priority}");
@@ -180,7 +176,7 @@ namespace MythHunter.Events
         /// </summary>
         public void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
-            // Перевірка на дефолтне значення структури (не є null, оскільки це структура, але може бути default)
+            // Перевірка на дефолтне значення структури
             if (EqualityComparer<TEvent>.Default.Equals(eventData, default))
             {
                 _logger.LogWarning($"Trying to publish default event of type {typeof(TEvent).Name}", "EventBus");
@@ -188,8 +184,7 @@ namespace MythHunter.Events
             }
             Type eventType = typeof(TEvent);
 
-            _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} " +
-                           $"and priority {eventData.GetPriority()}");
+            _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} and priority {eventData.GetPriority()}");
 
             // Для високопріоритетних подій виконуємо обробку відразу
             if (eventData.GetPriority() == EventPriority.Critical)
@@ -224,13 +219,12 @@ namespace MythHunter.Events
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error handling event {eventType.Name}: {ex.Message}",
-                                       "EventBus", ex);
+                        _logger.LogError($"Error handling event {eventType.Name}: {ex.Message}", "EventBus", ex);
                     }
                 }
             }
 
-            // Повертаємо подію в пул
+            // Повертаємо подію в пул (виправлення помилки CS0453)
             _eventPool.Return(eventData);
         }
 
@@ -242,7 +236,7 @@ namespace MythHunter.Events
         /// Підписується на асинхронну обробку події
         /// </summary>
         public void SubscribeAsync<TEvent>(Func<TEvent, UniTask> handler, EventPriority priority = EventPriority.Normal)
-     where TEvent : struct, IEvent
+            where TEvent : struct, IEvent
         {
             var type = typeof(TEvent);
 
@@ -255,7 +249,7 @@ namespace MythHunter.Events
             handlers.Add(new AsyncEventHandler(handler, priority));
             _asyncHandlers[type] = handlers.OrderByDescending(h => h.Priority).ToList();
 
-            // 🧠 Додаємо в кеш універсальну обгортку
+            // Додаємо в кеш універсальну обгортку
             _asyncDispatchers[type] = async (evt) => await handler((TEvent)evt);
 
             _logger.LogDebug($"Subscribed async to event {type.Name} with priority {priority}");
@@ -293,26 +287,25 @@ namespace MythHunter.Events
             }
             Type eventType = typeof(TEvent);
 
-            _logger.LogDebug($"Publishing async event {eventType.Name} with ID {eventData.GetEventId()} " +
-                           $"and priority {eventData.GetPriority()}");
+            _logger.LogDebug($"Publishing async event {eventType.Name} with ID {eventData.GetEventId()} and priority {eventData.GetPriority()}");
             try
             {
                 // Для критичних подій виконуємо обробку відразу
                 if (eventData.GetPriority() == EventPriority.Critical)
-                 {
-                await ProcessEventImmediatelyAsync(eventData);
-                 }
-            else
-                 {
-                // Додаємо до черги асинхронних подій
-                EnqueueAsync(eventData);
-                 }
+                {
+                    await ProcessEventImmediatelyAsync(eventData);
+                }
+                else
+                {
+                    // Додаємо до черги асинхронних подій
+                    EnqueueAsync(eventData);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error publishing async event {eventType.Name}: {ex.Message}", "EventBus", ex);
             }
-         }
+        }
 
         /// <summary>
         /// Негайно обробляє асинхронну подію, минаючи чергу
@@ -358,7 +351,7 @@ namespace MythHunter.Events
                 try
                 {
                     // Використання WithCancellation для можливості скасування за потреби
-                    await UniTask.WhenAll(tasks).AttachExceptionHandler(ex =>
+                    await UniTask.WhenAll(tasks).WithExceptionHandler(ex =>
                     {
                         exceptions.Add(ex);
                         _logger.LogError($"Error in async event handler: {ex.Message}", "EventBus", ex);
@@ -396,7 +389,7 @@ namespace MythHunter.Events
                 GetQueueForPriority(priority).Enqueue(new EventQueueItem
                 {
                     Event = eventData,
-                    EventType = typeof(TEvent),  // Додали типізацію
+                    EventType = typeof(TEvent),
                     IsAsync = false,
                     Priority = priority
                 });
@@ -417,7 +410,7 @@ namespace MythHunter.Events
                 GetQueueForPriority(priority).Enqueue(new EventQueueItem
                 {
                     Event = eventData,
-                    EventType = typeof(TEvent),  // Додали типізацію
+                    EventType = typeof(TEvent),
                     IsAsync = true,
                     Priority = priority
                 });
@@ -475,7 +468,6 @@ namespace MythHunter.Events
         /// <summary>
         /// Обробляє одну подію з черги
         /// </summary>
-        // Модифікація методу ProcessQueueAsync - видаляємо рефлексію
         private async UniTask<bool> ProcessQueueAsync(Queue<EventQueueItem> queue)
         {
             EventQueueItem item;
@@ -534,6 +526,19 @@ namespace MythHunter.Events
                     }
                 }
 
+                // Повертаємо подію в пул (виправлення помилки CS0453)
+                if (item.Event != null)
+                {
+                    try
+                    {
+                        _eventPool.Return(item.Event);
+                    }
+                    catch (Exception)
+                    {
+                        // Ігноруємо помилки при поверненні події в пул
+                    }
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -542,6 +547,7 @@ namespace MythHunter.Events
                 return true; // подію вважаємо "обробленою", щоб не блокувати чергу
             }
         }
+
         // Запасний метод обробки, якщо немає кешованого делегата
         private void ProcessEventFallback(IEvent eventData, Type eventType)
         {
@@ -562,6 +568,7 @@ namespace MythHunter.Events
                 }
             }
         }
+
         /// <summary>
         /// Повертає чергу для вказаного пріоритету
         /// </summary>
@@ -585,6 +592,7 @@ namespace MythHunter.Events
         {
             _eventProcessors[typeof(T)] = (evt) => processor((T)evt);
         }
+
         // Викликати в конструкторі або в окремому методі
         private void RegisterCommonEventProcessors()
         {
@@ -595,9 +603,10 @@ namespace MythHunter.Events
             RegisterEventProcessor<PhaseChangedEvent>((evt) => ProcessEventImmediately(evt));
             // Додайте інші часто використовувані типи
         }
+
         private void RegisterEventProcessors()
         {
-            // Використовуємо метод для реєстрації обробників
+            // Виправляємо помилку CS1593, використовуючи правильну сигнатуру для Action
             RegisterEventProcessor<GameStartedEvent>((evt) => ProcessEventImmediately(evt));
             RegisterEventProcessor<GamePausedEvent>((evt) => ProcessEventImmediately(evt));
             RegisterEventProcessor<GameEndedEvent>((evt) => ProcessEventImmediately(evt));

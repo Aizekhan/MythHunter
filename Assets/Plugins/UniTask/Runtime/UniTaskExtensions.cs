@@ -236,45 +236,8 @@ namespace Cysharp.Threading.Tasks
 
             return new UniTask<T>(new AttachExternalCancellationSource<T>(task, cancellationToken), 0);
         }
-        public static UniTask AttachExceptionHandler(this UniTask task, Action<Exception> exceptionHandler)
-        {
-            return task.ContinueWith(result =>
-            {
-                if (result.Exception != null)
-                    exceptionHandler(result.Exception);
-                return UniTask.CompletedTask;
-            });
-        }
-        /// <summary>
-        /// Безпечне виконання асинхронної задачі з обробкою винятків
-        /// </summary>
-        public static async UniTask SafeFireAndForget(this UniTask task, Action<Exception> errorHandler = null)
-        {
-            try
-            {
-                await task;
-            }
-            catch (Exception ex)
-            {
-                errorHandler?.Invoke(ex);
-            }
-        }
-
-        /// <summary>
-        /// Безпечне виконання асинхронної задачі з результатом та обробкою винятків
-        /// </summary>
-        public static async UniTask<T> SafeFireAndForget<T>(this UniTask<T> task, Action<Exception> errorHandler = null)
-        {
-            try
-            {
-                return await task;
-            }
-            catch (Exception ex)
-            {
-                errorHandler?.Invoke(ex);
-                return default;
-            }
-        }
+        
+      
         sealed class AttachExternalCancellationSource : IUniTaskSource
         {
             static readonly Action<object> cancellationCallbackDelegate = CancellationCallback;
