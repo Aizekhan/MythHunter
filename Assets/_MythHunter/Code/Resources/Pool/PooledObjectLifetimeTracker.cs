@@ -53,14 +53,14 @@ namespace MythHunter.Resources.Pool
             }
             public string LastSceneName { get; set; } = string.Empty;
 
-            public void AddSession()
+            public void AddSession(int maxHistorySize)
             {
                 var session = new LifetimeSession
                 {
                     StartTime = DateTime.Now
                 };
 
-                if (Sessions.Count >= _maxHistorySize)
+                if (Sessions.Count >= maxHistorySize)
                 {
                     Sessions.RemoveAt(0);
                 }
@@ -118,7 +118,7 @@ namespace MythHunter.Resources.Pool
         {
             if (instance == null)
                 return;
-
+            GameObject go = instance as GameObject;
             int instanceId = instance.GetInstanceID();
 
             if (!_lifetimeInfo.TryGetValue(instanceId, out var info))
@@ -134,7 +134,7 @@ namespace MythHunter.Resources.Pool
                 _lifetimeInfo[instanceId] = info;
 
                 // Додаткова інформація для GameObject
-                if (instance is GameObject go)
+                if (go != null)
                 {
                     info.LastComponentPath = GetGameObjectPath(go);
                     info.LastPosition = go.transform.position;
@@ -143,10 +143,10 @@ namespace MythHunter.Resources.Pool
             }
 
             // Додати нову сесію
-            info.AddSession();
+            info.AddSession(_maxHistorySize);
 
             // Оновлення інформації про GameObject
-            if (instance is GameObject go)
+            if (go != null)
             {
                 info.LastComponentPath = GetGameObjectPath(go);
                 info.LastPosition = go.transform.position;
@@ -252,12 +252,13 @@ namespace MythHunter.Resources.Pool
             {
                 if (pair.Value.ObjectType == typeof(GameObject))
                 {
-                    // Перевірка існування GameObject
-                    var go = UnityEngine.Object.FindObjectOfType<GameObject>(pair.Key);
+                     #if UNITY_EDITOR
+                    var go = UnityEditor.EditorUtility.InstanceIDToObject(pair.Key) as GameObject;
                     if (go == null)
                     {
                         idsToRemove.Add(pair.Key);
                     }
+                   #endif
                 }
             }
 

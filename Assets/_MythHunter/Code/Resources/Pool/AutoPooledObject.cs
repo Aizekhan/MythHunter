@@ -91,7 +91,7 @@ namespace MythHunter.Resources.Pool
                 else
                 {
                     // Запасний варіант, якщо логер недоступний
-                    Debug.LogWarning($"Cannot return object to pool: pool key is empty", gameObject);
+                    UnityEngine.Debug.LogWarning($"Cannot return object to pool: pool key is empty", gameObject);
                 }
                 return;
             }

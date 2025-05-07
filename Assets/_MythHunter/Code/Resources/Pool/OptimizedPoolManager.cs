@@ -282,7 +282,7 @@ namespace MythHunter.Resources.Pool
                 {
                     stats.InactiveCount = pool.CountInactive;
                     stats.ActiveCount = pool.CountActive;
-                    stats.TotalSize = pool.CountActive + pool.CountInactive;
+                   
                 }
             }
 
