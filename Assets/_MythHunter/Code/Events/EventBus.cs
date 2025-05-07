@@ -225,7 +225,10 @@ namespace MythHunter.Events
             }
 
             // Повертаємо подію в пул (виправлення помилки CS0453)
-            _eventPool.Return(eventData);
+            if (!EqualityComparer<TEvent>.Default.Equals(eventData, default))
+            {
+                _eventPool.Return(eventData);
+            }
         }
 
         #endregion
@@ -370,7 +373,10 @@ namespace MythHunter.Events
             }
 
             // Повертаємо подію в пул
-            _eventPool.Return(eventData);
+            if (!EqualityComparer<TEvent>.Default.Equals(eventData, default))
+            {
+                _eventPool.Return(eventData);
+            }
         }
 
         #endregion
@@ -531,7 +537,7 @@ namespace MythHunter.Events
                 {
                     try
                     {
-                        _eventPool.Return(item.Event);
+                        ReturnToPool(item.Event, item.EventType);
                     }
                     catch (Exception)
                     {
@@ -547,7 +553,15 @@ namespace MythHunter.Events
                 return true; // подію вважаємо "обробленою", щоб не блокувати чергу
             }
         }
-
+        /// <summary>
+        /// Безпечно повертає подію в пул з врахуванням типу
+        /// </summary>
+        private void ReturnToPool(IEvent eventData, Type eventType)
+        {
+            // Використовуємо рефлексію для виклику методу з правильним типом
+            var method = typeof(IEventPool).GetMethod("Return").MakeGenericMethod(eventType);
+            method.Invoke(_eventPool, new object[] { eventData });
+        }
         // Запасний метод обробки, якщо немає кешованого делегата
         private void ProcessEventFallback(IEvent eventData, Type eventType)
         {
