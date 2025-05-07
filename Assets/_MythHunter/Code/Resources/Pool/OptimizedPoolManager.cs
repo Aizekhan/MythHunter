@@ -9,7 +9,7 @@ using UnityEngine;
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Оптимізований менеджер пулів об'єктів з розширеними можливостями
+    /// Оптимізований менеджер пулів об'єктів з розширеними можливостями відстеження
     /// </summary>
     public class OptimizedPoolManager : IPoolManager
     {
@@ -22,6 +22,10 @@ namespace MythHunter.Resources.Pool
         private readonly Dictionary<int, PooledObjectInfo> _activeObjects = new Dictionary<int, PooledObjectInfo>();
         private float _autoCleanupInterval = 60f; // Секунд
         private float _lastCleanupTime;
+
+        // Нові поля для інтеграції з PooledObjectLifetimeTracker
+        private PooledObjectLifetimeTracker _lifetimeTracker;
+        private PoolMonitor _poolMonitor;
 
         /// <summary>
         /// Інформація про активний об'єкт пулу
@@ -38,6 +42,18 @@ namespace MythHunter.Resources.Pool
         {
             _logger = logger;
             _lastCleanupTime = Time.realtimeSinceStartup;
+
+            // Ініціалізація системи відстеження життєвого циклу
+            _lifetimeTracker = new PooledObjectLifetimeTracker(logger);
+        }
+
+        /// <summary>
+        /// Встановлює посилання на PoolMonitor
+        /// </summary>
+        public void SetPoolMonitor(PoolMonitor poolMonitor)
+        {
+            _poolMonitor = poolMonitor;
+            _logger.LogInfo("Pool monitor reference set", "Pool");
         }
 
         /// <summary>
@@ -86,6 +102,15 @@ namespace MythHunter.Resources.Pool
                 stats.TotalGetCount++;
             }
 
+            // Відстеження життєвого циклу об'єкта
+            _lifetimeTracker?.TrackActivation(key, instance);
+
+            // Інтеграція з PoolMonitor для сценозалежних пулів
+            if (_poolMonitor != null && instance is GameObject gameObj)
+            {
+                _poolMonitor.RegisterSceneDependentPool(key, gameObj.scene.name);
+            }
+
             return instance;
         }
 
@@ -102,6 +127,9 @@ namespace MythHunter.Resources.Pool
                 _logger.LogWarning($"Pool with key '{key}' does not exist", "Pool");
                 return;
             }
+
+            // Відстеження деактивації об'єкта
+            _lifetimeTracker?.TrackDeactivation(key, instance);
 
             // Видалення з відстеження активних об'єктів
             int instanceId = instance.GetInstanceID();
@@ -176,6 +204,14 @@ namespace MythHunter.Resources.Pool
                 InitialSize = initialSize,
             };
 
+            // Інформуємо PoolMonitor про створення пулу
+            if (_poolMonitor != null && typeof(T) == typeof(GameObject))
+            {
+                // Визначаємо поточну сцену
+                string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                _poolMonitor.RegisterSceneDependentPool(key, currentScene);
+            }
+
             _logger.LogInfo($"Created pool '{key}' for type {typeof(T).Name} with initial size {initialSize}", "Pool");
         }
 
@@ -202,9 +238,9 @@ namespace MythHunter.Resources.Pool
             // Видаляємо активні об'єкти цього пулу
             var keysToRemove = _activeObjects.Where(kvp => kvp.Value.PoolKey == key)
                 .Select(kvp => kvp.Key).ToList();
-            foreach (var key2 in keysToRemove)
+            foreach (var k in keysToRemove)
             {
-                _activeObjects.Remove(key2);
+                _activeObjects.Remove(k);
             }
 
             // Видаляємо статистику
@@ -276,6 +312,17 @@ namespace MythHunter.Resources.Pool
                 }
             }
 
+            // Перевірка витоків через систему відстеження життєвого циклу
+            if (_lifetimeTracker != null)
+            {
+                var potentialLeaks = _lifetimeTracker.DetectPotentialLeaks();
+                if (potentialLeaks.Count > 0)
+                {
+                    _logger.LogWarning($"Detected {potentialLeaks.Count} potential leaks via lifetime tracking", "Pool");
+                    // Деталі в зовнішній системі
+                }
+            }
+
             // Автоматичне очищення, якщо пройшов інтервал
             if (currentTime - _lastCleanupTime > _autoCleanupInterval)
             {
@@ -318,6 +365,75 @@ namespace MythHunter.Resources.Pool
         {
             _autoCleanupInterval = Mathf.Max(10f, seconds);
             _logger.LogInfo($"Auto cleanup interval set to {_autoCleanupInterval} seconds", "Pool");
+        }
+
+        /// <summary>
+        /// Отримує систему відстеження життєвого циклу об'єктів
+        /// </summary>
+        public PooledObjectLifetimeTracker GetLifetimeTracker()
+        {
+            return _lifetimeTracker;
+        }
+
+        /// <summary>
+        /// Отримує статистику про час життя об'єктів
+        /// </summary>
+        public Dictionary<string, List<PooledObjectLifetimeTracker.ObjectLifetimeInfo>> GetLifetimeStatistics()
+        {
+            return _lifetimeTracker?.GetLifetimeStatistics() ?? new Dictionary<string, List<PooledObjectLifetimeTracker.ObjectLifetimeInfo>>();
+        }
+
+        /// <summary>
+        /// Реєструє зв'язок пулу із сценою
+        /// </summary>
+        public void RegisterSceneAssociation(string poolKey, string sceneName)
+        {
+            if (_poolMonitor != null)
+            {
+                _poolMonitor.RegisterSceneDependentPool(poolKey, sceneName);
+                _logger.LogInfo($"Associated pool '{poolKey}' with scene '{sceneName}'", "Pool");
+            }
+        }
+
+        public void UpdateSceneAssociations()
+        {
+            if (_poolMonitor == null)
+                return;
+
+            // Отримуємо поточні сцени
+            var sceneNames = new List<string>();
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                sceneNames.Add(UnityEngine.SceneManagement.SceneManager.GetSceneAt(i).name);
+            }
+
+            // Оновлюємо статистику
+            foreach (var pair in _statistics)
+            {
+                string poolKey = pair.Key;
+                var stats = pair.Value;
+
+                // Оновлюємо інформацію про сцену на основі активних GameObject
+                foreach (var obj in _activeObjects.Values)
+                {
+                    if (obj.PoolKey == poolKey && obj.Instance is GameObject go)
+                    {
+                        stats.SceneName = go.scene.name;
+                        break;
+                    }
+                }
+
+                // Якщо пул асоційований з поточною сценою, реєструємо його
+                if (!string.IsNullOrEmpty(stats.SceneName) && sceneNames.Contains(stats.SceneName))
+                {
+                    _poolMonitor?.RegisterSceneDependentPool(poolKey, stats.SceneName);
+                }
+            }
+        }
+
+        public PoolMonitor GetPoolMonitor()
+        {
+            return _poolMonitor;
         }
     }
 }

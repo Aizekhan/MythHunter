@@ -4,11 +4,12 @@ using System;
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Статистика використання пулу об'єктів
+    /// Статистика пулу об'єктів
     /// </summary>
     public class PoolStatistics
     {
         // Базова інформація
+        public string PoolKey { get; set; } = string.Empty;
         public string PoolType { get; set; } = string.Empty;
         public DateTime CreationTime { get; set; } = DateTime.Now;
         public int InitialSize { get; set; } = 0;
@@ -16,20 +17,23 @@ namespace MythHunter.Resources.Pool
         // Поточний стан
         public int ActiveCount { get; set; } = 0;
         public int InactiveCount { get; set; } = 0;
-        public int TotalSize { get; set; } = 0;
+        public int TotalSize => ActiveCount + InactiveCount;
 
-        // Метрики використання
+        // Статистика використання
         public long TotalGetCount { get; set; } = 0;
         public long TotalReturnCount { get; set; } = 0;
+        public long DiscardedCount { get; set; } = 0;
 
-        // Додаткова інформація для діагностики
-        public float GetPerSecond { get; set; } = 0;
-        public float ReturnPerSecond { get; set; } = 0;
+        // Додаткова інформація
+        public string SceneName { get; set; } = string.Empty;
+        public float AverageActiveTime { get; set; } = 0;
+        public float PeakActiveTime { get; set; } = 0;
 
         public override string ToString()
         {
-            return $"Pool: {PoolType}, Active: {ActiveCount}, Inactive: {InactiveCount}, " +
-                   $"Total: {TotalSize}, Gets: {TotalGetCount}, Returns: {TotalReturnCount}";
+            return $"Pool: {PoolKey} ({PoolType}), Active: {ActiveCount}, Inactive: {InactiveCount}, " +
+                   $"Total: {TotalSize}, Get: {TotalGetCount}, Return: {TotalReturnCount}, " +
+                   (string.IsNullOrEmpty(SceneName) ? "" : $"Scene: {SceneName}");
         }
     }
 }
