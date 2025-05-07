@@ -2,9 +2,7 @@
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
 using MythHunter.Utils.Logging;
-using MythHunter.Resources.Core;
 using UnityEngine;
-using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.Installers
 {
@@ -18,8 +16,8 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Installing Pool System...", "Installer");
 
-            // Основна функціональність пулінгу
-            InstallCorePoolSystem(container).Forget();
+            // Реєструємо основні компоненти системи пулінгу
+            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
 
             // Моніторинг та діагностика
             InstallPoolMonitoring(container);
@@ -28,34 +26,6 @@ namespace MythHunter.Core.Installers
             IntegratePoolSubsystems(container);
 
             logger.LogInfo("Pool System installation completed", "Installer");
-        }
-
-        private async UniTaskVoid InstallCorePoolSystem(IDIContainer container)
-        {
-            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
-
-            var resourceProvider = container.Resolve<IResourceProvider>();
-            var logger = container.Resolve<IMythLogger>();
-
-            GameObject defaultPrefab = await resourceProvider.LoadAsync<GameObject>("DefaultPoolPrefab");
-
-            if (defaultPrefab == null)
-            {
-                logger.LogWarning("DefaultPoolPrefab not found. Using fallback empty prefab.", "Installer");
-
-                defaultPrefab = new GameObject("DefaultPoolPrefab");
-                defaultPrefab.SetActive(false);
-                Object.DontDestroyOnLoad(defaultPrefab);
-            }
-
-            container.RegisterFactory<GameObjectPool>((c) => new GameObjectPool(
-                defaultPrefab,
-                10,
-                null,
-                null,
-                null,
-                c.Resolve<IMythLogger>()
-            ));
         }
 
         private void InstallPoolMonitoring(IDIContainer container)

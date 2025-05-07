@@ -151,6 +151,12 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public void CreatePool<T>(string key, T prefab, int initialSize) where T : UnityEngine.Object
         {
+            if (prefab == null)
+            {
+                _logger.LogError($"Cannot create pool '{key}': prefab is null", "Pool");
+                return;
+            }
+
             if (_pools.ContainsKey(key))
             {
                 _logger.LogWarning($"Pool with key '{key}' already exists", "Pool");

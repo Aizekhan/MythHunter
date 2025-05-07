@@ -6,6 +6,7 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.Systems.Groups;
 
 namespace MythHunter.Systems.Core
 {
@@ -62,24 +63,46 @@ namespace MythHunter.Systems.Core
             var systemType = system.GetType();
             var systemName = systemType.Name;
 
-            // Перевірка на повторну реєстрацію
-            if (_allSystems.Any(r => r.System.GetType() == systemType))
+            // Перевірка на повторну реєстрацію за типом
+            if (_allSystems.Any(r => r.System.GetType() == systemType && !(system is SystemGroup)))
             {
                 _logger.LogWarning($"System {systemName} is already registered, skipping", "Systems");
                 return;
             }
 
-            _allSystems.Add(new SystemRegistration
+            // Додаткова перевірка на групи систем за їх назвою
+            if (system is SystemGroup systemGroup)
             {
-                System = system,
-                Priority = priority,
-                SystemType = systemType.Name
-            });
+                if (_allSystems.Any(r => r.System is SystemGroup existingGroup &&
+                                       existingGroup.GroupName == systemGroup.GroupName))
+                {
+                    _logger.LogWarning($"System group '{systemGroup.GroupName}' is already registered, skipping", "Systems");
+                    return;
+                }
+
+                // Додаємо систему до реєстру
+                _allSystems.Add(new SystemRegistration
+                {
+                    System = system,
+                    Priority = priority,
+                    SystemType = systemGroup.GroupName
+                });
+            }
+            else
+            {
+                // Додаємо систему до реєстру
+                _allSystems.Add(new SystemRegistration
+                {
+                    System = system,
+                    Priority = priority,
+                    SystemType = systemName
+                });
+            }
 
             // Сортуємо системи за пріоритетом
             _allSystems.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
-            _logger.LogInfo($"Registered system: {systemName} with priority {priority}", "Systems");
+            _logger.LogInfo($"Registered system: {(system is SystemGroup sg ? sg.GroupName : systemName)} with priority {priority}", "Systems");
         }
         public void InitializeAll()
         {
@@ -197,5 +220,6 @@ namespace MythHunter.Systems.Core
         {
             _logger?.LogInfo(message, "Systems");
         }
+      
     }
 }

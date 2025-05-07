@@ -23,8 +23,14 @@ namespace MythHunter.Systems.Groups
         // Додаємо поле для активних фаз
         private HashSet<GamePhase> _activePhases = new HashSet<GamePhase>();
 
-        public SystemGroup(IMythLogger logger)
+        public string GroupName
         {
+            get; private set;
+        }
+
+        public SystemGroup(string groupName, IMythLogger logger)
+        {
+            GroupName = groupName;
             _logger = logger;
         }
 
