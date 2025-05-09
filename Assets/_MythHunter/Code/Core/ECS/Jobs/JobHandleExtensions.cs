@@ -13,9 +13,13 @@ namespace MythHunter.Core.ECS.Jobs
         /// <summary>
         /// Перевіряє валідність дескриптора задачі
         /// </summary>
+        /// <summary>
+        /// Перевіряє валідність дескриптора задачі
+        /// </summary>
         public static bool IsValid(this JobHandle handle)
         {
-            return handle.jobGroup != null;
+            // Порівнюємо з default замість доступу до приватного поля
+            return handle != default;
         }
 
         /// <summary>

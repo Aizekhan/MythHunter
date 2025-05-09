@@ -145,5 +145,9 @@ namespace MythHunter.Core.Game
         {
             return _container?.Resolve<IPoolManager>();
         }
+        public IDIContainer GetContainer()
+        {
+            return _container;
+        }
     }
 }

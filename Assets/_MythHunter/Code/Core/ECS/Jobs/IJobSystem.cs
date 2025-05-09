@@ -8,6 +8,9 @@ namespace MythHunter.Core.ECS.Jobs
     /// <summary>
     /// Інтерфейс для систем, що підтримують паралельне виконання через Job System
     /// </summary>
+    /// <summary>
+    /// Інтерфейс для систем, що підтримують паралельне виконання через Job System
+    /// </summary>
     public interface IJobSystem : ISystem
     {
         /// <summary>
@@ -21,6 +24,16 @@ namespace MythHunter.Core.ECS.Jobs
         /// Обробляє результати виконання задач, викликається після їх завершення
         /// </summary>
         void ProcessJobResults();
+
+        /// <summary>
+        /// Синхронно завершує виконання задач і обробляє результати
+        /// </summary>
+        void CompleteJobs();
+
+        /// <summary>
+        /// Асинхронно завершує виконання задач і обробляє результати
+        /// </summary>
+        UniTask CompleteJobsAsync();
     }
 
     /// <summary>

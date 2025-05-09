@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Cysharp.Threading.Tasks;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
+using Unity.Collections;
 
 namespace MythHunter.Core.ECS.Jobs
 {
@@ -110,10 +111,15 @@ namespace MythHunter.Core.ECS.Jobs
             try
             {
                 // Створюємо комбіновану задачу для очікування всіх задач
-                JobHandle combinedHandle = JobHandle.CombineDependencies(_activeJobs.ToArray());
+                using (var nativeArray = new NativeArray<JobHandle>(_activeJobs.ToArray(), Allocator.Temp))
+                {
+                    JobHandle combinedHandle = JobHandle.CombineDependencies(nativeArray);
+                    await _scheduler.CompleteAsync(combinedHandle);
+                    // Асинхронно очікуємо завершення
+                    await _scheduler.CompleteAsync(combinedHandle);
 
-                // Асинхронно очікуємо завершення
-                await _scheduler.CompleteAsync(combinedHandle);
+                }
+
 
                 // Обробляємо результати
                 ProcessJobResults();

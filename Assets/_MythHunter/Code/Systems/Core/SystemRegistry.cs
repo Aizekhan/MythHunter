@@ -18,11 +18,14 @@ namespace MythHunter.Systems.Core
     {
         private readonly List<SystemRegistration> _allSystems = new List<SystemRegistration>();
         private readonly IMythLogger _logger;
+        protected IMythLogger Logger => _logger;
         private readonly IEventBus _eventBus;
 
         private GamePhase _currentPhase = GamePhase.None;
         private bool _isSubscribed = false;
-
+        // Додайте в базовий клас SystemRegistry
+        protected GamePhase CurrentPhase { get; private set; } = GamePhase.None;
+      
         /// <summary>
         /// Клас для реєстрації системи з додатковими даними
         /// </summary>
@@ -53,7 +56,7 @@ namespace MythHunter.Systems.Core
             SubscribeToEvents();
         }
 
-        public void RegisterSystem(ISystem system)
+        public virtual void RegisterSystem(ISystem system)
         {
             RegisterSystemWithPriority(system, 0);
         }
@@ -112,7 +115,7 @@ namespace MythHunter.Systems.Core
             }
         }
 
-        public void UpdateAll(float deltaTime)
+        public virtual void UpdateAll(float deltaTime)
         {
             foreach (var reg in _allSystems.Where(r => r.IsActive))
             {
@@ -186,10 +189,11 @@ namespace MythHunter.Systems.Core
             }
         }
 
+        // І змінити метод обробки події фази
         private void OnPhaseChanged(PhaseChangedEvent evt)
         {
-            _currentPhase = evt.CurrentPhase;
-            _logger.LogDebug($"System Registry phase changed to {_currentPhase}", "Systems");
+            CurrentPhase = evt.CurrentPhase;
+            _logger.LogDebug($"System Registry phase changed to {CurrentPhase}", "Systems");
         }
 
         /// <summary>
@@ -220,6 +224,44 @@ namespace MythHunter.Systems.Core
         {
             _logger?.LogInfo(message, "Systems");
         }
-      
+        /// <summary>
+        /// Перевіряє, чи система активна в поточній фазі
+        /// </summary>
+        private bool IsSystemActiveInCurrentPhase(ISystem system)
+        {
+            if (system is IPhaseFilteredSystem phaseSystem)
+            {
+                var currentPhase = GetCurrentPhase();
+                return phaseSystem.IsActiveInPhase(currentPhase);
+            }
+
+            return true;
+        }
+        /// <summary>
+        /// Отримує поточну фазу з батьківського класу
+        /// </summary>
+        private MythHunter.Events.Domain.GamePhase GetCurrentPhase()
+        {
+            // Отримуємо поточну фазу через публічний інтерфейс або додаткове поле
+            // Це одне з можливих рішень
+            var phaseSystem = FindPhaseSystem();
+            return phaseSystem?.CurrentPhase ?? MythHunter.Events.Domain.GamePhase.None;
+        }
+
+        /// <summary>
+        /// Знаходить систему фаз у списку зареєстрованих систем
+        /// </summary>
+        private MythHunter.Systems.Phase.IPhaseSystem FindPhaseSystem()
+        {
+            var allSystems = GetAllSystems();
+            foreach (var system in allSystems)
+            {
+                if (system is MythHunter.Systems.Phase.IPhaseSystem phaseSystem)
+                {
+                    return phaseSystem;
+                }
+            }
+            return null;
+        }
     }
 }

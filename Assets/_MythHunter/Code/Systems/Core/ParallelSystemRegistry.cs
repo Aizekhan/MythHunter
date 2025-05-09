@@ -222,7 +222,7 @@ namespace MythHunter.Systems.Core
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                            Logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                         }
                     }
                 }
@@ -237,7 +237,7 @@ namespace MythHunter.Systems.Core
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error completing jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                    Logger.LogError($"Error completing jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                 }
             }
         }
@@ -314,7 +314,7 @@ namespace MythHunter.Systems.Core
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                            Logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                         }
                     }
                 }
@@ -332,7 +332,7 @@ namespace MythHunter.Systems.Core
         {
             if (system is IPhaseFilteredSystem phaseSystem)
             {
-                return phaseSystem.IsActiveInPhase(_currentPhase);
+                return phaseSystem.IsActiveInPhase(CurrentPhase);
             }
 
             return true;
@@ -349,7 +349,7 @@ namespace MythHunter.Systems.Core
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error updating system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                Logger.LogError($"Error updating system {system.GetType().Name}: {ex.Message}", "Systems", ex);
             }
         }
     }

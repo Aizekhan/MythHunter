@@ -91,9 +91,12 @@ namespace MythHunter.Core.ECS.Jobs
 
             try
             {
-                JobHandle combinedHandle = JobHandle.CombineDependencies(jobs.ToArray());
-                RegisterActiveJob(combinedHandle);
-                return combinedHandle;
+                using (var nativeArray = new Unity.Collections.NativeArray<JobHandle>(jobs.ToArray(), Unity.Collections.Allocator.Temp))
+                {
+                    JobHandle combinedHandle = JobHandle.CombineDependencies(nativeArray);
+                    RegisterActiveJob(combinedHandle);
+                    return combinedHandle;
+                }
             }
             catch (Exception ex)
             {
@@ -159,7 +162,11 @@ namespace MythHunter.Core.ECS.Jobs
 
             try
             {
-                JobHandle.CompleteAll(_activeJobs.ToArray());
+                using (var nativeArray = new Unity.Collections.NativeArray<JobHandle>(_activeJobs.ToArray(), Unity.Collections.Allocator.Temp))
+                {
+                    JobHandle.CompleteAll(nativeArray);
+                }
+
                 _activeJobs.Clear();
             }
             catch (Exception ex)
