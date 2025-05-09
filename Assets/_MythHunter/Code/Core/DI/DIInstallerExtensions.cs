@@ -31,27 +31,21 @@ namespace MythHunter.Core.DI
         /// </summary>
         public static void BindLazySingleton<TService, TImplementation>(this DIInstaller installer, IDIContainer container)
             where TImplementation : TService
+            where TService : class
         {
             container.RegisterLazySingleton<TService, TImplementation>();
         }
+
+      
 
         /// <summary>
         /// Реєструє лінивий сінглтон з екземпляром у контейнері
         /// </summary>
         public static void BindLazySingleton<TService>(this DIInstaller installer, IDIContainer container, TService instance)
+            where TService : class  // Додати обмеження
         {
             var lazy = new LazyDependency<TService>(() => instance);
             container.RegisterInstance<LazyDependency<TService>>(lazy);
-        }
-
-        /// <summary>
-        /// Реєструє фабрику для типу
-        /// </summary>
-        public static void BindFactory<TService, TImplementation>(this DIInstaller installer, IDIContainer container)
-            where TImplementation : class, TService, new()
-            where TService : class
-        {
-            container.RegisterFactory<TService, TImplementation>();
         }
     }
 }

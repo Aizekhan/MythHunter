@@ -140,7 +140,9 @@ namespace MythHunter.Core.DI
         /// Реєструє лінивий сінглтон, який буде створено при першому зверненні
         /// </summary>
         public void RegisterLazySingleton<TService, TImplementation>()
+
             where TImplementation : TService
+            where TService : class
         {
             var serviceType = typeof(TService);
             var implementationType = typeof(TImplementation);

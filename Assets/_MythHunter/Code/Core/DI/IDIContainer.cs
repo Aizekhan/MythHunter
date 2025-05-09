@@ -19,7 +19,9 @@ namespace MythHunter.Core.DI
         /// <summary>
         /// Реєструє лінивий сінглтон, який буде створено при першому зверненні
         /// </summary>
-        void RegisterLazySingleton<TService, TImplementation>() where TImplementation : TService;
+        void RegisterLazySingleton<TService, TImplementation>()
+            where TImplementation : TService
+            where TService : class;  
 
         /// <summary>
         /// Резолвить лінивий екземпляр залежності

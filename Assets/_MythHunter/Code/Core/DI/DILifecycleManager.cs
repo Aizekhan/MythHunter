@@ -9,7 +9,7 @@ namespace MythHunter.Core.DI
     /// <summary>
     /// Менеджер життєвого циклу системи DI
     /// </summary>
-    public class DILifecycleManager
+    public class DILifecycleManager: IDILifecycleManager
     {
         private readonly IDIContainer _container;
         private readonly IMythLogger _logger;

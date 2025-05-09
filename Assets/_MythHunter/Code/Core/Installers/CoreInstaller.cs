@@ -30,7 +30,7 @@ namespace MythHunter.Core.Installers
             BindSingleton<ISystemRegistry, SystemRegistry>(container);
             BindSingleton<IEcsWorld, EcsWorld>(container);
             // Реєстрація менеджера життєвого циклу DI
-            BindSingleton<DILifecycleManager, DILifecycleManager>(container);
+            BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
 
             // Реєструємо розширення DI
             var diExtensionsInstaller = new DIExtensionsInstaller();
