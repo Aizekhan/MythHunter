@@ -19,17 +19,22 @@ namespace MythHunter.Systems.Phase
         private GamePhase _currentPhase;
         private float _phaseTimer;
         private float _phaseDuration;
+        private readonly IEventThrottler _eventThrottler;
         private readonly Dictionary<GamePhase, float> _phaseDurations = new Dictionary<GamePhase, float>();
 
         public GamePhase CurrentPhase => _currentPhase;
 
         [Inject]
-        public PhaseSystem(IEventBus eventBus, IMythLogger logger)
-            : base(logger, eventBus)
+        public PhaseSystem(IEventBus eventBus, IMythLogger logger, IEventThrottler eventThrottler)
+    : base(logger, eventBus)
         {
             _currentPhase = GamePhase.None;
             _phaseTimer = 0;
             _phaseDuration = 0;
+            _eventThrottler = eventThrottler;
+
+            // Реєструємо обмеження для PhaseUpdateEvent - максимум 4 рази на секунду
+            _eventThrottler.RegisterThrottle<PhaseUpdateEvent>(0.25f);
 
             // Ініціалізація стандартних тривалостей фаз
             InitDefaultPhaseDurations();
@@ -88,8 +93,15 @@ namespace MythHunter.Systems.Phase
             // Оновлення таймера фази
             _phaseTimer += deltaTime;
 
-            // Публікуємо подію оновлення фази для інформування інших систем
-            PublishPhaseUpdateEvent();
+            // Публікуємо подію оновлення фази через обмежувач
+            _eventThrottler.PublishThrottled(new PhaseUpdateEvent
+            {
+                Phase = _currentPhase,
+                ElapsedTime = _phaseTimer,
+                RemainingTime = _phaseDuration - _phaseTimer,
+                TotalDuration = _phaseDuration,
+                Timestamp = DateTime.UtcNow
+            });
 
             // Перевірка завершення фази
             if (_phaseTimer >= _phaseDuration)

@@ -1,4 +1,5 @@
 using MythHunter.Core.DI;
+using MythHunter.Resources;
 using MythHunter.Resources.Core;
 using MythHunter.Resources.Pool;
 using MythHunter.Resources.Providers;
@@ -19,10 +20,12 @@ namespace MythHunter.Core.Installers
 
             // DI автоматично створить з IMythLogger
             BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
-
+            // Asset Bundle Provider
+            BindSingleton<IAssetBundleProvider, AssetBundleProvider>(container);
             // Pool Manager
             BindSingleton<IPoolManager, OptimizedPoolManager>(container);
-
+            // Preload Manager
+            BindSingleton<IPreloadManager, PreloadManager>(container);
             // Addressables — тепер без int в конструкторі
             if (IsAddressablesAvailable())
             {
