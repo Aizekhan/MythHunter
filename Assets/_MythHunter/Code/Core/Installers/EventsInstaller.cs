@@ -3,6 +3,7 @@ using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Events.Debugging;
 using MythHunter.Events.Network;
+using MythHunter.Networking.Core;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
@@ -17,13 +18,35 @@ namespace MythHunter.Core.Installers
         {
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Installing Event System", "Installer");
-            // Нові компоненти для оптимізації та діагностики
+
+            // Спочатку реєструємо допоміжні компоненти
             BindSingleton<IEventThrottler, EventThrottler>(container);
             BindSingleton<IEventBatcher, EventBatcher>(container);
             BindSingleton<IEventStore, EventStore>(container);
-            // Замінити реєстрацію базової шини подій на мережеву
-            BindSingleton<IEventBus, NetworkEventBus>(container);
-            BindSingleton<INetworkEventBus, NetworkEventBus>(container);
+
+            // Перевіряємо наявність мережевої системи
+            bool hasNetworkSystem = container.IsRegistered<INetworkSystem>();
+
+            if (hasNetworkSystem)
+            {
+                // Замінюємо простий EventBus на мережевий
+                logger.LogInfo("Network system detected, using NetworkEventBus", "Installer");
+
+                // Видаляємо стару реєстрацію (необов'язково, так як RegisterSingleton перезаписує)
+                // container.Unregister<IEventBus>();
+
+                // Реєструємо нову шину подій
+                BindSingleton<IEventBus, NetworkEventBus>(container);
+                BindSingleton<INetworkEventBus, NetworkEventBus>(container);
+            }
+            else
+            {
+                // Замінюємо простий EventBus на повний
+                logger.LogInfo("No network system detected, using standard EventBus", "Installer");
+
+                // Реєструємо стандартну шину подій
+                BindSingleton<IEventBus, EventBus>(container);
+            }
 
             Bind<EventLogger, EventLogger>(container);
 

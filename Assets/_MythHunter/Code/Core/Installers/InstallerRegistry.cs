@@ -20,12 +20,13 @@ namespace MythHunter.Core
             var installers = new DIInstaller[]
    {
 new CoreInstaller(),
+new NetworkingInstaller(),
 new EventsInstaller(),
 new ResourceInstaller(),
 new SerializationInstaller(),
 new UIInstaller(),           
 new PoolSystemInstaller(),
-new NetworkingInstaller(),
+
 new EntitiesInstaller(),
 new GameplayInstaller(),
 new DebugToolsInstaller()

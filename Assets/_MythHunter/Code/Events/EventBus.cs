@@ -174,7 +174,7 @@ namespace MythHunter.Events
         /// <summary>
         /// Публікує подію для синхронної обробки
         /// </summary>
-        public void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
+        public virtual void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
             // Перевірка на дефолтне значення структури
             if (EqualityComparer<TEvent>.Default.Equals(eventData, default))

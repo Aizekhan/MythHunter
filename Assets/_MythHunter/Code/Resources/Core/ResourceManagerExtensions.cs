@@ -34,7 +34,7 @@ namespace MythHunter.Resources
             resourceManager.UnloadAll();
 
             // Запускаємо очищення невикористовуваних ассетів
-            var operation = Resources.UnloadUnusedAssets();
+            var operation = UnityEngine.Resources.UnloadUnusedAssets();
             await operation;
 
             // Запускаємо Garbage Collector
@@ -48,7 +48,7 @@ namespace MythHunter.Resources
         public static async UniTask CleanupMemoryAsync(this IResourceManager resourceManager)
         {
             // Запускаємо очищення невикористовуваних ассетів
-            var operation = Resources.UnloadUnusedAssets();
+            var operation = UnityEngine.Resources.UnloadUnusedAssets();
             await operation;
 
             // Запускаємо Garbage Collector

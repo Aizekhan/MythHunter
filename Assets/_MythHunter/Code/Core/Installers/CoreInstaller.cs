@@ -23,8 +23,10 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEntityManager, EntityManager>(container);
 
             BindSingleton<IEventPool, EventPool>(container);
-            BindSingleton<IEventBus, EventBus>(container);
-           
+            // Реєструємо тимчасовий EventBus, який буде перезаписаний
+            // ВАЖЛИВО: Використовуємо просту версію, яка не має залежностей
+            BindSingleton<IEventBus, SimpleEventBus>(container);
+
             BindSingleton<IGameStateMachine, GameStateMachine>(container);
             // Реєстрація SystemRegistry
             BindSingleton<ISystemRegistry, SystemRegistry>(container);

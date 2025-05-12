@@ -112,6 +112,9 @@ namespace MythHunter.Events.Network
         private void SynchronizeEventOverNetwork<TEvent>(TEvent eventData, NetworkEventMetadata metadata)
             where TEvent : struct, IEvent
         {
+            // Отримуємо тип всередині методу
+            Type eventType = typeof(TEvent);
+
             // Перевіряємо авторитетність
             bool canSendOverNetwork = false;
 
