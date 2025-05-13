@@ -5,8 +5,9 @@ using MythHunter.Systems.Phase;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Systems.Core;
-using MythHunter.Events.Domain;
+using MythHunter.Core.ECS;
 using MythHunter.Systems.Extensions;
+using MythHunter.Game.Systems.Phase;
 
 namespace MythHunter.Core.Installers
 {
@@ -23,36 +24,37 @@ namespace MythHunter.Core.Installers
             // Реєстрація фазової системи з високим пріоритетом
             BindSingleton<IPhaseSystem, PhaseSystem>(container);
 
-            // Отримання системного реєстру
+            // Реєстрація провайдера фаз
+            BindSingleton<IPhaseProvider, DefaultPhaseProvider>(container);
+
+            // Отримання системного реєстру і провайдера фаз
             var systemRegistry = container.Resolve<ISystemRegistry>();
+            var phaseProvider = container.Resolve<IPhaseProvider>();
 
             // Реєстрація базових систем
             systemRegistry.RegisterSystemWithPriority(container.Resolve<IPhaseSystem>(), SystemPriorities.Phase);
 
-            // Реєстрація систем специфічних для певних фаз
-            // Реєстрація груп систем за фазами - передаємо логер при створенні
+            // Реєстрація груп систем за фазами
             var movementGroup = systemRegistry.RegisterPhaseSystemGroup(
                 "Movement",
                 SystemPriorities.Movement,
                 logger,
-                GamePhase.Movement);
+                phaseProvider,
+                "Movement");
 
             var combatGroup = systemRegistry.RegisterPhaseSystemGroup(
                 "Combat",
                 SystemPriorities.Combat,
                 logger,
-                GamePhase.Combat);
+                phaseProvider,
+                "Combat");
 
             var planningGroup = systemRegistry.RegisterPhaseSystemGroup(
                 "Planning",
                 SystemPriorities.Planning,
                 logger,
-                GamePhase.Planning);
-
-            // Додавання систем в групи (за наявності)
-            // Наприклад:
-            // if (container.IsRegistered<IMovementSystem>())
-            //     movementGroup.AddSystem(container.Resolve<IMovementSystem>());
+                phaseProvider,
+                "Planning");
 
             logger.LogInfo("Встановлення залежностей GameplaySystem завершено", "Installer");
         }

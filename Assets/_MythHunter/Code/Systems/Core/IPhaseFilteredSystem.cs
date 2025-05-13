@@ -1,23 +1,27 @@
 // Шлях: Assets/_MythHunter/Code/Systems/Core/IPhaseFilteredSystem.cs
 
 using MythHunter.Core.ECS;
-using MythHunter.Events.Domain;
 
 namespace MythHunter.Systems.Core
 {
     /// <summary>
-    /// Інтерфейс для систем, які активні тільки в певних фазах
+    /// Система, яка активна лише в певних фазах
     /// </summary>
     public interface IPhaseFilteredSystem : ISystem
     {
         /// <summary>
-        /// Встановлює активні фази для системи
+        /// Встановлює фази, в яких система активна, використовуючи string ID
         /// </summary>
-        void SetActivePhases(GamePhase[] phases);
+        void SetActivePhaseIds(string[] phaseIds);
 
         /// <summary>
-        /// Перевіряє, чи активна система в поточній фазі
+        /// Встановлює фази, в яких система активна (для сумісності зі старим кодом)
         /// </summary>
-        bool IsActiveInPhase(GamePhase currentPhase);
+        void SetActivePhases(Events.Domain.GamePhase[] phases);
+
+        /// <summary>
+        /// Перевіряє, чи система активна у вказаній фазі (для сумісності зі старим кодом)
+        /// </summary>
+        bool IsActiveInPhase(Events.Domain.GamePhase phase);
     }
 }

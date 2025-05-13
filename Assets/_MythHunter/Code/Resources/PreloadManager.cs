@@ -1,12 +1,14 @@
 // Шлях: Assets/_MythHunter/Code/Resources/PreloadManager.cs
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
+using MythHunter.Core.ECS;
 using MythHunter.Events;
-using MythHunter.Events.Domain;
 using MythHunter.Resources.Core;
+using MythHunter.Systems.Phase;
 using MythHunter.Utils.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,17 +18,16 @@ namespace MythHunter.Resources
     /// <summary>
     /// Менеджер для прееміптивного завантаження ресурсів
     /// </summary>
-    public class PreloadManager : IPreloadManager, IEventSubscriber
+    public class PreloadManager : IPreloadManager, IDisposable
     {
-        private readonly Dictionary<GamePhase, List<PreloadConfig>> _phasePreloadConfigs = new Dictionary<GamePhase, List<PreloadConfig>>();
+        private readonly Dictionary<string, List<PreloadConfig>> _phasePreloadConfigs = new Dictionary<string, List<PreloadConfig>>();
         private readonly Dictionary<string, List<PreloadConfig>> _scenePreloadConfigs = new Dictionary<string, List<PreloadConfig>>();
 
         private readonly IResourceManager _resourceManager;
-        private readonly IEventBus _eventBus;
+        private readonly IPhaseProvider _phaseProvider;
         private readonly IMythLogger _logger;
 
-        private bool _isSubscribed = false;
-        private GamePhase _currentPhase = GamePhase.None;
+        private string _currentPhaseId = string.Empty;
         private string _currentScene = string.Empty;
 
         private struct PreloadConfig
@@ -39,48 +40,21 @@ namespace MythHunter.Resources
         }
 
         [Inject]
-        public PreloadManager(IResourceManager resourceManager, IEventBus eventBus, IMythLogger logger)
+        public PreloadManager(IResourceManager resourceManager, IPhaseProvider phaseProvider, IMythLogger logger)
         {
             _resourceManager = resourceManager;
-            _eventBus = eventBus;
+            _phaseProvider = phaseProvider;
             _logger = logger;
 
-            SubscribeToEvents();
-            InitializeDefaultConfigs();
-        }
-
-        public void SubscribeToEvents()
-        {
-            if (_isSubscribed)
-                return;
-
-            _eventBus.Subscribe<PhaseChangedEvent>(OnPhaseChanged);
+            // Підписка на зміни фаз і сцен
+            _phaseProvider.SubscribeToPhaseChange(OnPhaseChanged);
             SceneManager.sceneLoaded += OnSceneLoaded;
 
-            _isSubscribed = true;
-        }
+            // Зберігаємо поточну фазу
+            _currentPhaseId = _phaseProvider.GetCurrentPhaseId();
 
-        public void UnsubscribeFromEvents()
-        {
-            if (!_isSubscribed)
-                return;
-
-            _eventBus.Unsubscribe<PhaseChangedEvent>(OnPhaseChanged);
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-
-            _isSubscribed = false;
-        }
-
-        private void OnPhaseChanged(PhaseChangedEvent evt)
-        {
-            _currentPhase = evt.CurrentPhase;
-            PreloadForPhaseAsync(evt.CurrentPhase).Forget();
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            _currentScene = scene.name;
-            PreloadForSceneAsync(scene.name).Forget();
+            // Ініціалізуємо конфігурації
+            InitializeDefaultConfigs();
         }
 
         /// <summary>
@@ -90,9 +64,9 @@ namespace MythHunter.Resources
         {
             // Додавання конфігурацій завантаження для різних фаз гри
             // Приклад:
-            RegisterPhasePreload(GamePhase.Rune, "UI/RunePhaseUI", typeof(GameObject), 100, true, 1);
-            RegisterPhasePreload(GamePhase.Combat, "Effects/CombatEffects", typeof(GameObject), 100, true, 5);
-            RegisterPhasePreload(GamePhase.Combat, "Audio/CombatSounds", typeof(AudioClip), 50);
+            RegisterPhasePreload("Rune", "UI/RunePhaseUI", typeof(GameObject), 100, true, 1);
+            RegisterPhasePreload("Combat", "Effects/CombatEffects", typeof(GameObject), 100, true, 5);
+            RegisterPhasePreload("Combat", "Audio/CombatSounds", typeof(AudioClip), 50);
 
             // Додавання конфігурацій завантаження для різних сцен
             RegisterScenePreload("MainMenu", "UI/MainMenuUI", typeof(GameObject), 100);
@@ -102,20 +76,20 @@ namespace MythHunter.Resources
         /// <summary>
         /// Реєструє ресурс для прееміптивного завантаження для вказаної фази
         /// </summary>
-        public void RegisterPhasePreload<T>(GamePhase phase, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object
+        public void RegisterPhasePreload<T>(string phaseId, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object
         {
-            RegisterPhasePreload(phase, resourceKey, typeof(T), priority, createPool, poolSize);
+            RegisterPhasePreload(phaseId, resourceKey, typeof(T), priority, createPool, poolSize);
         }
 
         /// <summary>
         /// Реєструє ресурс для прееміптивного завантаження для вказаної фази
         /// </summary>
-        public void RegisterPhasePreload(GamePhase phase, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10)
+        public void RegisterPhasePreload(string phaseId, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10)
         {
-            if (!_phasePreloadConfigs.TryGetValue(phase, out var configs))
+            if (!_phasePreloadConfigs.TryGetValue(phaseId, out var configs))
             {
                 configs = new List<PreloadConfig>();
-                _phasePreloadConfigs[phase] = configs;
+                _phasePreloadConfigs[phaseId] = configs;
             }
 
             configs.Add(new PreloadConfig
@@ -128,7 +102,7 @@ namespace MythHunter.Resources
             });
 
             // Якщо це поточна фаза, зразу почати завантаження
-            if (phase == _currentPhase)
+            if (phaseId == _currentPhaseId)
             {
                 PreloadResourceAsync(resourceKey, resourceType, createPool, poolSize).Forget();
             }
@@ -170,14 +144,32 @@ namespace MythHunter.Resources
         }
 
         /// <summary>
+        /// Обробник зміни фази
+        /// </summary>
+        private void OnPhaseChanged(string previousPhaseId, string currentPhaseId)
+        {
+            _currentPhaseId = currentPhaseId;
+            PreloadForPhaseAsync(currentPhaseId).Forget();
+        }
+
+        /// <summary>
+        /// Обробник завантаження сцени
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            _currentScene = scene.name;
+            PreloadForSceneAsync(scene.name).Forget();
+        }
+
+        /// <summary>
         /// Асинхронно завантажує ресурси для вказаної фази
         /// </summary>
-        private async UniTask PreloadForPhaseAsync(GamePhase phase)
+        private async UniTask PreloadForPhaseAsync(string phaseId)
         {
-            if (!_phasePreloadConfigs.TryGetValue(phase, out var configs) || configs.Count == 0)
+            if (!_phasePreloadConfigs.TryGetValue(phaseId, out var configs) || configs.Count == 0)
                 return;
 
-            _logger.LogInfo($"Starting preloading for phase: {phase}", "Preload");
+            _logger.LogInfo($"Starting preloading for phase: {phaseId}", "Preload");
 
             // Сортуємо за пріоритетом
             var sortedConfigs = configs.OrderByDescending(c => c.Priority).ToList();
@@ -196,7 +188,7 @@ namespace MythHunter.Resources
 
             await UniTask.WhenAll(lowPriorityTasks);
 
-            _logger.LogInfo($"Completed preloading for phase: {phase}", "Preload");
+            _logger.LogInfo($"Completed preloading for phase: {phaseId}", "Preload");
         }
 
         /// <summary>
@@ -266,6 +258,15 @@ namespace MythHunter.Resources
             {
                 _logger.LogError($"Error preloading resource {resourceKey}: {ex.Message}", "Preload", ex);
             }
+        }
+
+        /// <summary>
+        /// Звільнення ресурсів
+        /// </summary>
+        public void Dispose()
+        {
+            _phaseProvider.UnsubscribeFromPhaseChange(OnPhaseChanged);
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
     }
 }

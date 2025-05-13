@@ -6,11 +6,9 @@ namespace MythHunter.Resources
     /// </summary>
     public interface IPreloadManager
     {
-        void RegisterPhasePreload<T>(Events.Domain.GamePhase phase, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object;
-        void RegisterPhasePreload(Events.Domain.GamePhase phase, string resourceKey, System.Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10);
+        void RegisterPhasePreload<T>(string phaseId, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object;
+        void RegisterPhasePreload(string phaseId, string resourceKey, System.Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10);
         void RegisterScenePreload<T>(string sceneName, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object;
         void RegisterScenePreload(string sceneName, string resourceKey, System.Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10);
-        void SubscribeToEvents();
-        void UnsubscribeFromEvents();
     }
 }

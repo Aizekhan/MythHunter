@@ -2,11 +2,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using MythHunter.Entities;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using MythHunter.Events;
+using MythHunter.Entities;
 using MythHunter.Events.Domain;
 
 namespace MythHunter.Core.ECS
@@ -14,20 +13,20 @@ namespace MythHunter.Core.ECS
     /// <summary>
     /// Оптимізований глобальний реєстр кешів компонентів з підтримкою фаз
     /// </summary>
-    public class ComponentCacheRegistry : IComponentCacheRegistry, IEventSubscriber
+    public class ComponentCacheRegistry : IComponentCacheRegistry, IDisposable
     {
         private readonly Dictionary<Type, object> _caches = new Dictionary<Type, object>();
         private readonly IEntityManager _entityManager;
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
+        private readonly IPhaseProvider _phaseProvider;
 
         // Налаштування автооновлення
         private bool _autoUpdate = true;
-        private bool _isSubscribed = false;
 
         // Налаштування оновлення за фазами
-        private readonly Dictionary<GamePhase, HashSet<Type>> _phaseComponentMapping = new Dictionary<GamePhase, HashSet<Type>>();
-        private GamePhase _currentPhase = GamePhase.None;
+        private readonly Dictionary<string, HashSet<Type>> _phaseComponentMapping = new Dictionary<string, HashSet<Type>>();
+        private string _currentPhase = string.Empty;
 
         // Лічильник кадрів для періодичного оновлення
         private int _frameCounter = 0;
@@ -43,20 +42,22 @@ namespace MythHunter.Core.ECS
         private readonly HashSet<Type> _autoCreateTypes = new HashSet<Type>();
 
         [Inject]
-        public ComponentCacheRegistry(IEntityManager entityManager, IEventBus eventBus, IMythLogger logger)
+        public ComponentCacheRegistry(
+            IEntityManager entityManager,
+            IEventBus eventBus,
+            IMythLogger logger,
+            IPhaseProvider phaseProvider)
         {
             _entityManager = entityManager;
             _eventBus = eventBus;
             _logger = logger;
+            _phaseProvider = phaseProvider;
 
-            // Ініціалізація мапінгу фаз
-            foreach (GamePhase phase in Enum.GetValues(typeof(GamePhase)))
-            {
-                _phaseComponentMapping[phase] = new HashSet<Type>();
-            }
+            // Підписуємося на зміну фази через провайдер
+            _phaseProvider.SubscribeToPhaseChange(OnPhaseChanged);
 
-            // Підписуємося на події
-            SubscribeToEvents();
+            // Підписуємося на події сутностей
+            SubscribeToEntityEvents();
 
             // Реєструємо компоненти для автоматичного кешування
             RegisterAutoCreateComponents();
@@ -71,9 +72,6 @@ namespace MythHunter.Core.ECS
             RegisterTypeForAutoCreate<Components.Core.NameComponent>();
             RegisterTypeForAutoCreate<Components.Core.DescriptionComponent>();
             RegisterTypeForAutoCreate<Components.Core.ValueComponent>();
-
-            // Додаємо компоненти для всіх фаз
-            // ...
 
             _logger.LogInfo($"Registered {_autoCreateTypes.Count} component types for auto-creation", "ECS");
         }
@@ -97,17 +95,17 @@ namespace MythHunter.Core.ECS
         /// <summary>
         /// Реєструє тип компонента для конкретної фази
         /// </summary>
-        public void RegisterComponentForPhase<T>(GamePhase phase) where T : struct, IComponent
+        public void RegisterComponentForPhase<T>(string phaseId) where T : struct, IComponent
         {
             Type componentType = typeof(T);
 
-            if (!_phaseComponentMapping.ContainsKey(phase))
+            if (!_phaseComponentMapping.ContainsKey(phaseId))
             {
-                _phaseComponentMapping[phase] = new HashSet<Type>();
+                _phaseComponentMapping[phaseId] = new HashSet<Type>();
             }
 
-            _phaseComponentMapping[phase].Add(componentType);
-            _logger.LogDebug($"Registered component {componentType.Name} for phase {phase}", "ECS");
+            _phaseComponentMapping[phaseId].Add(componentType);
+            _logger.LogDebug($"Registered component {componentType.Name} for phase {phaseId}", "ECS");
         }
 
         /// <summary>
@@ -191,7 +189,7 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public void UpdateCachesForCurrentPhase()
         {
-            if (_currentPhase == GamePhase.None)
+            if (string.IsNullOrEmpty(_currentPhase))
                 return;
 
             if (!_phaseComponentMapping.TryGetValue(_currentPhase, out var componentTypes))
@@ -295,43 +293,31 @@ namespace MythHunter.Core.ECS
         #region Event Handling
 
         /// <summary>
-        /// Підписується на події
+        /// Підписується на події сутностей
         /// </summary>
-        public void SubscribeToEvents()
+        private void SubscribeToEntityEvents()
         {
-            if (_isSubscribed)
-                return;
-
-            _eventBus.Subscribe<PhaseChangedEvent>(OnPhaseChanged);
             _eventBus.Subscribe<EntityCreatedEvent>(OnEntityCreated);
             _eventBus.Subscribe<EntityDestroyedEvent>(OnEntityDestroyed);
-
-            _isSubscribed = true;
-            _logger.LogDebug("ComponentCacheRegistry subscribed to events", "ECS");
+            _logger.LogDebug("ComponentCacheRegistry subscribed to entity events", "ECS");
         }
 
         /// <summary>
-        /// Відписується від подій
+        /// Відписується від подій сутностей
         /// </summary>
-        public void UnsubscribeFromEvents()
+        private void UnsubscribeFromEntityEvents()
         {
-            if (!_isSubscribed)
-                return;
-
-            _eventBus.Unsubscribe<PhaseChangedEvent>(OnPhaseChanged);
             _eventBus.Unsubscribe<EntityCreatedEvent>(OnEntityCreated);
             _eventBus.Unsubscribe<EntityDestroyedEvent>(OnEntityDestroyed);
-
-            _isSubscribed = false;
-            _logger.LogDebug("ComponentCacheRegistry unsubscribed from events", "ECS");
+            _logger.LogDebug("ComponentCacheRegistry unsubscribed from entity events", "ECS");
         }
 
         /// <summary>
         /// Обробляє подію зміни фази
         /// </summary>
-        private void OnPhaseChanged(PhaseChangedEvent evt)
+        private void OnPhaseChanged(string previousPhase, string currentPhase)
         {
-            _currentPhase = evt.CurrentPhase;
+            _currentPhase = currentPhase;
             _logger.LogDebug($"ComponentCacheRegistry phase changed to {_currentPhase}", "ECS");
 
             // Оновлюємо кеші для нової фази
@@ -370,5 +356,15 @@ namespace MythHunter.Core.ECS
         }
 
         #endregion
+
+        public void Dispose()
+        {
+            // Відписуємося від подій
+            _phaseProvider.UnsubscribeFromPhaseChange(OnPhaseChanged);
+            UnsubscribeFromEntityEvents();
+
+            // Очищаємо ресурси
+            ClearAllCaches();
+        }
     }
 }

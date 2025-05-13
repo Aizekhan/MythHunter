@@ -2,143 +2,86 @@
 
 using System.Collections.Generic;
 using MythHunter.Core.ECS;
-using MythHunter.Utils.Logging;
-using MythHunter.Events.Domain;
 using MythHunter.Systems.Core;
+using MythHunter.Utils.Logging;
 
 namespace MythHunter.Systems.Groups
 {
     /// <summary>
-    /// Група систем для послідовного виконання з підтримкою нової ієрархії
+    /// Група систем - логічний контейнер для групування систем
     /// </summary>
-    public class SystemGroup : ISystem, IUpdateSystem, IFixedUpdateSystem, ILateUpdateSystem, IEventSystem, IPhaseFilteredSystem
+    public class SystemGroup : ISystem
     {
-        private readonly List<ISystem> _systems = new List<ISystem>();
-        private readonly List<IUpdateSystem> _updateSystems = new List<IUpdateSystem>();
-        private readonly List<IFixedUpdateSystem> _fixedUpdateSystems = new List<IFixedUpdateSystem>();
-        private readonly List<ILateUpdateSystem> _lateUpdateSystems = new List<ILateUpdateSystem>();
-        private readonly List<IEventSystem> _eventSystems = new List<IEventSystem>();
-        private readonly IMythLogger _logger;
-
-        // Додаємо поле для активних фаз
-        private HashSet<GamePhase> _activePhases = new HashSet<GamePhase>();
+        protected readonly List<ISystem> _systems = new List<ISystem>();
+        protected readonly IMythLogger _logger;
 
         public string GroupName
         {
-            get; private set;
+            get;
         }
 
-        public SystemGroup(string groupName, IMythLogger logger)
+        public SystemGroup(string name, IMythLogger logger)
         {
-            GroupName = groupName;
+            GroupName = name;
             _logger = logger;
         }
 
-        public void AddSystem(ISystem system)
-        {
-            _systems.Add(system);
-
-            if (system is IUpdateSystem updateSystem)
-                _updateSystems.Add(updateSystem);
-
-            if (system is IFixedUpdateSystem fixedUpdateSystem)
-                _fixedUpdateSystems.Add(fixedUpdateSystem);
-
-            if (system is ILateUpdateSystem lateUpdateSystem)
-                _lateUpdateSystems.Add(lateUpdateSystem);
-
-            if (system is IEventSystem eventSystem)
-                _eventSystems.Add(eventSystem);
-
-            _logger.LogInfo($"System {system.GetType().Name} added to group", "Systems");
-        }
-
-        public void Initialize()
+        public virtual void Initialize()
         {
             foreach (var system in _systems)
             {
                 system.Initialize();
             }
+            _logger.LogDebug($"Initialized system group '{GroupName}'", "System");
         }
 
-        public void Update(float deltaTime)
+        public virtual void Update(float deltaTime)
         {
-            foreach (var system in _updateSystems)
+            foreach (var system in _systems)
             {
                 system.Update(deltaTime);
             }
         }
 
-        public void FixedUpdate(float fixedDeltaTime)
-        {
-            foreach (var system in _fixedUpdateSystems)
-            {
-                system.FixedUpdate(fixedDeltaTime);
-            }
-        }
-
-        public void LateUpdate(float deltaTime)
-        {
-            foreach (var system in _lateUpdateSystems)
-            {
-                system.LateUpdate(deltaTime);
-            }
-        }
-
-        public void SubscribeToEvents()
-        {
-            foreach (var system in _eventSystems)
-            {
-                system.SubscribeToEvents();
-            }
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            foreach (var system in _eventSystems)
-            {
-                system.UnsubscribeFromEvents();
-            }
-        }
-
-        public void Dispose()
+        public virtual void Dispose()
         {
             foreach (var system in _systems)
             {
                 system.Dispose();
             }
-
-            _systems.Clear();
-            _updateSystems.Clear();
-            _fixedUpdateSystems.Clear();
-            _lateUpdateSystems.Clear();
-            _eventSystems.Clear();
+            _logger.LogDebug($"Disposed system group '{GroupName}'", "System");
         }
 
         /// <summary>
-        /// Реалізація IPhaseFilteredSystem.SetActivePhases
+        /// Додає систему до групи
         /// </summary>
-        public void SetActivePhases(GamePhase[] phases)
+        public void AddSystem(ISystem system)
         {
-            _activePhases.Clear();
-            foreach (var phase in phases)
+            if (system != null && !_systems.Contains(system))
             {
-                _activePhases.Add(phase);
+                _systems.Add(system);
+                _logger.LogDebug($"Added system {system.GetType().Name} to group '{GroupName}'", "System");
             }
-
-            _logger.LogInfo($"Set active phases for group: {string.Join(", ", phases)}", "Systems");
         }
 
         /// <summary>
-        /// Реалізація IPhaseFilteredSystem.IsActiveInPhase
+        /// Видаляє систему з групи
         /// </summary>
-        public bool IsActiveInPhase(GamePhase currentPhase)
+        public void RemoveSystem(ISystem system)
         {
-            // Якщо активних фаз не вказано, система активна завжди
-            if (_activePhases.Count == 0)
-                return true;
+            if (system != null && _systems.Contains(system))
+            {
+                _systems.Remove(system);
+                _logger.LogDebug($"Removed system {system.GetType().Name} from group '{GroupName}'", "System");
+            }
+        }
 
-            return _activePhases.Contains(currentPhase);
+        /// <summary>
+        /// Отримує всі системи в групі
+        /// </summary>
+        public IReadOnlyList<ISystem> GetSystems()
+        {
+            return _systems.AsReadOnly();
         }
     }
 }
