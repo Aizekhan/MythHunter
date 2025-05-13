@@ -56,8 +56,8 @@ namespace MythHunter.Game.Systems.Phase
         {
             _phaseDurations[GamePhase.Rune] = 15f;       // Фаза вибору руни: 15 секунд
             _phaseDurations[GamePhase.Planning] = 30f;   // Фаза планування руху: 30 секунд
-            _phaseDurations[GamePhase.Movement] = 20f;   // Фаза руху: 20 секунд
-            _phaseDurations[GamePhase.Combat] = 10f;     // Фаза бою: 10 секунд (частина активної фази)
+            _phaseDurations[GamePhase.Active] = 20f;   // Фаза руху: 20 секунд
+           
             _phaseDurations[GamePhase.Freeze] = 5f;      // Фаза завмирання: 5 секунд
         }
 
@@ -198,9 +198,8 @@ namespace MythHunter.Game.Systems.Phase
             return currentPhase switch
             {
                 GamePhase.Rune => GamePhase.Planning,
-                GamePhase.Planning => GamePhase.Movement,
-                GamePhase.Movement => GamePhase.Combat,
-                GamePhase.Combat => GamePhase.Freeze,
+                GamePhase.Planning => GamePhase.Active,
+                GamePhase.Active => GamePhase.Freeze,
                 GamePhase.Freeze => GamePhase.Rune,
                 _ => GamePhase.Rune
             };

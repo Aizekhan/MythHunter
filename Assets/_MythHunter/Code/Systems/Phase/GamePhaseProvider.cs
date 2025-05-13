@@ -28,8 +28,7 @@ namespace MythHunter.Systems.Phase
             { GamePhase.None, "None" },
             { GamePhase.Rune, "Rune" },
             { GamePhase.Planning, "Planning" },
-            { GamePhase.Movement, "Movement" },
-            { GamePhase.Combat, "Combat" },
+            { GamePhase.Active, "Active" }, 
             { GamePhase.Freeze, "Freeze" }
         };
 

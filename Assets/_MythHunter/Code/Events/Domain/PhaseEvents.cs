@@ -9,8 +9,7 @@ namespace MythHunter.Events.Domain
         None = 0,
         Rune,       // Фаза вибору руни
         Planning,   // Фаза планування руху
-        Movement,   // Фаза руху
-        Combat,     // Фаза бою (частина активної фази)
+        Active,   // Aктивнa фазa
         Freeze      // Фаза завмирання
     }
 
