@@ -24,8 +24,8 @@ namespace MythHunter.Core.Installers
             // Реєстрація фазової системи з високим пріоритетом
             BindSingleton<IPhaseSystem, PhaseSystem>(container);
 
-            // Реєстрація провайдера фаз
-            BindSingleton<IPhaseProvider, DefaultPhaseProvider>(container);
+            // Реєстрація провайдера фаз - тепер тільки один тип!
+            BindSingleton<IPhaseProvider, GamePhaseProvider>(container);
 
             // Отримання системного реєстру і провайдера фаз
             var systemRegistry = container.Resolve<ISystemRegistry>();
@@ -55,6 +55,11 @@ namespace MythHunter.Core.Installers
                 logger,
                 phaseProvider,
                 "Planning");
+
+            // Тут можна зареєструвати інші системи в групах
+            // movementGroup.AddSystem(container.Resolve<IMovementSystem>());
+            // combatGroup.AddSystem(container.Resolve<ICombatSystem>());
+            // planningGroup.AddSystem(container.Resolve<IPlanningSystem>());
 
             logger.LogInfo("Встановлення залежностей GameplaySystem завершено", "Installer");
         }

@@ -33,6 +33,9 @@ namespace MythHunter.Systems.Core
         // Додатковий стан виконання
         private bool _isUpdating = false;
 
+        // Доступ до логера
+        private readonly IMythLogger _logger;
+
         /// <summary>
         /// Метадані системи
         /// </summary>
@@ -61,6 +64,7 @@ namespace MythHunter.Systems.Core
             : base(logger, eventBus)
         {
             _jobScheduler = jobScheduler;
+            _logger = logger;
         }
 
         /// <summary>
@@ -222,7 +226,7 @@ namespace MythHunter.Systems.Core
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                            _logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                         }
                     }
                 }
@@ -237,7 +241,7 @@ namespace MythHunter.Systems.Core
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error completing jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                    _logger.LogError($"Error completing jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                 }
             }
         }
@@ -314,7 +318,7 @@ namespace MythHunter.Systems.Core
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                            _logger.LogError($"Error scheduling jobs for system {system.GetType().Name}: {ex.Message}", "Systems", ex);
                         }
                     }
                 }
@@ -330,12 +334,34 @@ namespace MythHunter.Systems.Core
         /// </summary>
         private bool IsSystemActiveInCurrentPhase(ISystem system)
         {
+            // Спочатку отримуємо поточну фазу через PhaseSystem
+            Events.Domain.GamePhase currentPhase = GetCurrentPhase();
+
             if (system is IPhaseFilteredSystem phaseSystem)
             {
-                return phaseSystem.IsActiveInPhase(CurrentPhase);
+                return phaseSystem.IsActiveInPhase(currentPhase);
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Отримує поточну фазу за допомогою IPhaseProvider
+        /// </summary>
+        private Events.Domain.GamePhase GetCurrentPhase()
+        {
+            // Шукаємо IPhaseSystem серед усіх зареєстрованих систем
+            var allSystems = GetAllSystems();
+            foreach (var system in allSystems)
+            {
+                if (system is MythHunter.Systems.Phase.IPhaseSystem phaseSystem)
+                {
+                    return phaseSystem.CurrentPhase;
+                }
+            }
+
+            // Якщо систему не знайдено, повертаємо None
+            return Events.Domain.GamePhase.None;
         }
 
         /// <summary>
@@ -349,7 +375,7 @@ namespace MythHunter.Systems.Core
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error updating system {system.GetType().Name}: {ex.Message}", "Systems", ex);
+                _logger.LogError($"Error updating system {system.GetType().Name}: {ex.Message}", "Systems", ex);
             }
         }
     }

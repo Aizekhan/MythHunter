@@ -1,4 +1,4 @@
-// Файл: Assets/_MythHunter/Code/Systems/Core/SystemRegistry.cs
+// Шлях: Assets/_MythHunter/Code/Systems/Core/SystemRegistry.cs
 using System.Collections.Generic;
 using System.Linq;
 using MythHunter.Core.ECS;
@@ -10,7 +10,6 @@ using MythHunter.Systems.Groups;
 
 namespace MythHunter.Systems.Core
 {
-    
     /// <summary>
     /// Реєстр систем з підтримкою фаз та пріоритетів
     /// </summary>
@@ -18,14 +17,12 @@ namespace MythHunter.Systems.Core
     {
         private readonly List<SystemRegistration> _allSystems = new List<SystemRegistration>();
         private readonly IMythLogger _logger;
-        protected IMythLogger Logger => _logger;
         private readonly IEventBus _eventBus;
 
+        // Єдине поле для зберігання поточної фази
         private GamePhase _currentPhase = GamePhase.None;
         private bool _isSubscribed = false;
-        // Додайте в базовий клас SystemRegistry
-        protected GamePhase CurrentPhase { get; private set; } = GamePhase.None;
-      
+
         /// <summary>
         /// Клас для реєстрації системи з додатковими даними
         /// </summary>
@@ -43,7 +40,7 @@ namespace MythHunter.Systems.Core
             public string SystemType
             {
                 get; set;
-            } // ← Ось ця властивість потрібна
+            } // Тип або назва системи
         }
 
         [Inject]
@@ -54,6 +51,7 @@ namespace MythHunter.Systems.Core
 
             // Підписуємося на події зміни фази
             SubscribeToEvents();
+            _logger.LogInfo("SystemRegistry initialized", "Systems");
         }
 
         public virtual void RegisterSystem(ISystem system)
@@ -102,17 +100,27 @@ namespace MythHunter.Systems.Core
                 });
             }
 
-            // Сортуємо системи за пріоритетом
+            // Сортуємо системи за пріоритетом (від високого до низького)
             _allSystems.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
             _logger.LogInfo($"Registered system: {(system is SystemGroup sg ? sg.GroupName : systemName)} with priority {priority}", "Systems");
         }
+
         public void InitializeAll()
         {
             foreach (var reg in _allSystems)
             {
-                reg.System.Initialize();
+                try
+                {
+                    reg.System.Initialize();
+                    _logger.LogDebug($"Initialized system: {reg.SystemType}", "Systems");
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError($"Error initializing system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                }
             }
+            _logger.LogInfo($"Initialized {_allSystems.Count} systems", "Systems");
         }
 
         public virtual void UpdateAll(float deltaTime)
@@ -124,7 +132,14 @@ namespace MythHunter.Systems.Core
                     continue;
 
                 // Оновлюємо систему
-                reg.System.Update(deltaTime);
+                try
+                {
+                    reg.System.Update(deltaTime);
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError($"Error updating system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                }
             }
         }
 
@@ -139,7 +154,14 @@ namespace MythHunter.Systems.Core
                 // Оновлюємо систему, якщо вона підтримує FixedUpdate
                 if (reg.System is IFixedUpdateSystem fixedSystem)
                 {
-                    fixedSystem.FixedUpdate(fixedDeltaTime);
+                    try
+                    {
+                        fixedSystem.FixedUpdate(fixedDeltaTime);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError($"Error fixed-updating system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                    }
                 }
             }
         }
@@ -155,7 +177,14 @@ namespace MythHunter.Systems.Core
                 // Оновлюємо систему, якщо вона підтримує LateUpdate
                 if (reg.System is ILateUpdateSystem lateSystem)
                 {
-                    lateSystem.LateUpdate(deltaTime);
+                    try
+                    {
+                        lateSystem.LateUpdate(deltaTime);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError($"Error late-updating system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                    }
                 }
             }
         }
@@ -164,11 +193,20 @@ namespace MythHunter.Systems.Core
         {
             foreach (var reg in _allSystems)
             {
-                reg.System.Dispose();
+                try
+                {
+                    reg.System.Dispose();
+                    _logger.LogDebug($"Disposed system: {reg.SystemType}", "Systems");
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError($"Error disposing system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                }
             }
 
             _allSystems.Clear();
             UnsubscribeFromEvents();
+            _logger.LogInfo("Disposed all systems", "Systems");
         }
 
         public void SubscribeToEvents()
@@ -177,6 +215,7 @@ namespace MythHunter.Systems.Core
             {
                 _eventBus.Subscribe<PhaseChangedEvent>(OnPhaseChanged);
                 _isSubscribed = true;
+                _logger.LogDebug("SystemRegistry subscribed to events", "Systems");
             }
         }
 
@@ -186,14 +225,15 @@ namespace MythHunter.Systems.Core
             {
                 _eventBus.Unsubscribe<PhaseChangedEvent>(OnPhaseChanged);
                 _isSubscribed = false;
+                _logger.LogDebug("SystemRegistry unsubscribed from events", "Systems");
             }
         }
 
-        // І змінити метод обробки події фази
+        // Обробка події зміни фази
         private void OnPhaseChanged(PhaseChangedEvent evt)
         {
-            CurrentPhase = evt.CurrentPhase;
-            _logger.LogDebug($"System Registry phase changed to {CurrentPhase}", "Systems");
+            _currentPhase = evt.CurrentPhase;
+            _logger.LogInfo($"SystemRegistry phase changed to {_currentPhase}", "Systems");
         }
 
         /// <summary>
@@ -205,7 +245,7 @@ namespace MythHunter.Systems.Core
             if (reg != null)
             {
                 reg.IsActive = isActive;
-                _logger.LogInfo($"System {system.GetType().Name} {(isActive ? "activated" : "deactivated")}", "Systems");
+                _logger.LogInfo($"System {reg.SystemType} {(isActive ? "activated" : "deactivated")}", "Systems");
             }
         }
 
@@ -224,45 +264,5 @@ namespace MythHunter.Systems.Core
         {
             _logger?.LogInfo(message, "Systems");
         }
-        /// <summary>
-        /// Перевіряє, чи система активна в поточній фазі
-        /// </summary>
-        private bool IsSystemActiveInCurrentPhase(ISystem system)
-        {
-            if (system is IPhaseFilteredSystem phaseSystem)
-            {
-                var currentPhase = GetCurrentPhase();
-                return phaseSystem.IsActiveInPhase(currentPhase);
-            }
-
-            return true;
-        }
-        /// <summary>
-        /// Отримує поточну фазу з батьківського класу
-        /// </summary>
-        private MythHunter.Events.Domain.GamePhase GetCurrentPhase()
-        {
-            // Отримуємо поточну фазу через публічний інтерфейс або додаткове поле
-            // Це одне з можливих рішень
-            var phaseSystem = FindPhaseSystem();
-            return phaseSystem?.CurrentPhase ?? MythHunter.Events.Domain.GamePhase.None;
-        }
-
-        /// <summary>
-        /// Знаходить систему фаз у списку зареєстрованих систем
-        /// </summary>
-        private MythHunter.Systems.Phase.IPhaseSystem FindPhaseSystem()
-        {
-            var allSystems = GetAllSystems();
-            foreach (var system in allSystems)
-            {
-                if (system is MythHunter.Systems.Phase.IPhaseSystem phaseSystem)
-                {
-                    return phaseSystem;
-                }
-            }
-            return null;
-        }
-       
     }
 }

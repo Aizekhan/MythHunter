@@ -13,7 +13,7 @@ namespace MythHunter.Systems.Phase
     /// <summary>
     /// Реалізація провайдера фаз на основі GamePhase
     /// </summary>
-    public class GamePhaseProvider : IPhaseProvider, IEventSubscriber
+    public class GamePhaseProvider : IPhaseProvider, IEventSubscriber, IDisposable
     {
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
@@ -31,7 +31,6 @@ namespace MythHunter.Systems.Phase
             { GamePhase.Movement, "Movement" },
             { GamePhase.Combat, "Combat" },
             { GamePhase.Freeze, "Freeze" }
-            // Додайте інші фази тут
         };
 
         // Зворотнє відображення для конвертації string в GamePhase
@@ -51,6 +50,7 @@ namespace MythHunter.Systems.Phase
 
             // Підписка на події здійснюється через метод SubscribeToEvents
             SubscribeToEvents();
+            _logger.LogInfo("GamePhaseProvider initialized", "Phase");
         }
 
         /// <summary>
@@ -76,20 +76,25 @@ namespace MythHunter.Systems.Phase
 
         public bool IsCurrentPhase(string phaseId)
         {
-            return _currentPhaseId == phaseId;
+            return string.Equals(_currentPhaseId, phaseId, StringComparison.OrdinalIgnoreCase);
         }
 
         public void SubscribeToPhaseChange(Action<string, string> onPhaseChanged)
         {
-            if (!_phaseChangeCallbacks.Contains(onPhaseChanged))
+            if (onPhaseChanged != null && !_phaseChangeCallbacks.Contains(onPhaseChanged))
             {
                 _phaseChangeCallbacks.Add(onPhaseChanged);
+                _logger.LogDebug($"Added phase change callback, total callbacks: {_phaseChangeCallbacks.Count}", "Phase");
             }
         }
 
         public void UnsubscribeFromPhaseChange(Action<string, string> onPhaseChanged)
         {
-            _phaseChangeCallbacks.Remove(onPhaseChanged);
+            if (onPhaseChanged != null && _phaseChangeCallbacks.Contains(onPhaseChanged))
+            {
+                _phaseChangeCallbacks.Remove(onPhaseChanged);
+                _logger.LogDebug($"Removed phase change callback, remaining callbacks: {_phaseChangeCallbacks.Count}", "Phase");
+            }
         }
 
         public string[] GetAllPhaseIds()
@@ -102,10 +107,10 @@ namespace MythHunter.Systems.Phase
             string previousPhaseId = _currentPhaseId;
             _currentPhaseId = ConvertPhaseToId(evt.CurrentPhase);
 
-            _logger.LogDebug($"Phase changed from '{previousPhaseId}' to '{_currentPhaseId}'", "Phase");
+            _logger.LogInfo($"Phase changed from '{previousPhaseId}' to '{_currentPhaseId}'", "Phase");
 
             // Виклик всіх колбеків
-            foreach (var callback in _phaseChangeCallbacks)
+            foreach (var callback in new List<Action<string, string>>(_phaseChangeCallbacks))
             {
                 try
                 {
@@ -143,6 +148,7 @@ namespace MythHunter.Systems.Phase
         {
             UnsubscribeFromEvents();
             _phaseChangeCallbacks.Clear();
+            _logger.LogInfo("GamePhaseProvider disposed", "Phase");
         }
     }
 }

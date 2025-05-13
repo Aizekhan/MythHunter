@@ -21,14 +21,30 @@ namespace MythHunter.Systems.Groups
             string name,
             int priority,
             IMythLogger logger,
-            string[] activePhaseIds,  // Змінено з string phaseId
+            string[] activePhaseIds,
             IPhaseProvider phaseProvider) : base(name, logger)
         {
-            // Зберігаємо активні фази
-            _activePhaseIds.AddRange(activePhaseIds);
-            _phaseProvider = phaseProvider;
+            // Перевіряємо і зберігаємо активні фази
+            if (activePhaseIds != null && activePhaseIds.Length > 0)
+            {
+                _activePhaseIds.AddRange(activePhaseIds);
+            }
 
-            logger.LogDebug($"Created PhaseSystemGroup '{name}' for phases: {string.Join(", ", activePhaseIds)}", "System");
+            _phaseProvider = phaseProvider ?? throw new System.ArgumentNullException(nameof(phaseProvider));
+
+            logger.LogInfo($"Created PhaseSystemGroup '{name}' for phases: {string.Join(", ", activePhaseIds ?? new string[0])}", "System");
+        }
+
+        public override void Initialize()
+        {
+            // Перевіряємо чи є активні фази
+            if (_activePhaseIds.Count == 0)
+            {
+                _logger.LogWarning($"PhaseSystemGroup '{GroupName}' has no active phases defined", "System");
+            }
+
+            // Ініціалізуємо всі підсистеми
+            base.Initialize();
         }
 
         public override void Update(float deltaTime)
@@ -46,6 +62,10 @@ namespace MythHunter.Systems.Groups
         /// </summary>
         private bool IsActiveInCurrentPhase()
         {
+            // Якщо немає активних фаз, вважаємо що активна завжди
+            if (_activePhaseIds.Count == 0)
+                return true;
+
             string currentPhaseId = _phaseProvider.GetCurrentPhaseId();
             return _activePhaseIds.Contains(currentPhaseId);
         }
@@ -58,9 +78,14 @@ namespace MythHunter.Systems.Groups
             _activePhaseIds.Clear();
 
             // Додаємо нові фази
-            if (phaseIds != null)
+            if (phaseIds != null && phaseIds.Length > 0)
             {
                 _activePhaseIds.AddRange(phaseIds);
+                _logger.LogInfo($"Updated active phases for group '{GroupName}': {string.Join(", ", phaseIds)}", "System");
+            }
+            else
+            {
+                _logger.LogWarning($"No active phases set for group '{GroupName}'", "System");
             }
         }
 
@@ -71,12 +96,17 @@ namespace MythHunter.Systems.Groups
             _activePhaseIds.Clear();
 
             // Конвертуємо GamePhase в string IDs і додаємо
-            if (phases != null)
+            if (phases != null && phases.Length > 0)
             {
                 foreach (var phase in phases)
                 {
                     _activePhaseIds.Add(phase.ToString());
                 }
+                _logger.LogInfo($"Updated active phases for group '{GroupName}': {string.Join(", ", phases)}", "System");
+            }
+            else
+            {
+                _logger.LogWarning($"No active phases set for group '{GroupName}'", "System");
             }
         }
 
@@ -86,5 +116,10 @@ namespace MythHunter.Systems.Groups
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return $"PhaseSystemGroup '{GroupName}' (Active phases: {string.Join(", ", _activePhaseIds)})";
+        }
     }
 }

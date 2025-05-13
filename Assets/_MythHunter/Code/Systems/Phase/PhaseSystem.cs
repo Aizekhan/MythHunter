@@ -1,4 +1,4 @@
-// Assets/_MythHunter/Code/Game/Systems/Phase/PhaseSystem.cs
+// Шлях: Assets/_MythHunter/Code/Systems/Phase/PhaseSystem.cs
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
@@ -13,7 +13,7 @@ namespace MythHunter.Game.Systems.Phase
     /// <summary>
     /// Система для керування фазами гри
     /// </summary>
-    public class PhaseSystem : IPhaseSystem
+    public class PhaseSystem : IPhaseSystem, IDisposable
     {
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
@@ -24,6 +24,8 @@ namespace MythHunter.Game.Systems.Phase
         private float _phaseDuration;
         private readonly Dictionary<GamePhase, float> _phaseDurations = new Dictionary<GamePhase, float>();
         private bool _isPaused;
+        private bool _isInitialized;
+        private bool _isDisposed;
 
         // Геттер для поточної фази
         public GamePhase CurrentPhase => _currentPhase;
@@ -40,15 +42,14 @@ namespace MythHunter.Game.Systems.Phase
             _phaseTimer = 0;
             _phaseDuration = 0;
             _isPaused = false;
+            _isInitialized = false;
+            _isDisposed = false;
 
             // Реєструємо обмеження для PhaseUpdateEvent - максимум 4 рази на секунду
             _eventThrottler.RegisterThrottle<PhaseUpdateEvent>(0.25f);
 
             // Ініціалізуємо стандартні тривалості фаз
             InitDefaultPhaseDurations();
-
-            // Підписуємося на події
-            SubscribeToEvents();
         }
 
         private void InitDefaultPhaseDurations()
@@ -62,12 +63,19 @@ namespace MythHunter.Game.Systems.Phase
 
         public void Initialize()
         {
+            if (_isInitialized)
+                return;
+
+            // Підписуємося на події
+            SubscribeToEvents();
+            _isInitialized = true;
+
             _logger.LogInfo("PhaseSystem initialized", "PhaseSystem");
         }
 
         public void Update(float deltaTime)
         {
-            if (_currentPhase == GamePhase.None || _isPaused)
+            if (_currentPhase == GamePhase.None || _isPaused || _isDisposed)
                 return;
 
             // Оновлення таймера фази
@@ -96,6 +104,12 @@ namespace MythHunter.Game.Systems.Phase
 
         public void StartPhase(GamePhase phase)
         {
+            if (_isDisposed)
+                return;
+
+            // Зберігаємо попередню фазу перед оновленням
+            GamePhase previousPhase = _currentPhase;
+
             _currentPhase = phase;
             _phaseTimer = 0;
 
@@ -107,19 +121,32 @@ namespace MythHunter.Game.Systems.Phase
             _logger.LogInfo($"Starting phase: {phase}, duration: {_phaseDuration}s", "PhaseSystem");
 
             // Публікація події початку фази
-            var evt = new PhaseStartedEvent
+            var startEvent = new PhaseStartedEvent
             {
                 Phase = phase,
                 Duration = _phaseDuration,
                 Timestamp = DateTime.UtcNow
             };
 
-            _eventBus.Publish(evt);
+            _eventBus.Publish(startEvent);
+
+            // Публікуємо подію зміни фази, якщо це не перша фаза або фаза змінилася
+            if (previousPhase != GamePhase.None || phase != GamePhase.None)
+            {
+                var phaseChangedEvent = new PhaseChangedEvent
+                {
+                    PreviousPhase = previousPhase,
+                    CurrentPhase = phase,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                _eventBus.Publish(phaseChangedEvent);
+            }
         }
 
         public void EndPhase(GamePhase phase)
         {
-            if (_currentPhase != phase)
+            if (_isDisposed || _currentPhase != phase)
                 return;
 
             _logger.LogInfo($"Ending phase: {phase}", "PhaseSystem");
@@ -135,12 +162,19 @@ namespace MythHunter.Game.Systems.Phase
 
         public void SetPhaseDuration(GamePhase phase, float duration)
         {
+            if (duration <= 0)
+            {
+                _logger.LogWarning($"Invalid phase duration: {duration} for phase {phase}. Must be greater than 0.", "PhaseSystem");
+                return;
+            }
+
             _phaseDurations[phase] = duration;
 
             // Якщо це поточна фаза, оновлюємо тривалість
             if (_currentPhase == phase)
             {
                 _phaseDuration = duration;
+                _logger.LogInfo($"Updated current phase duration to {duration}s", "PhaseSystem");
             }
         }
 
@@ -174,12 +208,18 @@ namespace MythHunter.Game.Systems.Phase
 
         public void Pause()
         {
+            if (_isPaused)
+                return;
+
             _isPaused = true;
             _logger.LogInfo("Game phases paused", "PhaseSystem");
         }
 
         public void Resume()
         {
+            if (!_isPaused)
+                return;
+
             _isPaused = false;
             _logger.LogInfo("Game phases resumed", "PhaseSystem");
         }
@@ -190,11 +230,26 @@ namespace MythHunter.Game.Systems.Phase
             _eventBus.Subscribe<GameStartedEvent>(OnGameStarted);
             _eventBus.Subscribe<GamePausedEvent>(OnGamePaused);
             _eventBus.SubscribeAsync<GameEndedEvent>(OnGameEndedAsync);
+
+            _logger.LogDebug("PhaseSystem subscribed to events", "PhaseSystem");
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            if (_eventBus == null)
+                return;
+
+            _eventBus.Unsubscribe<PhaseChangeRequestEvent>(OnPhaseChangeRequest);
+            _eventBus.Unsubscribe<GameStartedEvent>(OnGameStarted);
+            _eventBus.Unsubscribe<GamePausedEvent>(OnGamePaused);
+            _eventBus.UnsubscribeAsync<GameEndedEvent>(OnGameEndedAsync);
+
+            _logger.LogDebug("PhaseSystem unsubscribed from events", "PhaseSystem");
         }
 
         private void OnPhaseChangeRequest(PhaseChangeRequestEvent evt)
         {
-            if (_isPaused)
+            if (_isPaused || _isDisposed)
                 return;
 
             GamePhase previousPhase = _currentPhase;
@@ -222,6 +277,8 @@ namespace MythHunter.Game.Systems.Phase
 
             // Запуск першої фази при старті гри
             StartPhase(GamePhase.Rune);
+
+            _logger.LogInfo("Game started, phase set to Rune", "PhaseSystem");
         }
 
         private void OnGamePaused(GamePausedEvent evt)
@@ -238,21 +295,36 @@ namespace MythHunter.Game.Systems.Phase
             Pause();
 
             // Скидаємо фазу
+            GamePhase previousPhase = _currentPhase;
             _currentPhase = GamePhase.None;
             _phaseTimer = 0;
             _phaseDuration = 0;
 
+            // Публікуємо подію зміни фази
+            var phaseChangedEvent = new PhaseChangedEvent
+            {
+                PreviousPhase = previousPhase,
+                CurrentPhase = GamePhase.None,
+                Timestamp = DateTime.UtcNow
+            };
+
+            _eventBus.Publish(phaseChangedEvent);
+
             // Асинхронне очищення даних фаз якщо потрібно
             await UniTask.CompletedTask;
+
+            _logger.LogInfo("Game ended, phase reset to None", "PhaseSystem");
         }
 
         public void Dispose()
         {
+            if (_isDisposed)
+                return;
+
+            _isDisposed = true;
+
             // Відписуємося від подій
-            _eventBus.Unsubscribe<PhaseChangeRequestEvent>(OnPhaseChangeRequest);
-            _eventBus.Unsubscribe<GameStartedEvent>(OnGameStarted);
-            _eventBus.Unsubscribe<GamePausedEvent>(OnGamePaused);
-            _eventBus.UnsubscribeAsync<GameEndedEvent>(OnGameEndedAsync);
+            UnsubscribeFromEvents();
 
             _logger.LogInfo("PhaseSystem disposed", "PhaseSystem");
         }
