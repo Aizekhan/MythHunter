@@ -6,7 +6,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Systems.Core;
 using MythHunter.Core.ECS;
-using MythHunter.Systems.Extensions;
+
 using MythHunter.Game.Systems.Phase;
 
 namespace MythHunter.Core.Installers
@@ -37,17 +37,11 @@ namespace MythHunter.Core.Installers
             // Реєстрація груп систем за фазами
             var movementGroup = systemRegistry.RegisterPhaseSystemGroup(
                 "Movement",
-                SystemPriorities.Movement,
+                SystemPriorities.Active,
                 logger,
                 phaseProvider,
                 "Movement");
 
-            var combatGroup = systemRegistry.RegisterPhaseSystemGroup(
-                "Combat",
-                SystemPriorities.Combat,
-                logger,
-                phaseProvider,
-                "Combat");
 
             var planningGroup = systemRegistry.RegisterPhaseSystemGroup(
                 "Planning",

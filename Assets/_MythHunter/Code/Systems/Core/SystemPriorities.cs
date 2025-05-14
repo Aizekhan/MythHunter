@@ -18,9 +18,8 @@ namespace MythHunter.Systems.Core
         // Системи планування
         public const int Planning = 700;
         // Системи руху
-        public const int Movement = 600;
-        // Системи бою
-        public const int Combat = 500;
+        public const int Active = 600;
+       
         // Системи штучного інтелекту
         public const int AI = 400;
         // Системи фізики
@@ -45,10 +44,8 @@ namespace MythHunter.Systems.Core
                 return "Input";
             if (priority >= Planning)
                 return "Planning";
-            if (priority >= Movement)
-                return "Movement";
-            if (priority >= Combat)
-                return "Combat";
+            if (priority >= Active)
+                return "Active";
             if (priority >= AI)
                 return "AI";
             if (priority >= Physics)

@@ -4,6 +4,8 @@ namespace MythHunter.Systems.Core
 {
     public interface ISystemRegistry
     {
+        //RegisterSystemWithPriority - в файлі  Assets/_MythHunter/Code/Systems/Core/SystemRegistryExtensions.cs
+        //using MythHunter.Systems.Core; 
         void RegisterSystem(ISystem system);
         void InitializeAll();
         void UpdateAll(float deltaTime);

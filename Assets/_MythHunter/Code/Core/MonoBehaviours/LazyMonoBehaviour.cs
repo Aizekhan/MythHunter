@@ -40,7 +40,9 @@ namespace MythHunter.Core.MonoBehaviours
         protected virtual void OnInitialized()
         {
         }
-
+        protected virtual void OnInject()
+        {
+        }
         protected virtual void Awake()
         {
             _awakePerformed = true;
