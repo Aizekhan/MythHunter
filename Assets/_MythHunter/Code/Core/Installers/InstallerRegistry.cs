@@ -31,6 +31,7 @@ new EntitiesInstaller(),
 //Gameplay
 new GameplayInstaller(),
 new MovementInstaller(),
+new CombatSystemInstaller(),
 
 //Debug
 new DebugToolsInstaller()
