@@ -28,7 +28,11 @@ new UIInstaller(),
 new PoolSystemInstaller(),
 
 new EntitiesInstaller(),
+//Gameplay
 new GameplayInstaller(),
+new MovementInstaller(),
+
+//Debug
 new DebugToolsInstaller()
    };
 
