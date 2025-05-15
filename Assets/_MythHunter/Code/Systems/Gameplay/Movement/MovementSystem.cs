@@ -434,7 +434,7 @@ namespace MythHunter.Systems.Movement
 
         private void OnPhaseChanged(PhaseChangedEvent evt)
         {
-            // Якщо фаза змінилася на Movement, запускаємо рух для всіх сутностей
+            // Якщо фаза змінилася на Active, запускаємо рух для всіх сутностей
             if (evt.CurrentPhase == GamePhase.Active)
             {
                 StartAllPlannedMovements();
