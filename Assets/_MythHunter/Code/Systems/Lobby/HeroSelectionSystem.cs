@@ -77,6 +77,15 @@ namespace MythHunter.Systems.Lobby
                         Category = GetCategoryFromHeroClass(GetHeroClassFromArchetype(archetypeId)),
                         IconPath = GetHeroIconPathFromArchetype(archetypeId)
                     };
+                    if (string.IsNullOrEmpty(heroInfo.Name))
+                    {
+                        heroInfo.Name = archetypeId;
+                        _logger.LogWarning($"Hero archetype {archetypeId} має порожнє Name, встановлено ArchetypeId як імʼя", "HeroSelection");
+                    }
+                    if (string.IsNullOrEmpty(heroInfo.IconPath))
+                    {
+                        _logger.LogWarning($"Hero archetype {archetypeId} має порожній IconPath", "HeroSelection");
+                    }
 
                     _heroInfos.Add(archetypeId, heroInfo);
 

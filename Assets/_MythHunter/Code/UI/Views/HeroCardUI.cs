@@ -1,4 +1,4 @@
-// Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
+// Шлях: Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
 using System;
 using MythHunter.UI.Models;
 using TMPro;
@@ -19,6 +19,7 @@ namespace MythHunter.UI.Views
         [SerializeField] private Image _iconImage;
         [SerializeField] private Button _selectButton;
         [SerializeField] private GameObject _selectedIndicator;
+        [SerializeField] private Sprite _defaultIcon;
 
         private string _archetypeId;
 
@@ -28,29 +29,22 @@ namespace MythHunter.UI.Views
         {
             _archetypeId = model.ArchetypeId;
 
-            _nameText.text = model.Name;
+            _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
             _descriptionText.text = model.Description;
             _raceClassText.text = $"{model.Race} - {model.Class}";
             _manaCostText.text = $"Вартість: {model.ManaCost}";
 
-            // Завантажуємо зображення
+            Sprite icon = null;
             if (!string.IsNullOrEmpty(model.IconPath))
             {
-                Sprite icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
-
-                if (icon != null)
-                {
-                    _iconImage.sprite = icon;
-                }
+                icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
             }
 
-            // Налаштовуємо відображення вибраної картки
-            _selectedIndicator.SetActive(model.IsSelected);
+            _iconImage.sprite = icon != null ? icon : _defaultIcon;
 
-            // Налаштовуємо інтерактивність
+            _selectedIndicator.SetActive(model.IsSelected);
             SetInteractable(model.IsSelectable);
 
-            // Додаємо слухача подій кнопки
             _selectButton.onClick.AddListener(OnSelectButtonClicked);
         }
 
@@ -66,7 +60,6 @@ namespace MythHunter.UI.Views
 
         private void OnDestroy()
         {
-            // Видаляємо слухача подій
             _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
         }
     }

@@ -1,8 +1,9 @@
-// Assets/_MythHunter/Code/UI/Views/LobbyView.cs
+// Шлях: Assets/_MythHunter/Code/UI/Views/LobbyView.cs
 using System.Collections.Generic;
 using MythHunter.Core.DI;
 using MythHunter.UI.Models;
 using MythHunter.UI.Presenters;
+using MythHunter.UI.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +11,9 @@ using UnityEngine.UI;
 namespace MythHunter.UI.Views
 {
     /// <summary>
-    /// Реалізація представлення лоббі на основі MonoBehaviour
+    /// Перенесена реалізація LobbyView в архітектурну систему з підтримкою IView
     /// </summary>
-    public class LobbyView : MonoBehaviour, ILobbyView
+    public class LobbyView : UIViewBase, ILobbyView
     {
         [SerializeField] private Transform _heroCardsContainer;
         [SerializeField] private Transform _selectedHeroesContainer;
@@ -36,18 +37,14 @@ namespace MythHunter.UI.Views
 
         private void Start()
         {
-            // Ініціалізуємо лоббі для 2 гравців
             _presenter.StartLobby(2);
 
-            // Налаштовуємо слухачі подій
             _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
             _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
 
-            // Приховуємо повідомлення про помилку та початок гри
             _errorText.gameObject.SetActive(false);
             _gameStartingText.gameObject.SetActive(false);
 
-            // Налаштовуємо тексти статусу гравців
             for (int i = 0; i < _playerStatusTexts.Length; i++)
             {
                 _playerStatusTexts[i].text = $"Гравець {i + 1}: Очікує вибору";
@@ -56,50 +53,38 @@ namespace MythHunter.UI.Views
 
         private void OnDestroy()
         {
-            // Відписуємося від подій
             _confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
             _startGameButton.onClick.RemoveListener(OnStartGameButtonClicked);
-
-            // Очищуємо контейнери
             ClearContainer(_heroCardsContainer);
             ClearContainer(_selectedHeroesContainer);
         }
 
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
-            // Очищуємо контейнер
             ClearContainer(_heroCardsContainer);
-
-            // Створюємо картки героїв
             foreach (var hero in heroes)
             {
-                var heroCard = Instantiate(_heroCardPrefab, _heroCardsContainer);
-                var heroCardUI = heroCard.GetComponent<HeroCardUI>();
-
-                if (heroCardUI != null)
+                var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
+                var ui = card.GetComponent<HeroCardUI>();
+                if (ui != null)
                 {
-                    heroCardUI.Setup(hero);
-                    heroCardUI.OnHeroSelected += OnHeroCardSelected;
+                    ui.Setup(hero);
+                    ui.OnHeroSelected += OnHeroCardSelected;
                 }
             }
         }
 
         public void UpdateSelectedHeroes(List<HeroCardModel> selectedHeroes)
         {
-            // Очищуємо контейнер
             ClearContainer(_selectedHeroesContainer);
-
-            // Створюємо картки вибраних героїв
             foreach (var hero in selectedHeroes)
             {
-                var heroCard = Instantiate(_heroCardPrefab, _selectedHeroesContainer);
-                var heroCardUI = heroCard.GetComponent<HeroCardUI>();
-
-                if (heroCardUI != null)
+                var card = Instantiate(_heroCardPrefab, _selectedHeroesContainer);
+                var ui = card.GetComponent<HeroCardUI>();
+                if (ui != null)
                 {
-                    heroCardUI.Setup(hero);
-                    // Вибрані герої не можуть бути вибрані повторно
-                    heroCardUI.SetInteractable(false);
+                    ui.Setup(hero);
+                    ui.SetInteractable(false);
                 }
             }
         }
@@ -113,7 +98,6 @@ namespace MythHunter.UI.Views
         {
             int minutes = Mathf.FloorToInt(remainingTime / 60);
             int seconds = Mathf.FloorToInt(remainingTime % 60);
-
             _timerText.text = $"Час: {minutes:00}:{seconds:00}";
         }
 
@@ -121,55 +105,34 @@ namespace MythHunter.UI.Views
         {
             _errorText.text = message;
             _errorText.gameObject.SetActive(true);
-
-            // Приховуємо повідомлення через 3 секунди
             Invoke(nameof(HideError), 3f);
         }
 
-        public void ShowPlayerStatus(int playerIndex, bool isReady)
+        public void ShowPlayerStatus(int index, bool isReady)
         {
-            if (playerIndex >= 0 && playerIndex < _playerStatusTexts.Length)
+            if (index < _playerStatusTexts.Length)
             {
-                _playerStatusTexts[playerIndex].text = isReady
-                    ? $"Гравець {playerIndex + 1}: Готовий"
-                    : $"Гравець {playerIndex + 1}: Вибирає";
-
-                // Змінюємо колір тексту
-                _playerStatusTexts[playerIndex].color = isReady ? Color.green : Color.white;
+                _playerStatusTexts[index].text = isReady ? $"Гравець {index + 1}: Готовий" : $"Гравець {index + 1}: Вибирає";
+                _playerStatusTexts[index].color = isReady ? Color.green : Color.white;
             }
         }
 
         public void ShowGameStartingMessage()
         {
             _gameStartingText.gameObject.SetActive(true);
-
-            // Приховуємо інші елементи
             _heroCardsContainer.gameObject.SetActive(false);
             _selectedHeroesContainer.gameObject.SetActive(false);
             _confirmButton.gameObject.SetActive(false);
             _startGameButton.gameObject.SetActive(false);
         }
 
-        private void OnConfirmButtonClicked()
-        {
-            _presenter.OnSelectionConfirmed();
-        }
+        public override void Show() => gameObject.SetActive(true);
+        public override void Hide() => gameObject.SetActive(false);
 
-        private async void OnStartGameButtonClicked()
-        {
-            await _presenter.StartGameAsync();
-        }
-
-        private void OnHeroCardSelected(string archetypeId)
-        {
-            _presenter.OnHeroSelected(archetypeId);
-        }
-
-        private void HideError()
-        {
-            _errorText.gameObject.SetActive(false);
-        }
-
+        private void OnConfirmButtonClicked() => _presenter.OnSelectionConfirmed();
+        private async void OnStartGameButtonClicked() => await _presenter.StartGameAsync();
+        private void OnHeroCardSelected(string archetypeId) => _presenter.OnHeroSelected(archetypeId);
+        private void HideError() => _errorText.gameObject.SetActive(false);
         private void ClearContainer(Transform container)
         {
             foreach (Transform child in container)

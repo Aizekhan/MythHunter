@@ -1,4 +1,7 @@
-// Assets/_MythHunter/Code/UI/Presenters/LobbyPresenter.cs
+// Шлях: Assets/_MythHunter/Code/UI/Views/LobbyView.cs
+// ... (залишено без змін)
+
+// Шлях: Assets/_MythHunter/Code/UI/Presenters/LobbyPresenter.cs
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -8,12 +11,13 @@ using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Lobby;
 using MythHunter.UI.Models;
 using MythHunter.UI.Views;
+using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.UI.Presenters
 {
     /// <summary>
-    /// Презентер лоббі
+    /// Презентер лоббі з повною підтримкою IViewFactory та ViewConfigRegistry
     /// </summary>
     public class LobbyPresenter : ILobbyPresenter, IEventSubscriber
     {
@@ -21,6 +25,9 @@ namespace MythHunter.UI.Presenters
         private readonly IHeroSelectionSystem _heroSelectionSystem;
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
+        private readonly ILobbyModel _model;
+        private readonly IUIViewFactory _viewFactory;
+        private readonly IViewConfigRegistry _viewConfigRegistry;
 
         private ILobbyView _view;
         private bool _isSubscribed = false;
@@ -30,45 +37,54 @@ namespace MythHunter.UI.Presenters
             ILobbySystem lobbySystem,
             IHeroSelectionSystem heroSelectionSystem,
             IEventBus eventBus,
-            IMythLogger logger)
+            IMythLogger logger,
+            ILobbyModel model,
+            IUIViewFactory viewFactory,
+            IViewConfigRegistry viewConfigRegistry)
         {
             _lobbySystem = lobbySystem;
             _heroSelectionSystem = heroSelectionSystem;
             _eventBus = eventBus;
             _logger = logger;
+            _model = model;
+            _viewFactory = viewFactory;
+            _viewConfigRegistry = viewConfigRegistry;
         }
 
-        public void Initialize(ILobbyView view)
+        public async void Initialize(ILobbyView view)
         {
             _view = view;
             SubscribeToEvents();
         }
 
-        public void StartLobby(int playerCount)
+        public async void StartLobby(int playerCount)
         {
             _lobbySystem.InitializeLobby(playerCount);
 
-            // Відображаємо доступних героїв
-            _view.PopulateHeroCards(GetAvailableHeroes());
-
-            // Оновлюємо UI мани
-            _view.UpdateMana(GetRemainingMana(), 4); // 4 - стандартна кількість мани
-
-            _logger.LogInfo($"Lobby UI initialized for {playerCount} players", "LobbyUI");
+            var config = _viewConfigRegistry.Get("Lobby");
+            if (config != null)
+            {
+                _view = await _viewFactory.CreateViewAsync<LobbyView>(config.PrefabPath);
+                _view.PopulateHeroCards(GetAvailableHeroes());
+                _view.UpdateMana(GetRemainingMana(), 4);
+            }
+            else
+            {
+                _logger.LogError("LobbyViewConfig не знайдено для ViewId: 'Lobby'", "LobbyPresenter");
+            }
         }
 
         public void OnHeroSelected(string archetypeId)
         {
             if (_lobbySystem.SelectHero(archetypeId))
             {
-                // Оновлюємо UI
                 _view.UpdateSelectedHeroes(GetSelectedHeroes());
                 _view.UpdateMana(GetRemainingMana(), 4);
                 _view.PopulateHeroCards(GetAvailableHeroes());
             }
             else
             {
-                _view.ShowError("Не вдалося вибрати героя. Перевірте наявність мани та доступність героя.");
+                _view.ShowError("Не вдалося вибрати героя. Перевірте мана або доступність героя.");
             }
         }
 
@@ -86,7 +102,6 @@ namespace MythHunter.UI.Presenters
             }
 
             _view.ShowGameStartingMessage();
-
             if (await _lobbySystem.StartGameAsync())
             {
                 _logger.LogInfo("Game started successfully", "LobbyUI");
@@ -99,111 +114,48 @@ namespace MythHunter.UI.Presenters
 
         public List<HeroCardModel> GetAvailableHeroes()
         {
-            var availableHeroes = _lobbySystem.GetAvailableHeroes();
-            var heroModels = new List<HeroCardModel>();
-
-            foreach (var archetypeId in availableHeroes)
-            {
-                var heroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
-
-                if (heroInfo != null)
+            return _lobbySystem.GetAvailableHeroes()
+                .Select(id => _heroSelectionSystem.GetHeroInfo(id))
+                .Where(info => info != null)
+                .Select(info => new HeroCardModel
                 {
-                    heroModels.Add(new HeroCardModel
-                    {
-                        ArchetypeId = heroInfo.ArchetypeId,
-                        Name = heroInfo.Name,
-                        Description = heroInfo.Description,
-                        Race = heroInfo.Race,
-                        Class = heroInfo.Class,
-                        ManaCost = heroInfo.ManaCost,
-                        IconPath = heroInfo.IconPath,
-                        IsSelected = false,
-                        IsSelectable = true
-                    });
-                }
-            }
-
-            return heroModels;
+                    ArchetypeId = info.ArchetypeId,
+                    Name = info.Name,
+                    Description = info.Description,
+                    Race = info.Race,
+                    Class = info.Class,
+                    ManaCost = info.ManaCost,
+                    IconPath = info.IconPath,
+                    IsSelectable = true,
+                    IsSelected = false
+                }).ToList();
         }
 
         public List<HeroCardModel> GetSelectedHeroes()
         {
-            var selectedHeroes = _lobbySystem.GetSelectedHeroes();
-            var heroModels = new List<HeroCardModel>();
-
-            foreach (var archetypeId in selectedHeroes)
-            {
-                var heroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
-
-                if (heroInfo != null)
+            return _lobbySystem.GetSelectedHeroes()
+                .Select(id => _heroSelectionSystem.GetHeroInfo(id))
+                .Where(info => info != null)
+                .Select(info => new HeroCardModel
                 {
-                    heroModels.Add(new HeroCardModel
-                    {
-                        ArchetypeId = heroInfo.ArchetypeId,
-                        Name = heroInfo.Name,
-                        Description = heroInfo.Description,
-                        Race = heroInfo.Race,
-                        Class = heroInfo.Class,
-                        ManaCost = heroInfo.ManaCost,
-                        IconPath = heroInfo.IconPath,
-                        IsSelected = true,
-                        IsSelectable = false
-                    });
-                }
-            }
-
-            return heroModels;
+                    ArchetypeId = info.ArchetypeId,
+                    Name = info.Name,
+                    Description = info.Description,
+                    Race = info.Race,
+                    Class = info.Class,
+                    ManaCost = info.ManaCost,
+                    IconPath = info.IconPath,
+                    IsSelectable = false,
+                    IsSelected = true
+                }).ToList();
         }
 
         public int GetRemainingMana()
         {
-            // Отримуємо через доступні героїв, оскільки нам потрібен контекст поточного гравця
-            var heroInfos = _heroSelectionSystem.GetHeroesByCategory().Values.SelectMany(x => x).ToList();
-            var availableHeroes = _lobbySystem.GetAvailableHeroes();
-
-            // Знаходимо героя з максимальною вартістю, якого ще можна вибрати
-            int maxAvailableCost = 0;
-
-            foreach (var archetypeId in availableHeroes)
-            {
-                var heroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
-
-                if (heroInfo != null && heroInfo.ManaCost > maxAvailableCost)
-                {
-                    maxAvailableCost = heroInfo.ManaCost;
-                }
-            }
-
-            // Якщо немає доступних героїв, повертаємо 0
-            if (availableHeroes.Count == 0)
-            {
-                foreach (var archetypeId in heroInfos)
-                {
-                    var heroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
-
-                    // Перевіряємо героїв зі зростаючою вартістю
-                    for (int manaCost = 1; manaCost <= 4; manaCost++)
-                    {
-                        if (heroInfo != null && heroInfo.ManaCost == manaCost && !availableHeroes.Contains(archetypeId))
-                        {
-                            // Якщо знайшли героя, якого не можна вибрати, це означає, що залишилось менше мани
-                            return manaCost - 1;
-                        }
-                    }
-                }
-
-                return 0;
-            }
-
-            return maxAvailableCost;
+            return _lobbySystem.GetRemainingManaForCurrentPlayer();
         }
 
-        public float GetRemainingTime()
-        {
-            // У справжній реалізації це значення можна було б отримати з компонента LobbyStateComponent
-            // Для прикладу, повертаємо фіксоване значення
-            return 300f; // 5 хвилин
-        }
+        public float GetRemainingTime() => 300f;
 
         public void SubscribeToEvents()
         {
@@ -211,9 +163,9 @@ namespace MythHunter.UI.Presenters
                 return;
 
             _eventBus.Subscribe<LobbyInitializedEvent>(OnLobbyInitialized);
-            _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectEvent);
+            _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-            _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnSelectionTimerUpdated);
+            _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
 
             _isSubscribed = true;
         }
@@ -224,61 +176,46 @@ namespace MythHunter.UI.Presenters
                 return;
 
             _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
-            _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectEvent);
+            _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-            _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnSelectionTimerUpdated);
+            _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
 
             _isSubscribed = false;
         }
 
         private void OnLobbyInitialized(LobbyInitializedEvent evt)
         {
-            // Оновлюємо UI при ініціалізації лоббі
             _view.PopulateHeroCards(GetAvailableHeroes());
             _view.UpdateMana(evt.ManaPerPlayer, evt.ManaPerPlayer);
             _view.UpdateTimer(evt.SelectionTimeLimit, evt.SelectionTimeLimit);
         }
 
-        private void OnHeroSelectEvent(HeroSelectedEvent evt)
+        private void OnHeroSelectedEvent(HeroSelectedEvent evt)
         {
-            // Оновлюємо UI при виборі героя
-            if (_view != null)
-            {
-                _view.UpdateSelectedHeroes(GetSelectedHeroes());
-                _view.UpdateMana(evt.RemainingMana, 4);
-                _view.PopulateHeroCards(GetAvailableHeroes());
-            }
+            _view.UpdateSelectedHeroes(GetSelectedHeroes());
+            _view.UpdateMana(evt.RemainingMana, 4);
+            _view.PopulateHeroCards(GetAvailableHeroes());
         }
 
         private void OnSelectionConfirmedEvent(SelectionConfirmedEvent evt)
         {
-            // Оновлюємо статус гравця
-            if (_view != null)
-            {
-                _view.ShowPlayerStatus(evt.PlayerIndex, true);
+            _view.ShowPlayerStatus(evt.PlayerIndex, true);
 
-                // Якщо всі гравці готові, показуємо повідомлення про початок гри
-                if (_lobbySystem.AreAllPlayersReady())
-                {
-                    _view.ShowGameStartingMessage();
-                }
-                else
-                {
-                    // Якщо вибір гравця завершено, оновлюємо доступних героїв для наступного гравця
-                    _view.PopulateHeroCards(GetAvailableHeroes());
-                    _view.UpdateSelectedHeroes(GetSelectedHeroes());
-                    _view.UpdateMana(GetRemainingMana(), 4);
-                }
+            if (_lobbySystem.AreAllPlayersReady())
+            {
+                _view.ShowGameStartingMessage();
+            }
+            else
+            {
+                _view.PopulateHeroCards(GetAvailableHeroes());
+                _view.UpdateSelectedHeroes(GetSelectedHeroes());
+                _view.UpdateMana(GetRemainingMana(), 4);
             }
         }
 
-        private void OnSelectionTimerUpdated(SelectionTimerUpdatedEvent evt)
+        private void OnTimerUpdated(SelectionTimerUpdatedEvent evt)
         {
-            // Оновлюємо таймер
-            if (_view != null)
-            {
-                _view.UpdateTimer(evt.RemainingTime, 300f); // 5 хвилин
-            }
+            _view.UpdateTimer(evt.RemainingTime, 300f);
         }
     }
 }

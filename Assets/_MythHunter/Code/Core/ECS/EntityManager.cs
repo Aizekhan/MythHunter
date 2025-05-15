@@ -64,7 +64,17 @@ namespace MythHunter.Core.ECS
                 
             return (TComponent)_components[entityId][typeof(TComponent)];
         }
-        
+        public bool TryGetComponent<T>(int entityId, out T component) where T : struct, IComponent
+        {
+            if (HasComponent<T>(entityId))
+            {
+                component = GetComponent<T>(entityId);
+                return true;
+            }
+
+            component = default;
+            return false;
+        }
         public void RemoveComponent<TComponent>(int entityId) where TComponent : IComponent
         {
             if (!HasComponent<TComponent>(entityId))

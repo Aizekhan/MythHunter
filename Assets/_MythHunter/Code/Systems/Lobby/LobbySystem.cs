@@ -439,5 +439,19 @@ namespace MythHunter.Systems.Lobby
 
             return true;
         }
+        public int GetRemainingManaForCurrentPlayer()
+        {
+            if (!_isInitialized || _currentPlayerIndex >= _playerEntityIds.Count)
+                return 0;
+
+            var playerEntityId = _playerEntityIds[_currentPlayerIndex];
+
+            if (_entityManager.TryGetComponent<LobbyStateComponent>(playerEntityId, out var state))
+            {
+                return state.RemainingMana;
+            }
+
+            return 0;
+        }
     }
 }
