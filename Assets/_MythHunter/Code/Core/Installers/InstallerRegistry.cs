@@ -32,7 +32,9 @@ new EntitiesInstaller(),
 new GameplayInstaller(),
 new MovementInstaller(),
 new CombatSystemInstaller(),
-
+   new HeroSystemInstaller(),
+     // Додаємо інсталятор лоббі
+        new LobbyInstaller(),
 //Debug
 new DebugToolsInstaller()
    };

@@ -43,7 +43,8 @@ namespace MythHunter.Core.Installers
             BindSingleton<IMainMenuModel, MainMenuModel>(container);
             BindSingleton<IGameplayUIModel, GameplayUIModel>(container);
             BindSingleton<IInventoryModel, InventoryModel>(container);
-
+            // Реєструємо UI презентери
+            BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             // Реєстрація презентерів
             Bind<IMainMenuPresenter, MainMenuPresenter>(container);
             Bind<IGameplayUIPresenter, GameplayUIPresenter>(container);

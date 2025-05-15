@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
+  m_Name: Hero_DarkElf_Ranger_eea78cb8
+  m_EditorClassIdentifier: 
+  ArchetypeId: Hero_DarkElf_Ranger_eea78cb8
+  HeroName: Atakhan
+  Description: "\u041C\u0430\u0439\u0441\u0442\u0435\u0440\u043D\u0438\u0439 \u043B\u0443\u0447\u043D\u0438\u043A,
+    \u0449\u043E \u0441\u043F\u0435\u0446\u0456\u0430\u043B\u0456\u0437\u0443\u0454\u0442\u044C\u0441\u044F
+    \u043D\u0430 \u0434\u0430\u043B\u044C\u043D\u0456\u0445 \u0430\u0442\u0430\u043A\u0430\u0445"
+  Race: 3
+  Class: 2
+  BaseHealth: 85
+  BaseAttack: 11
+  BaseDefense: 4
+  BaseMoveSpeed: 4.5
+  BaseMovementPoints: 110
+  CriticalChance: 0.3
+  CriticalMultiplier: 2.2
+  DodgeChance: 0.2
+  BlockChance: 0.1
+  AttackSpeed: 1.5
+  MaxRage: 90
+  MaxConcentration: 110
+  ActiveAbilityId: aimed_shot
+  PassiveAbilityIds:
+  - shadow_stealth
+  AggressiveAttackMod: 2
+  AggressiveDefenseMod: 0.7
+  AggressiveDodgeMod: 0.7
+  AggressiveBlockMod: 0.5
+  DefensiveAttackMod: 0.5
+  DefensiveDefenseMod: 1.3
+  DefensiveDodgeMod: 1.3
+  DefensiveBlockMod: 1.5
+  VisionRadius: 7
+  VisionAngle: 140
+  TeamId: 0
