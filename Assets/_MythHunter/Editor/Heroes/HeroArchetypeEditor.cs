@@ -1,135 +1,163 @@
-// Assets/_MythHunter/Code/Editor/Heroes/HeroArchetypeEditor.cs
-#if UNITY_EDITOR
+// Assets/_MythHunter/Code/Editor/HeroArchetypeEditor.cs
+
 using UnityEngine;
 using UnityEditor;
 using MythHunter.Entities.Archetypes;
+using MythHunter.Components.Character;
+using MythHunter.Data;
+using System.Linq;
 
-namespace MythHunter.Editor.Heroes
+namespace MythHunter.Editor
 {
     [CustomEditor(typeof(HeroArchetypeSO))]
     public class HeroArchetypeEditor : UnityEditor.Editor
     {
-        private bool showAdvancedSettings = false;
+        private bool _showBasicStats = true;
+        private bool _showCombatStats = true;
+        private bool _showMagicStats = true;
+        private bool _showStatusStats = true;
+        private bool _showEconomyStats = true;
+        private bool _showInventoryStats = true;
+        private bool _showPassiveSkills = true;
+        private bool _showActiveSkills = true;
 
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
+
             HeroArchetypeSO heroArchetype = (HeroArchetypeSO)target;
 
-            // Основна інформація
-            EditorGUILayout.LabelField("Основна інформація про героя", EditorStyles.boldLabel);
+            // Відображення базових полів
+            EditorGUILayout.LabelField("UI", EditorStyles.boldLabel);
 
-            // Автоматичне генерування ID, якщо порожній
-            if (string.IsNullOrEmpty(heroArchetype.ArchetypeId))
+            // Icon Path з вибором зображення
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("IconPath"));
+
+            if (GUILayout.Button("Browse", GUILayout.Width(60)))
             {
-                heroArchetype.ArchetypeId = "Hero_" + System.Guid.NewGuid().ToString().Substring(0, 8);
-                EditorUtility.SetDirty(heroArchetype);
+                string path = EditorUtility.OpenFilePanel("Select Hero Icon", "Assets/Resources", "png,jpg,jpeg");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    // Перетворення шляху в формат ресурсів Unity
+                    string resourcePath = path.Replace(Application.dataPath + "/Resources/", "");
+                    resourcePath = resourcePath.Replace(".png", "").Replace(".jpg", "").Replace(".jpeg", "");
+                    serializedObject.FindProperty("IconPath").stringValue = resourcePath;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+
+            // Попередній перегляд іконки
+            if (!string.IsNullOrEmpty(heroArchetype.IconPath))
+            {
+                Sprite icon = UnityEngine.Resources.Load<Sprite>(heroArchetype.IconPath);
+                if (icon != null)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    Rect previewRect = GUILayoutUtility.GetRect(64, 64);
+                    GUI.DrawTexture(previewRect, icon.texture, ScaleMode.ScaleToFit);
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox($"Icon not found at path: {heroArchetype.IconPath}", MessageType.Warning);
+                }
             }
 
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.TextField("Архетип ID", heroArchetype.ArchetypeId);
-            EditorGUI.EndDisabledGroup();
-
-            heroArchetype.HeroName = EditorGUILayout.TextField("Ім'я героя", heroArchetype.HeroName);
-            heroArchetype.Description = EditorGUILayout.TextArea(heroArchetype.Description, GUILayout.Height(60));
-
+            // Відображення ідентифікаційних полів
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Ідентифікація", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("ArchetypeId"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("HeroName"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Description"));
 
-            // Раса і клас
-            EditorGUILayout.LabelField("Параметри героя", EditorStyles.boldLabel);
-            heroArchetype.Race = (HeroRace)EditorGUILayout.EnumPopup("Раса", heroArchetype.Race);
-            heroArchetype.Class = (HeroClass)EditorGUILayout.EnumPopup("Клас", heroArchetype.Class);
-
+            // Відображення расових та класових характеристик
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Раса та клас", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Race"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Class"));
 
-            // Основні характеристики
-            EditorGUILayout.LabelField("Базові характеристики", EditorStyles.boldLabel);
-            heroArchetype.BaseHealth = EditorGUILayout.FloatField("Здоров'я", heroArchetype.BaseHealth);
-            heroArchetype.BaseAttack = EditorGUILayout.FloatField("Атака", heroArchetype.BaseAttack);
-            heroArchetype.BaseDefense = EditorGUILayout.FloatField("Захист", heroArchetype.BaseDefense);
-            heroArchetype.BaseMoveSpeed = EditorGUILayout.FloatField("Швидкість руху", heroArchetype.BaseMoveSpeed);
-            heroArchetype.BaseMovementPoints = EditorGUILayout.FloatField("Очки руху", heroArchetype.BaseMovementPoints);
-
+            // Відображення соціальних навичок
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Соціальні навички", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Religion"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Ideology"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_professions"));
 
-            // Бойові характеристики
-            EditorGUILayout.LabelField("Бойові характеристики", EditorStyles.boldLabel);
-            heroArchetype.CriticalChance = EditorGUILayout.Slider("Шанс критичного удару", heroArchetype.CriticalChance, 0f, 1f);
-            heroArchetype.CriticalMultiplier = EditorGUILayout.FloatField("Множник критичного удару", heroArchetype.CriticalMultiplier);
-            heroArchetype.DodgeChance = EditorGUILayout.Slider("Шанс ухилення", heroArchetype.DodgeChance, 0f, 1f);
-            heroArchetype.BlockChance = EditorGUILayout.Slider("Шанс блокування", heroArchetype.BlockChance, 0f, 1f);
-            heroArchetype.AttackSpeed = EditorGUILayout.FloatField("Швидкість атаки", heroArchetype.AttackSpeed);
-
+            // Відображення характеристик по категоріях
             EditorGUILayout.Space();
+            DrawStatCategory(heroArchetype, StatCategory.Basic, ref _showBasicStats, "Базові характеристики");
+            DrawStatCategory(heroArchetype, StatCategory.Combat, ref _showCombatStats, "Бойові характеристики");
+            DrawStatCategory(heroArchetype, StatCategory.Magic, ref _showMagicStats, "Магічні характеристики");
+            DrawStatCategory(heroArchetype, StatCategory.Status, ref _showStatusStats, "Статусні ефекти");
+            DrawStatCategory(heroArchetype, StatCategory.Economy, ref _showEconomyStats, "Економічні характеристики");
+            DrawStatCategory(heroArchetype, StatCategory.Inventory, ref _showInventoryStats, "Інвентар");
 
-            // Ресурси
-            EditorGUILayout.LabelField("Ресурси", EditorStyles.boldLabel);
-            heroArchetype.MaxRage = EditorGUILayout.FloatField("Максимальна лють", heroArchetype.MaxRage);
-            heroArchetype.MaxConcentration = EditorGUILayout.FloatField("Максимальна концентрація", heroArchetype.MaxConcentration);
-
+            // Відображення навичок
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Навички", EditorStyles.boldLabel);
 
-            // Здібності
-            EditorGUILayout.LabelField("Спеціальні здібності", EditorStyles.boldLabel);
-            heroArchetype.ActiveAbilityId = EditorGUILayout.TextField("Активна здібність", heroArchetype.ActiveAbilityId);
-
-            EditorGUILayout.LabelField("Пасивні здібності");
-            if (heroArchetype.PassiveAbilityIds == null)
-                heroArchetype.PassiveAbilityIds = new System.Collections.Generic.List<string>();
-
-            int passiveCount = EditorGUILayout.IntField("Кількість пасивних здібностей", heroArchetype.PassiveAbilityIds.Count);
-
-            // Змінюємо розмір списку
-            while (heroArchetype.PassiveAbilityIds.Count < passiveCount)
-                heroArchetype.PassiveAbilityIds.Add("");
-            while (heroArchetype.PassiveAbilityIds.Count > passiveCount)
-                heroArchetype.PassiveAbilityIds.RemoveAt(heroArchetype.PassiveAbilityIds.Count - 1);
-
-            for (int i = 0; i < heroArchetype.PassiveAbilityIds.Count; i++)
+            _showPassiveSkills = EditorGUILayout.Foldout(_showPassiveSkills, "Пасивні навички", true);
+            if (_showPassiveSkills)
             {
-                heroArchetype.PassiveAbilityIds[i] = EditorGUILayout.TextField($"Пасивна здібність {i + 1}", heroArchetype.PassiveAbilityIds[i]);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_passiveSkills"), true);
             }
 
-            EditorGUILayout.Space();
-
-            // Розділ стилів бою
-            EditorGUILayout.LabelField("Стилі бою", EditorStyles.boldLabel);
-
-            // Агресивний стиль
-            EditorGUILayout.LabelField("Агресивний стиль", EditorStyles.boldLabel);
-            heroArchetype.AggressiveAttackMod = EditorGUILayout.Slider("Модифікатор атаки", heroArchetype.AggressiveAttackMod, 0.5f, 2f);
-            heroArchetype.AggressiveDefenseMod = EditorGUILayout.Slider("Модифікатор захисту", heroArchetype.AggressiveDefenseMod, 0.5f, 2f);
-            heroArchetype.AggressiveDodgeMod = EditorGUILayout.Slider("Модифікатор ухилення", heroArchetype.AggressiveDodgeMod, 0.5f, 2f);
-            heroArchetype.AggressiveBlockMod = EditorGUILayout.Slider("Модифікатор блокування", heroArchetype.AggressiveBlockMod, 0.5f, 2f);
-
-            // Захисний стиль
-            EditorGUILayout.LabelField("Захисний стиль", EditorStyles.boldLabel);
-            heroArchetype.DefensiveAttackMod = EditorGUILayout.Slider("Модифікатор атаки", heroArchetype.DefensiveAttackMod, 0.5f, 2f);
-            heroArchetype.DefensiveDefenseMod = EditorGUILayout.Slider("Модифікатор захисту", heroArchetype.DefensiveDefenseMod, 0.5f, 2f);
-            heroArchetype.DefensiveDodgeMod = EditorGUILayout.Slider("Модифікатор ухилення", heroArchetype.DefensiveDodgeMod, 0.5f, 2f);
-            heroArchetype.DefensiveBlockMod = EditorGUILayout.Slider("Модифікатор блокування", heroArchetype.DefensiveBlockMod, 0.5f, 2f);
-
-            EditorGUILayout.Space();
-
-            // Додаткові настройки
-            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Додаткові настройки");
-            if (showAdvancedSettings)
+            _showActiveSkills = EditorGUILayout.Foldout(_showActiveSkills, "Активні навички", true);
+            if (_showActiveSkills)
             {
-                EditorGUILayout.LabelField("Поле зору", EditorStyles.boldLabel);
-                heroArchetype.VisionRadius = EditorGUILayout.FloatField("Радіус огляду", heroArchetype.VisionRadius);
-                heroArchetype.VisionAngle = EditorGUILayout.Slider("Кут огляду", heroArchetype.VisionAngle, 1f, 360f);
-
-                EditorGUILayout.Space();
-
-                EditorGUILayout.LabelField("Команда", EditorStyles.boldLabel);
-                heroArchetype.TeamId = EditorGUILayout.IntField("ID команди", heroArchetype.TeamId);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_activeSkills"), true);
             }
 
-            // Зберігаємо зміни
-            if (GUI.changed)
+            // Відображення скінів
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Скіни", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("Skins"), true);
+
+            // Відображення команди
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Команда", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("TeamId"));
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawStatCategory(HeroArchetypeSO heroArchetype, StatCategory category, ref bool showCategory, string categoryName)
+        {
+            showCategory = EditorGUILayout.Foldout(showCategory, categoryName, true);
+
+            if (showCategory)
             {
-                EditorUtility.SetDirty(heroArchetype);
+                EditorGUI.indentLevel++;
+
+                var definitions = StatRegistry.GetDefinitionsByCategory(category).ToList();
+                foreach (var def in definitions)
+                {
+                    float currentValue = heroArchetype.GetStat(def.Type);
+                    float newValue = EditorGUILayout.Slider(def.Name, currentValue, def.MinValue, def.MaxValue);
+
+                    if (newValue != currentValue)
+                    {
+                        heroArchetype.SetStat(def.Type, newValue);
+                        EditorUtility.SetDirty(heroArchetype);
+                    }
+
+                    // Додаємо підказку з описом
+                    if (!string.IsNullOrEmpty(def.Description))
+                    {
+                        Rect lastRect = GUILayoutUtility.GetLastRect();
+                        GUI.Label(lastRect, new GUIContent("", def.Description));
+                        EditorGUILayout.BeginHorizontal();
+                        GUILayout.Space(EditorGUI.indentLevel * 16);
+                        EditorGUILayout.LabelField(def.Description, EditorStyles.miniLabel);
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+
+                EditorGUI.indentLevel--;
             }
         }
     }
 }
-#endif

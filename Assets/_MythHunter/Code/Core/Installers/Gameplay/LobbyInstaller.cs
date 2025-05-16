@@ -2,6 +2,7 @@
 using MythHunter.Core.DI;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Lobby;
+using MythHunter.UI.Presenters;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
@@ -19,7 +20,7 @@ namespace MythHunter.Core.Installers
             // Реєструємо системи лоббі
             BindSingleton<IHeroSelectionSystem, HeroSelectionSystem>(container);
             BindSingleton<ILobbySystem, LobbySystem>(container);
-
+            BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             // Отримуємо реєстр систем
             var systemRegistry = container.Resolve<ISystemRegistry>();
 

@@ -2,7 +2,8 @@
 using System;
 using MythHunter.Components.Combat;
 using MythHunter.Entities.Archetypes;
-
+using MythHunter.Entities.Heroes;
+using MythHunter.Services.Heroes;
 namespace MythHunter.Events.Domain.Gameplay
 {
     /// <summary>

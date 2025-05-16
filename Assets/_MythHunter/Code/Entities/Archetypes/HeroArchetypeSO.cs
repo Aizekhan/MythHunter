@@ -1,154 +1,197 @@
 // Assets/_MythHunter/Code/Entities/Archetypes/HeroArchetypeSO.cs
+
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using MythHunter.Components.Core;
 using MythHunter.Components.Combat;
 using MythHunter.Components.Movement;
-
+using MythHunter.Components.Character;
+using MythHunter.Entities.Heroes;
 namespace MythHunter.Entities.Archetypes
 {
     [CreateAssetMenu(fileName = "HeroArchetype", menuName = "MythHunter/Heroes/Hero Archetype")]
     public class HeroArchetypeSO : ScriptableObject
     {
         [Header("UI")]
-        [SerializeField] private string _iconPath;
-        public string IconPath => _iconPath;
+        [SerializeField] public string IconPath; // Шлях до іконки героя
 
         [Header("Ідентифікація")]
         public string ArchetypeId;
         public string HeroName;
         public string Description;
 
-        [Header("Расові характеристики")]
+        [Header("Расові та класові характеристики")]
         public HeroRace Race;
-
-        [Header("Класові характеристики")]
         public HeroClass Class;
 
-        [Header("Базові характеристики")]
-        public float BaseHealth;
-        public float BaseAttack;
-        public float BaseDefense;
-        public float BaseMoveSpeed;
-        public float BaseMovementPoints;
+        [Header("Соціальні навички")]
+        public string Religion;
+        public string Ideology;
+        [SerializeField] private string[] _professions = new string[3];
 
-        [Header("Бойові характеристики")]
-        public float CriticalChance;
-        public float CriticalMultiplier;
-        public float DodgeChance;
-        public float BlockChance;
-        public float AttackSpeed;
+        [Header("Характеристики")]
+        [SerializeField] private StatValue[] _stats = new StatValue[0];
 
-        [Header("Ресурси")]
-        public float MaxRage;
-        public float MaxConcentration;
+        // Клас для представлення характеристик в інспекторі
+        [Serializable]
+        public class StatValue
+        {
+            public StatType Type;
+            public float Value;
+        }
 
-        [Header("Спеціальні здібності")]
-        public string ActiveAbilityId;
-        public List<string> PassiveAbilityIds = new List<string>();
+        [Header("Зображення та скіни")]
+        public string[] Skins = new string[0];
 
-        [Header("Стилі бою")]
-        [Range(0.5f, 2f)] public float AggressiveAttackMod = 1.5f;
-        [Range(0.5f, 2f)] public float AggressiveDefenseMod = 0.7f;
-        [Range(0.5f, 2f)] public float AggressiveDodgeMod = 0.7f;
-        [Range(0.5f, 2f)] public float AggressiveBlockMod = 0.5f;
+        [Header("Навички")]
+        [SerializeField] private SkillValue[] _passiveSkills = new SkillValue[0];
+        [SerializeField] private SkillValue[] _activeSkills = new SkillValue[0];
 
-        [Range(0.5f, 2f)] public float DefensiveAttackMod = 0.7f;
-        [Range(0.5f, 2f)] public float DefensiveDefenseMod = 1.5f;
-        [Range(0.5f, 2f)] public float DefensiveDodgeMod = 1.3f;
-        [Range(0.5f, 2f)] public float DefensiveBlockMod = 1.5f;
-
-        [Header("Поле зору")]
-        public float VisionRadius = 5f;
-        public float VisionAngle = 120f;
+        // Клас для представлення навичок в інспекторі
+        [Serializable]
+        public class SkillValue
+        {
+            public string Id;
+            public int Level;
+        }
 
         [Header("Команда")]
         public int TeamId = 0;
 
         public void RegisterWithArchetypeSystem(ArchetypeTemplateRegistry registry)
         {
-            // Створення шаблону героя
+            // Створюємо компонент ідентифікації
+            var identityComponent = new HeroIdentityComponent
+            {
+                HeroID = ArchetypeId,
+                Name = HeroName,
+                Race = Race.ToString(),
+                Image = IconPath,
+                Skins = new List<string>(Skins)
+            };
+
+            // Створюємо компонент соціальних навичок
+            var socialComponent = new SocialSkillsComponent
+            {
+                Religion = Religion,
+                Ideology = Ideology,
+                Class = Class.ToString(),
+                Professions = _professions
+            };
+
+            // Створюємо компонент характеристик
+            var statsComponent = new StatsComponent();
+            statsComponent.Values = new Dictionary<StatType, float>();
+
+            // Заповнюємо значення характеристик
+            foreach (var stat in _stats)
+            {
+                statsComponent.Values[stat.Type] = stat.Value;
+            }
+
+            // Якщо характеристики не визначені, встановлюємо стандартні
+            if (_stats == null || _stats.Length == 0)
+            {
+                statsComponent.SetStat(StatType.Level, 1);
+                statsComponent.SetStat(StatType.HP, 100);
+                statsComponent.SetStat(StatType.Stamina, 100);
+                statsComponent.SetStat(StatType.Damage, 10);
+                statsComponent.SetStat(StatType.ArmorResistance, 10);
+            }
+
+            // Створюємо компонент навичок
+            var skillsComponent = new SkillsComponent
+            {
+                PassiveSkills = ConvertSkillValues(_passiveSkills),
+                ActiveSkills = ConvertSkillValues(_activeSkills)
+            };
+
+            // Створюємо компонент інвентаря з базовими значеннями
+            var inventoryComponent = new InventoryComponent
+            {
+                Items = new List<string>(),
+                EquippedItems = new EquippedItems(),
+                Bag = new Bag { Slots = (int)statsComponent.GetStat(StatType.BagSlots, 2), Elixirs = new List<string>() }
+            };
+
+            // Реєструємо шаблон героя з усіма компонентами
             registry.RegisterArchetypeTemplate(ArchetypeId)
-                .WithComponent(new NameComponent { Name = HeroName })
-                .WithComponent(new DescriptionComponent { Description = Description })
-                .WithComponent(new HealthComponent
-                {
-                    CurrentHealth = BaseHealth,
-                    MaxHealth = BaseHealth,
-                    RegenRate = 1f
-                })
-                .WithComponent(new CombatStatsComponent
-                {
-                    AttackPower = BaseAttack,
-                    Defense = BaseDefense,
-                    CriticalChance = CriticalChance,
-                    CriticalMultiplier = CriticalMultiplier,
-                    DodgeChance = DodgeChance,
-                    BlockChance = BlockChance,
-                    AttackSpeed = AttackSpeed,
-                    Rage = 0,
-                    MaxRage = MaxRage,
-                    Concentration = MaxConcentration,
-                    MaxConcentration = MaxConcentration,
-                    IsInCombat = false
-                })
-                .WithComponent(new MovementComponent
-                {
-                    MoveSpeed = BaseMoveSpeed,
-                    MovementPoints = BaseMovementPoints,
-                    MaxMovementPoints = BaseMovementPoints,
-                    IsMoving = false
-                })
-                .WithComponent(new VisibilityComponent
-                {
-                    VisionRadius = VisionRadius,
-                    VisionAngle = VisionAngle,
-                    IsVisible = true
-                })
+                .WithComponent(identityComponent)
+                .WithComponent(socialComponent)
+                .WithComponent(statsComponent)
+                .WithComponent(skillsComponent)
+                .WithComponent(inventoryComponent)
                 .WithComponent(new TeamComponent
                 {
                     TeamId = TeamId,
                     IsNeutral = false
                 })
-                .WithComponent(new CombatStyleComponent
+                .WithComponent(new VisibilityComponent
                 {
-                    CurrentStance = CombatStance.Balanced,
-                    DefaultStance = CombatStance.Balanced,
-                    AggressiveAttackMod = AggressiveAttackMod,
-                    AggressiveDefenseMod = AggressiveDefenseMod,
-                    AggressiveDodgeMod = AggressiveDodgeMod,
-                    AggressiveBlockMod = AggressiveBlockMod,
-                    DefensiveAttackMod = DefensiveAttackMod,
-                    DefensiveDefenseMod = DefensiveDefenseMod,
-                    DefensiveDodgeMod = DefensiveDodgeMod,
-                    DefensiveBlockMod = DefensiveBlockMod
-                })
-                .WithComponent(new CombatAbilityComponent
-                {
-                    ActiveAbilityId = ActiveAbilityId,
-                    PassiveAbilityIds = PassiveAbilityIds.ToArray(),
-                    IsActiveAbilityUsed = false
+                    VisionRadius = 5, // Значення за замовчуванням
+                    VisionAngle = 120,
+                    IsVisible = true
                 });
         }
-    }
 
-    public enum HeroRace
-    {
-        Human,
-        Dwarf,
-        Elf,
-        DarkElf,
-        Troll,
-        Goblin
-    }
+        private List<Skill> ConvertSkillValues(SkillValue[] skillValues)
+        {
+            var result = new List<Skill>();
 
-    public enum HeroClass
-    {
-        Warrior,
-        Rogue,
-        Ranger,
-        Mage,
-        Support,
-        Tank
+            if (skillValues != null)
+            {
+                foreach (var skillValue in skillValues)
+                {
+                    result.Add(new Skill
+                    {
+                        Id = skillValue.Id,
+                        Level = skillValue.Level
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        // Допоміжні методи для редактора
+        public void SetStat(StatType type, float value)
+        {
+            if (_stats == null)
+                _stats = new StatValue[0];
+
+            // Пошук існуючої характеристики
+            for (int i = 0; i < _stats.Length; i++)
+            {
+                if (_stats[i].Type == type)
+                {
+                    _stats[i].Value = value;
+                    return;
+                }
+            }
+
+            // Додавання нової характеристики
+            Array.Resize(ref _stats, _stats.Length + 1);
+            _stats[_stats.Length - 1] = new StatValue { Type = type, Value = value };
+        }
+
+        public float GetStat(StatType type, float defaultValue = 0f)
+        {
+            if (_stats == null)
+                return defaultValue;
+
+            foreach (var stat in _stats)
+            {
+                if (stat.Type == type)
+                    return stat.Value;
+            }
+
+            return defaultValue;
+        }
+
+        public IEnumerable<StatValue> GetAllStats()
+        {
+            return _stats ?? new StatValue[0];
+        }
     }
 }

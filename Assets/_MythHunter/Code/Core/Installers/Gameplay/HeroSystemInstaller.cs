@@ -16,8 +16,7 @@ namespace MythHunter.Core.Installers
             // Реєструємо реєстр архетипів героїв
             BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
 
-            // Реєструємо фабрику героїв
-            BindSingleton<IHeroFactory, HeroFactory>(container);
+           
 
             logger.LogInfo("Hero systems installed successfully", "Installer");
         }
