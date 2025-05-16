@@ -1,20 +1,23 @@
-// Path: Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs
+// Шлях: Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs
 using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities.Heroes;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Gameplay;
 using MythHunter.Utils.Logging;
+using MythHunter.Components.Combat;  // Для HealthComponent
+using MythHunter.Components.Character; // Для StatsComponent
 using System;
 using Cysharp.Threading.Tasks;
 using MythHunter.Entities;
+using System.Collections.Generic;
 
 namespace MythHunter.Systems.Heroes
 {
     public interface IHeroSystem : ISystem
     {
         int CreateHero(string archetypeId, string heroName, int teamId);
-        int CreateHeroWithComponents(string archetypeId, System.Collections.Generic.Dictionary<Type, object> overrides);
+        int CreateHeroWithComponents(string archetypeId, Dictionary<Type, object> overrides);
         UniTask<int> LoadHeroAsync(string heroId);
         UniTask SaveHeroAsync(int entityId, string heroId);
         void DestroyHero(int entityId);
@@ -27,8 +30,8 @@ namespace MythHunter.Systems.Heroes
         private readonly IRaceClassBonusSystem _bonusSystem;
         private readonly IComponentCacheRegistry _componentCacheRegistry;
 
-        private ComponentCache<Components.Character.StatsComponent> _statsCache;
-        private ComponentCache<Components.Character.HealthComponent> _healthCache;
+        private ComponentCache<StatsComponent> _statsCache;
+        private ComponentCache<HealthComponent> _healthCache;
 
         [Inject]
         public HeroSystem(
@@ -51,8 +54,8 @@ namespace MythHunter.Systems.Heroes
             base.Initialize();
 
             // Ініціалізація кешу компонентів
-            _statsCache = _componentCacheRegistry.GetCache<Components.Character.StatsComponent>();
-            _healthCache = _componentCacheRegistry.GetCache<Components.Character.HealthComponent>();
+            _statsCache = _componentCacheRegistry.GetCache<StatsComponent>();
+            _healthCache = _componentCacheRegistry.GetCache<HealthComponent>();
 
             // Підписка на події
             SubscribeToEvents();
@@ -79,7 +82,7 @@ namespace MythHunter.Systems.Heroes
             return _heroFactory.CreateHero(archetypeId, heroName, teamId);
         }
 
-        public int CreateHeroWithComponents(string archetypeId, System.Collections.Generic.Dictionary<Type, object> overrides)
+        public int CreateHeroWithComponents(string archetypeId, Dictionary<Type, object> overrides)
         {
             return _heroFactory.CreateCustomHero(archetypeId, overrides);
         }

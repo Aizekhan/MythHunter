@@ -1,8 +1,11 @@
-// Assets/_MythHunter/Code/Editor/Heroes/CreateHeroArchetypeWizard.cs
+// Шлях: Assets/_MythHunter/Code/Editor/Heroes/CreateHeroArchetypeWizard.cs
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using MythHunter.Entities.Archetypes;
+using MythHunter.Entities.Heroes;
+using MythHunter.Components.Character;
+using System.Collections.Generic;
 
 namespace MythHunter.Editor.Heroes
 {
@@ -36,196 +39,37 @@ namespace MythHunter.Editor.Heroes
             // Встановлюємо стандартні або копіюємо з шаблону
             if (baseTemplate != null)
             {
-                // Копіюємо значення з шаблону
+                // Копіюємо опис
                 heroArchetype.Description = baseTemplate.Description;
-                heroArchetype.BaseHealth = baseTemplate.BaseHealth;
-                heroArchetype.BaseAttack = baseTemplate.BaseAttack;
-                heroArchetype.BaseDefense = baseTemplate.BaseDefense;
-                heroArchetype.BaseMoveSpeed = baseTemplate.BaseMoveSpeed;
-                heroArchetype.BaseMovementPoints = baseTemplate.BaseMovementPoints;
-                heroArchetype.CriticalChance = baseTemplate.CriticalChance;
-                heroArchetype.CriticalMultiplier = baseTemplate.CriticalMultiplier;
-                heroArchetype.DodgeChance = baseTemplate.DodgeChance;
-                heroArchetype.BlockChance = baseTemplate.BlockChance;
-                heroArchetype.AttackSpeed = baseTemplate.AttackSpeed;
-                heroArchetype.MaxRage = baseTemplate.MaxRage;
-                heroArchetype.MaxConcentration = baseTemplate.MaxConcentration;
-                heroArchetype.ActiveAbilityId = baseTemplate.ActiveAbilityId;
-                heroArchetype.PassiveAbilityIds = new System.Collections.Generic.List<string>(baseTemplate.PassiveAbilityIds);
-                heroArchetype.AggressiveAttackMod = baseTemplate.AggressiveAttackMod;
-                heroArchetype.AggressiveDefenseMod = baseTemplate.AggressiveDefenseMod;
-                heroArchetype.AggressiveDodgeMod = baseTemplate.AggressiveDodgeMod;
-                heroArchetype.AggressiveBlockMod = baseTemplate.AggressiveBlockMod;
-                heroArchetype.DefensiveAttackMod = baseTemplate.DefensiveAttackMod;
-                heroArchetype.DefensiveDefenseMod = baseTemplate.DefensiveDefenseMod;
-                heroArchetype.DefensiveDodgeMod = baseTemplate.DefensiveDodgeMod;
-                heroArchetype.DefensiveBlockMod = baseTemplate.DefensiveBlockMod;
-                heroArchetype.VisionRadius = baseTemplate.VisionRadius;
-                heroArchetype.VisionAngle = baseTemplate.VisionAngle;
+
+                // Копіюємо всі характеристики
+                foreach (var statValue in baseTemplate.GetAllStats())
+                {
+                    heroArchetype.SetStat(statValue.Type, statValue.Value);
+                }
+
+                // Копіюємо навички
+                heroArchetype._passiveSkills = baseTemplate._passiveSkills;
+                heroArchetype._activeSkills = baseTemplate._activeSkills;
+
+                // Копіюємо візуальні та інші налаштування
+                heroArchetype.IconPath = baseTemplate.IconPath;
+                heroArchetype.Skins = baseTemplate.Skins;
                 heroArchetype.TeamId = baseTemplate.TeamId;
+
+                // Копіюємо соціальні навички
+                heroArchetype.Religion = baseTemplate.Religion;
+                heroArchetype.Ideology = baseTemplate.Ideology;
+                heroArchetype._professions = baseTemplate._professions;
             }
-            // Assets/_MythHunter/Code/Editor/Heroes/CreateHeroArchetypeWizard.cs (продовження)
             else
             {
-                // Стандартні значення залежно від класу
-                switch (heroClass)
-                {
-                    case HeroClass.Warrior:
-                        heroArchetype.Description = "Могутній воїн, що спеціалізується на ближньому бою";
-                        heroArchetype.BaseHealth = 120f;
-                        heroArchetype.BaseAttack = 10f;
-                        heroArchetype.BaseDefense = 8f;
-                        heroArchetype.BaseMoveSpeed = 4f;
-                        heroArchetype.BaseMovementPoints = 100f;
-                        heroArchetype.CriticalChance = 0.2f;
-                        heroArchetype.CriticalMultiplier = 2f;
-                        heroArchetype.DodgeChance = 0.1f;
-                        heroArchetype.BlockChance = 0.3f;
-                        heroArchetype.AttackSpeed = 1.0f;
-                        heroArchetype.MaxRage = 100f;
-                        heroArchetype.MaxConcentration = 100f;
-                        heroArchetype.ActiveAbilityId = "shield_block";
-                        heroArchetype.VisionRadius = 5f;
-                        heroArchetype.VisionAngle = 120f;
-                        break;
-
-                    case HeroClass.Rogue:
-                        heroArchetype.Description = "Спритний розбійник, що спеціалізується на несподіваних атаках";
-                        heroArchetype.BaseHealth = 90f;
-                        heroArchetype.BaseAttack = 12f;
-                        heroArchetype.BaseDefense = 5f;
-                        heroArchetype.BaseMoveSpeed = 5f;
-                        heroArchetype.BaseMovementPoints = 120f;
-                        heroArchetype.CriticalChance = 0.4f;
-                        heroArchetype.CriticalMultiplier = 2.5f;
-                        heroArchetype.DodgeChance = 0.3f;
-                        heroArchetype.BlockChance = 0.1f;
-                        heroArchetype.AttackSpeed = 1.2f;
-                        heroArchetype.MaxRage = 80f;
-                        heroArchetype.MaxConcentration = 120f;
-                        heroArchetype.ActiveAbilityId = "backstab";
-                        heroArchetype.VisionRadius = 6f;
-                        heroArchetype.VisionAngle = 100f;
-                        break;
-
-                    case HeroClass.Ranger:
-                        heroArchetype.Description = "Майстерний лучник, що спеціалізується на дальніх атаках";
-                        heroArchetype.BaseHealth = 85f;
-                        heroArchetype.BaseAttack = 11f;
-                        heroArchetype.BaseDefense = 4f;
-                        heroArchetype.BaseMoveSpeed = 4.5f;
-                        heroArchetype.BaseMovementPoints = 110f;
-                        heroArchetype.CriticalChance = 0.3f;
-                        heroArchetype.CriticalMultiplier = 2.2f;
-                        heroArchetype.DodgeChance = 0.2f;
-                        heroArchetype.BlockChance = 0.1f;
-                        heroArchetype.AttackSpeed = 1.5f;
-                        heroArchetype.MaxRage = 90f;
-                        heroArchetype.MaxConcentration = 110f;
-                        heroArchetype.ActiveAbilityId = "aimed_shot";
-                        heroArchetype.VisionRadius = 7f;
-                        heroArchetype.VisionAngle = 140f;
-                        break;
-
-                    case HeroClass.Mage:
-                        heroArchetype.Description = "Могутній заклинач з величезним магічним потенціалом";
-                        heroArchetype.BaseHealth = 75f;
-                        heroArchetype.BaseAttack = 15f;
-                        heroArchetype.BaseDefense = 3f;
-                        heroArchetype.BaseMoveSpeed = 3.5f;
-                        heroArchetype.BaseMovementPoints = 90f;
-                        heroArchetype.CriticalChance = 0.25f;
-                        heroArchetype.CriticalMultiplier = 3f;
-                        heroArchetype.DodgeChance = 0.15f;
-                        heroArchetype.BlockChance = 0.05f;
-                        heroArchetype.AttackSpeed = 0.8f;
-                        heroArchetype.MaxRage = 70f;
-                        heroArchetype.MaxConcentration = 150f;
-                        heroArchetype.ActiveAbilityId = "teleport";
-                        heroArchetype.VisionRadius = 6f;
-                        heroArchetype.VisionAngle = 130f;
-                        break;
-
-                    case HeroClass.Support:
-                        heroArchetype.Description = "Цілитель та підтримка, що допомагає союзникам у бою";
-                        heroArchetype.BaseHealth = 95f;
-                        heroArchetype.BaseAttack = 7f;
-                        heroArchetype.BaseDefense = 6f;
-                        heroArchetype.BaseMoveSpeed = 4f;
-                        heroArchetype.BaseMovementPoints = 100f;
-                        heroArchetype.CriticalChance = 0.15f;
-                        heroArchetype.CriticalMultiplier = 1.8f;
-                        heroArchetype.DodgeChance = 0.15f;
-                        heroArchetype.BlockChance = 0.15f;
-                        heroArchetype.AttackSpeed = 1.0f;
-                        heroArchetype.MaxRage = 80f;
-                        heroArchetype.MaxConcentration = 130f;
-                        heroArchetype.ActiveAbilityId = "healing_wave";
-                        heroArchetype.VisionRadius = 5.5f;
-                        heroArchetype.VisionAngle = 135f;
-                        break;
-
-                    case HeroClass.Tank:
-                        heroArchetype.Description = "Витривалий захисник, що здатен витримати багато ударів";
-                        heroArchetype.BaseHealth = 150f;
-                        heroArchetype.BaseAttack = 8f;
-                        heroArchetype.BaseDefense = 12f;
-                        heroArchetype.BaseMoveSpeed = 3.5f;
-                        heroArchetype.BaseMovementPoints = 90f;
-                        heroArchetype.CriticalChance = 0.1f;
-                        heroArchetype.CriticalMultiplier = 1.5f;
-                        heroArchetype.DodgeChance = 0.05f;
-                        heroArchetype.BlockChance = 0.4f;
-                        heroArchetype.AttackSpeed = 0.8f;
-                        heroArchetype.MaxRage = 120f;
-                        heroArchetype.MaxConcentration = 150f;
-                        heroArchetype.ActiveAbilityId = "taunt";
-                        heroArchetype.VisionRadius = 4.5f;
-                        heroArchetype.VisionAngle = 110f;
-                        break;
-                }
-
-                // Модифікатори для стилів бою
-                heroArchetype.AggressiveAttackMod = 1.5f;
-                heroArchetype.AggressiveDefenseMod = 0.7f;
-                heroArchetype.AggressiveDodgeMod = 0.7f;
-                heroArchetype.AggressiveBlockMod = 0.5f;
-
-                heroArchetype.DefensiveAttackMod = 0.7f;
-                heroArchetype.DefensiveDefenseMod = 1.5f;
-                heroArchetype.DefensiveDodgeMod = 1.3f;
-                heroArchetype.DefensiveBlockMod = 1.5f;
-
-                // Пасивні здібності залежно від раси
-                heroArchetype.PassiveAbilityIds = new System.Collections.Generic.List<string>();
-                switch (race)
-                {
-                    case HeroRace.Human:
-                        heroArchetype.PassiveAbilityIds.Add("versatility");
-                        break;
-                    case HeroRace.Dwarf:
-                        heroArchetype.PassiveAbilityIds.Add("stone_resilience");
-                        break;
-                    case HeroRace.Elf:
-                        heroArchetype.PassiveAbilityIds.Add("nature_affinity");
-                        break;
-                    case HeroRace.DarkElf:
-                        heroArchetype.PassiveAbilityIds.Add("shadow_stealth");
-                        break;
-                    case HeroRace.Troll:
-                        heroArchetype.PassiveAbilityIds.Add("regeneration");
-                        break;
-                    case HeroRace.Goblin:
-                        heroArchetype.PassiveAbilityIds.Add("cunning_tricks");
-                        break;
-                }
-
-                // За замовчуванням команда 0
-                heroArchetype.TeamId = 0;
+                // Встановлюємо базові значення залежно від класу та раси
+                SetDefaultStats(heroArchetype);
             }
 
             // Створюємо директорію, якщо її ще немає
-            if (!AssetDatabase.IsValidFolder("Assets/Resources/ScriptableObjects"))
+            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
                 AssetDatabase.CreateFolder("Assets", "Resources");
 
             if (!AssetDatabase.IsValidFolder("Assets/Resources/ScriptableObjects"))
@@ -242,6 +86,296 @@ namespace MythHunter.Editor.Heroes
             // Відкриваємо для редагування
             EditorUtility.FocusProjectWindow();
             Selection.activeObject = heroArchetype;
+        }
+
+        private void SetDefaultStats(HeroArchetypeSO heroArchetype)
+        {
+            // Опис за замовчуванням для класу
+            string description = GetDefaultDescription(heroClass);
+            heroArchetype.Description = description;
+
+            // Встановлюємо основні характеристики
+            SetDefaultStatsForClass(heroArchetype, heroClass);
+
+            // Додаємо расові бонуси
+            ApplyRacialBonuses(heroArchetype, race);
+
+            // Стилі бою
+            SetCombatStyles(heroArchetype);
+
+            // Порожні списки по замовчуванню
+            heroArchetype._passiveSkills = new System.Collections.Generic.List<HeroArchetypeSO.SkillValue>();
+            heroArchetype._activeSkills = new System.Collections.Generic.List<HeroArchetypeSO.SkillValue>();
+
+            // Додаємо стандартну активну здібність для класу
+            AddDefaultActiveSkill(heroArchetype, heroClass);
+
+            // Додаємо пасивну здібність для раси
+            AddDefaultPassiveSkill(heroArchetype, race);
+
+            // За замовчуванням команда 0
+            heroArchetype.TeamId = 0;
+        }
+
+        private string GetDefaultDescription(HeroClass heroClass)
+        {
+            switch (heroClass)
+            {
+                case HeroClass.Warrior:
+                    return "Могутній воїн, що спеціалізується на ближньому бою";
+                case HeroClass.Rogue:
+                    return "Спритний розбійник, що спеціалізується на несподіваних атаках";
+                case HeroClass.Ranger:
+                    return "Майстерний лучник, що спеціалізується на дальніх атаках";
+                case HeroClass.Mage:
+                    return "Могутній заклинач з величезним магічним потенціалом";
+                case HeroClass.Support:
+                    return "Цілитель та підтримка, що допомагає союзникам у бою";
+                case HeroClass.Tank:
+                    return "Витривалий захисник, що здатен витримати багато ударів";
+                default:
+                    return "Герой з невідомими здібностями";
+            }
+        }
+
+        private void SetDefaultStatsForClass(HeroArchetypeSO heroArchetype, HeroClass heroClass)
+        {
+            // Базові характеристики для всіх класів
+            heroArchetype.SetStat(StatType.Level, 1);
+
+            // Специфічні характеристики для класів
+            switch (heroClass)
+            {
+                case HeroClass.Warrior:
+                    heroArchetype.SetStat(StatType.HP, 120);
+                    heroArchetype.SetStat(StatType.HpRegen, 5);
+                    heroArchetype.SetStat(StatType.Stamina, 100);
+                    heroArchetype.SetStat(StatType.Damage, 10);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 8);
+                    heroArchetype.SetStat(StatType.CritChance, 20);
+                    heroArchetype.SetStat(StatType.CritPower, 2);
+                    heroArchetype.SetStat(StatType.BlockChance, 30);
+                    heroArchetype.SetStat(StatType.EvasionChance, 10);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 80);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 1.0f);
+                    heroArchetype.SetStat(StatType.VisionRadius, 5);
+                    break;
+
+                case HeroClass.Rogue:
+                    heroArchetype.SetStat(StatType.HP, 90);
+                    heroArchetype.SetStat(StatType.HpRegen, 3);
+                    heroArchetype.SetStat(StatType.Stamina, 120);
+                    heroArchetype.SetStat(StatType.Damage, 12);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 5);
+                    heroArchetype.SetStat(StatType.CritChance, 40);
+                    heroArchetype.SetStat(StatType.CritPower, 2.5f);
+                    heroArchetype.SetStat(StatType.BlockChance, 10);
+                    heroArchetype.SetStat(StatType.EvasionChance, 30);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 75);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 1.2f);
+                    heroArchetype.SetStat(StatType.VisionRadius, 6);
+                    break;
+
+                case HeroClass.Ranger:
+                    heroArchetype.SetStat(StatType.HP, 85);
+                    heroArchetype.SetStat(StatType.HpRegen, 3);
+                    heroArchetype.SetStat(StatType.Stamina, 110);
+                    heroArchetype.SetStat(StatType.Damage, 11);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 4);
+                    heroArchetype.SetStat(StatType.CritChance, 30);
+                    heroArchetype.SetStat(StatType.CritPower, 2.2f);
+                    heroArchetype.SetStat(StatType.BlockChance, 10);
+                    heroArchetype.SetStat(StatType.EvasionChance, 20);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 90);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 1.5f);
+                    heroArchetype.SetStat(StatType.VisionRadius, 7);
+                    break;
+
+                case HeroClass.Mage:
+                    heroArchetype.SetStat(StatType.HP, 75);
+                    heroArchetype.SetStat(StatType.HpRegen, 2);
+                    heroArchetype.SetStat(StatType.Stamina, 90);
+                    heroArchetype.SetStat(StatType.Damage, 15);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 3);
+                    heroArchetype.SetStat(StatType.CritChance, 25);
+                    heroArchetype.SetStat(StatType.CritPower, 3);
+                    heroArchetype.SetStat(StatType.BlockChance, 5);
+                    heroArchetype.SetStat(StatType.EvasionChance, 15);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 85);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 0.8f);
+                    heroArchetype.SetStat(StatType.MagicChance, 90);
+                    heroArchetype.SetStat(StatType.MagicPower, 20);
+                    heroArchetype.SetStat(StatType.VisionRadius, 6);
+                    break;
+
+                case HeroClass.Support:
+                    heroArchetype.SetStat(StatType.HP, 95);
+                    heroArchetype.SetStat(StatType.HpRegen, 6);
+                    heroArchetype.SetStat(StatType.Stamina, 100);
+                    heroArchetype.SetStat(StatType.Damage, 7);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 6);
+                    heroArchetype.SetStat(StatType.CritChance, 15);
+                    heroArchetype.SetStat(StatType.CritPower, 1.8f);
+                    heroArchetype.SetStat(StatType.BlockChance, 15);
+                    heroArchetype.SetStat(StatType.EvasionChance, 15);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 80);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 1.0f);
+                    heroArchetype.SetStat(StatType.MagicChance, 70);
+                    heroArchetype.SetStat(StatType.MagicPower, 15);
+                    heroArchetype.SetStat(StatType.VisionRadius, 5.5f);
+                    break;
+
+                case HeroClass.Tank:
+                    heroArchetype.SetStat(StatType.HP, 150);
+                    heroArchetype.SetStat(StatType.HpRegen, 7);
+                    heroArchetype.SetStat(StatType.Stamina, 90);
+                    heroArchetype.SetStat(StatType.Damage, 8);
+                    heroArchetype.SetStat(StatType.ArmorResistance, 12);
+                    heroArchetype.SetStat(StatType.CritChance, 10);
+                    heroArchetype.SetStat(StatType.CritPower, 1.5f);
+                    heroArchetype.SetStat(StatType.BlockChance, 40);
+                    heroArchetype.SetStat(StatType.EvasionChance, 5);
+                    heroArchetype.SetStat(StatType.AccuracyChance, 75);
+                    heroArchetype.SetStat(StatType.AttackSpeed, 0.8f);
+                    heroArchetype.SetStat(StatType.VisionRadius, 4.5f);
+                    break;
+            }
+        }
+
+        private void ApplyRacialBonuses(HeroArchetypeSO heroArchetype, HeroRace race)
+        {
+            switch (race)
+            {
+                case HeroRace.Human:
+                    // Універсальність
+                    heroArchetype.SetStat(StatType.GoldPerTap, heroArchetype.GetStat(StatType.GoldPerTap) + 2);
+                    heroArchetype.SetStat(StatType.CommonItemChance, heroArchetype.GetStat(StatType.CommonItemChance) + 5);
+                    break;
+
+                case HeroRace.Dwarf:
+                    // Витривалість
+                    heroArchetype.SetStat(StatType.ArmorResistance, heroArchetype.GetStat(StatType.ArmorResistance) + 10);
+                    heroArchetype.SetStat(StatType.BlockChance, heroArchetype.GetStat(StatType.BlockChance) + 5);
+                    break;
+
+                case HeroRace.Elf:
+                    // Спритність
+                    heroArchetype.SetStat(StatType.EvasionChance, heroArchetype.GetStat(StatType.EvasionChance) + 5);
+                    heroArchetype.SetStat(StatType.AccuracyChance, heroArchetype.GetStat(StatType.AccuracyChance) + 10);
+                    break;
+
+                case HeroRace.DarkElf:
+                    // Магія тіней
+                    heroArchetype.SetStat(StatType.MagicPower, heroArchetype.GetStat(StatType.MagicPower) + 10);
+                    heroArchetype.SetStat(StatType.CritChance, heroArchetype.GetStat(StatType.CritChance) + 5);
+                    break;
+
+                case HeroRace.Troll:
+                    // Регенерація
+                    heroArchetype.SetStat(StatType.HP, heroArchetype.GetStat(StatType.HP) + 20);
+                    heroArchetype.SetStat(StatType.HpRegen, heroArchetype.GetStat(StatType.HpRegen) + 2);
+                    break;
+
+                case HeroRace.Goblin:
+                    // Жадібність
+                    heroArchetype.SetStat(StatType.ThiefChance, heroArchetype.GetStat(StatType.ThiefChance) + 10);
+                    heroArchetype.SetStat(StatType.GoldPerTap, heroArchetype.GetStat(StatType.GoldPerTap) + 5);
+                    break;
+            }
+        }
+
+        private void SetCombatStyles(HeroArchetypeSO heroArchetype)
+        {
+            // Модифікатори для стилів бою
+            heroArchetype.AggressiveAttackMod = 1.5f;
+            heroArchetype.AggressiveDefenseMod = 0.7f;
+            heroArchetype.AggressiveDodgeMod = 0.7f;
+            heroArchetype.AggressiveBlockMod = 0.5f;
+
+            heroArchetype.DefensiveAttackMod = 0.7f;
+            heroArchetype.DefensiveDefenseMod = 1.5f;
+            heroArchetype.DefensiveDodgeMod = 1.3f;
+            heroArchetype.DefensiveBlockMod = 1.5f;
+        }
+
+        private void AddDefaultActiveSkill(HeroArchetypeSO heroArchetype, HeroClass heroClass)
+        {
+            string skillId = "";
+
+            switch (heroClass)
+            {
+                case HeroClass.Warrior:
+                    skillId = "shield_block";
+                    break;
+                case HeroClass.Rogue:
+                    skillId = "backstab";
+                    break;
+                case HeroClass.Ranger:
+                    skillId = "aimed_shot";
+                    break;
+                case HeroClass.Mage:
+                    skillId = "teleport";
+                    break;
+                case HeroClass.Support:
+                    skillId = "healing_wave";
+                    break;
+                case HeroClass.Tank:
+                    skillId = "taunt";
+                    break;
+            }
+            if (!string.IsNullOrEmpty(skillId))
+            {
+                var skillValue = new HeroArchetypeSO.SkillValue
+                {
+                    Id = skillId,
+                    Level = 1
+                };
+
+                if (heroArchetype._activeSkills == null)
+                    heroArchetype._activeSkills = new System.Collections.Generic.List<HeroArchetypeSO.SkillValue>();
+
+                heroArchetype._activeSkills.Add(skillValue);
+            }
+        }
+        private void AddDefaultPassiveSkill(HeroArchetypeSO heroArchetype, HeroRace race)
+        {
+            string skillId = "";
+
+            switch (race)
+            {
+                case HeroRace.Human:
+                    skillId = "versatility";
+                    break;
+                case HeroRace.Dwarf:
+                    skillId = "stone_resilience";
+                    break;
+                case HeroRace.Elf:
+                    skillId = "nature_affinity";
+                    break;
+                case HeroRace.DarkElf:
+                    skillId = "shadow_stealth";
+                    break;
+                case HeroRace.Troll:
+                    skillId = "regeneration";
+                    break;
+                case HeroRace.Goblin:
+                    skillId = "cunning_tricks";
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(skillId))
+            {
+                var skillValue = new HeroArchetypeSO.SkillValue
+                {
+                    Id = skillId,
+                    Level = 1
+                };
+
+                if (heroArchetype._passiveSkills == null)
+                    heroArchetype._passiveSkills = new System.Collections.Generic.List<HeroArchetypeSO.SkillValue>();
+
+                heroArchetype._passiveSkills.Add(skillValue);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-// Assets/_MythHunter/Code/Editor/HeroArchetypeEditor.cs
+// Шлях: Assets/_MythHunter/Code/Editor/HeroArchetypeEditor.cs
 
 using UnityEngine;
 using UnityEditor;
