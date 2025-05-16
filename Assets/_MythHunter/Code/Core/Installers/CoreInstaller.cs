@@ -6,6 +6,7 @@ using MythHunter.Events;
 using MythHunter.Utils.Logging;
 using MythHunter.Systems.Core;
 using MythHunter.Core.SceneManagement;
+using MythHunter.Resources.SceneManagement;
 
 namespace MythHunter.Core.Installers
 {
@@ -34,7 +35,10 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEcsWorld, EcsWorld>(container);
             // Реєстрація менеджера життєвого циклу DI
             BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
+
+            BindSingleton<SceneLoader, SceneLoader>(container); // цей другорядний, використовується тільки в СценДиспечер (тому нема інтерфейса)
             BindSingleton<ISceneDispatcher, SceneDispatcher>(container);
+            
             // Реєструємо розширення DI
             var diExtensionsInstaller = new DIExtensionsInstaller();
             diExtensionsInstaller.InstallBindings(container);

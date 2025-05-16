@@ -35,7 +35,7 @@ namespace MythHunter.Core.Installers
 
             // Основні сервіси
             BindSingleton<IResourceManager, ResourceManager>(container);
-            BindSingleton<ISceneLoader, SceneLoader>(container);
+           
 
             logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
         }

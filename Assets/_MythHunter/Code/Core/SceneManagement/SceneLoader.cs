@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using MythHunter.Core.DI;
 namespace MythHunter.Resources.SceneManagement
 {
-    public class SceneLoader : ISceneLoader
+    public class SceneLoader 
     {
         private readonly IMythLogger _logger;
 

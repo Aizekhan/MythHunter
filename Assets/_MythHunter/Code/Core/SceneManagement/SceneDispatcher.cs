@@ -13,14 +13,14 @@ namespace MythHunter.Core.SceneManagement
     /// </summary>
     public class SceneDispatcher : ISceneDispatcher
     {
-        private readonly ISceneLoader _sceneLoader;
+        private readonly SceneLoader _sceneLoader;
         private readonly IMythLogger _logger;
 
         // Тимчасове сховище для передачі даних між сценами
         private static readonly Dictionary<string, object> _sceneData = new();
 
         [Inject]
-        public SceneDispatcher(ISceneLoader sceneLoader, IMythLogger logger)
+        public SceneDispatcher(SceneLoader sceneLoader, IMythLogger logger)
         {
             _sceneLoader = sceneLoader;
             _logger = logger;
