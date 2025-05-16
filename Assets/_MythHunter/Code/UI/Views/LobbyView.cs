@@ -71,6 +71,7 @@ namespace MythHunter.UI.Views
             foreach (var hero in heroes)
             {
                 var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
+                
                 var ui = card.GetComponent<HeroCardUI>();
                 if (ui != null)
                 {

@@ -72,7 +72,7 @@ namespace MythHunter.UI.Presenters
                 _logger.LogWarning("LobbyView is not initialized via Construct()", "LobbyPresenter");
                 return;
             }
-
+            _logger.LogInfo($"[LobbyPresenter] Creating {GetAvailableHeroes().Count} hero cards", "Lobby");
             _view.PopulateHeroCards(GetAvailableHeroes());
             _view.UpdateMana(GetRemainingMana(), 4);
         }
