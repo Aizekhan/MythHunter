@@ -10,16 +10,14 @@ namespace MythHunter.Entities.Archetypes
     [CreateAssetMenu(fileName = "HeroArchetype", menuName = "MythHunter/Heroes/Hero Archetype")]
     public class HeroArchetypeSO : ScriptableObject
     {
-      
+        [Header("UI")]
+        [SerializeField] private string _iconPath;
+        public string IconPath => _iconPath;
 
         [Header("Ідентифікація")]
         public string ArchetypeId;
         public string HeroName;
         public string Description;
-
-        [Header("UI")]
-        public string IconPath;
-
 
         [Header("Расові характеристики")]
         public HeroRace Race;
