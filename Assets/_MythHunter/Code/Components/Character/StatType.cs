@@ -11,11 +11,13 @@ namespace MythHunter.Components.Character
     {
         // Базові характеристики
         Level,
+        Experience,
         HP,
         HpRegen,
         Stamina,
         StaminaRegen,
-
+        VisionRadius,   // Радіус огляду
+        VisionAngle,    // Кут огляду
         // Магічні характеристики
         MagicChance,
         MagicPower,
@@ -28,7 +30,9 @@ namespace MythHunter.Components.Character
         MultipleAttackChance,
         AmountOfMultipleHits,
         Slowdown,
-
+        Rage,           // Лють (для бойової системи)
+        RageMax,        // Максимальна лють
+       
         // Бойові характеристики - захист
         ArmorDurability,
         ArmorResistance,
@@ -37,10 +41,13 @@ namespace MythHunter.Components.Character
         BlockChance,
         BlockPenetrationChance,
         ArmorPenetrationChance,
+        Concentration,  // Концентрація (для бойової системи)
+        ConcentrationMax, // Максимальна концентрація
 
         // Бойові характеристики - критичні удари
         CritChance,
         CritPower,
+       
 
         // Бойові характеристики - ухилення/точність
         EvasionChance,

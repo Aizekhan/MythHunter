@@ -18,10 +18,21 @@ namespace MythHunter.Data
         {
             // Базові характеристики
             RegisterStat(StatType.Level, "Рівень", "Загальний рівень героя", 1, 100, StatCategory.Basic);
+            RegisterStat(StatType.Experience,"Досвід","Кількість досвіду, набраного героєм",0, 999999,StatCategory.Basic);
             RegisterStat(StatType.HP, "Здоров'я", "Максимальна кількість здоров'я", 1, 10000, StatCategory.Basic);
             RegisterStat(StatType.HpRegen, "Регенерація здоров'я", "Кількість здоров'я, що відновлюється за секунду", 0, 1000, StatCategory.Basic);
             RegisterStat(StatType.Stamina, "Витривалість", "Максимальна кількість витривалості", 1, 1000, StatCategory.Basic);
             RegisterStat(StatType.StaminaRegen, "Регенерація витривалості", "Кількість витривалості, що відновлюється за секунду", 0, 100, StatCategory.Basic);
+
+            // Характеристики для системи огляду
+            RegisterStat(StatType.VisionRadius, "Радіус огляду", "Максимальна відстань, на якій герой бачить об'єкти", 1, 10, StatCategory.Basic);
+            RegisterStat(StatType.VisionAngle, "Кут огляду", "Кут огляду героя у градусах", 30, 360, StatCategory.Basic);
+
+            // Характеристики для системи бою
+            RegisterStat(StatType.Rage, "Лють", "Поточний рівень люті для бойових здібностей", 0, 100, StatCategory.Combat);
+            RegisterStat(StatType.RageMax, "Максимальна лють", "Максимально можливий рівень люті", 50, 200, StatCategory.Combat);
+            RegisterStat(StatType.Concentration, "Концентрація", "Поточний рівень концентрації для захисних маневрів", 0, 100, StatCategory.Combat);
+            RegisterStat(StatType.ConcentrationMax, "Максимальна концентрація", "Максимально можливий рівень концентрації", 50, 200, StatCategory.Combat);
 
             // Магічні характеристики
             RegisterStat(StatType.MagicChance, "Шанс магії", "Ймовірність використання магії", 0, 100, StatCategory.Magic);
@@ -86,7 +97,7 @@ namespace MythHunter.Data
             RegisterStat(StatType.UpgradeScale, "Масштаб поліпшення", "Множник збільшення вартості при поліпшенні", 1, 10, StatCategory.Economy);
 
             // Інші характеристики
-            RegisterStat(StatType.BagSlots, "Слоти сумки", "Кількість слотів в сумці", 1, 100, StatCategory.Inventory);
+            RegisterStat(StatType.BagSlots, "Слоти сумки", "Кількість слотів в сумці", 1, 4, StatCategory.Inventory);
         }
 
         private static void RegisterStat(StatType type, string name, string description, float min, float max, StatCategory category)

@@ -103,6 +103,7 @@ namespace MythHunter.Core.Game
             _eventBus = _container.Resolve<IEventBus>();
 
             _ecsWorld = _container.Resolve<IEcsWorld>();
+            _ecsWorld.Initialize();
             _stateMachine = _container.Resolve<IGameStateMachine>();
             _dependencyInjector = _container.Resolve<IDependencyInjector>();
 

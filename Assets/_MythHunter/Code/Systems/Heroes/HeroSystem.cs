@@ -55,6 +55,8 @@ namespace MythHunter.Systems.Heroes
 
             // Ініціалізація кешу компонентів
             _statsCache = _componentCacheRegistry.GetCache<StatsComponent>();
+            if (_statsCache == null)
+                _logger.LogWarning("StatsComponent cache is null — ймовірно, ще немає жодної сутності з цим компонентом", "HeroSystem");
             _healthCache = _componentCacheRegistry.GetCache<HealthComponent>();
 
             // Підписка на події

@@ -99,6 +99,17 @@ namespace MythHunter.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Навички", EditorStyles.boldLabel);
 
+            // Відображення бойових модифікаторів
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Бойові стилі (модифікатори)", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("AggressiveAttackMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("AggressiveDefenseMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("AggressiveDodgeMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("AggressiveBlockMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("DefensiveAttackMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("DefensiveDefenseMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("DefensiveDodgeMod"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("DefensiveBlockMod"));
             _showPassiveSkills = EditorGUILayout.Foldout(_showPassiveSkills, "Пасивні навички", true);
             if (_showPassiveSkills)
             {
