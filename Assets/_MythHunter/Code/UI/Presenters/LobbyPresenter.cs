@@ -32,6 +32,7 @@ namespace MythHunter.UI.Presenters
         private ILobbyView _view;
         private bool _isSubscribed = false;
 
+        private ILobbyPresenter _presenter;
         [Inject]
         public LobbyPresenter(
             ILobbySystem lobbySystem,
@@ -51,10 +52,11 @@ namespace MythHunter.UI.Presenters
             _viewConfigRegistry = viewConfigRegistry;
         }
 
-        public async void Initialize(ILobbyView view)
+        public  void Initialize(ILobbyView view)
         {
             _view = view;
             SubscribeToEvents();
+
         }
 
         public async void StartLobby(int playerCount)
@@ -72,6 +74,7 @@ namespace MythHunter.UI.Presenters
             {
                 _logger.LogError("LobbyViewConfig не знайдено для ViewId: 'Lobby'", "LobbyPresenter");
             }
+
         }
 
         public void OnHeroSelected(string archetypeId)

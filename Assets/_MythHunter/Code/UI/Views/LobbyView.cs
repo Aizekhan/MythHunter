@@ -7,6 +7,7 @@ using MythHunter.UI.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using MythHunter.Services.GameSettings;
 
 namespace MythHunter.UI.Views
 {
@@ -27,17 +28,18 @@ namespace MythHunter.UI.Views
         [SerializeField] private Button _startGameButton;
 
         private ILobbyPresenter _presenter;
-
+        private IGameSettingsService _settings;
         [Inject]
-        public void Construct(ILobbyPresenter presenter)
+        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings)
         {
             _presenter = presenter;
+            _settings = settings;
             _presenter.Initialize(this);
         }
 
         private void Start()
         {
-            _presenter.StartLobby(2);
+            _presenter.StartLobby(_settings.PlayerCount);
 
             _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
             _startGameButton.onClick.AddListener(OnStartGameButtonClicked);

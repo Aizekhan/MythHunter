@@ -9,6 +9,7 @@ using MythHunter.Systems.Core;
 using MythHunter.Debug;
 using MythHunter.Utils;
 using MythHunter.Resources.Pool;
+using MythHunter.Core.SceneManagement;
 
 namespace MythHunter.Core.Game
 {
@@ -18,7 +19,7 @@ namespace MythHunter.Core.Game
         public static GameBootstrapper Instance => _instance;
 
         [SerializeField] private bool _injectOnAwake = true;
-
+    
         private IDIContainer _container;
         private IMythLogger _logger;
         private IEventBus _eventBus;
@@ -26,7 +27,7 @@ namespace MythHunter.Core.Game
         private IEcsWorld _ecsWorld;
         private IGameStateMachine _stateMachine;
         private IDependencyInjector _dependencyInjector;
-
+        private ISceneDispatcher _sceneDispatcher;
         private async void Awake()
         {
             if (!TryInitializeSingleton())
@@ -40,6 +41,9 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("GameBootstrapper initialized successfully");
 
             await InitializeServicesAsync();
+
+            // після цього — запускаємо сцену Lobby
+            await _sceneDispatcher.LoadSceneAsync("LobbyScene");
         }
 
         private void Update()
@@ -118,7 +122,7 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Starting async services initialization", "Bootstrapper");
 
             await UniTask.Delay(100); // Placeholder async init
-
+            _sceneDispatcher = _container.Resolve<ISceneDispatcher>();
             _logger.LogInfo("Async services initialization completed", "Bootstrapper");
             _stateMachine.ChangeState(GameStateType.Boot);
         }

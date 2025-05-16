@@ -8,6 +8,7 @@ using MythHunter.Systems.Core;
 using MythHunter.Core.ECS;
 
 using MythHunter.Game.Systems.Phase;
+using MythHunter.Services.GameSettings;
 
 namespace MythHunter.Core.Installers
 {
@@ -20,7 +21,7 @@ namespace MythHunter.Core.Installers
         {
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей GameplaySystem...", "Installer");
-
+            BindSingleton<IGameSettingsService, GameSettingsService>(container);
             // Реєстрація фазової системи з високим пріоритетом
             BindSingleton<IPhaseSystem, PhaseSystem>(container);
 

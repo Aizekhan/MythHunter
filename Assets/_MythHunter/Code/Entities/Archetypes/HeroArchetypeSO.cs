@@ -15,6 +15,9 @@ namespace MythHunter.Entities.Archetypes
         public string HeroName;
         public string Description;
 
+        [Header("UI")]
+        public string IconPath; // або public Sprite Icon;
+
         [Header("Расові характеристики")]
         public HeroRace Race;
 
