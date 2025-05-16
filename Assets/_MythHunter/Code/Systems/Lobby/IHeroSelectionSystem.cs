@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Systems/Lobby/IHeroSelectionSystem.cs
+using Cysharp.Threading.Tasks;
 using MythHunter.Core.ECS;
 using System.Collections.Generic;
 
@@ -12,7 +13,7 @@ namespace MythHunter.Systems.Lobby
         /// <summary>
         /// Завантажує доступних героїв
         /// </summary>
-        void LoadAvailableHeroes();
+        UniTask LoadAvailableHeroes();
 
         /// <summary>
         /// Отримує інформацію про героя за ідентифікатором архетипу

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using static MythHunter.Entities.Archetypes.ArchetypeTemplateRegistry;
 
 namespace MythHunter.Entities.Archetypes
 {
@@ -270,6 +271,7 @@ namespace MythHunter.Entities.Archetypes
 
             _logger.LogDebug($"Added component {typeof(T).Name} to template '{archetypeId}'", "Entity");
         }
+      
     }
 
     /// <summary>

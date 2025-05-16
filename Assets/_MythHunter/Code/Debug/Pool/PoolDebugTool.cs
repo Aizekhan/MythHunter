@@ -16,6 +16,8 @@ namespace MythHunter.Debug.Pool
     /// </summary>
     public class PoolDebugTool : DebugToolBase
     {
+      
+
         private readonly IPoolManager _poolManager;
         private readonly PoolMonitor _poolMonitor;
         private Vector2 _statsScrollPosition;
@@ -58,7 +60,7 @@ namespace MythHunter.Debug.Pool
             SceneManager.sceneLoaded += OnSceneLoaded;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
-
+    
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             // Оновлюємо статистику сцен

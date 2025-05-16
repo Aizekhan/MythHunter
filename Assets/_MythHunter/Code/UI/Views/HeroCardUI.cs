@@ -33,18 +33,22 @@ namespace MythHunter.UI.Views
             _descriptionText.text = model.Description;
             _raceClassText.text = $"{model.Race} - {model.Class}";
             _manaCostText.text = $"Вартість: {model.ManaCost}";
-            _defaultIcon = UnityEngine.Resources.Load<Sprite>("UI/Icons/default_hero");
+
             Sprite icon = null;
             if (!string.IsNullOrEmpty(model.IconPath))
             {
                 icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
             }
 
+            if (_defaultIcon == null)
+            {
+                _defaultIcon = UnityEngine.Resources.Load<Sprite>("UI/Icons/default_hero");
+            }
+
             _iconImage.sprite = icon != null ? icon : _defaultIcon;
 
             _selectedIndicator.SetActive(model.IsSelected);
             SetInteractable(model.IsSelectable);
-
             _selectButton.onClick.AddListener(OnSelectButtonClicked);
         }
 
