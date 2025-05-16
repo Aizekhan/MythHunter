@@ -274,48 +274,4 @@ namespace MythHunter.Entities.Archetypes
       
     }
 
-    /// <summary>
-    /// Будівельник для шаблону архетипу
-    /// </summary>
-    public class ArchetypeTemplateBuilder
-    {
-        private readonly ArchetypeTemplateRegistry.ArchetypeTemplate _template;
-        private readonly ArchetypeTemplateRegistry _registry;
-
-        public ArchetypeTemplateBuilder(ArchetypeTemplateRegistry.ArchetypeTemplate template, ArchetypeTemplateRegistry registry)
-        {
-            _template = template;
-            _registry = registry;
-        }
-
-        /// <summary>
-        /// Додає компонент до шаблону архетипу
-        /// </summary>
-        public ArchetypeTemplateBuilder WithComponent<T>(T component) where T : struct, IComponent
-        {
-            _template.DefaultComponents[typeof(T)] = component;
-
-            // Додаємо функцію перевірки для цього компонента
-            _registry.AddComponentToTemplate(_template.ArchetypeId, component);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Додає функцію перевірки компонента
-        /// </summary>
-        public ArchetypeTemplateBuilder WithComponentCheck<T>(Func<T, bool> predicate) where T : struct, IComponent
-        {
-            _registry.AddComponentChecker(_template.ArchetypeId, predicate);
-            return this;
-        }
-
-        /// <summary>
-        /// Завершує створення шаблону архетипу
-        /// </summary>
-        public ArchetypeTemplateRegistry Build()
-        {
-            return _registry;
-        }
-    }
 }

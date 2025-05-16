@@ -8,6 +8,7 @@ using MythHunter.Components.Combat;
 using MythHunter.Components.Movement;
 using MythHunter.Components.Character;
 using MythHunter.Entities.Heroes;
+using MythHunter.Core.ECS;
 namespace MythHunter.Entities.Archetypes
 {
     [CreateAssetMenu(fileName = "HeroArchetype", menuName = "MythHunter/Heroes/Hero Archetype")]
@@ -59,7 +60,7 @@ namespace MythHunter.Entities.Archetypes
         [Header("Команда")]
         public int TeamId = 0;
 
-        public void RegisterWithArchetypeSystem(ArchetypeTemplateRegistry registry)
+        public void RegisterWithArchetypeSystem(IArchetypeTemplateRegistry registry)
         {
             // Створюємо компонент ідентифікації
             var identityComponent = new HeroIdentityComponent
@@ -87,7 +88,7 @@ namespace MythHunter.Entities.Archetypes
             // Заповнюємо значення характеристик
             foreach (var stat in _stats)
             {
-                statsComponent.Values[stat.Type] = stat.Value;
+                statsComponent.SetStat(stat.Type, stat.Value);
             }
 
             // Якщо характеристики не визначені, встановлюємо стандартні
@@ -132,7 +133,8 @@ namespace MythHunter.Entities.Archetypes
                     VisionRadius = 5, // Значення за замовчуванням
                     VisionAngle = 120,
                     IsVisible = true
-                });
+                })
+                .Build();
         }
 
         private List<Skill> ConvertSkillValues(SkillValue[] skillValues)

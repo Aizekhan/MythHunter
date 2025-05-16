@@ -33,6 +33,7 @@ new GameplayInstaller(),
 new MovementInstaller(),
 new CombatSystemInstaller(),
    new HeroSystemInstaller(),
+   new HeroesInstaller(),
      // Додаємо інсталятор лоббі
         new LobbyInstaller(),
 //Debug

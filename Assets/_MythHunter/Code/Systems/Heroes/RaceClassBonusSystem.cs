@@ -13,7 +13,7 @@ namespace MythHunter.Systems.Heroes
     /// <summary>
     /// Система для застосування бонусів від раси та класу героя
     /// </summary>
-    public class RaceClassBonusSystem : SystemBase
+    public class RaceClassBonusSystem : SystemBase, IRaceClassBonusSystem
     {
         private readonly IEntityManager _entityManager;
 
@@ -372,49 +372,6 @@ namespace MythHunter.Systems.Heroes
         }
     }
 
-    /// <summary>
-    /// Бонуси від раси героя
-    /// </summary>
-    public class RacialBonuses
-    {
-        /// <summary>
-        /// Бонуси до характеристик
-        /// </summary>
-        public Dictionary<StatType, float> StatBonuses { get; set; } = new Dictionary<StatType, float>();
 
-        /// <summary>
-        /// Ідентифікатор пасивної здібності раси
-        /// </summary>
-        public string PassiveAbilityId
-        {
-            get; set;
-        }
-    }
-
-    /// <summary>
-    /// Бонуси від класу героя
-    /// </summary>
-    public class ClassBonuses
-    {
-        /// <summary>
-        /// Бонуси до характеристик
-        /// </summary>
-        public Dictionary<StatType, float> StatBonuses { get; set; } = new Dictionary<StatType, float>();
-
-        /// <summary>
-        /// Ідентифікатор пасивної здібності класу
-        /// </summary>
-        public string PassiveAbilityId
-        {
-            get; set;
-        }
-
-        /// <summary>
-        /// Ідентифікатор активної здібності класу
-        /// </summary>
-        public string ActiveAbilityId
-        {
-            get; set;
-        }
-    }
+   
 }

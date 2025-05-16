@@ -1,29 +1,29 @@
-// Assets/_MythHunter/Code/Core/Installers/HeroesInstaller.cs
-
+// Path: Assets/_MythHunter/Code/Core/Installers/HeroesInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Entities.Heroes;
 using MythHunter.Services.Heroes;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Heroes;
 
-namespace MythHunter.Core.Installers
+public class HeroesInstaller : DIInstaller
 {
-    public class HeroesInstaller : DIInstaller
+    public override void InstallBindings(IDIContainer container)
     {
-        public override void InstallBindings(IDIContainer container)
-        {
-            // Героєва фабрика
-            BindSingleton<IHeroFactory, HeroFactory>(container);
+        // Героєва фабрика
+        BindSingleton<IHeroFactory, HeroFactory>(container);
 
-            // Сервіс даних героїв (локальна реалізація для тестування)
-            BindSingleton<IHeroDataService, LocalHeroDataService>(container);
+        // Сервіс даних героїв
+        BindSingleton<IHeroDataService, LocalHeroDataService>(container);
 
-            // Система расових і класових бонусів
-            BindSingleton<RaceClassBonusSystem, RaceClassBonusSystem>(container);
+        // Система расових і класових бонусів
+        BindSingleton<IRaceClassBonusSystem, RaceClassBonusSystem>(container);
 
-            // Реєстрація системи в реєстрі систем
-            var systemRegistry = container.Resolve<ISystemRegistry>();
-            systemRegistry.RegisterSystem(container.Resolve<RaceClassBonusSystem>());
-        }
+        // Головна система героїв
+        BindSingleton<IHeroSystem, HeroSystem>(container);
+
+        // Реєстрація систем у реєстрі систем
+        var systemRegistry = container.Resolve<ISystemRegistry>();
+        systemRegistry.RegisterSystem(container.Resolve<IRaceClassBonusSystem>());
+        systemRegistry.RegisterSystem(container.Resolve<IHeroSystem>());
     }
 }

@@ -10,12 +10,13 @@ namespace MythHunter.Entities.Archetypes
     // Утиліта для завантаження всіх архетипів героїв зі ScriptableObjects
     public class HeroArchetypeRegistry : IHeroArchetypeRegistry
     {
-        private readonly ArchetypeTemplateRegistry _templateRegistry;
+        private readonly IArchetypeTemplateRegistry _templateRegistry;
         private readonly IMythLogger _logger;
         private readonly Dictionary<string, HeroArchetypeSO> _heroArchetypes = new Dictionary<string, HeroArchetypeSO>();
 
+        
         [Inject]
-        public HeroArchetypeRegistry(ArchetypeTemplateRegistry templateRegistry, IMythLogger logger)
+        public HeroArchetypeRegistry(IArchetypeTemplateRegistry templateRegistry, IMythLogger logger)
         {
             _templateRegistry = templateRegistry;
             _logger = logger;
