@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
-  m_Name: Hero_Elf_Ranger_df7ea4d2
+  m_Name: Hero_DarkElf_Rogue_89485488
   m_EditorClassIdentifier: 
   IconPath: UI/Icons/hero_Atakhan
-  ArchetypeId: Hero_Elf_Ranger_df7ea4d2
-  HeroName: Malu
-  Description: "\u041B\u0443\u0447\u043D\u0438\u043A \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0456\u0457"
-  Race: 2
-  Class: 2
+  ArchetypeId: Hero_DarkElf_Rogue_89485488
+  HeroName: Kuro
+  Description: "\u0421\u043F\u0440\u0438\u0442\u043D\u0438\u0439 \u0440\u043E\u0437\u0431\u0456\u0439\u043D\u0438\u043A"
+  Race: 3
+  Class: 1
   Religion: 
   Ideology: 
   _professions:
@@ -27,57 +27,37 @@ MonoBehaviour:
   _stats:
   - Type: 0
     Value: 1
-  - Type: 1
-    Value: 100
-  - Type: 3
-    Value: 100
-  - Type: 9
-    Value: 10
-  - Type: 19
-    Value: 10
-  - Type: 27
-    Value: 50
-  - Type: 28
-    Value: 2
-  - Type: 22
-    Value: 10
-  - Type: 11
-    Value: 1
-  - Type: 5
-    Value: 5
-  - Type: 6
-    Value: 10
-  - Type: 17
-    Value: 50
-  - Type: 26
-    Value: 50
-  - Type: 12
-    Value: 0.1
-  - Type: 14
-    Value: 1
-  - Type: 53
-    Value: 1
-  - Type: 54
-    Value: 1
-  - Type: 55
-    Value: 1
-  - Type: 47
-    Value: 0
   - Type: 2
-    Value: 1
+    Value: 100
   - Type: 4
+    Value: 100
+  - Type: 10
+    Value: 10
+  - Type: 20
+    Value: 10
+  - Type: 28
+    Value: 20
+  - Type: 29
+    Value: 2
+  - Type: 23
+    Value: 10
+  - Type: 12
     Value: 1
+  - Type: 6
+    Value: 5
   - Type: 7
     Value: 30
   - Type: 18
     Value: 50
-  - Type: 10
-    Value: 1
+  - Type: 27
+    Value: 50
   - Type: 13
     Value: 0.1
   - Type: 15
     Value: 1
-  - Type: 29
+  - Type: 54
+    Value: 1
+  - Type: 55
     Value: 1
   - Type: 56
     Value: 1
@@ -91,9 +71,9 @@ MonoBehaviour:
   DefensiveBlockMod: 1.5
   Skins: []
   _passiveSkills:
-  - Id: nature_affinity
+  - Id: shadow_stealth
     Level: 1
   _activeSkills:
-  - Id: aimed_shot
+  - Id: backstab
     Level: 1
   TeamId: 0

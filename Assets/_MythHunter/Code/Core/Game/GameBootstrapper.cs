@@ -42,8 +42,7 @@ namespace MythHunter.Core.Game
 
             await InitializeServicesAsync();
 
-            // після цього — запускаємо сцену Lobby
-            await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+            
         }
 
         private void Update()

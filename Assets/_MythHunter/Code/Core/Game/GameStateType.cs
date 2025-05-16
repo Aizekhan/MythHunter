@@ -6,6 +6,7 @@ namespace MythHunter.Core.Game
     public enum GameStateType
     {
         None = 0,
+        Lobby = 5,
         Boot,
         MainMenu,
         Loading,

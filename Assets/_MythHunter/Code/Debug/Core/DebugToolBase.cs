@@ -48,6 +48,7 @@ namespace MythHunter.Debug.Core
         public virtual void Initialize()
         {
             _logger?.LogInfo($"{ToolName} initialized", ToolCategory);
+            IsEnabled = false;
         }
 
         public virtual void Update()
@@ -73,33 +74,11 @@ namespace MythHunter.Debug.Core
 
         public virtual void RenderGUI(Rect area)
         {
-            if (!IsEnabled)
-                return;
-
             GUILayout.BeginArea(area);
-
-            // Заголовок інструменту
-            GUILayout.BeginVertical("box");
-            GUILayout.Label(ToolName, GUI.skin.box);
-
-            // Кнопки для управління
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Refresh", GUILayout.Width(80)))
-            {
-                RefreshData();
-            }
-
             IsEnabled = GUILayout.Toggle(IsEnabled, "Enabled", GUILayout.Width(80));
-
+            GUILayout.Label(GetType().Name, GUILayout.Width(200));
             GUILayout.EndHorizontal();
-
-            // Контент
-            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-
-            RenderContent();
-
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
             GUILayout.EndArea();
         }
 
@@ -177,5 +156,6 @@ namespace MythHunter.Debug.Core
 
             return _sectionFoldouts[title];
         }
+
     }
 }

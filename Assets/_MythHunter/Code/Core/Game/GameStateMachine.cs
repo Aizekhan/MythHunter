@@ -1,5 +1,6 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.StateMachine;
+using MythHunter.States;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Game
@@ -27,8 +28,11 @@ namespace MythHunter.Core.Game
             _stateMachine.RegisterState(GameStateType.MainMenu, new MainMenuState(_container));
             _stateMachine.RegisterState(GameStateType.Loading, new LoadingState(_container));
             _stateMachine.RegisterState(GameStateType.Game, new GameplayState(_container));
-            
+            _stateMachine.RegisterState(GameStateType.Lobby, new LobbyState(_container));
+
             // Налаштування переходів
+            _stateMachine.AddTransition(GameStateType.MainMenu, GameStateType.Lobby);
+            _stateMachine.AddTransition(GameStateType.Boot, GameStateType.Lobby); // тимчасово для тесту
             _stateMachine.AddTransition(GameStateType.Boot, GameStateType.MainMenu);
             _stateMachine.AddTransition(GameStateType.MainMenu, GameStateType.Loading);
             _stateMachine.AddTransition(GameStateType.Loading, GameStateType.Game);

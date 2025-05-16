@@ -3,6 +3,7 @@ using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 using System;
+using MythHunter.Core.SceneManagement;
 
 namespace MythHunter.Core.Game
 {
@@ -27,22 +28,22 @@ namespace MythHunter.Core.Game
             // Асинхронна ініціалізація
             InitializeAsync().Forget();
         }
-        
+
         private async UniTaskVoid InitializeAsync()
         {
             try
             {
-                // Приклад асинхронної ініціалізації
-                await UniTask.Delay(100);
-                
-                _logger.LogInfo("Boot state initialized asynchronously", "GameState");
+                var sceneDispatcher = Container.Resolve<ISceneDispatcher>();
+                await sceneDispatcher.LoadSceneAsync("LobbyScene");
+
+                Container.Resolve<IGameStateMachine>().ChangeState(GameStateType.Lobby);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in Boot initialization: {ex.Message}", "GameState", ex);
+                _logger.LogError($"Boot error: {ex.Message}", "BootState", ex);
             }
         }
-        
+
         public override void Update()
         {
             // Логіка оновлення Boot стану

@@ -28,20 +28,22 @@ namespace MythHunter.UI.Presenters
         private readonly ILobbyModel _model;
         private readonly IUIViewFactory _viewFactory;
         private readonly IViewConfigRegistry _viewConfigRegistry;
-
+        private readonly IEventThrottler _eventThrottler;
         private ILobbyView _view;
         private bool _isSubscribed = false;
 
         private ILobbyPresenter _presenter;
         [Inject]
         public LobbyPresenter(
-            ILobbySystem lobbySystem,
-            IHeroSelectionSystem heroSelectionSystem,
-            IEventBus eventBus,
-            IMythLogger logger,
-            ILobbyModel model,
-            IUIViewFactory viewFactory,
-            IViewConfigRegistry viewConfigRegistry)
+    ILobbySystem lobbySystem,
+    IHeroSelectionSystem heroSelectionSystem,
+    IEventBus eventBus,
+    IMythLogger logger,
+    ILobbyModel model,
+    IUIViewFactory viewFactory,
+    IViewConfigRegistry viewConfigRegistry
+
+)
         {
             _lobbySystem = lobbySystem;
             _heroSelectionSystem = heroSelectionSystem;
@@ -50,6 +52,7 @@ namespace MythHunter.UI.Presenters
             _model = model;
             _viewFactory = viewFactory;
             _viewConfigRegistry = viewConfigRegistry;
+            
         }
 
         public  void Initialize(ILobbyView view)
@@ -59,22 +62,19 @@ namespace MythHunter.UI.Presenters
 
         }
 
-        public async void StartLobby(int playerCount)
+        public void StartLobby(int playerCount)
         {
             _lobbySystem.InitializeLobby(playerCount);
 
-            var config = _viewConfigRegistry.Get("Lobby");
-            if (config != null)
+            // ❌ Більше НЕ створюй _view вручну
+            if (_view == null)
             {
-                _view = await _viewFactory.CreateViewAsync<LobbyView>(config.PrefabPath);
-                _view.PopulateHeroCards(GetAvailableHeroes());
-                _view.UpdateMana(GetRemainingMana(), 4);
-            }
-            else
-            {
-                _logger.LogError("LobbyViewConfig не знайдено для ViewId: 'Lobby'", "LobbyPresenter");
+                _logger.LogWarning("LobbyView is not initialized via Construct()", "LobbyPresenter");
+                return;
             }
 
+            _view.PopulateHeroCards(GetAvailableHeroes());
+            _view.UpdateMana(GetRemainingMana(), 4);
         }
 
         public void OnHeroSelected(string archetypeId)
@@ -169,6 +169,7 @@ namespace MythHunter.UI.Presenters
             _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
+           
 
             _isSubscribed = true;
         }

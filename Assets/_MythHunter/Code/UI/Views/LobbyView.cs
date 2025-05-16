@@ -30,20 +30,23 @@ namespace MythHunter.UI.Views
         private ILobbyPresenter _presenter;
         private IGameSettingsService _settings;
         [Inject]
+      
         public void Construct(ILobbyPresenter presenter, IGameSettingsService settings)
         {
+            UnityEngine.Debug.Log("✅ LobbyView: Construct called");
             _presenter = presenter;
             _settings = settings;
+
             _presenter.Initialize(this);
+            InitializeView(); // викликає StartLobby
         }
 
-        private void Start()
+        private void InitializeView()
         {
             _presenter.StartLobby(_settings.PlayerCount);
 
             _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
             _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
-
             _errorText.gameObject.SetActive(false);
             _gameStartingText.gameObject.SetActive(false);
 
@@ -52,6 +55,7 @@ namespace MythHunter.UI.Views
                 _playerStatusTexts[i].text = $"Гравець {i + 1}: Очікує вибору";
             }
         }
+
 
         private void OnDestroy()
         {

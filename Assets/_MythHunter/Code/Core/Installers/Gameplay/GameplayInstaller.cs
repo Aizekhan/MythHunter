@@ -22,6 +22,7 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей GameplaySystem...", "Installer");
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
+
             // Реєстрація фазової системи з високим пріоритетом
             BindSingleton<IPhaseSystem, PhaseSystem>(container);
 

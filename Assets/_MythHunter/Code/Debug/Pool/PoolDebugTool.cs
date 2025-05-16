@@ -60,7 +60,15 @@ namespace MythHunter.Debug.Pool
             SceneManager.sceneLoaded += OnSceneLoaded;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
-    
+        public override void RenderGUI(Rect area)
+        {
+            base.RenderGUI(area); // ⬅️ показує кнопку Enabled
+
+            GUILayout.BeginArea(area);
+            GUILayout.Label("Pool Monitor Settings:");
+            // Можна додати ще контроли
+            GUILayout.EndArea();
+        }
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             // Оновлюємо статистику сцен

@@ -4,6 +4,7 @@ using MythHunter.Events;
 using MythHunter.Events.Debugging;
 using MythHunter.Events.Network;
 using MythHunter.Networking.Core;
+using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
@@ -17,10 +18,14 @@ namespace MythHunter.Core.Installers
         public override void InstallBindings(IDIContainer container)
         {
             var logger = container.Resolve<IMythLogger>();
+            var systemRegistry = container.Resolve<ISystemRegistry>();
             logger.LogInfo("Installing Event System", "Installer");
 
             // Спочатку реєструємо допоміжні компоненти
             BindSingleton<IEventThrottler, EventThrottler>(container);
+            BindSingleton<IEventThrottlerUpdateSystem, EventThrottlerUpdateSystem>(container);
+            systemRegistry.RegisterSystem(container.Resolve<IEventThrottlerUpdateSystem>());
+
             BindSingleton<IEventBatcher, EventBatcher>(container);
             BindSingleton<IEventStore, EventStore>(container);
 

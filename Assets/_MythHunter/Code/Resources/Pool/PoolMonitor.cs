@@ -19,6 +19,8 @@ namespace MythHunter.Resources.Pool
         private PooledObjectLifetimeTracker _lifetimeTracker;
 
         // Налаштування
+        public bool IsEnabled = false;
+
         [SerializeField] private float _checkInterval = 30f; // Перевірка кожні 30 секунд
         [SerializeField] private int _maxInactivePerPool = 20; // Максимальна кількість неактивних об'єктів у пулі
         [SerializeField] private float _leakThresholdTime = 300f; // 5 хвилин активності = потенційний витік
@@ -75,7 +77,8 @@ namespace MythHunter.Resources.Pool
         {
             // Оновлення FPS
             CalculateFPS();
-
+            if (!IsEnabled)
+                return;
             // Періодична перевірка витоків
             if (Time.realtimeSinceStartup - _lastCheckTime > _checkInterval)
             {
@@ -115,6 +118,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public void CheckForLeaks()
         {
+            if (!IsEnabled)
+                return;
             _poolManager.CheckForLeaks();
 
             // Аналіз даних трекера часу життя
@@ -167,6 +172,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         private void PerformBackgroundCleaning()
         {
+            if (!IsEnabled)
+                return;
             _logger.LogInfo($"Performing background pool cleaning (FPS: {_currentFps:F1})", "Pool");
 
             // Отримання статистики пулів
@@ -214,6 +221,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         private void UpdateCurrentScenes()
         {
+            if (!IsEnabled)
+                return;
             _previousScenes.Clear();
 
             for (int i = 0; i < SceneManager.sceneCount; i++)
@@ -234,6 +243,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            if (!IsEnabled)
+                return;
             _logger.LogInfo($"Scene loaded: {scene.name}", "Pool");
 
             // Додаємо сцену до активних
@@ -251,6 +262,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         private void OnSceneUnloaded(Scene scene)
         {
+            if (!IsEnabled)
+                return;
             _logger.LogInfo($"Scene unloaded: {scene.name}", "Pool");
 
             // Видаляємо сцену з активних
@@ -305,6 +318,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         private void OnActiveSceneChanged(Scene oldScene, Scene newScene)
         {
+            if (!IsEnabled)
+                return;
             _logger.LogInfo($"Active scene changed from {oldScene.name} to {newScene.name}", "Pool");
 
             if (_cleanOnSceneChange)
@@ -324,6 +339,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public void RegisterSceneDependentPool(string poolKey, string sceneName)
         {
+            if (!IsEnabled)
+                return;
             if (!_poolsPerScene.TryGetValue(sceneName, out var scenePools))
             {
                 scenePools = new HashSet<string>();
