@@ -11,7 +11,7 @@ namespace MythHunter.Resources.Pool
     /// <summary>
     /// Оптимізований менеджер пулів об'єктів з розширеними можливостями відстеження
     /// </summary>
-    public class OptimizedPoolManager : IPoolManager
+    public class PoolManager : IPoolManager
     {
         private readonly Dictionary<string, IObjectPool> _pools = new Dictionary<string, IObjectPool>();
         private readonly IMythLogger _logger;
@@ -38,7 +38,7 @@ namespace MythHunter.Resources.Pool
         }
 
         [Inject]
-        public OptimizedPoolManager(IMythLogger logger)
+        public PoolManager(IMythLogger logger)
         {
             _logger = logger;
             _lastCleanupTime = Time.realtimeSinceStartup;

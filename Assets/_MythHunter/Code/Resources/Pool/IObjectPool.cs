@@ -26,4 +26,5 @@ namespace MythHunter.Resources.Pool
         T Get();
         void Release(T instance);
     }
+
 }

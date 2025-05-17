@@ -20,5 +20,6 @@ namespace MythHunter.Resources.Pool
         void TrimExcessObjects(int maxInactivePerPool = 20);
         int GetTotalActiveObjects();
         void SetAutoCleanupInterval(float seconds);
+        bool HasPool(string poolKey);
     }
 }

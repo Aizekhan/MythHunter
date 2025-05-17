@@ -1,4 +1,5 @@
-// Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
+// Оновити Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
+
 using System;
 using MythHunter.UI.Models;
 using MythHunter.Utils.Logging;
@@ -6,12 +7,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MythHunter.Core.DI;
+using MythHunter.UI.Services;
+using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Views
 {
-    /// <summary>
-    /// UI компонент картки героя
-    /// </summary>
     public class HeroCardUI : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI _nameText;
@@ -25,13 +25,15 @@ namespace MythHunter.UI.Views
 
         private string _archetypeId;
         private IMythLogger _logger;
+        private ISpriteService _spriteService;
 
         public event Action<string> OnHeroSelected;
 
         [Inject]
-        public void Construct(IMythLogger logger)
+        public void Construct(IMythLogger logger, ISpriteService spriteService)
         {
             _logger = logger;
+            _spriteService = spriteService;
             _logger.LogInfo("HeroCardUI initialized", "UI");
         }
 
@@ -44,46 +46,32 @@ namespace MythHunter.UI.Views
             _raceClassText.text = $"{model.Race} - {model.Class}";
             _manaCostText.text = $"Вартість: {model.ManaCost}";
 
-            // Завантаження іконки або встановлення за замовчуванням
-            Sprite icon = null;
-
-            if (_logger != null) // Перевірка на наявність логера 
+            // Асинхронне завантаження іконки через сервіс
+            if (!string.IsNullOrEmpty(model.IconPath) && _spriteService != null)
             {
-                if (!string.IsNullOrEmpty(model.IconPath))
-                {
-                    icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
-                    _logger.LogInfo($"Спроба завантажити іконку за шляхом: {model.IconPath}, результат: {(icon != null ? "успішно" : "невдача")}", "HeroCardUI");
-                }
-                else
-                {
-                    _logger.LogWarning("Шлях до іконки порожній", "HeroCardUI");
-                }
+                LoadIconAsync(model.IconPath).Forget();
             }
             else
             {
-                // Якщо логер не доступний, використовуємо Debug.Log для діагностики
-                UnityEngine.Debug.Log($"[HeroCardUI] Логер не ініціалізований! Спроба завантажити іконку за шляхом: {model.IconPath}");
-            }
-
-            if (icon == null)
-            {
-                // Завантаження іконки за замовчуванням
-                if (_defaultIcon == null)
+                _iconImage.sprite = _defaultIcon;
+                if (_logger != null)
                 {
-                    _defaultIcon = UnityEngine.Resources.Load<Sprite>("UI/Icons/default_hero");
-
-                    if (_logger != null)
-                    {
-                        _logger.LogInfo($"Завантаження іконки за замовчуванням: {(_defaultIcon != null ? "успішно" : "невдача")}", "HeroCardUI");
-                    }
+                    _logger.LogWarning($"Invalid icon path or sprite service not available for hero: {model.Name}", "HeroCardUI");
                 }
-                icon = _defaultIcon;
             }
 
-            _iconImage.sprite = icon;
             _selectedIndicator.SetActive(model.IsSelected);
             SetInteractable(model.IsSelectable);
             _selectButton.onClick.AddListener(OnSelectButtonClicked);
+        }
+
+        private async UniTaskVoid LoadIconAsync(string iconPath)
+        {
+            var sprite = await _spriteService.GetSpriteAsync(iconPath, _defaultIcon);
+            if (this != null && _iconImage != null) // Перевірка на випадок, якщо об'єкт був знищений
+            {
+                _iconImage.sprite = sprite;
+            }
         }
 
         public void SetInteractable(bool interactable)

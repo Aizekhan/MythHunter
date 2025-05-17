@@ -32,7 +32,8 @@ namespace MythHunter.UI.Views
         private ILobbyPresenter _presenter;
         private IGameSettingsService _settings;
         private IMythLogger _logger;
-
+        private readonly List<HeroCardUI> _createdCards = new List<HeroCardUI>();
+        private IUIViewFactory _uiViewFactory;
         protected override void Awake()
         {
             base.Awake();
@@ -89,6 +90,7 @@ namespace MythHunter.UI.Views
             _presenter = presenter;
             _settings = settings;
             _logger = logger;
+            _uiViewFactory = uiViewFactory;
 
             // Ініціалізуємо презентер з представленням
             if (_presenter != null)
@@ -137,6 +139,7 @@ namespace MythHunter.UI.Views
         protected override void OnDestroy()
         {
             base.OnDestroy();
+            ClearHeroCards();
 
             // Відписуємось від евентів через презентер
             if (_presenter != null)
@@ -157,20 +160,42 @@ namespace MythHunter.UI.Views
 
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
-            ClearContainer(_heroCardsContainer);
+            ClearHeroCards(); // Повертаємо всі картки в пул перед створенням нових
+
             foreach (var hero in heroes)
             {
                 var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
-
                 var ui = card.GetComponent<HeroCardUI>();
+
                 if (ui != null)
                 {
-                    // Ось тут додаємо ін'єкцію
+                    // Ін'єкція залежностей через GameBootstrapper
                     GameBootstrapper.Instance?.RegisterForInjection(ui);
 
                     ui.Setup(hero);
                     ui.OnHeroSelected += OnHeroCardSelected;
+                    _createdCards.Add(ui);
                 }
+            }
+        }
+        private void ClearHeroCards()
+        {
+            // Відписуємось від подій і знищуємо всі картки
+            foreach (var card in _createdCards)
+            {
+                if (card != null)
+                {
+                    card.OnHeroSelected -= OnHeroCardSelected;
+                    Destroy(card.gameObject);
+                }
+            }
+
+            _createdCards.Clear();
+
+            // Додатково очищаємо контейнер
+            foreach (Transform child in _heroCardsContainer)
+            {
+                Destroy(child.gameObject);
             }
         }
 
@@ -296,5 +321,6 @@ namespace MythHunter.UI.Views
                 Destroy(child.gameObject);
             }
         }
+
     }
 }
