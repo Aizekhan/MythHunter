@@ -25,11 +25,14 @@ namespace MythHunter.Core.Installers
             BindSingleton<IUISystem, UISystem>(container);
             BindSingleton<IViewConfigRegistry, ViewConfigRegistry>(container);
 
+            // Додаємо високорівневий UIService
+            BindSingleton<IUIService, UIService>(container);
+
             // Моделі
             BindSingleton<IMainMenuModel, MainMenuModel>(container);
             BindSingleton<IGameplayUIModel, GameplayUIModel>(container);
             BindSingleton<IInventoryModel, InventoryModel>(container);
-            BindSingleton<ILobbyModel, LobbyModel>(container); // ✅ Додано!
+            BindSingleton<ILobbyModel, LobbyModel>(container);
 
             // Презентери
             BindSingleton<IMainMenuPresenter, MainMenuPresenter>(container);

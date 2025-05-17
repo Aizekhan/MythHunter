@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/UI/Presenters/ILobbyPresenter.cs
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.UI.Models;
@@ -9,7 +10,7 @@ namespace MythHunter.UI.Presenters
     /// <summary>
     /// Інтерфейс презентера лоббі
     /// </summary>
-    public interface ILobbyPresenter
+    public interface ILobbyPresenter : IDisposable
     {
         /// <summary>
         /// Ініціалізує презентер з відповідним View

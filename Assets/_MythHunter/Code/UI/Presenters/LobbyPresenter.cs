@@ -1,6 +1,3 @@
-// Шлях: Assets/_MythHunter/Code/UI/Views/LobbyView.cs
-// ... (залишено без змін)
-
 // Шлях: Assets/_MythHunter/Code/UI/Presenters/LobbyPresenter.cs
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +14,9 @@ using MythHunter.Utils.Logging;
 namespace MythHunter.UI.Presenters
 {
     /// <summary>
-    /// Презентер лоббі з повною підтримкою IViewFactory та ViewConfigRegistry
+    /// Презентер лоббі
     /// </summary>
-    public class LobbyPresenter : BasePresenter<ILobbyView>, ILobbyPresenter
+    public class LobbyPresenter : ILobbyPresenter, IEventSubscriber
     {
         private readonly ILobbySystem _lobbySystem;
         private readonly IHeroSelectionSystem _heroSelectionSystem;
@@ -28,31 +25,27 @@ namespace MythHunter.UI.Presenters
         private readonly ILobbyModel _model;
         private readonly IUIViewFactory _viewFactory;
         private readonly IViewConfigRegistry _viewConfigRegistry;
-        private readonly IEventThrottler _eventThrottler;
         private ILobbyView _view;
         private bool _isSubscribed = false;
 
-        private ILobbyPresenter _presenter;
         [Inject]
         public LobbyPresenter(
-             IEventBus eventBus,
-    IMythLogger logger,
-    ILobbySystem lobbySystem,
-    IHeroSelectionSystem heroSelectionSystem,
-    ILobbyModel model,
-    IUIViewFactory viewFactory,
-    IViewConfigRegistry viewConfigRegistry
-
-     ) : base(eventBus, logger)
+            IEventBus eventBus,
+            IMythLogger logger,
+            ILobbySystem lobbySystem,
+            IHeroSelectionSystem heroSelectionSystem,
+            ILobbyModel model,
+            IUIViewFactory viewFactory,
+            IViewConfigRegistry viewConfigRegistry
+        )
         {
-            _lobbySystem = lobbySystem;
-            _heroSelectionSystem = heroSelectionSystem;
             _eventBus = eventBus;
             _logger = logger;
+            _lobbySystem = lobbySystem;
+            _heroSelectionSystem = heroSelectionSystem;
             _model = model;
             _viewFactory = viewFactory;
             _viewConfigRegistry = viewConfigRegistry;
-            
         }
 
         public void Initialize(ILobbyView view)
@@ -61,28 +54,56 @@ namespace MythHunter.UI.Presenters
             SubscribeToEvents();
             _logger.LogInfo("LobbyPresenter initialized with view", "Presenter");
         }
-        // Додаємо реалізацію InitializeAsync
+
         public async UniTask InitializeAsync()
         {
             SubscribeToEvents();
             _logger.LogInfo("LobbyPresenter initialized async", "Lobby");
             await UniTask.CompletedTask;
         }
+
         public void Dispose()
         {
             UnsubscribeFromEvents();
             _logger.LogInfo("LobbyPresenter disposed", "Presenter");
         }
+
+        public void SubscribeToEvents()
+        {
+            if (_isSubscribed)
+                return;
+
+            _eventBus.Subscribe<LobbyInitializedEvent>(OnLobbyInitialized);
+            _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
+            _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
+            _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
+
+            _isSubscribed = true;
+        }
+
+        public void UnsubscribeFromEvents()
+        {
+            if (!_isSubscribed)
+                return;
+
+            _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
+            _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
+            _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
+            _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
+
+            _isSubscribed = false;
+        }
+
         public void StartLobby(int playerCount)
         {
             _lobbySystem.InitializeLobby(playerCount);
 
-            // ❌ Більше НЕ створюй _view вручну
             if (_view == null)
             {
-                _logger.LogWarning("LobbyView is not initialized via Construct()", "LobbyPresenter");
+                _logger.LogWarning("LobbyView is not initialized", "LobbyPresenter");
                 return;
             }
+
             _logger.LogInfo($"[LobbyPresenter] Creating {GetAvailableHeroes().Count} hero cards", "Lobby");
             _view.PopulateHeroCards(GetAvailableHeroes());
             _view.UpdateMana(GetRemainingMana(), 4);
@@ -170,33 +191,6 @@ namespace MythHunter.UI.Presenters
         }
 
         public float GetRemainingTime() => 300f;
-
-        public void SubscribeToEvents()
-        {
-            if (_isSubscribed)
-                return;
-
-            _eventBus.Subscribe<LobbyInitializedEvent>(OnLobbyInitialized);
-            _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
-            _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-            _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
-           
-
-            _isSubscribed = true;
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            if (!_isSubscribed)
-                return;
-
-            _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
-            _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
-            _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-            _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
-
-            _isSubscribed = false;
-        }
 
         private void OnLobbyInitialized(LobbyInitializedEvent evt)
         {

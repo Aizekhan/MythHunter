@@ -1,10 +1,11 @@
+using System;
 using Cysharp.Threading.Tasks;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.UI.Core
 {
-    public abstract class BasePresenter<TView> : IPresenter, IEventSubscriber where TView : IView
+    public abstract class BasePresenter<TView> : IPresenter, IEventSubscriber, IDisposable where TView : IView
     {
         protected readonly IEventBus _eventBus;
         protected readonly IMythLogger _logger;

@@ -8,13 +8,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MythHunter.Services.GameSettings;
-using MythHunter.Events;
-using MythHunter.Core.Game;
 
 namespace MythHunter.UI.Views
 {
     /// <summary>
-    /// Перенесена реалізація LobbyView в архітектурну систему з підтримкою IView
+    /// Представлення лоббі
     /// </summary>
     public class LobbyView : UIViewBase, ILobbyView
     {
@@ -31,17 +29,12 @@ namespace MythHunter.UI.Views
 
         private ILobbyPresenter _presenter;
         private IGameSettingsService _settings;
-      
 
-     
         [Inject]
-        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings, IUISystem uiSystem)
+        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings)
         {
             _presenter = presenter;
             _settings = settings;
-
-            // Реєструємо View в UISystem
-            uiSystem.RegisterView(this);
 
             // Ініціалізуємо презентер з представленням
             _presenter.Initialize(this);
@@ -63,31 +56,20 @@ namespace MythHunter.UI.Views
             }
         }
 
-
-        // У методі OnDestroy додаємо відписку
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            // Перевіряємо чи _presenter - це IEventSubscriber і відписуємось
-            if (_presenter != null && _presenter is IEventSubscriber eventSubscriber)
+            base.OnDestroy();
+
+            // Відписуємось від евентів через презентер
+            if (_presenter != null)
             {
-                eventSubscriber.UnsubscribeFromEvents();
+                _presenter.Dispose();
             }
 
             _confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
             _startGameButton.onClick.RemoveListener(OnStartGameButtonClicked);
             ClearContainer(_heroCardsContainer);
             ClearContainer(_selectedHeroesContainer);
-
-            // Відписка від UISystem
-            if (FindFirstObjectByType<GameBootstrapper>() != null)
-            {
-                var container = FindFirstObjectByType<GameBootstrapper>().GetContainer();
-                if (container != null && container.IsRegistered<IUISystem>())
-                {
-                    var uiSystem = container.Resolve<IUISystem>();
-                    uiSystem.UnregisterView(this);
-                }
-            }
         }
 
         public void PopulateHeroCards(List<HeroCardModel> heroes)
@@ -96,7 +78,7 @@ namespace MythHunter.UI.Views
             foreach (var hero in heroes)
             {
                 var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
-                
+
                 var ui = card.GetComponent<HeroCardUI>();
                 if (ui != null)
                 {
@@ -157,9 +139,6 @@ namespace MythHunter.UI.Views
             _confirmButton.gameObject.SetActive(false);
             _startGameButton.gameObject.SetActive(false);
         }
-
-        public override void Show() => gameObject.SetActive(true);
-        public override void Hide() => gameObject.SetActive(false);
 
         private void OnConfirmButtonClicked() => _presenter.OnSelectionConfirmed();
         private async void OnStartGameButtonClicked() => await _presenter.StartGameAsync();

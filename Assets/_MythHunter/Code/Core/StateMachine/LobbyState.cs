@@ -8,14 +8,12 @@ namespace MythHunter.States
 {
     public class LobbyState : BaseState<GameStateType>
     {
-        private readonly IUISystem _uiSystem;
-        private readonly IViewConfigRegistry _viewConfigRegistry;
+        private readonly IUIService _uiService;
         private readonly IMythLogger _logger;
 
         public LobbyState(IDIContainer container) : base(container)
         {
-            _uiSystem = container.Resolve<IUISystem>();
-            _viewConfigRegistry = container.Resolve<IViewConfigRegistry>();
+            _uiService = container.Resolve<IUIService>();
             _logger = container.Resolve<IMythLogger>();
         }
 
@@ -23,15 +21,14 @@ namespace MythHunter.States
         {
             _logger.LogInfo("Entering LobbyState", "GameState");
 
-            var config = _viewConfigRegistry.Get("Lobby");
-            if (config != null)
+            var view = await _uiService.ShowScreenAsync<UI.Views.LobbyView>("Lobby");
+            if (view != null)
             {
-                await _uiSystem.ShowViewAsync<UI.Views.LobbyView>(config.PrefabPath);
                 _logger.LogInfo("LobbyView created and shown", "LobbyState");
             }
             else
             {
-                _logger.LogError("Failed to find LobbyView config", "LobbyState");
+                _logger.LogError("Failed to show LobbyView", "LobbyState");
             }
         }
 
@@ -40,7 +37,7 @@ namespace MythHunter.States
         public override void Exit()
         {
             _logger.LogInfo("Exiting LobbyState", "GameState");
-            _uiSystem.HideView<UI.Views.LobbyView>();
+            _uiService.HideScreen<UI.Views.LobbyView>();
         }
     }
 }
