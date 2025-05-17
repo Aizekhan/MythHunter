@@ -19,7 +19,7 @@ namespace MythHunter.UI.Presenters
     /// <summary>
     /// Презентер лоббі з повною підтримкою IViewFactory та ViewConfigRegistry
     /// </summary>
-    public class LobbyPresenter : ILobbyPresenter, IEventSubscriber
+    public class LobbyPresenter : BasePresenter<ILobbyView>, ILobbyPresenter
     {
         private readonly ILobbySystem _lobbySystem;
         private readonly IHeroSelectionSystem _heroSelectionSystem;
@@ -35,15 +35,15 @@ namespace MythHunter.UI.Presenters
         private ILobbyPresenter _presenter;
         [Inject]
         public LobbyPresenter(
+             IEventBus eventBus,
+    IMythLogger logger,
     ILobbySystem lobbySystem,
     IHeroSelectionSystem heroSelectionSystem,
-    IEventBus eventBus,
-    IMythLogger logger,
     ILobbyModel model,
     IUIViewFactory viewFactory,
     IViewConfigRegistry viewConfigRegistry
 
-)
+     ) : base(eventBus, logger)
         {
             _lobbySystem = lobbySystem;
             _heroSelectionSystem = heroSelectionSystem;
@@ -55,13 +55,24 @@ namespace MythHunter.UI.Presenters
             
         }
 
-        public  void Initialize(ILobbyView view)
+        public void Initialize(ILobbyView view)
         {
             _view = view;
             SubscribeToEvents();
-
+            _logger.LogInfo("LobbyPresenter initialized with view", "Presenter");
         }
-
+        // Додаємо реалізацію InitializeAsync
+        public async UniTask InitializeAsync()
+        {
+            SubscribeToEvents();
+            _logger.LogInfo("LobbyPresenter initialized async", "Lobby");
+            await UniTask.CompletedTask;
+        }
+        public void Dispose()
+        {
+            UnsubscribeFromEvents();
+            _logger.LogInfo("LobbyPresenter disposed", "Presenter");
+        }
         public void StartLobby(int playerCount)
         {
             _lobbySystem.InitializeLobby(playerCount);

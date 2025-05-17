@@ -8,6 +8,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MythHunter.Services.GameSettings;
+using MythHunter.Events;
+using MythHunter.Core.Game;
 
 namespace MythHunter.UI.Views
 {
@@ -29,16 +31,21 @@ namespace MythHunter.UI.Views
 
         private ILobbyPresenter _presenter;
         private IGameSettingsService _settings;
-        [Inject]
       
-        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings)
+
+     
+        [Inject]
+        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings, IUISystem uiSystem)
         {
-            UnityEngine.Debug.Log("✅ LobbyView: Construct called");
             _presenter = presenter;
             _settings = settings;
 
+            // Реєструємо View в UISystem
+            uiSystem.RegisterView(this);
+
+            // Ініціалізуємо презентер з представленням
             _presenter.Initialize(this);
-            InitializeView(); // викликає StartLobby
+            InitializeView();
         }
 
         private void InitializeView()
@@ -57,12 +64,30 @@ namespace MythHunter.UI.Views
         }
 
 
+        // У методі OnDestroy додаємо відписку
         private void OnDestroy()
         {
+            // Перевіряємо чи _presenter - це IEventSubscriber і відписуємось
+            if (_presenter != null && _presenter is IEventSubscriber eventSubscriber)
+            {
+                eventSubscriber.UnsubscribeFromEvents();
+            }
+
             _confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
             _startGameButton.onClick.RemoveListener(OnStartGameButtonClicked);
             ClearContainer(_heroCardsContainer);
             ClearContainer(_selectedHeroesContainer);
+
+            // Відписка від UISystem
+            if (FindFirstObjectByType<GameBootstrapper>() != null)
+            {
+                var container = FindFirstObjectByType<GameBootstrapper>().GetContainer();
+                if (container != null && container.IsRegistered<IUISystem>())
+                {
+                    var uiSystem = container.Resolve<IUISystem>();
+                    uiSystem.UnregisterView(this);
+                }
+            }
         }
 
         public void PopulateHeroCards(List<HeroCardModel> heroes)

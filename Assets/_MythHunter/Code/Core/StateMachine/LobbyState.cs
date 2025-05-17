@@ -2,34 +2,45 @@ using MythHunter.Core.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
 using MythHunter.UI.Core;
-using MythHunter.UI.Presenters;
-using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.States
 {
-    /// <summary>
-    /// Стан гри, відповідальний за запуск лоббі
-    /// </summary>
     public class LobbyState : BaseState<GameStateType>
     {
+        private readonly IUISystem _uiSystem;
         private readonly IViewConfigRegistry _viewConfigRegistry;
-        private readonly IUIViewFactory _viewFactory;
+        private readonly IMythLogger _logger;
 
         public LobbyState(IDIContainer container) : base(container)
         {
+            _uiSystem = container.Resolve<IUISystem>();
             _viewConfigRegistry = container.Resolve<IViewConfigRegistry>();
-            _viewFactory = container.Resolve<IUIViewFactory>();
+            _logger = container.Resolve<IMythLogger>();
         }
 
         public override async void Enter()
         {
-            var config = _viewConfigRegistry.Get("Lobby");
-            await _viewFactory.CreateViewAsync<LobbyView>(config.PrefabPath);
+            _logger.LogInfo("Entering LobbyState", "GameState");
 
-            UnityEngine.Debug.Log("✅ LobbyView created from LobbyState");
+            var config = _viewConfigRegistry.Get("Lobby");
+            if (config != null)
+            {
+                await _uiSystem.ShowViewAsync<UI.Views.LobbyView>(config.PrefabPath);
+                _logger.LogInfo("LobbyView created and shown", "LobbyState");
+            }
+            else
+            {
+                _logger.LogError("Failed to find LobbyView config", "LobbyState");
+            }
         }
 
         public override GameStateType StateId => GameStateType.Lobby;
+
+        public override void Exit()
+        {
+            _logger.LogInfo("Exiting LobbyState", "GameState");
+            _uiSystem.HideView<UI.Views.LobbyView>();
+        }
     }
 }
