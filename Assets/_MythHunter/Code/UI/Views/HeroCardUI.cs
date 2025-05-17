@@ -1,10 +1,11 @@
-// Шлях: Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
+// Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
 using System;
 using MythHunter.UI.Models;
 using MythHunter.Utils.Logging;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using MythHunter.Core.DI;
 
 namespace MythHunter.UI.Views
 {
@@ -23,10 +24,17 @@ namespace MythHunter.UI.Views
         [SerializeField] private Sprite _defaultIcon;
 
         private string _archetypeId;
+        private IMythLogger _logger;
 
         public event Action<string> OnHeroSelected;
-        private IMythLogger _logger;
-        // В класі HeroCardUI.cs
+
+        [Inject]
+        public void Construct(IMythLogger logger)
+        {
+            _logger = logger;
+            _logger.LogInfo("HeroCardUI initialized", "UI");
+        }
+
         public void Setup(HeroCardModel model)
         {
             _archetypeId = model.ArchetypeId;
@@ -39,10 +47,22 @@ namespace MythHunter.UI.Views
             // Завантаження іконки або встановлення за замовчуванням
             Sprite icon = null;
 
-            if (!string.IsNullOrEmpty(model.IconPath))
+            if (_logger != null) // Перевірка на наявність логера 
             {
-                icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
-                _logger.LogInfo($"Спроба завантажити іконку за шляхом: {model.IconPath}, результат: {(icon != null ? "успішно" : "невдача")}", "HeroCardUI");
+                if (!string.IsNullOrEmpty(model.IconPath))
+                {
+                    icon = UnityEngine.Resources.Load<Sprite>(model.IconPath);
+                    _logger.LogInfo($"Спроба завантажити іконку за шляхом: {model.IconPath}, результат: {(icon != null ? "успішно" : "невдача")}", "HeroCardUI");
+                }
+                else
+                {
+                    _logger.LogWarning("Шлях до іконки порожній", "HeroCardUI");
+                }
+            }
+            else
+            {
+                // Якщо логер не доступний, використовуємо Debug.Log для діагностики
+                UnityEngine.Debug.Log($"[HeroCardUI] Логер не ініціалізований! Спроба завантажити іконку за шляхом: {model.IconPath}");
             }
 
             if (icon == null)
@@ -51,7 +71,11 @@ namespace MythHunter.UI.Views
                 if (_defaultIcon == null)
                 {
                     _defaultIcon = UnityEngine.Resources.Load<Sprite>("UI/Icons/default_hero");
-                    _logger.LogInfo($"Завантаження іконки за замовчуванням: {(_defaultIcon != null ? "успішно" : "невдача")}", "HeroCardUI");
+
+                    if (_logger != null)
+                    {
+                        _logger.LogInfo($"Завантаження іконки за замовчуванням: {(_defaultIcon != null ? "успішно" : "невдача")}", "HeroCardUI");
+                    }
                 }
                 icon = _defaultIcon;
             }
@@ -69,12 +93,22 @@ namespace MythHunter.UI.Views
 
         private void OnSelectButtonClicked()
         {
+            if (_logger != null)
+            {
+                _logger.LogInfo($"Вибрано героя: {_archetypeId}", "HeroCardUI");
+            }
+
             OnHeroSelected?.Invoke(_archetypeId);
         }
 
         private void OnDestroy()
         {
             _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
+
+            if (_logger != null)
+            {
+                _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
+            }
         }
     }
 }
