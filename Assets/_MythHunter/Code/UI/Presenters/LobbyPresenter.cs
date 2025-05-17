@@ -10,6 +10,7 @@ using MythHunter.UI.Models;
 using MythHunter.UI.Views;
 using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
+using System;
 
 namespace MythHunter.UI.Presenters
 {
@@ -50,9 +51,30 @@ namespace MythHunter.UI.Presenters
 
         public void Initialize(ILobbyView view)
         {
+            if (view == null)
+            {
+                _logger.LogError("[LobbyPresenter] Спроба ініціалізувати з null view", "Lobby");
+                return;
+            }
+
             _view = view;
             SubscribeToEvents();
-            _logger.LogInfo("LobbyPresenter initialized with view", "Presenter");
+            _logger.LogInfo("[LobbyPresenter] Ініціалізовано з представленням", "Lobby");
+
+            // Переконаймося, що HeroSelectionSystem завантажив героїв
+            if (_heroSelectionSystem == null)
+            {
+                _logger.LogError("[LobbyPresenter] _heroSelectionSystem є null", "Lobby");
+            }
+            else
+            {
+                // Запускаємо Load асинхронно
+                UniTask.Create(async () =>
+                {
+                    await _heroSelectionSystem.LoadAvailableHeroes();
+                    _logger.LogInfo("[LobbyPresenter] Героїв асинхронно завантажено", "Lobby");
+                });
+            }
         }
 
         public async UniTask InitializeAsync()
@@ -96,17 +118,25 @@ namespace MythHunter.UI.Presenters
 
         public void StartLobby(int playerCount)
         {
+            _logger.LogInfo($"[LobbyPresenter] StartLobby викликано для {playerCount} гравців", "Lobby");
+
+            // Спочатку ініціалізуємо систему лобі
             _lobbySystem.InitializeLobby(playerCount);
 
-            if (_view == null)
+            // Явно оновлюємо UI з актуальними даними
+            if (_view != null)
             {
-                _logger.LogWarning("LobbyView is not initialized", "LobbyPresenter");
-                return;
-            }
+                // Отримуємо доступних героїв і оновлюємо картки
+                var availableHeroes = GetAvailableHeroes();
+                _logger.LogInfo($"[LobbyPresenter] Отримано {availableHeroes.Count} героїв", "Lobby");
 
-            _logger.LogInfo($"[LobbyPresenter] Creating {GetAvailableHeroes().Count} hero cards", "Lobby");
-            _view.PopulateHeroCards(GetAvailableHeroes());
-            _view.UpdateMana(GetRemainingMana(), 4);
+                _view.PopulateHeroCards(availableHeroes);
+                _view.UpdateMana(GetRemainingMana(), 4);
+            }
+            else
+            {
+                _logger.LogError("[LobbyPresenter] View не ініціалізовано у StartLobby", "Lobby");
+            }
         }
 
         public void OnHeroSelected(string archetypeId)
@@ -149,37 +179,55 @@ namespace MythHunter.UI.Presenters
 
         public List<HeroCardModel> GetAvailableHeroes()
         {
-            // Отримуємо всі доступні архетипи героїв
-            var allHeroIds = _heroSelectionSystem.GetHeroesByCategory()
-                .SelectMany(category => category.Value)
-                .ToList();
+            if (_heroSelectionSystem == null)
+            {
+                _logger.LogError("[LobbyPresenter] _heroSelectionSystem є null в GetAvailableHeroes", "Lobby");
+                return new List<HeroCardModel>();
+            }
 
-            // Отримуємо список вже вибраних героїв
-            var selectedHeroIds = _lobbySystem.GetSelectedHeroes();
+            try
+            {
+                // Отримуємо всі доступні архетипи героїв
+                var allHeroIds = _heroSelectionSystem.GetHeroesByCategory()
+                    .SelectMany(category => category.Value)
+                    .ToList();
 
-            // Для кожного архетипу створюємо модель
-            return allHeroIds
-                .Select(id => _heroSelectionSystem.GetHeroInfo(id))
-                .Where(info => info != null)
-                .Select(info => new HeroCardModel
+                if (allHeroIds.Count == 0)
                 {
-                    ArchetypeId = info.ArchetypeId,
-                    Name = info.Name,
-                    Description = info.Description,
-                    Race = info.Race,
-                    Class = info.Class,
-                    ManaCost = info.ManaCost,
-                    IconPath = info.IconPath,
-                    // Герой доступний для вибору, якщо:
-                    // 1. Його ще не вибрали
-                    // 2. У гравця достатньо мани
-                    // 3. Можливий вибір згідно з правилами гри
-                    IsSelectable = !selectedHeroIds.Contains(info.ArchetypeId) &&
-                                  _lobbySystem.GetRemainingManaForCurrentPlayer() >= info.ManaCost &&
-                                  _heroSelectionSystem.CanSelectHero(info.ArchetypeId, _currentPlayerIndex, _lobbySystem.GetRemainingManaForCurrentPlayer()),
-                    IsSelected = selectedHeroIds.Contains(info.ArchetypeId)
-                })
-                .ToList();
+                    _logger.LogWarning("[LobbyPresenter] Отримано 0 архетипів героїв", "Lobby");
+                }
+
+                // Отримуємо список вже вибраних героїв
+                var selectedHeroIds = _lobbySystem.GetSelectedHeroes();
+
+                // Для кожного архетипу створюємо модель
+                var result = allHeroIds
+                    .Select(id => _heroSelectionSystem.GetHeroInfo(id))
+                    .Where(info => info != null)
+                    .Select(info => new HeroCardModel
+                    {
+                        ArchetypeId = info.ArchetypeId,
+                        Name = info.Name,
+                        Description = info.Description,
+                        Race = info.Race,
+                        Class = info.Class,
+                        ManaCost = info.ManaCost,
+                        IconPath = info.IconPath,
+                        IsSelectable = !selectedHeroIds.Contains(info.ArchetypeId) &&
+                                      _lobbySystem.GetRemainingManaForCurrentPlayer() >= info.ManaCost &&
+                                      _heroSelectionSystem.CanSelectHero(info.ArchetypeId, _currentPlayerIndex, _lobbySystem.GetRemainingManaForCurrentPlayer()),
+                        IsSelected = selectedHeroIds.Contains(info.ArchetypeId)
+                    })
+                    .ToList();
+
+                _logger.LogInfo($"[LobbyPresenter] GetAvailableHeroes повертає {result.Count} героїв", "Lobby");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[LobbyPresenter] Помилка в GetAvailableHeroes: {ex.Message}", "Lobby");
+                return new List<HeroCardModel>();
+            }
         }
 
         public List<HeroCardModel> GetSelectedHeroes()

@@ -40,30 +40,50 @@ namespace MythHunter.UI.Views
 
         public void Setup(HeroCardModel model)
         {
+            if (model == null)
+            {
+                if (_logger != null)
+                    _logger.LogError("Setup викликано з null моделлю", "HeroCardUI");
+                return;
+            }
+
             _archetypeId = model.ArchetypeId;
 
-            _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
-            _descriptionText.text = model.Description;
-            _raceClassText.text = $"{model.Race} - {model.Class}";
-            _manaCostText.text = $"Вартість: {model.ManaCost}";
+            // Встановлюємо текстові поля
+            if (_nameText)
+                _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
+            if (_descriptionText)
+                _descriptionText.text = model.Description;
+            if (_raceClassText)
+                _raceClassText.text = $"{model.Race} - {model.Class}";
+            if (_manaCostText)
+                _manaCostText.text = $"Вартість: {model.ManaCost}";
 
-            // Асинхронне завантаження іконки через сервіс
+            // Асинхронне завантаження іконки
             if (!string.IsNullOrEmpty(model.IconPath) && _spriteService != null)
             {
                 LoadIconAsync(model.IconPath).Forget();
             }
             else
             {
-                _iconImage.sprite = _defaultIcon;
+                if (_iconImage)
+                    _iconImage.sprite = _defaultIcon;
                 if (_logger != null)
                 {
-                    _logger.LogWarning($"Invalid icon path or sprite service not available for hero: {model.Name}", "HeroCardUI");
+                    _logger.LogWarning($"Invalid icon path or sprite service for hero: {model.Name}", "HeroCardUI");
                 }
             }
 
-            _selectedIndicator.SetActive(model.IsSelected);
+            if (_selectedIndicator)
+                _selectedIndicator.SetActive(model.IsSelected);
             SetInteractable(model.IsSelectable);
-            _selectButton.onClick.AddListener(OnSelectButtonClicked);
+
+            // Видаляємо старий обробник перед додаванням нового
+            if (_selectButton)
+            {
+                _selectButton.onClick.RemoveAllListeners();
+                _selectButton.onClick.AddListener(OnSelectButtonClicked);
+            }
         }
 
         private async UniTaskVoid LoadIconAsync(string iconPath)

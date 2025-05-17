@@ -39,8 +39,8 @@ namespace MythHunter.UI.Views
         {
             base.Awake();
 
-            // Отримання логера через GameBootstrapper для дебагу
-            var bootstrapper = FindFirstObjectByType<MythHunter.Core.Game.GameBootstrapper>();
+            // Отримуємо логер для дебагу
+            var bootstrapper = FindFirstObjectByType<GameBootstrapper>();
             if (bootstrapper != null)
             {
                 var container = bootstrapper.GetContainer();
@@ -51,39 +51,44 @@ namespace MythHunter.UI.Views
                 }
                 else
                 {
-                    // Створення тимчасового логера, якщо не вдалося отримати через DI
                     _logger = MythLoggerFactory.GetDefaultLogger();
                 }
             }
             else
             {
-                // Створення тимчасового логера, якщо не вдалося отримати через DI
                 _logger = MythLoggerFactory.GetDefaultLogger();
             }
 
-            _logger.LogInfo("Awake викликано", "LobbyView");
-
-            // Перевірка наявності необхідних компонентів
+            // Перевірка компонентів
             if (_heroCardsContainer == null)
                 _logger.LogError("_heroCardsContainer не вказано в інспекторі!", "LobbyView");
             if (_selectedHeroesContainer == null)
                 _logger.LogError("_selectedHeroesContainer не вказано в інспекторі!", "LobbyView");
             if (_heroCardPrefab == null)
                 _logger.LogError("_heroCardPrefab не вказано в інспекторі!", "LobbyView");
-            if (_manaText == null)
-                _logger.LogError("_manaText не вказано в інспекторі!", "LobbyView");
-            if (_timerText == null)
-                _logger.LogError("_timerText не вказано в інспекторі!", "LobbyView");
-            if (_errorText == null)
-                _logger.LogError("_errorText не вказано в інспекторі!", "LobbyView");
-            if (_gameStartingText == null)
-                _logger.LogError("_gameStartingText не вказано в інспекторі!", "LobbyView");
-            if (_confirmButton == null)
-                _logger.LogError("_confirmButton не вказано в інспекторі!", "LobbyView");
-            if (_startGameButton == null)
-                _logger.LogError("_startGameButton не вказано в інспекторі!", "LobbyView");
+
+            // Додати слухачів подій для кнопок тут
+            if (_confirmButton)
+                _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
+            if (_startGameButton)
+                _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
+        }
+        private void Start()
+        {
+            _logger.LogInfo("Start викликано", "LobbyView");
+
+            // Якщо ін'єкція вже відбулась, то ініціалізуємо
+            if (_presenter != null)
+            {
+                InitializeView();
+            }
+            else
+            {
+                _logger.LogError("Presenter не був ін'єктований до Start()", "LobbyView");
+            }
         }
 
+      
         [Inject]
         public void Construct(ILobbyPresenter presenter, IGameSettingsService settings, IMythLogger logger, IUIViewFactory uiViewFactory)
         {
@@ -91,21 +96,26 @@ namespace MythHunter.UI.Views
             _presenter = presenter;
             _settings = settings;
             _logger = logger;
-            _uiViewFactory = uiViewFactory; // Тепер це правильно працюватиме
+            _uiViewFactory = uiViewFactory;
 
             // Ініціалізуємо презентер з представленням
-            if (_presenter != null)
+            _presenter.Initialize(this);
+            _logger.LogInfo("Presenter ініціалізовано", "LobbyView");
+
+            // Якщо об'єкт уже активний, ініціалізуємо представлення
+            if (gameObject.activeInHierarchy)
             {
-                _presenter.Initialize(this);
-                _logger.LogInfo("Presenter ініціалізовано", "LobbyView");
                 InitializeView();
             }
-            else
+            // Інакше ініціалізація відбудеться у Start
+        }
+        private void OnEnable()
+        {
+            if (_presenter != null)
             {
-                _logger.LogError("Presenter не ін'єктовано!", "LobbyView");
+                InitializeView();
             }
         }
-
         private void InitializeView()
         {
             _logger.LogInfo("InitializeView викликано", "LobbyView");
@@ -116,17 +126,7 @@ namespace MythHunter.UI.Views
                 return;
             }
 
-            // Запускаємо лобі і відразу показуємо героїв
-            _presenter.StartLobby(_settings.PlayerCount);
-
-            // ДОДАЙТЕ ЦЕЙ РЯДОК: явно викликаємо PopulateHeroCards, щоб відобразити героїв відразу
-            PopulateHeroCards(_presenter.GetAvailableHeroes());
-
-            if (_confirmButton)
-                _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
-            if (_startGameButton)
-                _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
-
+            // Скидаємо елементи інтерфейсу в початковий стан
             if (_errorText)
                 _errorText.gameObject.SetActive(false);
             if (_gameStartingText)
@@ -137,6 +137,12 @@ namespace MythHunter.UI.Views
                 if (_playerStatusTexts[i])
                     _playerStatusTexts[i].text = $"Гравець {i + 1}: Очікує вибору";
             }
+
+            // Запускаємо лобі
+            _presenter.StartLobby(_settings.PlayerCount);
+
+            // ВАЖЛИВО: Тепер презентер відповідає за виклик PopulateHeroCards
+            // Не викликайте PopulateHeroCards тут!
 
             _logger.LogInfo("View ініціалізовано", "LobbyView");
         }
@@ -196,21 +202,42 @@ namespace MythHunter.UI.Views
         }
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
-            ClearHeroCards(); // Повертаємо всі картки в пул перед створенням нових
+            if (heroes == null || heroes.Count == 0)
+            {
+                _logger.LogWarning("PopulateHeroCards викликано з пустим списком героїв", "LobbyView");
+                return;
+            }
+
+            _logger.LogInfo($"PopulateHeroCards викликано з {heroes.Count} героями", "LobbyView");
+
+            ClearHeroCards();
 
             foreach (var hero in heroes)
             {
-                var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
-                var ui = card.GetComponent<HeroCardUI>();
-
-                if (ui != null)
+                try
                 {
-                    // Ін'єкція залежностей через GameBootstrapper
-                    GameBootstrapper.Instance?.RegisterForInjection(ui);
+                    var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
+                    var ui = card.GetComponent<HeroCardUI>();
 
-                    ui.Setup(hero);
-                    ui.OnHeroSelected += OnHeroCardSelected;
-                    _createdCards.Add(ui);
+                    if (ui != null)
+                    {
+                        // Ін'єкція залежностей через GameBootstrapper
+                        GameBootstrapper.Instance?.RegisterForInjection(ui);
+
+                        ui.Setup(hero);
+                        ui.OnHeroSelected += OnHeroCardSelected;
+                        _createdCards.Add(ui);
+
+                        _logger.LogInfo($"Створено картку для героя {hero.Name}", "LobbyView");
+                    }
+                    else
+                    {
+                        _logger.LogError("Не знайдено компонент HeroCardUI на префабі", "LobbyView");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при створенні картки героя: {ex.Message}", "LobbyView");
                 }
             }
         }
@@ -323,7 +350,15 @@ namespace MythHunter.UI.Views
         private void OnConfirmButtonClicked()
         {
             _logger.LogInfo("OnConfirmButtonClicked викликано", "LobbyView");
-            _presenter?.OnSelectionConfirmed();
+
+            if (_presenter != null)
+            {
+                _presenter.OnSelectionConfirmed();
+            }
+            else
+            {
+                _logger.LogError("_presenter відсутній при натисканні Confirm!", "LobbyView");
+            }
         }
 
         private async void OnStartGameButtonClicked()

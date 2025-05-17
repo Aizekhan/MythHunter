@@ -50,54 +50,72 @@ namespace MythHunter.Systems.Lobby
 
             _logger.LogInfo("Початок завантаження героїв", "HeroSelection");
 
-            var archetypeIds = _archetypeTemplateRegistry.GetAllTemplateIds()
-                .Where(id => id.StartsWith("Character") || id.StartsWith("Hero"))
-                .ToList();
-
-            _logger.LogInfo($"Знайдено {archetypeIds.Count} архетипів героїв", "HeroSelection");
-            foreach (var archetypeId in archetypeIds)
+            try
             {
-                var heroArchetype = await _resourceManager.LoadAsync<HeroArchetypeSO>($"ScriptableObjects/Heroes/{archetypeId}");
+                var archetypeIds = _archetypeTemplateRegistry.GetAllTemplateIds()
+                    .Where(id => id.StartsWith("Character") || id.StartsWith("Hero"))
+                    .ToList();
 
-                if (heroArchetype == null)
+                _logger.LogInfo($"Знайдено {archetypeIds.Count} архетипів героїв", "HeroSelection");
+
+                foreach (var archetypeId in archetypeIds)
                 {
-                    _logger.LogWarning($"HeroArchetypeSO not found for ID: {archetypeId}", "HeroSelection");
-                    continue;
+                    try
+                    {
+                        var heroArchetype = await _resourceManager.LoadAsync<HeroArchetypeSO>($"ScriptableObjects/Heroes/{archetypeId}");
+
+                        if (heroArchetype == null)
+                        {
+                            _logger.LogWarning($"HeroArchetypeSO not found for ID: {archetypeId}", "HeroSelection");
+                            continue;
+                        }
+
+                        var heroInfo = new HeroInfo
+                        {
+                            ArchetypeId = archetypeId,
+                            Name = heroArchetype.HeroName,
+                            Description = heroArchetype.Description,
+                            Race = heroArchetype.Race.ToString(),
+                            Class = heroArchetype.Class.ToString(),
+                            ManaCost = heroArchetype.ManaCost,
+                            Category = GetCategoryFromHeroClass(heroArchetype.Class.ToString()),
+                            IconPath = heroArchetype.IconPath
+                        };
+
+                        if (string.IsNullOrWhiteSpace(heroInfo.Name))
+                        {
+                            heroInfo.Name = archetypeId;
+                            _logger.LogWarning($"Hero archetype {archetypeId} має порожнє Name", "HeroSelection");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(heroInfo.IconPath))
+                        {
+                            _logger.LogWarning($"Hero archetype {archetypeId} має порожній IconPath", "HeroSelection");
+                        }
+
+                        _heroInfos.Add(archetypeId, heroInfo);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Помилка завантаження архетипу {archetypeId}: {ex.Message}", "HeroSelection");
+                    }
                 }
 
-                var heroInfo = new HeroInfo
+                // Додаємо тестові дані, якщо немає героїв
+                if (_heroInfos.Count == 0)
                 {
-                    ArchetypeId = archetypeId,
-                    Name = heroArchetype.HeroName,
-                    Description = heroArchetype.Description,
-                    Race = heroArchetype.Race.ToString(),
-                    Class = heroArchetype.Class.ToString(),
-                    ManaCost = heroArchetype.ManaCost, // Використовуємо значення з SO
-                    Category = GetCategoryFromHeroClass(heroArchetype.Class.ToString()),
-                    IconPath = heroArchetype.IconPath
-                };
-
-                if (string.IsNullOrWhiteSpace(heroInfo.Name))
-                {
-                    heroInfo.Name = archetypeId;
-                    _logger.LogWarning($"Hero archetype {archetypeId} має порожнє Name", "HeroSelection");
+                    _logger.LogWarning("Не знайдено жодного архетипу героя, додаємо тестові дані", "HeroSelection");
+                    AddTestHeroes();
                 }
 
-                if (string.IsNullOrWhiteSpace(heroInfo.IconPath))
-                {
-                    _logger.LogWarning($"Hero archetype {archetypeId} має порожній IconPath", "HeroSelection");
-                }
-
-                _heroInfos.Add(archetypeId, heroInfo);
+                _logger.LogInfo($"Завантажено {_heroInfos.Count} героїв", "HeroSelection");
             }
-            // Додаємо тестові дані, якщо немає героїв
-            if (_heroInfos.Count == 0)
+            catch (Exception ex)
             {
-                _logger.LogWarning("Не знайдено жодного архетипу героя, додаємо тестові дані", "HeroSelection");
+                _logger.LogError($"Помилка при завантаженні героїв: {ex.Message}", "HeroSelection");
+                // У разі помилки додаємо тестові дані
                 AddTestHeroes();
             }
-
-            _logger.LogInfo($"Завантажено {_heroInfos.Count} героїв", "HeroSelection");
         }
         private void AddTestHeroes()
         {
