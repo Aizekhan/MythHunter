@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
   m_Name: Hero_Elf_Ranger_df7ea4d2
   m_EditorClassIdentifier: 
-  IconPath: UI/Icons/hero_Atakhan
+  IconPath: UI/Icons/Heroes/hero_Atakhan
   ArchetypeId: Hero_Elf_Ranger_df7ea4d2
   HeroName: Malu
   Description: "\u041B\u0443\u0447\u043D\u0438\u043A \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0456\u0457"

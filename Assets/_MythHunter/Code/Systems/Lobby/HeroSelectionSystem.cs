@@ -57,10 +57,7 @@ namespace MythHunter.Systems.Lobby
             _logger.LogInfo($"Знайдено {archetypeIds.Count} архетипів героїв", "HeroSelection");
             foreach (var archetypeId in archetypeIds)
             {
-                int manaCost = CalculateManaCostForArchetype(archetypeId);
-
                 var heroArchetype = await _resourceManager.LoadAsync<HeroArchetypeSO>($"ScriptableObjects/Heroes/{archetypeId}");
-
 
                 if (heroArchetype == null)
                 {
@@ -75,7 +72,7 @@ namespace MythHunter.Systems.Lobby
                     Description = heroArchetype.Description,
                     Race = heroArchetype.Race.ToString(),
                     Class = heroArchetype.Class.ToString(),
-                    ManaCost = manaCost,
+                    ManaCost = heroArchetype.ManaCost, // Використовуємо значення з SO
                     Category = GetCategoryFromHeroClass(heroArchetype.Class.ToString()),
                     IconPath = heroArchetype.IconPath
                 };
@@ -178,6 +175,7 @@ namespace MythHunter.Systems.Lobby
                 return false;
             }
 
+            // Перевіряємо, чи не вибраний цей герой іншим гравцем
             foreach (var entityId in _entityManager.GetEntitiesWith<HeroSelectionComponent>())
             {
                 var selection = _entityManager.GetComponent<HeroSelectionComponent>(entityId);
@@ -209,10 +207,7 @@ namespace MythHunter.Systems.Lobby
             return result;
         }
 
-        private int CalculateManaCostForArchetype(string archetypeId)
-        {
-            return Math.Max(1, Math.Min(4, archetypeId.Length % 4 + 1));
-        }
+       
 
         private string GetCategoryFromHeroClass(string heroClass)
         {

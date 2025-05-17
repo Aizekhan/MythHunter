@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
   m_Name: Hero_Goblin_Mage_532d06c6
   m_EditorClassIdentifier: 
-  IconPath: Ui/Icons/hero_troll
+  IconPath: Ui/Icons/Heroes/hero_troll
   ArchetypeId: Hero_Goblin_Mage_532d06c6
   HeroName: "\u0412\u0430\u043B\u0438\u0440\u0430"
   Description: "\u041C\u0430\u0433 \u0456\u0437 \u043F\u043E\u0442\u0443\u0436\u043D\u043E\u044E

@@ -16,7 +16,10 @@ namespace MythHunter.Data
 
         static StatRegistry()
         {
+
+
             // Базові характеристики
+            RegisterStat(StatType.ManaCost, "Вартість мани", "Вартість виклику героя в мані", 1, 4, StatCategory.Basic);
             RegisterStat(StatType.Level, "Рівень", "Загальний рівень героя", 1, 100, StatCategory.Basic);
             RegisterStat(StatType.Experience,"Досвід","Кількість досвіду, набраного героєм",0, 999999,StatCategory.Basic);
             RegisterStat(StatType.HP, "Здоров'я", "Максимальна кількість здоров'я", 1, 10000, StatCategory.Basic);

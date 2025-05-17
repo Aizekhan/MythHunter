@@ -24,6 +24,7 @@ namespace MythHunter.UI.Views
         [SerializeField] private Sprite _defaultIcon;
 
         private string _archetypeId;
+        public string ArchetypeId => _archetypeId;
         private IMythLogger _logger;
         private ISpriteService _spriteService;
 

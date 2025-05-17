@@ -10,6 +10,8 @@ namespace MythHunter.Components.Character
     public enum StatType
     {
         // Базові характеристики
+        ManaCost,
+
         Level,
         Experience,
         HP,

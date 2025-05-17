@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using MythHunter.Services.GameSettings;
 using MythHunter.Core.Game;
+using System.Linq;
 namespace MythHunter.UI.Views
 {
     /// <summary>
@@ -115,7 +116,11 @@ namespace MythHunter.UI.Views
                 return;
             }
 
+            // Запускаємо лобі і відразу показуємо героїв
             _presenter.StartLobby(_settings.PlayerCount);
+
+            // ДОДАЙТЕ ЦЕЙ РЯДОК: явно викликаємо PopulateHeroCards, щоб відобразити героїв відразу
+            PopulateHeroCards(_presenter.GetAvailableHeroes());
 
             if (_confirmButton)
                 _confirmButton.onClick.AddListener(OnConfirmButtonClicked);
@@ -158,6 +163,37 @@ namespace MythHunter.UI.Views
             _logger.LogInfo("OnDestroy викликано", "LobbyView");
         }
 
+        public void UpdateHeroCardsState(List<HeroCardModel> heroes)
+        {
+            if (_createdCards == null || heroes == null)
+            {
+                _logger.LogWarning("_createdCards або heroes є null", "LobbyView");
+                return;
+            }
+
+            foreach (var card in _createdCards)
+            {
+                if (card == null)
+                    continue;
+
+                // Шукаємо відповідну модель героя за ID
+                var model = heroes.FirstOrDefault(h => h.ArchetypeId == card.ArchetypeId);
+                if (model != null)
+                {
+                    // Оновлюємо стан картки
+                    card.SetInteractable(model.IsSelectable);
+                    // Встановлюємо видимість - завжди видима, навіть якщо не вибирається
+                    card.gameObject.SetActive(true);
+                }
+                else
+                {
+                    // Якщо герой не знайдений у списку, однаково залишаємо його видимим
+                    // але неактивним для вибору
+                    card.SetInteractable(false);
+                    card.gameObject.SetActive(true);
+                }
+            }
+        }
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
             ClearHeroCards(); // Повертаємо всі картки в пул перед створенням нових

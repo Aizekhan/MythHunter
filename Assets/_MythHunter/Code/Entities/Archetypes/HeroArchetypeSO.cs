@@ -16,7 +16,7 @@ namespace MythHunter.Entities.Archetypes
     {
         [Header("UI")]
         [SerializeField] public string IconPath; // Шлях до іконки героя
-
+        [SerializeField] public int ManaCost = 1;
         [Header("Ідентифікація")]
         public string ArchetypeId;
         public string HeroName;

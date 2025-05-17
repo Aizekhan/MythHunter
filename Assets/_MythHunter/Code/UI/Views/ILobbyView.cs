@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/UI/Views/ILobbyView.cs
+
 using System.Collections.Generic;
 using MythHunter.UI.Models;
 using MythHunter.UI.Core;
@@ -14,6 +15,11 @@ namespace MythHunter.UI.Views
         /// Створює картки героїв на екрані з доступних героїв
         /// </summary>
         void PopulateHeroCards(List<HeroCardModel> heroes);
+
+        /// <summary>
+        /// Оновлює стан карток героїв без їх перестворення
+        /// </summary>
+        void UpdateHeroCardsState(List<HeroCardModel> heroes);
 
         /// <summary>
         /// Оновлює вибраних героїв

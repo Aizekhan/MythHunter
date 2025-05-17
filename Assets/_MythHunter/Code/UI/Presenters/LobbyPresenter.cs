@@ -27,7 +27,7 @@ namespace MythHunter.UI.Presenters
         private readonly IViewConfigRegistry _viewConfigRegistry;
         private ILobbyView _view;
         private bool _isSubscribed = false;
-
+        private int _currentPlayerIndex = 0; // Додайте це поле
         [Inject]
         public LobbyPresenter(
             IEventBus eventBus,
@@ -149,7 +149,16 @@ namespace MythHunter.UI.Presenters
 
         public List<HeroCardModel> GetAvailableHeroes()
         {
-            return _lobbySystem.GetAvailableHeroes()
+            // Отримуємо всі доступні архетипи героїв
+            var allHeroIds = _heroSelectionSystem.GetHeroesByCategory()
+                .SelectMany(category => category.Value)
+                .ToList();
+
+            // Отримуємо список вже вибраних героїв
+            var selectedHeroIds = _lobbySystem.GetSelectedHeroes();
+
+            // Для кожного архетипу створюємо модель
+            return allHeroIds
                 .Select(id => _heroSelectionSystem.GetHeroInfo(id))
                 .Where(info => info != null)
                 .Select(info => new HeroCardModel
@@ -161,9 +170,16 @@ namespace MythHunter.UI.Presenters
                     Class = info.Class,
                     ManaCost = info.ManaCost,
                     IconPath = info.IconPath,
-                    IsSelectable = true,
-                    IsSelected = false
-                }).ToList();
+                    // Герой доступний для вибору, якщо:
+                    // 1. Його ще не вибрали
+                    // 2. У гравця достатньо мани
+                    // 3. Можливий вибір згідно з правилами гри
+                    IsSelectable = !selectedHeroIds.Contains(info.ArchetypeId) &&
+                                  _lobbySystem.GetRemainingManaForCurrentPlayer() >= info.ManaCost &&
+                                  _heroSelectionSystem.CanSelectHero(info.ArchetypeId, _currentPlayerIndex, _lobbySystem.GetRemainingManaForCurrentPlayer()),
+                    IsSelected = selectedHeroIds.Contains(info.ArchetypeId)
+                })
+                .ToList();
         }
 
         public List<HeroCardModel> GetSelectedHeroes()
@@ -203,7 +219,8 @@ namespace MythHunter.UI.Presenters
         {
             _view.UpdateSelectedHeroes(GetSelectedHeroes());
             _view.UpdateMana(evt.RemainingMana, 4);
-            _view.PopulateHeroCards(GetAvailableHeroes());
+            // Замінюємо повну перегенерацію на оновлення стану
+            _view.UpdateHeroCardsState(GetAvailableHeroes());
         }
 
         private void OnSelectionConfirmedEvent(SelectionConfirmedEvent evt)
@@ -225,6 +242,12 @@ namespace MythHunter.UI.Presenters
         private void OnTimerUpdated(SelectionTimerUpdatedEvent evt)
         {
             _view.UpdateTimer(evt.RemainingTime, 300f);
+        }
+        // Також модифікуйте метод обробки зміни гравця (якщо він є):
+        private void OnPlayerChanged(int newPlayerIndex)
+        {
+            _currentPlayerIndex = newPlayerIndex;
+            // Оновлення UI...
         }
     }
 }
