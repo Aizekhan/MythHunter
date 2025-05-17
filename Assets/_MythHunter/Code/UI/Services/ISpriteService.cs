@@ -6,8 +6,8 @@ namespace MythHunter.UI.Services
 {
     public interface ISpriteService
     {
-        Sprite GetSprite(string path, Sprite defaultSprite = null);
         UniTask<Sprite> GetSpriteAsync(string path, Sprite defaultSprite = null);
         void PreloadSprites(string[] paths);
+        void ClearCache();
     }
 }

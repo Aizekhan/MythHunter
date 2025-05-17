@@ -17,7 +17,7 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Installing Pool System...", "Installer");
 
             // Реєструємо основні компоненти системи пулінгу
-            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
+            BindSingleton<IPoolManager, PoolManager>(container);
 
             // Моніторинг та діагностика
             InstallPoolMonitoring(container);
@@ -47,7 +47,7 @@ namespace MythHunter.Core.Installers
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Integrating Pool Subsystems...", "Installer");
 
-            var poolManager = container.Resolve<IPoolManager>() as OptimizedPoolManager;
+            var poolManager = container.Resolve<IPoolManager>() as PoolManager;
             var poolMonitor = container.Resolve<PoolMonitor>();
 
             if (poolManager != null && poolMonitor != null)

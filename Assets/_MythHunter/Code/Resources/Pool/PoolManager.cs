@@ -1,4 +1,4 @@
-// Шлях: Assets/_MythHunter/Code/Resources/Pool/OptimizedPoolManager.cs
+// Шлях: Assets/_MythHunter/Code/Resources/Pool/PoolManager.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -440,6 +440,13 @@ namespace MythHunter.Resources.Pool
         public PoolMonitor GetPoolMonitor()
         {
             return _poolMonitor;
+        }
+        /// <summary>
+        /// Перевіряє, чи існує пул з вказаним ключем
+        /// </summary>
+        public bool HasPool(string poolKey)
+        {
+            return _pools.ContainsKey(poolKey);
         }
     }
 }

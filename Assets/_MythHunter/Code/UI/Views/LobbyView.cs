@@ -84,13 +84,13 @@ namespace MythHunter.UI.Views
         }
 
         [Inject]
-        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings, IMythLogger logger)
+        public void Construct(ILobbyPresenter presenter, IGameSettingsService settings, IMythLogger logger, IUIViewFactory uiViewFactory)
         {
             _logger.LogInfo("Construct викликано", "LobbyView");
             _presenter = presenter;
             _settings = settings;
             _logger = logger;
-            _uiViewFactory = uiViewFactory;
+            _uiViewFactory = uiViewFactory; // Тепер це правильно працюватиме
 
             // Ініціалізуємо презентер з представленням
             if (_presenter != null)

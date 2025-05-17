@@ -21,31 +21,6 @@ namespace MythHunter.UI.Services
             _logger = logger;
         }
 
-        public Sprite GetSprite(string path, Sprite defaultSprite = null)
-        {
-            if (string.IsNullOrEmpty(path))
-                return defaultSprite;
-
-            if (_cache.TryGetValue(path, out var sprite))
-                return sprite;
-
-            try
-            {
-                sprite = _resourceProvider.Load<Sprite>(path);
-                if (sprite != null)
-                {
-                    _cache[path] = sprite;
-                    return sprite;
-                }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogWarning($"Failed to load sprite from {path}: {ex.Message}", "SpriteService");
-            }
-
-            return defaultSprite;
-        }
-
         public async UniTask<Sprite> GetSpriteAsync(string path, Sprite defaultSprite = null)
         {
             if (string.IsNullOrEmpty(path))
@@ -82,6 +57,13 @@ namespace MythHunter.UI.Services
                     await GetSpriteAsync(path);
                 });
             }
+        }
+
+        // Додатковий метод для очищення кешу
+        public void ClearCache()
+        {
+            _cache.Clear();
+            _logger.LogInfo("Sprite cache cleared", "SpriteService");
         }
     }
 }

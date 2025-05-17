@@ -48,12 +48,12 @@ namespace MythHunter.Debug.Pool
             _poolManager = poolManager;
             _lastRefreshTime = Time.realtimeSinceStartup;
 
-            // Отримуємо PoolMonitor через інтеграцію з OptimizedPoolManager
-            var optimizedManager = _poolManager as OptimizedPoolManager;
+            // Отримуємо PoolMonitor через інтеграцію з PoolManager
+            var optimizedManager = _poolManager as PoolManager;
             if (optimizedManager != null)
             {
-                // Тут потрібно забезпечити, щоб _poolMonitor був доступний через OptimizedPoolManager
-                // Можливо, додати публічний метод GetPoolMonitor в OptimizedPoolManager
+                // Тут потрібно забезпечити, щоб _poolMonitor був доступний через PoolManager
+                // Можливо, додати публічний метод GetPoolMonitor в PoolManager
             }
 
             // Підписуємося на події сцен для моніторингу
@@ -156,7 +156,7 @@ namespace MythHunter.Debug.Pool
             }
 
             // Отримання інформації про життєвий цикл, якщо доступно
-            if (_poolManager is OptimizedPoolManager optimizedManager)
+            if (_poolManager is PoolManager optimizedManager)
             {
                 var lifetimeStats = optimizedManager.GetLifetimeStatistics();
                 if (lifetimeStats != null && lifetimeStats.Count > 0)
@@ -320,7 +320,7 @@ namespace MythHunter.Debug.Pool
 
             // Новий розділ - відстеження життєвого циклу об'єктів
             _showLifetimeSection = DrawFoldout("Життєвий цикл об'єктів");
-            if (_showLifetimeSection && _poolManager is OptimizedPoolManager optimizedManager)
+            if (_showLifetimeSection && _poolManager is PoolManager optimizedManager)
             {
                 var lifetimeStats = optimizedManager.GetLifetimeStatistics();
 

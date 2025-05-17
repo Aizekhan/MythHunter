@@ -23,7 +23,7 @@ namespace MythHunter.Core.Installers
             // Asset Bundle Provider
             BindSingleton<IAssetBundleProvider, AssetBundleProvider>(container);
             // Pool Manager
-            BindSingleton<IPoolManager, OptimizedPoolManager>(container);
+            BindSingleton<IPoolManager, PoolManager>(container);
             // Preload Manager
             BindSingleton<IPreloadManager, PreloadManager>(container);
             // Addressables — тепер без int в конструкторі
