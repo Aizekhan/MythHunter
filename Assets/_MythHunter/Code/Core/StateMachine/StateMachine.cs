@@ -1,74 +1,62 @@
+// Файл: Assets/_MythHunter/Code/Core/StateMachine/StateMachine.cs
 using System;
 using System.Collections.Generic;
 
 namespace MythHunter.Core.StateMachine
 {
     /// <summary>
-    /// Реалізація машини станів з підтримкою enum
+    /// Базова реалізація машини станів
     /// </summary>
-    public class StateMachine<TStateEnum> : IStateMachine<TStateEnum> where TStateEnum : Enum
+    public class StateMachine<T> : IStateMachine<T> where T : Enum
+
     {
-        private readonly Dictionary<TStateEnum, IState<TStateEnum>> _states = new Dictionary<TStateEnum, IState<TStateEnum>>();
-        private readonly HashSet<(TStateEnum from, TStateEnum to)> _allowedTransitions = new HashSet<(TStateEnum from, TStateEnum to)>();
-        
-        private IState<TStateEnum> _currentState;
-        
-        public TStateEnum CurrentState => _currentState != null ? _currentState.StateId : default;
-        
-        public void RegisterState(TStateEnum stateId, IState<TStateEnum> state)
-        {
-            _states[stateId] = state;
-        }
-        
-        public void UnregisterState(TStateEnum stateId)
-        {
-            if (_states.ContainsKey(stateId))
-            {
-                if (_currentState != null && EqualityComparer<TStateEnum>.Default.Equals(_currentState.StateId, stateId))
-                {
-                    _currentState.Exit();
-                    _currentState = null;
-                }
-                
-                _states.Remove(stateId);
-            }
-        }
-        
-        public bool SetState(TStateEnum stateId)
+        private readonly Dictionary<T, IState<T>> _states = new Dictionary<T, IState<T>>();
+        private IState<T> _currentState;
+        private readonly HashSet<(T, T)> _transitions = new();
+        private T _currentStateId;
+        private T _previousStateId;
+
+        public T CurrentState => _currentStateId;
+        public T PreviousState => _previousStateId;
+
+        public void RegisterState(T stateId, IState<T> state)
         {
             if (!_states.ContainsKey(stateId))
+                _states.Add(stateId, state);
+        }
+
+        public bool SetState(T stateId)
+        {
+            if (!_states.TryGetValue(stateId, out var state))
                 return false;
-                
-            if (_currentState != null)
-            {
-                if (EqualityComparer<TStateEnum>.Default.Equals(_currentState.StateId, stateId))
-                    return true;
-                    
-                if (!CanTransition(_currentState.StateId, stateId))
-                    return false;
-                    
-                _currentState.Exit();
-            }
-            
-            _currentState = _states[stateId];
-            _currentState.Enter();
-            
+
+            _currentState?.Exit();
+
+            _previousStateId = _currentStateId;
+            _currentStateId = stateId;
+            _currentState = state;
+
+            _currentState.Enter(_previousStateId);
             return true;
         }
-        
+        public void UnregisterState(T stateId)
+        {
+            _states.Remove(stateId);
+        }
         public void Update()
         {
             _currentState?.Update();
         }
-        
-        public void AddTransition(TStateEnum fromStateId, TStateEnum toStateId)
+        public void AddTransition(T from, T to)
         {
-            _allowedTransitions.Add((fromStateId, toStateId));
+            _transitions.Add((from, to));
         }
-        
-        public bool CanTransition(TStateEnum fromStateId, TStateEnum toStateId)
+
+
+
+        public bool CanTransition(T from, T to)
         {
-            return _allowedTransitions.Contains((fromStateId, toStateId));
+            return _transitions.Contains((from, to));
         }
     }
 }

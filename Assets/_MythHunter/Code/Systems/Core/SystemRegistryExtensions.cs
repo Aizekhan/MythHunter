@@ -184,6 +184,147 @@ namespace MythHunter.Systems.Core
 
             return phaseProvider;
         }
+
+        /// <summary>
+        /// Реєструє групу систем з вказаною категорією ініціалізації
+        /// </summary>
+        /// <typeparam name="TGroup">Тип групи систем</typeparam>
+        /// <param name="registry">Реєстр систем</param>
+        /// <param name="groupName">Назва групи</param>
+        /// <param name="priority">Пріоритет виконання</param>
+        /// <param name="category">Категорія ініціалізації</param>
+        /// <param name="logger">Логер</param>
+        /// <param name="systems">Типи систем для додавання в групу</param>
+        /// <returns>Створена група систем</returns>
+        public static TGroup RegisterGroupWithCategory<TGroup>(
+            this ISystemRegistry registry,
+            string groupName,
+            int priority,
+            SystemInitializationCategory category,
+            IMythLogger logger,
+            Type[] systems = null)
+            where TGroup : SystemGroup
+        {
+            // Створюємо екземпляр групи через активатор
+            var group = (TGroup)Activator.CreateInstance(
+                typeof(TGroup),
+                new object[] { groupName, logger });
+
+            // Застосовуємо категорію через атрибут
+            Type groupType = typeof(TGroup);
+            if (groupType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
+                .FirstOrDefault() is SystemCategoryAttribute existingAttr)
+            {
+                // Якщо атрибут вже існує, перевіряємо чи потрібно його замінити
+                if (existingAttr.Category != category)
+                {
+                    logger.LogWarning($"Group type {groupType.Name} already has category {existingAttr.Category}, overriding with {category}", "SystemRegistry");
+                }
+            }
+
+            // Реєструємо групу з пріоритетом та категорією
+            registry.RegisterSystemWithPriority(group, priority);
+
+            // Додаємо системи, якщо вони вказані
+            if (systems != null && systems.Length > 0)
+            {
+                var container = registry.GetContainer();
+                foreach (var systemType in systems)
+                {
+                    try
+                    {
+                        // Отримуємо екземпляр через DI контейнер
+                        if (container.IsRegistered(systemType))
+                        {
+                            var system = container.Resolve(systemType) as ISystem;
+                            if (system != null)
+                            {
+                                group.AddSystem(system);
+                                logger.LogInfo($"Added system {systemType.Name} to group {groupName}", "SystemRegistry");
+                            }
+                            else
+                            {
+                                logger.LogWarning($"System {systemType.Name} is not an ISystem", "SystemRegistry");
+                            }
+                        }
+                        else
+                        {
+                            logger.LogWarning($"System {systemType.Name} is not registered in container", "SystemRegistry");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError($"Error adding system {systemType.Name} to group: {ex.Message}", "SystemRegistry", ex);
+                    }
+                }
+            }
+
+            logger.LogInfo($"Registered system group {groupName} with category {category}", "SystemRegistry");
+            return group;
+        }
+
+        /// <summary>
+        /// Реєструє групу систем з вказаною категорією ініціалізації та списком інтерфейсів систем
+        /// </summary>
+        public static TGroup RegisterGroupWithCategory<TGroup, TSystem1>(
+            this ISystemRegistry registry,
+            string groupName,
+            int priority,
+            SystemInitializationCategory category,
+            IMythLogger logger)
+            where TGroup : SystemGroup
+            where TSystem1 : ISystem
+        {
+            return registry.RegisterGroupWithCategory<TGroup>(
+                groupName,
+                priority,
+                category,
+                logger,
+                new Type[] { typeof(TSystem1) });
+        }
+
+        /// <summary>
+        /// Реєструє групу систем з вказаною категорією ініціалізації та списком двох інтерфейсів систем
+        /// </summary>
+        public static TGroup RegisterGroupWithCategory<TGroup, TSystem1, TSystem2>(
+            this ISystemRegistry registry,
+            string groupName,
+            int priority,
+            SystemInitializationCategory category,
+            IMythLogger logger)
+            where TGroup : SystemGroup
+            where TSystem1 : ISystem
+            where TSystem2 : ISystem
+        {
+            return registry.RegisterGroupWithCategory<TGroup>(
+                groupName,
+                priority,
+                category,
+                logger,
+                new Type[] { typeof(TSystem1), typeof(TSystem2) });
+        }
+
+        /// <summary>
+        /// Реєструє групу систем з вказаною категорією ініціалізації та списком трьох інтерфейсів систем
+        /// </summary>
+        public static TGroup RegisterGroupWithCategory<TGroup, TSystem1, TSystem2, TSystem3>(
+            this ISystemRegistry registry,
+            string groupName,
+            int priority,
+            SystemInitializationCategory category,
+            IMythLogger logger)
+            where TGroup : SystemGroup
+            where TSystem1 : ISystem
+            where TSystem2 : ISystem
+            where TSystem3 : ISystem
+        {
+            return registry.RegisterGroupWithCategory<TGroup>(
+                groupName,
+                priority,
+                category,
+                logger,
+                new Type[] { typeof(TSystem1), typeof(TSystem2), typeof(TSystem3) });
+        }
     }
 
     

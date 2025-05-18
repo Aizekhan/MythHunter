@@ -1,5 +1,6 @@
 // Assets/_MythHunter/Code/Events/Domain/GameEvents.cs
 using System;
+using MythHunter.Core.Game;
 
 namespace MythHunter.Events.Domain
 {
@@ -31,5 +32,17 @@ namespace MythHunter.Events.Domain
 
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
         public EventPriority GetPriority() => EventPriority.Critical;
+    }
+    /// <summary>
+    /// Подія зміни стану гри
+    /// </summary>
+    public struct GameStateChangedEvent : IEvent
+    {
+        public GameStateType PreviousState;
+        public GameStateType NewState;
+        public DateTime Timestamp;
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.High;
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 
 namespace MythHunter.Systems.Core
@@ -5,15 +7,17 @@ namespace MythHunter.Systems.Core
 
     public interface ISystemRegistry
     {
-        //RegisterSystemWithPriority - в файлі  Assets/_MythHunter/Code/Systems/Core/SystemRegistryExtensions.cs
-        //using MythHunter.Systems.Core; 
         void RegisterSystem(ISystem system);
+        void RegisterSystemWithPriority(ISystem system, int priority);
+        void UpdateAll(float deltaTime);
+        void DisposeAll();
+        IReadOnlyList<ISystem> GetAllSystems();
+        void SetSystemActive(ISystem system, bool isActive);
         void InitializeAll();
         void InitializeSystemsByCategory(SystemInitializationCategory category);
+        void LogInfo(string message);
 
-        void UpdateAll(float deltaTime);
-        void FixedUpdateAll(float fixedDeltaTime);
-        void LateUpdateAll(float deltaTime);
-        void DisposeAll();
+        // Додамо метод для отримання DI контейнера
+        IDIContainer GetContainer();
     }
 }

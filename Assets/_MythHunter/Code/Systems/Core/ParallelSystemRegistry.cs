@@ -60,8 +60,8 @@ namespace MythHunter.Systems.Core
         }
 
         [Inject]
-        public ParallelSystemRegistry(IMythLogger logger, IEventBus eventBus, ISystemJobScheduler jobScheduler)
-            : base(logger, eventBus)
+        public ParallelSystemRegistry(IMythLogger logger, IEventBus eventBus, IDIContainer container, ISystemJobScheduler jobScheduler)
+     : base(logger, eventBus, container)
         {
             _jobScheduler = jobScheduler;
             _logger = logger;

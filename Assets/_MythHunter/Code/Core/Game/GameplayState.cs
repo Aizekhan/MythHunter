@@ -24,7 +24,7 @@ namespace MythHunter.Core.Game
             _eventBus = container.Resolve<IEventBus>();
         }
         
-        public override void Enter()
+        public override void Enter(GameStateType previousState)
         {
             _logger.LogInfo("Entering gameplay state");
             

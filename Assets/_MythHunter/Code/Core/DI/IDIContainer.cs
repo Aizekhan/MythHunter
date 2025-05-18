@@ -1,4 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/DI/IDIContainer.cs
+using System;
 namespace MythHunter.Core.DI
 {
     /// <summary>
@@ -11,6 +12,9 @@ namespace MythHunter.Core.DI
         void RegisterInstance<TService>(TService instance);
         TService Resolve<TService>();
         bool IsRegistered<TService>();
+        // Нові методи для роботи з Type
+        bool IsRegistered(Type type);
+        object Resolve(Type type);
         void AnalyzeDependencies();
 
         // Метод для ін'єкції залежностей у об'єкт

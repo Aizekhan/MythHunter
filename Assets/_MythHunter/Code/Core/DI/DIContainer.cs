@@ -267,6 +267,20 @@ namespace MythHunter.Core.DI
                    _registrations.ContainsKey(serviceType);
         }
 
+        public bool IsRegistered(Type type)
+        {
+            // Перевірка на наявність реєстрації для вказаного типу
+            return _registrations.ContainsKey(type);
+        }
+
+        public object Resolve(Type type)
+        {
+            if (!IsRegistered(type))
+                throw new InvalidOperationException($"Type {type.Name} is not registered");
+
+            return _registrations[type];
+        }
+
         #endregion
 
         #region Фабрики і ін'єкція

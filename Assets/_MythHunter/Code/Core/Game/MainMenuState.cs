@@ -20,7 +20,7 @@ namespace MythHunter.Core.Game
             _logger = container.Resolve<IMythLogger>();
         }
         
-        public override void Enter()
+        public override void Enter(GameStateType previousState)
         {
             _logger.LogInfo("Entering MainMenu state", "GameState");
             

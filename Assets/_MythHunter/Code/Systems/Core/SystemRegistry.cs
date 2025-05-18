@@ -18,7 +18,7 @@ namespace MythHunter.Systems.Core
         private readonly List<SystemRegistration> _allSystems = new List<SystemRegistration>();
         private readonly IMythLogger _logger;
         private readonly IEventBus _eventBus;
-
+        private readonly IDIContainer _container;
         // Єдине поле для зберігання поточної фази
         private GamePhase _currentPhase = GamePhase.None;
         private bool _isSubscribed = false;
@@ -48,14 +48,19 @@ namespace MythHunter.Systems.Core
         }
 
         [Inject]
-        public SystemRegistry(IMythLogger logger, IEventBus eventBus)
+        public SystemRegistry(IMythLogger logger, IEventBus eventBus, IDIContainer container)
         {
             _logger = logger;
             _eventBus = eventBus;
+            _container = container;
 
             // Підписуємося на події зміни фази
             SubscribeToEvents();
             _logger.LogInfo("SystemRegistry initialized", "Systems");
+        }
+        public IDIContainer GetContainer()
+        {
+            return _container;
         }
 
         public virtual void RegisterSystem(ISystem system)
