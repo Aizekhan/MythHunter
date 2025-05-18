@@ -22,7 +22,7 @@ namespace MythHunter.Systems.Core
         // Єдине поле для зберігання поточної фази
         private GamePhase _currentPhase = GamePhase.None;
         private bool _isSubscribed = false;
-
+        private readonly HashSet<ISystem> _initializedSystems = new();
         /// <summary>
         /// Клас для реєстрації системи з додатковими даними
         /// </summary>
@@ -40,7 +40,11 @@ namespace MythHunter.Systems.Core
             public string SystemType
             {
                 get; set;
-            } // Тип або назва системи
+            }
+            public SystemInitializationCategory Category
+            {
+                get; set;
+            }
         }
 
         [Inject]
@@ -71,6 +75,12 @@ namespace MythHunter.Systems.Core
                 return;
             }
 
+            // Визначення категорії ініціалізації
+            var categoryAttr = systemType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
+                .FirstOrDefault() as SystemCategoryAttribute;
+
+            var category = categoryAttr?.Category ?? SystemInitializationCategory.OnDemand;
+
             // Додаткова перевірка на групи систем за їх назвою
             if (system is SystemGroup systemGroup)
             {
@@ -86,7 +96,8 @@ namespace MythHunter.Systems.Core
                 {
                     System = system,
                     Priority = priority,
-                    SystemType = systemGroup.GroupName
+                    SystemType = systemGroup.GroupName,
+                    Category = category
                 });
             }
             else
@@ -96,33 +107,47 @@ namespace MythHunter.Systems.Core
                 {
                     System = system,
                     Priority = priority,
-                    SystemType = systemName
+                    SystemType = systemName,
+                    Category = category
                 });
             }
 
             // Сортуємо системи за пріоритетом (від високого до низького)
             _allSystems.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
-            _logger.LogInfo($"Registered system: {(system is SystemGroup sg ? sg.GroupName : systemName)} with priority {priority}", "Systems");
+            _logger.LogInfo($"Registered system: {(system is SystemGroup sg ? sg.GroupName : systemName)} with priority {priority}, category {category}", "Systems");
         }
 
         public void InitializeAll()
         {
-            foreach (var reg in _allSystems)
+            // Ініціалізуємо тільки системи з категорією OnBoot
+            InitializeSystemsByCategory(SystemInitializationCategory.OnBoot);
+        }
+        // Метод для ініціалізації систем за категорією
+        public void InitializeSystemsByCategory(SystemInitializationCategory category)
+        {
+            int count = 0;
+
+            foreach (var reg in _allSystems.Where(r => r.Category == category))
             {
-                try
+                if (!_initializedSystems.Contains(reg.System))
                 {
-                    reg.System.Initialize();
-                    _logger.LogDebug($"Initialized system: {reg.SystemType}", "Systems");
-                }
-                catch (System.Exception ex)
-                {
-                    _logger.LogError($"Error initializing system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                    try
+                    {
+                        reg.System.Initialize();
+                        _initializedSystems.Add(reg.System);
+                        count++;
+                        _logger.LogDebug($"Initialized system: {reg.SystemType}", "Systems");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError($"Error initializing system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                    }
                 }
             }
-            _logger.LogInfo($"Initialized {_allSystems.Count} systems", "Systems");
-        }
 
+            _logger.LogInfo($"Initialized {count} systems of category {category}", "Systems");
+        }
         public virtual void UpdateAll(float deltaTime)
         {
             foreach (var reg in _allSystems.Where(r => r.IsActive))

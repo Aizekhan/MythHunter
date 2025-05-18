@@ -108,6 +108,12 @@ namespace MythHunter.Core.Game
 
             _stateMachine.Initialize();
 
+            // Отримання реєстру систем
+            var systemRegistry = _container.Resolve<ISystemRegistry>();
+
+            // Ініціалізація тільки базових систем (категорія OnBoot)
+            systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnBoot);
+
             if (_injectOnAwake)
                 _dependencyInjector.InjectDependenciesInScene();
 

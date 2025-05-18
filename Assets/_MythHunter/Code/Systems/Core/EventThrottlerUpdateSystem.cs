@@ -8,6 +8,7 @@ namespace MythHunter.Systems.Core
     /// <summary>
     /// Система, яка викликає EventThrottler.Update() кожен кадр
     /// </summary>
+    [SystemCategory(SystemInitializationCategory.OnBoot)]
     public class EventThrottlerUpdateSystem : SystemBase, ISystem, IEventThrottlerUpdateSystem
     {
         private readonly IEventThrottler _eventThrottler;

@@ -11,9 +11,11 @@ using MythHunter.Utils.Logging;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Resources.Core;
 using Cysharp.Threading.Tasks;
+using MythHunter.Systems.Core;
 
 namespace MythHunter.Systems.Lobby
 {
+    [SystemCategory(SystemInitializationCategory.OnDemand)]
     public class HeroSelectionSystem : SystemBase, IHeroSelectionSystem
     {
         private readonly IEntityManager _entityManager;

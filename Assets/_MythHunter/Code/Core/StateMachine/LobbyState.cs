@@ -1,7 +1,11 @@
+using System;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
+using MythHunter.Events;
+using MythHunter.Systems.Core;
 using MythHunter.UI.Core;
+
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.States
@@ -10,6 +14,7 @@ namespace MythHunter.States
     {
         private readonly IUIService _uiService;
         private readonly IMythLogger _logger;
+        private readonly IEventBus _eventBus;
 
         public LobbyState(IDIContainer container) : base(container)
         {
@@ -20,6 +25,21 @@ namespace MythHunter.States
         public override async void Enter()
         {
             _logger.LogInfo("Entering LobbyState", "GameState");
+
+            // Отримання реєстру систем
+            var systemRegistry = Container.Resolve<ISystemRegistry>();
+
+            // Ініціалізуємо всі системи з категорією OnDemand
+            // Це автоматично ініціалізує всі системи лобі, якщо вони ще не ініціалізовані
+            systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
+
+            // Публікуємо подію зміни стану гри
+            _eventBus.Publish(new GameStateChangedEvent
+            {
+                PreviousState = _previousState,
+                NewState = GameStateType.Lobby,
+                Timestamp = DateTime.UtcNow
+            });
 
             var view = await _uiService.ShowScreenAsync<UI.Views.LobbyView>("Lobby");
             if (view != null)
