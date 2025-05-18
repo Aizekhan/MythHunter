@@ -15,7 +15,7 @@ using MythHunter.Systems.Core;
 
 namespace MythHunter.Systems.Lobby
 {
-    [SystemCategory(SystemInitializationCategory.OnDemand)]
+    
     public class HeroSelectionSystem : SystemBase, IHeroSelectionSystem
     {
         private readonly IEntityManager _entityManager;

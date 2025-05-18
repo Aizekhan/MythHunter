@@ -19,7 +19,7 @@ namespace MythHunter.Systems.Lobby
     /// <summary>
     /// Система лоббі
     /// </summary>
-    [SystemCategory(SystemInitializationCategory.OnDemand)]
+  
     public class LobbySystem : SystemBase, ILobbySystem
     {
         private readonly IEntityManager _entityManager;

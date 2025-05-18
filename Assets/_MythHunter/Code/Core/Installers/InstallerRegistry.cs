@@ -18,7 +18,7 @@ namespace MythHunter.Core
 
             // Інсталятори в порядку залежностей
             var installers = new DIInstaller[]
-   {
+        {
 new CoreInstaller(),
 new NetworkingInstaller(),
 new EventsInstaller(),
@@ -33,9 +33,9 @@ new GameplayInstaller(),
 new MovementInstaller(),
 new CombatSystemInstaller(),
 
-   new HeroesInstaller(),
+new HeroesInstaller(),
      // Додаємо інсталятор лоббі
-        new LobbyInstaller(),
+new LobbyInstaller(),
 //Debug
 new DebugToolsInstaller()
    };
