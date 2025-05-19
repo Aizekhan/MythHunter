@@ -5,6 +5,8 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using Cysharp.Threading.Tasks;
 using System;
+using MythHunter.Core.SceneManagement;
+using MythHunter.Events.Domain.Gameplay;
 
 namespace MythHunter.Core.Game
 {
@@ -26,20 +28,28 @@ namespace MythHunter.Core.Game
             _gameFlowManager = container.Resolve<IGameFlowManager>();
         }
 
-        public override void Enter(GameStateType previousState)
+        public override async void Enter(GameStateType previousState)
         {
             _logger.LogInfo("Entering gameplay state");
 
-            // Публікуємо подію старту гри
-            _eventBus.Publish(new GameStartedEvent
+            var dispatcher = Container.Resolve<ISceneDispatcher>();
+            var eventBus = Container.Resolve<IEventBus>();
+
+            var heroes = SceneDispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
+
+            if (heroes != null)
             {
-                Timestamp = DateTime.UtcNow
-            });
+                foreach (var hero in heroes)
+                {
+                    eventBus.Publish(new SpawnCharacterEvent { CharacterName = hero });
+                }
+            }
 
-            // Асинхронна ініціалізація
-            InitializeAsync().Forget();
+            eventBus.Publish(new GameStartedEvent { Timestamp = DateTime.UtcNow });
+
+            // Додатково можна активувати HUD, тощо
+            await UniTask.Delay(100); // якщо потрібно дочекатись ECS
         }
-
         private async UniTaskVoid InitializeAsync()
         {
             _logger.LogInfo("Starting async gameplay initialization");

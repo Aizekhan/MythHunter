@@ -15,5 +15,6 @@ namespace MythHunter.Core.SceneManagement
 
         // Метод для передачі даних між сценами
         void SetSceneData<T>(string key, T data);
+      
     }
 }
