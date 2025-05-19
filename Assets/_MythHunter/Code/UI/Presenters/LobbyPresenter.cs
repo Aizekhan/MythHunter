@@ -4,6 +4,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events;
+using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Lobby;
 using MythHunter.UI.Models;
@@ -12,6 +13,7 @@ using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 using System;
 using MythHunter.Core.Game;
+using MythHunter.Services.GameSettings;
 
 namespace MythHunter.UI.Presenters
 {
@@ -28,10 +30,11 @@ namespace MythHunter.UI.Presenters
         private readonly IUIViewFactory _viewFactory;
         private readonly IViewConfigRegistry _viewConfigRegistry;
         private readonly IGameFlowManager _gameFlowManager;
+        private readonly IGameSettingsService _gameSettings;
         private ILobbyView _view;
         private bool _isSubscribed = false;
-        private int _currentPlayerIndex = 0; // Додайте це поле
-                                           
+        private int _currentPlayerIndex = 0;
+
         [Inject]
         public LobbyPresenter(
             IEventBus eventBus,
@@ -41,7 +44,8 @@ namespace MythHunter.UI.Presenters
             ILobbyModel model,
             IUIViewFactory viewFactory,
             IViewConfigRegistry viewConfigRegistry,
-            IGameFlowManager gameFlowManager // Додали GameFlowManager
+            IGameFlowManager gameFlowManager,
+            IGameSettingsService gameSettings
         )
         {
             _eventBus = eventBus;
@@ -51,7 +55,8 @@ namespace MythHunter.UI.Presenters
             _model = model;
             _viewFactory = viewFactory;
             _viewConfigRegistry = viewConfigRegistry;
-            _gameFlowManager = gameFlowManager; // Зберігаємо посилання
+            _gameFlowManager = gameFlowManager;
+            _gameSettings = gameSettings;
         }
 
         public void Initialize(ILobbyView view)
@@ -104,6 +109,7 @@ namespace MythHunter.UI.Presenters
             _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
+            _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
 
             _isSubscribed = true;
         }
@@ -117,30 +123,58 @@ namespace MythHunter.UI.Presenters
             _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
+            _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
 
             _isSubscribed = false;
+        }
+
+        private void OnGameStateChanged(GameStateChangedEvent evt)
+        {
+            if (evt.NewState == GameStateType.Lobby)
+            {
+                _logger.LogInfo("[LobbyPresenter] Отримано подію GameStateChangedEvent для Lobby", "Lobby");
+                UpdateUI();
+            }
         }
 
         public void StartLobby(int playerCount)
         {
             _logger.LogInfo($"[LobbyPresenter] StartLobby викликано для {playerCount} гравців", "Lobby");
 
-            // Спочатку ініціалізуємо систему лобі
-            _lobbySystem.InitializeLobby(playerCount);
+            // Перевіряємо, чи ініціалізовано лобі
+            bool isAlreadyInitialized = false;
 
-            // Явно оновлюємо UI з актуальними даними
+            // Перевіряємо ініціалізацію через інтерфейс, якщо така властивість існує
+            var propInfo = _lobbySystem.GetType().GetProperty("IsInitialized");
+            if (propInfo != null)
+            {
+                isAlreadyInitialized = (bool)propInfo.GetValue(_lobbySystem);
+            }
+
+            if (!isAlreadyInitialized)
+            {
+                _lobbySystem.InitializeLobby(playerCount);
+            }
+            else
+            {
+                _logger.LogInfo("[LobbyPresenter] Лобі вже ініціалізовано", "Lobby");
+            }
+
+            // Оновлюємо UI з актуальними даними
+            UpdateUI();
+        }
+
+        private void UpdateUI()
+        {
             if (_view != null)
             {
-                // Отримуємо доступних героїв і оновлюємо картки
                 var availableHeroes = GetAvailableHeroes();
-                _logger.LogInfo($"[LobbyPresenter] Отримано {availableHeroes.Count} героїв", "Lobby");
-
                 _view.PopulateHeroCards(availableHeroes);
                 _view.UpdateMana(GetRemainingMana(), 4);
             }
             else
             {
-                _logger.LogError("[LobbyPresenter] View не ініціалізовано у StartLobby", "Lobby");
+                _logger.LogError("[LobbyPresenter] View не ініціалізовано", "Lobby");
             }
         }
 
@@ -294,11 +328,12 @@ namespace MythHunter.UI.Presenters
         {
             _view.UpdateTimer(evt.RemainingTime, 300f);
         }
-        // Також модифікуйте метод обробки зміни гравця (якщо він є):
+
         private void OnPlayerChanged(int newPlayerIndex)
         {
             _currentPlayerIndex = newPlayerIndex;
-            // Оновлення UI...
+            // Оновлення UI
+            UpdateUI();
         }
     }
 }

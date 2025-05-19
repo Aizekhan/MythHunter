@@ -37,7 +37,7 @@ namespace MythHunter.Systems.Lobby
 
         // Константи
         private const int DEFAULT_MANA_PER_PLAYER = 4;
-
+        public bool IsInitialized => _isInitialized;
         [Inject]
         public LobbySystem(
             IEntityManager entityManager,

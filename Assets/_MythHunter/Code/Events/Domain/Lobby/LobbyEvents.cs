@@ -17,7 +17,13 @@ namespace MythHunter.Events.Domain.Lobby
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
         public EventPriority GetPriority() => EventPriority.High;
     }
+    public struct LobbyStateEnteredEvent : IEvent
+    {
+        public DateTime Timestamp;
 
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Normal;
+    }
     /// <summary>
     /// Подія вибору героя
     /// </summary>
