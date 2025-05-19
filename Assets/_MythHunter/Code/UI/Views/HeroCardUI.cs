@@ -1,4 +1,4 @@
-// Оновити Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
+// Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
 
 using System;
 using MythHunter.UI.Models;
@@ -12,7 +12,7 @@ using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Views
 {
-    public class HeroCardUI : MonoBehaviour
+    public class HeroCardUI : MonoBehaviour, IHeroCardUI
     {
         [SerializeField] private TextMeshProUGUI _nameText;
         [SerializeField] private TextMeshProUGUI _descriptionText;
@@ -24,10 +24,10 @@ namespace MythHunter.UI.Views
         [SerializeField] private Sprite _defaultIcon;
 
         private string _archetypeId;
-        public string ArchetypeId => _archetypeId;
         private IMythLogger _logger;
         private ISpriteService _spriteService;
 
+        public string ArchetypeId => _archetypeId;
         public event Action<string> OnHeroSelected;
 
         [Inject]
@@ -35,7 +35,7 @@ namespace MythHunter.UI.Views
         {
             _logger = logger;
             _spriteService = spriteService;
-            _logger.LogInfo("HeroCardUI initialized", "UI");
+            _logger.LogInfo("HeroCardUI ініціалізовано через DI", "HeroCardUI");
         }
 
         public void Setup(HeroCardModel model)
@@ -68,17 +68,13 @@ namespace MythHunter.UI.Views
             {
                 if (_iconImage)
                     _iconImage.sprite = _defaultIcon;
-                if (_logger != null)
-                {
-                    _logger.LogWarning($"Invalid icon path or sprite service for hero: {model.Name}", "HeroCardUI");
-                }
             }
 
             if (_selectedIndicator)
                 _selectedIndicator.SetActive(model.IsSelected);
             SetInteractable(model.IsSelectable);
 
-            // Видаляємо старий обробник перед додаванням нового
+            // Налаштування кнопки
             if (_selectButton)
             {
                 _selectButton.onClick.RemoveAllListeners();
@@ -86,55 +82,16 @@ namespace MythHunter.UI.Views
             }
         }
 
-        private async UniTaskVoid LoadIconAsync(string iconPath)
-        {
-            var sprite = await _spriteService.GetSpriteAsync(iconPath, _defaultIcon);
-            if (this != null && _iconImage != null) // Перевірка на випадок, якщо об'єкт був знищений
-            {
-                _iconImage.sprite = sprite;
-            }
-        }
-
         public void SetInteractable(bool interactable)
         {
-            _selectButton.interactable = interactable;
+            if (_selectButton != null)
+                _selectButton.interactable = interactable;
         }
 
-        private void OnSelectButtonClicked()
-        {
-            if (_logger != null)
-            {
-                _logger.LogInfo($"Вибрано героя: {_archetypeId}", "HeroCardUI");
-            }
-
-            OnHeroSelected?.Invoke(_archetypeId);
-        }
-
-        private void OnDestroy()
-        {
-            _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
-
-            if (_logger != null)
-            {
-                _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
-            }
-        }
-        private void OnDisable()
-        {
-            // Деактивація картки
-            if (_logger != null)
-            {
-                _logger.LogInfo("HeroCardUI деактивовано", "HeroCardUI");
-            }
-        }
-        // Додайте метод для скидання даних картки
         public void Reset()
         {
             // Відписуємось від усіх евентів
-            if (_selectButton)
-            {
-                _selectButton.onClick.RemoveAllListeners();
-            }
+            OnHeroSelected = null;
 
             // Скидаємо всі поля до початкових значень
             _archetypeId = string.Empty;
@@ -148,18 +105,43 @@ namespace MythHunter.UI.Views
                 _raceClassText.text = string.Empty;
             if (_manaCostText)
                 _manaCostText.text = string.Empty;
-            if (_iconImage)
+            if (_iconImage && _defaultIcon)
                 _iconImage.sprite = _defaultIcon;
             if (_selectedIndicator)
                 _selectedIndicator.SetActive(false);
 
-            // Видаляємо всі слухачі події
-            OnHeroSelected = null;
+            // Скидаємо слухачі кнопки
+            if (_selectButton)
+            {
+                _selectButton.onClick.RemoveAllListeners();
+                _selectButton.onClick.AddListener(OnSelectButtonClicked);
+            }
 
             if (_logger != null)
+                _logger.LogInfo("HeroCardUI скинуто", "HeroCardUI");
+        }
+
+        private async UniTaskVoid LoadIconAsync(string iconPath)
+        {
+            var sprite = await _spriteService.GetSpriteAsync(iconPath, _defaultIcon);
+            if (this != null && _iconImage != null)
             {
-                _logger.LogInfo("HeroCardUI скинуто для повторного використання", "HeroCardUI");
+                _iconImage.sprite = sprite;
             }
+        }
+
+        private void OnSelectButtonClicked()
+        {
+            OnHeroSelected?.Invoke(_archetypeId);
+        }
+
+        private void OnDestroy()
+        {
+            if (_selectButton)
+                _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
+
+            if (_logger != null)
+                _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
         }
     }
 }
