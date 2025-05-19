@@ -8,6 +8,7 @@ using MythHunter.Core.DI;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using MythHunter.Utils.Extensions;
+using MythHunter.Events.Domain.Lobby;
 
 namespace MythHunter.Events
 {
@@ -37,6 +38,10 @@ namespace MythHunter.Events
         public bool IsProcessing => _isProcessing;
         private readonly object _syncLock = new object();
 
+        private static readonly HashSet<Type> _logExcludedEvents = new(){
+                                                        typeof(SelectionTimerUpdatedEvent),
+                                                        // typeof(AnotherSpamEvent),
+                                                                    };
         // Клас обгортки для синхронного обробника подій
         private class SyncEventHandler
         {
@@ -184,8 +189,10 @@ namespace MythHunter.Events
                 return;
             }
             Type eventType = typeof(TEvent);
-
-            _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} and priority {eventData.GetPriority()}");
+            if (!_logExcludedEvents.Contains(typeof(TEvent)))
+            {
+                _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} and priority {eventData.GetPriority()}");
+            }
 
             // Для високопріоритетних подій виконуємо обробку відразу
             if (eventData.GetPriority() == EventPriority.Critical)
@@ -401,8 +408,10 @@ namespace MythHunter.Events
                     Priority = priority
                 });
             }
-
-            _logger.LogDebug($"Enqueued event {typeof(TEvent).Name} with ID {eventData.GetEventId()} and priority {priority}");
+            if (!_logExcludedEvents.Contains(typeof(TEvent)))
+            {
+                _logger.LogDebug($"Enqueued event {typeof(TEvent).Name} with ID {eventData.GetEventId()} and priority {priority}");
+            }
         }
 
         /// <summary>
@@ -656,5 +665,7 @@ namespace MythHunter.Events
             _cancellationTokenSource = null;
             Clear();
         }
+
+       
     }
 }

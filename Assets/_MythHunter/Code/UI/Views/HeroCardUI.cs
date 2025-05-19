@@ -119,5 +119,47 @@ namespace MythHunter.UI.Views
                 _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
             }
         }
+        private void OnDisable()
+        {
+            // Деактивація картки
+            if (_logger != null)
+            {
+                _logger.LogInfo("HeroCardUI деактивовано", "HeroCardUI");
+            }
+        }
+        // Додайте метод для скидання даних картки
+        public void Reset()
+        {
+            // Відписуємось від усіх евентів
+            if (_selectButton)
+            {
+                _selectButton.onClick.RemoveAllListeners();
+            }
+
+            // Скидаємо всі поля до початкових значень
+            _archetypeId = string.Empty;
+
+            // Скидаємо UI-елементи
+            if (_nameText)
+                _nameText.text = string.Empty;
+            if (_descriptionText)
+                _descriptionText.text = string.Empty;
+            if (_raceClassText)
+                _raceClassText.text = string.Empty;
+            if (_manaCostText)
+                _manaCostText.text = string.Empty;
+            if (_iconImage)
+                _iconImage.sprite = _defaultIcon;
+            if (_selectedIndicator)
+                _selectedIndicator.SetActive(false);
+
+            // Видаляємо всі слухачі події
+            OnHeroSelected = null;
+
+            if (_logger != null)
+            {
+                _logger.LogInfo("HeroCardUI скинуто для повторного використання", "HeroCardUI");
+            }
+        }
     }
 }

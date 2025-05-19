@@ -183,26 +183,7 @@ namespace MythHunter.UI.Presenters
             // Не оновлюємо UI тут — чекаємо завантаження героїв
         }
 
-        private void UpdateUI()
-        {
-            if (_view != null)
-            {
-                var availableHeroes = GetAvailableHeroes();
-                if (availableHeroes.Count > 0)
-                {
-                    _view.PopulateHeroCards(availableHeroes);
-                    _view.UpdateMana(GetRemainingMana(), 4);
-                }
-                else
-                {
-                    _logger.LogWarning("[LobbyPresenter] Немає героїв для UI", "Lobby");
-                }
-            }
-            else
-            {
-                _logger.LogError("[LobbyPresenter] View не ініціалізовано", "Lobby");
-            }
-        }
+      
 
         public void OnHeroSelected(string archetypeId)
         {
@@ -330,6 +311,7 @@ namespace MythHunter.UI.Presenters
         {
             _view.UpdateSelectedHeroes(GetSelectedHeroes());
             _view.UpdateMana(evt.RemainingMana, 4);
+
             // Замінюємо повну перегенерацію на оновлення стану
             _view.UpdateHeroCardsState(GetAvailableHeroes());
         }
@@ -360,6 +342,28 @@ namespace MythHunter.UI.Presenters
             _currentPlayerIndex = newPlayerIndex;
             // Оновлення UI
             UpdateUI();
+        }
+
+        private void UpdateUI()
+        {
+            if (_view != null)
+            {
+                var availableHeroes = GetAvailableHeroes();
+                if (availableHeroes.Count > 0)
+                {
+                    _logger.LogInfo($"UpdateUI: Оновлюємо {availableHeroes.Count} героїв", "LobbyPresenter");
+                    _view.PopulateHeroCards(availableHeroes);
+                    _view.UpdateMana(GetRemainingMana(), 4);
+                }
+                else
+                {
+                    _logger.LogWarning("[LobbyPresenter] Немає героїв для UI", "Lobby");
+                }
+            }
+            else
+            {
+                _logger.LogError("[LobbyPresenter] View не ініціалізовано", "Lobby");
+            }
         }
     }
 }

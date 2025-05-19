@@ -72,12 +72,24 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Обробник події запиту на початок гри
         /// </summary>
+
         private void OnGameStartRequested(GameStartRequestEvent evt)
         {
             _logger.LogInfo("Отримано запит на початок гри", "GameFlow");
 
+            // Отримуємо системи для взаємодії з лоббі
+            var lobbySystem = _systemRegistry.GetSystem<ILobbySystem>();
+
+            // Отримуємо список вибраних героїв, якщо система лоббі доступна
+            string[] selectedHeroes = null;
+            if (lobbySystem != null)
+            {
+                selectedHeroes = lobbySystem.GetSelectedHeroes().ToArray();
+                _logger.LogInfo($"Отримано {selectedHeroes.Length} вибраних героїв з Lobby", "GameFlow");
+            }
+
             // Запускаємо асинхронний перехід до Gameplay без очікування завершення
-            EnterGameplayAsync().Forget();
+            EnterGameplayAsync(selectedHeroes).Forget();
         }
 
         /// <summary>

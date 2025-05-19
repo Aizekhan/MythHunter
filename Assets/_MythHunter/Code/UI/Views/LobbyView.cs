@@ -12,6 +12,7 @@ using UnityEngine.UI;
 using MythHunter.Services.GameSettings;
 using MythHunter.Core.Game;
 using System.Linq;
+using MythHunter.Resources.Pool;
 namespace MythHunter.UI.Views
 {
     /// <summary>
@@ -35,6 +36,12 @@ namespace MythHunter.UI.Views
         private IMythLogger _logger;
         private readonly List<HeroCardUI> _createdCards = new List<HeroCardUI>();
         private IUIViewFactory _uiViewFactory;
+
+        //Пул система карток
+        private const string HERO_CARD_POOL_KEY = "HeroCardUI";
+        private IPoolManager _poolManager;
+        private bool _isPoolInitialized = false;
+
         protected override void Awake()
         {
             base.Awake();
@@ -48,6 +55,18 @@ namespace MythHunter.UI.Views
                 {
                     _logger = container.Resolve<IMythLogger>();
                     _logger.LogInfo("Отримано логер через GameBootstrapper", "LobbyView");
+
+                    // Отримуємо PoolManager через контейнер
+                    _poolManager = container.Resolve<IPoolManager>();
+                    if (_poolManager != null)
+                    {
+                        _logger.LogInfo("Отримано PoolManager через GameBootstrapper", "LobbyView");
+                        InitializeCardPool();
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Не вдалося отримати PoolManager", "LobbyView");
+                    }
                 }
                 else
                 {
@@ -58,7 +77,6 @@ namespace MythHunter.UI.Views
             {
                 _logger = MythLoggerFactory.GetDefaultLogger();
             }
-
             // Перевірка компонентів
             if (_heroCardsContainer == null)
                 _logger.LogError("_heroCardsContainer не вказано в інспекторі!", "LobbyView");
@@ -150,7 +168,7 @@ namespace MythHunter.UI.Views
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            ClearHeroCards();
+            ReturnAllCardsToPool();
 
             // Відписуємось від евентів через презентер
             if (_presenter != null)
@@ -163,11 +181,11 @@ namespace MythHunter.UI.Views
             if (_startGameButton)
                 _startGameButton.onClick.RemoveListener(OnStartGameButtonClicked);
 
-            ClearContainer(_heroCardsContainer);
-            ClearContainer(_selectedHeroesContainer);
-
             _logger.LogInfo("OnDestroy викликано", "LobbyView");
         }
+
+
+
 
         public void UpdateHeroCardsState(List<HeroCardModel> heroes)
         {
@@ -177,30 +195,66 @@ namespace MythHunter.UI.Views
                 return;
             }
 
+            _logger.LogInfo($"UpdateHeroCardsState викликано з {heroes.Count} героями", "LobbyView");
+
+            // Словник для швидкого пошуку моделей за ID
+            var heroModelsDict = heroes.ToDictionary(h => h.ArchetypeId, h => h);
+
+            // Список карток, які потрібно повернути в пул (не знайдені в оновленому списку)
+            var cardsToRemove = new List<HeroCardUI>();
+
+            // Оновлюємо існуючі картки
             foreach (var card in _createdCards)
             {
                 if (card == null)
                     continue;
 
-                // Шукаємо відповідну модель героя за ID
-                var model = heroes.FirstOrDefault(h => h.ArchetypeId == card.ArchetypeId);
-                if (model != null)
+                if (heroModelsDict.TryGetValue(card.ArchetypeId, out var model))
                 {
-                    // Оновлюємо стан картки
+                    // Оновлюємо стан існуючої картки
                     card.SetInteractable(model.IsSelectable);
-                    // Встановлюємо видимість - завжди видима, навіть якщо не вибирається
-                    card.gameObject.SetActive(true);
+
+                    // Видаляємо з словника (щоб знати, які картки ще потрібно створити)
+                    heroModelsDict.Remove(card.ArchetypeId);
                 }
                 else
                 {
-                    // Якщо герой не знайдений у списку, однаково залишаємо його видимим
-                    // але неактивним для вибору
-                    card.SetInteractable(false);
-                    card.gameObject.SetActive(true);
+                    // Картка не знайдена в оновленому списку, відмічаємо для повернення в пул
+                    cardsToRemove.Add(card);
+                }
+            }
+
+            // Повертаємо непотрібні картки в пул
+            foreach (var card in cardsToRemove)
+            {
+                ReturnCardToPool(card.gameObject);
+                _createdCards.Remove(card);
+            }
+
+            // Створюємо нові картки для моделей, які не мають відповідних карток
+            foreach (var heroEntry in heroModelsDict)
+            {
+                var hero = heroEntry.Value;
+                var cardObject = GetCardFromPool();
+
+                if (cardObject != null)
+                {
+                    cardObject.transform.SetParent(_heroCardsContainer, false);
+                    cardObject.SetActive(true);
+
+                    var ui = cardObject.GetComponent<HeroCardUI>();
+                    if (ui != null)
+                    {
+                        GameBootstrapper.Instance?.RegisterForInjection(ui);
+                        ui.Setup(hero);
+                        ui.OnHeroSelected += OnHeroCardSelected;
+                        _createdCards.Add(ui);
+
+                        _logger.LogInfo($"Створено нову картку для героя {hero.Name}", "LobbyView");
+                    }
                 }
             }
         }
-        // Assets/_MythHunter/Code/UI/Views/LobbyView.cs
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
             if (heroes == null || heroes.Count == 0)
@@ -213,43 +267,45 @@ namespace MythHunter.UI.Views
 
             try
             {
-                ClearHeroCards();
+                // Повертаємо всі картки в пул перед створенням нових
+                ReturnAllCardsToPool();
 
                 foreach (var hero in heroes)
                 {
                     try
                     {
-                        if (_heroCardPrefab == null)
+                        // Отримуємо картку з пулу або створюємо нову
+                        GameObject cardObject = GetCardFromPool();
+
+                        if (cardObject == null)
                         {
-                            _logger.LogError("_heroCardPrefab є null!", "LobbyView");
+                            _logger.LogError("Не вдалося отримати картку з пулу і створити нову", "LobbyView");
                             continue;
                         }
 
-                        var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
-                        var ui = card.GetComponent<HeroCardUI>();
+                        // Встановлюємо батьківський об'єкт і активуємо
+                        cardObject.transform.SetParent(_heroCardsContainer, false);
+                        cardObject.SetActive(true);
 
+                        var ui = cardObject.GetComponent<HeroCardUI>();
                         if (ui != null)
                         {
                             // Ін'єкція залежностей через GameBootstrapper
                             if (GameBootstrapper.Instance != null)
                             {
                                 GameBootstrapper.Instance.RegisterForInjection(ui);
-                                _logger.LogInfo($"Ін'єкція залежностей для картки героя {hero.Name}", "LobbyView");
-                            }
-                            else
-                            {
-                                _logger.LogWarning("GameBootstrapper.Instance є null!", "LobbyView");
                             }
 
                             ui.Setup(hero);
                             ui.OnHeroSelected += OnHeroCardSelected;
                             _createdCards.Add(ui);
 
-                            _logger.LogInfo($"Створено картку для героя {hero.Name}", "LobbyView");
+                            _logger.LogInfo($"Отримано картку з пулу для героя {hero.Name}", "LobbyView");
                         }
                         else
                         {
-                            _logger.LogError("Не знайдено компонент HeroCardUI на префабі", "LobbyView");
+                            _logger.LogError("Не знайдено компонент HeroCardUI на об'єкті з пулу", "LobbyView");
+                            ReturnCardToPool(cardObject);
                         }
                     }
                     catch (Exception ex)
@@ -263,44 +319,156 @@ namespace MythHunter.UI.Views
                 _logger.LogError($"Критична помилка в PopulateHeroCards: {ex.Message}", "LobbyView", ex);
             }
         }
-        private void ClearHeroCards()
+        //Пул карт
+        private void InitializeCardPool()
         {
-            // Відписуємось від подій і знищуємо всі картки
+            if (_poolManager != null && _heroCardPrefab != null && !_isPoolInitialized)
+            {
+                try
+                {
+                    // Якщо пул вже існує, ми просто використовуємо його
+                    if (!_poolManager.HasPool(HERO_CARD_POOL_KEY))
+                    {
+                        _poolManager.CreatePool<GameObject>(HERO_CARD_POOL_KEY, _heroCardPrefab, 20);
+                        _logger.LogInfo($"Створено пул карток героїв з розміром 20", "LobbyView");
+                    }
+                    else
+                    {
+                        _logger.LogInfo("Пул карток героїв вже існує, використовуємо його", "LobbyView");
+                    }
+
+                    _isPoolInitialized = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при ініціалізації пулу: {ex.Message}", "LobbyView");
+                }
+            }
+        }
+        private void ReturnAllCardsToPool()
+        {
+            // Повертаємо всі картки в пул
             foreach (var card in _createdCards)
             {
                 if (card != null)
                 {
-                    card.OnHeroSelected -= OnHeroCardSelected;
-                    Destroy(card.gameObject);
+                    ReturnCardToPool(card.gameObject);
                 }
             }
 
             _createdCards.Clear();
 
-            // Додатково очищаємо контейнер
+            // Додатково перевіряємо, чи залишилися діти в контейнері
             foreach (Transform child in _heroCardsContainer)
             {
-                Destroy(child.gameObject);
-            }
-        }
-
-        public void UpdateSelectedHeroes(List<HeroCardModel> selectedHeroes)
-        {
-            ClearContainer(_selectedHeroesContainer);
-            foreach (var hero in selectedHeroes)
-            {
-                var card = Instantiate(_heroCardPrefab, _selectedHeroesContainer);
-                var ui = card.GetComponent<HeroCardUI>();
-                if (ui != null)
+                if (child.gameObject != null)
                 {
-                    // Ось тут додаємо ін'єкцію
-                    GameBootstrapper.Instance?.RegisterForInjection(ui);
-
-                    ui.Setup(hero);
-                    ui.SetInteractable(false);
+                    // Якщо залишилися діти, повертаємо їх у пул
+                    ReturnCardToPool(child.gameObject);
                 }
             }
         }
+        private void ReturnCardToPool(GameObject cardObject)
+        {
+            if (cardObject == null)
+                return;
+
+            // Відключаємо подію для картки
+            var ui = cardObject.GetComponent<HeroCardUI>();
+            if (ui != null)
+            {
+                ui.OnHeroSelected -= OnHeroCardSelected;
+            }
+
+            // Деактивуємо об'єкт перед поверненням у пул
+            cardObject.SetActive(false);
+
+            // Повертаємо в пул
+            if (_poolManager != null && _isPoolInitialized)
+            {
+                try
+                {
+                    _poolManager.ReturnToPool(HERO_CARD_POOL_KEY, cardObject);
+                    _logger.LogInfo("Повернуто картку в пул", "LobbyView");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при поверненні картки в пул: {ex.Message}", "LobbyView");
+                    // Знищуємо об'єкт, якщо не вдалося повернути в пул
+                    Destroy(cardObject);
+                }
+            }
+            else
+            {
+                // Якщо пул не доступний, просто знищуємо об'єкт
+                Destroy(cardObject);
+            }
+        }
+        private GameObject GetCardFromPool()
+        {
+            // Спробуємо отримати об'єкт з пулу
+            if (_poolManager != null && _isPoolInitialized)
+            {
+                try
+                {
+                    var cardObject = _poolManager.GetFromPool<GameObject>(HERO_CARD_POOL_KEY);
+                    if (cardObject != null)
+                    {
+                        return cardObject;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Отримано null з пулу карток", "LobbyView");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при отриманні картки з пулу: {ex.Message}", "LobbyView");
+                }
+            }
+
+            // Якщо не вдалося отримати з пулу, створюємо новий об'єкт
+            _logger.LogInfo("Створюємо нову картку героя, оскільки не вдалося отримати з пулу", "LobbyView");
+            return Instantiate(_heroCardPrefab);
+        }
+        private void ClearHeroCards()
+        {
+            ReturnAllCardsToPool();
+        }
+
+        // Модифікуємо UpdateSelectedHeroes, щоб використовувати пул для вибраних героїв
+        public void UpdateSelectedHeroes(List<HeroCardModel> selectedHeroes)
+        {
+            // Повертаємо всі картки з контейнера вибраних героїв у пул
+            foreach (Transform child in _selectedHeroesContainer)
+            {
+                if (child.gameObject != null)
+                {
+                    ReturnCardToPool(child.gameObject);
+                }
+            }
+
+            // Створюємо нові картки для вибраних героїв з пулу
+            foreach (var hero in selectedHeroes)
+            {
+                var cardObject = GetCardFromPool();
+                if (cardObject != null)
+                {
+                    cardObject.transform.SetParent(_selectedHeroesContainer, false);
+                    cardObject.SetActive(true);
+
+                    var ui = cardObject.GetComponent<HeroCardUI>();
+                    if (ui != null)
+                    {
+                        GameBootstrapper.Instance?.RegisterForInjection(ui);
+                        ui.Setup(hero);
+                        ui.SetInteractable(false);
+                    }
+                }
+            }
+        }
+
+       
 
         public void UpdateMana(int remainingMana, int totalMana)
         {
