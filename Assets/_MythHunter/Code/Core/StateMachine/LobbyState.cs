@@ -1,4 +1,4 @@
-// Файл: Assets/_MythHunter/Code/Core/Game/LobbyState.cs
+using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
@@ -16,12 +16,14 @@ namespace MythHunter.States
         private readonly IUIService _uiService;
         private readonly IMythLogger _logger;
         private readonly IEventBus _eventBus;
+        private readonly IGameFlowManager _gameFlowManager;
 
         public LobbyState(IDIContainer container) : base(container)
         {
             _uiService = container.Resolve<IUIService>();
             _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
+            _gameFlowManager = container.Resolve<IGameFlowManager>();
         }
 
         public override async void Enter(GameStateType previousState)
@@ -59,6 +61,21 @@ namespace MythHunter.States
         {
             _logger.LogInfo("Exiting LobbyState", "GameState");
             _uiService.HideScreen<UI.Views.LobbyView>();
+        }
+
+        // Метод для переходу в ігровий режим (викликається з презентера лобі)
+        public async UniTask StartGame(string[] selectedHeroArchetypes)
+        {
+            _logger.LogInfo("Starting game from lobby", "LobbyState");
+
+            try
+            {
+                await _gameFlowManager.EnterGameplayAsync(selectedHeroArchetypes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error entering gameplay: {ex.Message}", "LobbyState", ex);
+            }
         }
     }
 }

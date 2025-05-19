@@ -1,21 +1,19 @@
-// Assets/_MythHunter/Code/Core/SceneManagement/ISceneDispatcher.cs
 using Cysharp.Threading.Tasks;
 
 namespace MythHunter.Core.SceneManagement
 {
     /// <summary>
-    /// Інтерфейс диспетчера сцен
+    /// Інтерфейс для диспетчера сцен
     /// </summary>
     public interface ISceneDispatcher
     {
-        /// <summary>
-        /// Завантажує сцену за назвою
-        /// </summary>
         UniTask LoadSceneAsync(string sceneName);
+        UniTask LoadSceneAdditiveAsync(string sceneName);
+        UniTask UnloadSceneAsync(string sceneName);
+        string GetActiveScene();
+        bool IsSceneLoaded(string sceneName);
 
-        /// <summary>
-        /// Завантажує ігрову сцену з параметрами
-        /// </summary>
-        UniTask LoadGameSceneAsync(string[] selectedHeroArchetypes);
+        // Метод для передачі даних між сценами
+        void SetSceneData<T>(string key, T data);
     }
 }

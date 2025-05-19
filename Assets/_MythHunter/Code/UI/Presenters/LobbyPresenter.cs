@@ -11,6 +11,7 @@ using MythHunter.UI.Views;
 using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 using System;
+using MythHunter.Core.Game;
 
 namespace MythHunter.UI.Presenters
 {
@@ -26,9 +27,11 @@ namespace MythHunter.UI.Presenters
         private readonly ILobbyModel _model;
         private readonly IUIViewFactory _viewFactory;
         private readonly IViewConfigRegistry _viewConfigRegistry;
+        private readonly IGameFlowManager _gameFlowManager;
         private ILobbyView _view;
         private bool _isSubscribed = false;
         private int _currentPlayerIndex = 0; // Додайте це поле
+                                           
         [Inject]
         public LobbyPresenter(
             IEventBus eventBus,
@@ -37,7 +40,8 @@ namespace MythHunter.UI.Presenters
             IHeroSelectionSystem heroSelectionSystem,
             ILobbyModel model,
             IUIViewFactory viewFactory,
-            IViewConfigRegistry viewConfigRegistry
+            IViewConfigRegistry viewConfigRegistry,
+            IGameFlowManager gameFlowManager // Додали GameFlowManager
         )
         {
             _eventBus = eventBus;
@@ -47,6 +51,7 @@ namespace MythHunter.UI.Presenters
             _model = model;
             _viewFactory = viewFactory;
             _viewConfigRegistry = viewConfigRegistry;
+            _gameFlowManager = gameFlowManager; // Зберігаємо посилання
         }
 
         public void Initialize(ILobbyView view)
@@ -167,14 +172,12 @@ namespace MythHunter.UI.Presenters
             }
 
             _view.ShowGameStartingMessage();
-            if (await _lobbySystem.StartGameAsync())
-            {
-                _logger.LogInfo("Game started successfully", "LobbyUI");
-            }
-            else
-            {
-                _view.ShowError("Не вдалося почати гру");
-            }
+
+            // Отримуємо список вибраних героїв
+            var selectedHeroes = _lobbySystem.GetSelectedHeroes();
+
+            // Використовуємо GameFlowManager для переходу до ігрової сцени
+            await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
         }
 
         public List<HeroCardModel> GetAvailableHeroes()

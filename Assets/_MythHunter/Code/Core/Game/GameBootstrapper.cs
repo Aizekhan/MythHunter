@@ -129,8 +129,15 @@ namespace MythHunter.Core.Game
 
             await UniTask.Delay(100); // Placeholder async init
             _sceneDispatcher = _container.Resolve<ISceneDispatcher>();
-            _logger.LogInfo("Async services initialization completed", "Bootstrapper");
+
+            // Замість прямого виклику використовуємо GameFlowManager
+            var gameFlowManager = _container.Resolve<IGameFlowManager>();
+
+            // Змінюємо стан через GameFlowManager
+            // До першого виклику всі повинні бути ініціалізовані
             _stateMachine.ChangeState(GameStateType.Boot);
+
+            _logger.LogInfo("Async services initialization completed", "Bootstrapper");
         }
 
         public void RegisterForInjection(MonoBehaviour component)

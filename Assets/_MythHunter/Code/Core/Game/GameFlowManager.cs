@@ -1,0 +1,195 @@
+using Cysharp.Threading.Tasks;
+using MythHunter.Core.DI;
+using MythHunter.Core.SceneManagement;
+using MythHunter.Events;
+using MythHunter.Events.Domain;
+using MythHunter.Utils.Logging;
+using System;
+
+namespace MythHunter.Core.Game
+{
+    /// <summary>
+    /// Централізований сервіс для управління переходами між ігровими станами та сценами
+    /// </summary>
+    public class GameFlowManager : IGameFlowManager
+    {
+        private readonly IGameStateMachine _gameStateMachine;
+        private readonly ISceneDispatcher _sceneDispatcher;
+        private readonly IEventBus _eventBus;
+        private readonly IMythLogger _logger;
+
+        private string _currentSceneName = string.Empty;
+
+        [Inject]
+        public GameFlowManager(
+            IGameStateMachine gameStateMachine,
+            ISceneDispatcher sceneDispatcher,
+            IEventBus eventBus,
+            IMythLogger logger)
+        {
+            _gameStateMachine = gameStateMachine;
+            _sceneDispatcher = sceneDispatcher;
+            _eventBus = eventBus;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Запускає перехід від Boot до Lobby
+        /// </summary>
+        public async UniTask EnterLobbyAsync()
+        {
+            _logger.LogInfo("Початок переходу до Lobby", "GameFlow");
+
+            try
+            {
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+                _currentSceneName = "LobbyScene";
+
+                _gameStateMachine.ChangeState(GameStateType.Lobby);
+
+                // Публікуємо подію зміни стану гри
+                PublishStateChange(GameStateType.Boot, GameStateType.Lobby);
+
+                _logger.LogInfo("Перехід до Lobby завершено", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при переході до Lobby: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Запускає перехід від Lobby до Gameplay
+        /// </summary>
+        public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null)
+        {
+            _logger.LogInfo("Початок переходу до Gameplay", "GameFlow");
+
+            try
+            {
+                // Якщо передано дані про вибраних героїв, зберігаємо їх для наступної сцени
+                if (selectedHeroArchetypes != null && selectedHeroArchetypes.Length > 0)
+                {
+                    _sceneDispatcher.SetSceneData("SelectedHeroArchetypes", selectedHeroArchetypes);
+                    _logger.LogInfo($"Дані про вибраних героїв ({selectedHeroArchetypes.Length}) передано в наступну сцену", "GameFlow");
+                }
+
+                await _sceneDispatcher.LoadSceneAsync("GameScene");
+                _currentSceneName = "GameScene";
+
+                _gameStateMachine.ChangeState(GameStateType.Game);
+
+                // Публікуємо подію зміни стану гри
+                PublishStateChange(GameStateType.Lobby, GameStateType.Game);
+
+                _logger.LogInfo("Перехід до Gameplay завершено", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при переході до Gameplay: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Повертається з будь-якого стану до головного меню
+        /// </summary>
+        public async UniTask ReturnToMainMenuAsync()
+        {
+            _logger.LogInfo("Початок повернення до головного меню", "GameFlow");
+
+            try
+            {
+                GameStateType previousState = _gameStateMachine.CurrentState;
+
+                await _sceneDispatcher.LoadSceneAsync("MainMenuScene");
+                _currentSceneName = "MainMenuScene";
+
+                _gameStateMachine.ChangeState(GameStateType.MainMenu);
+
+                // Публікуємо подію зміни стану гри
+                PublishStateChange(previousState, GameStateType.MainMenu);
+
+                _logger.LogInfo("Повернення до головного меню завершено", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при поверненні до головного меню: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Перезавантажує поточну сцену
+        /// </summary>
+        public async UniTask ReloadCurrentSceneAsync()
+        {
+            _logger.LogInfo($"Початок перезавантаження поточної сцени: {_currentSceneName}", "GameFlow");
+
+            try
+            {
+                if (string.IsNullOrEmpty(_currentSceneName))
+                {
+                    _currentSceneName = _sceneDispatcher.GetActiveScene();
+                }
+
+                GameStateType currentState = _gameStateMachine.CurrentState;
+
+                await _sceneDispatcher.LoadSceneAsync(_currentSceneName);
+
+                // Публікуємо подію перезавантаження сцени
+                _eventBus.Publish(new SceneReloadedEvent
+                {
+                    SceneName = _currentSceneName,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _logger.LogInfo($"Перезавантаження сцени {_currentSceneName} завершено", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при перезавантаженні сцени: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Запускає гру з самого початку (Boot)
+        /// </summary>
+        public async UniTask RestartGameAsync()
+        {
+            _logger.LogInfo("Початок перезапуску гри", "GameFlow");
+
+            try
+            {
+                GameStateType previousState = _gameStateMachine.CurrentState;
+
+                await _sceneDispatcher.LoadSceneAsync("LoadingScene");
+                _currentSceneName = "LoadingScene";
+
+                _gameStateMachine.ChangeState(GameStateType.Boot);
+
+                // Публікуємо подію зміни стану гри
+                PublishStateChange(previousState, GameStateType.Boot);
+
+                _logger.LogInfo("Перезапуск гри завершено", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при перезапуску гри: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+
+        private void PublishStateChange(GameStateType previousState, GameStateType newState)
+        {
+            _eventBus.Publish(new GameStateChangedEvent
+            {
+                PreviousState = previousState,
+                NewState = newState,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+}

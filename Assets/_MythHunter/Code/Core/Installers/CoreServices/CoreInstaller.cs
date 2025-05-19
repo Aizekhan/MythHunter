@@ -41,7 +41,8 @@ namespace MythHunter.Core.Installers
             BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
 
             BindSingleton<SceneLoader, SceneLoader>(container); // цей другорядний, використовується тільки в СценДиспечер (тому нема інтерфейса)
-            BindSingleton<ISceneDispatcher, SceneDispatcher>(container);
+            BindSingleton<ISceneDispatcher, SceneDispatcher>(container);// 
+            BindSingleton<IGameFlowManager, GameFlowManager>(container);
 
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
             // Реєструємо розширення DI
