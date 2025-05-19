@@ -3,6 +3,7 @@ using MythHunter.Core.DI;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
+using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
 using System;
 
@@ -17,6 +18,7 @@ namespace MythHunter.Core.Game
         private readonly ISceneDispatcher _sceneDispatcher;
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
+        private readonly ISystemRegistry _systemRegistry;
 
         private string _currentSceneName = string.Empty;
 
@@ -25,12 +27,14 @@ namespace MythHunter.Core.Game
             IGameStateMachine gameStateMachine,
             ISceneDispatcher sceneDispatcher,
             IEventBus eventBus,
-            IMythLogger logger)
+            IMythLogger logger,
+            ISystemRegistry systemRegistry)
         {
             _gameStateMachine = gameStateMachine;
             _sceneDispatcher = sceneDispatcher;
             _eventBus = eventBus;
             _logger = logger;
+            _systemRegistry = systemRegistry;
         }
 
         /// <summary>
@@ -44,6 +48,9 @@ namespace MythHunter.Core.Game
             {
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
                 _currentSceneName = "LobbyScene";
+                
+                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
+               _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
 
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
 
@@ -77,6 +84,8 @@ namespace MythHunter.Core.Game
 
                 await _sceneDispatcher.LoadSceneAsync("GameScene");
                 _currentSceneName = "GameScene";
+
+                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Gameplay);
 
                 _gameStateMachine.ChangeState(GameStateType.Game);
 

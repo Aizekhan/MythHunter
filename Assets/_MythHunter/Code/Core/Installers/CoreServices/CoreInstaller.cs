@@ -10,6 +10,7 @@ using MythHunter.Resources.SceneManagement;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
 using MythHunter.Services.GameSettings;
+using MythHunter.Entities;
 
 namespace MythHunter.Core.Installers
 {
@@ -40,11 +41,17 @@ namespace MythHunter.Core.Installers
             // Реєстрація менеджера життєвого циклу DI
             BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
 
+            // 🟢 Реєстрація фазового провайдера та фазової системи
+            BindSingleton<IPhaseProvider, GamePhaseProvider>(container);     // або EmergencyPhaseProvider
+
             BindSingleton<SceneLoader, SceneLoader>(container); // цей другорядний, використовується тільки в СценДиспечер (тому нема інтерфейса)
             BindSingleton<ISceneDispatcher, SceneDispatcher>(container);// 
             BindSingleton<IGameFlowManager, GameFlowManager>(container);
 
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
+      
+
+
             // Реєструємо розширення DI
             var diExtensionsInstaller = new DIExtensionsInstaller();
             diExtensionsInstaller.InstallBindings(container);

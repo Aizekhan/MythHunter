@@ -24,41 +24,33 @@ namespace MythHunter.Core.Installers
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
 
-            // Реєстрація базових системних груп з конкретними типами систем
-            systemRegistry.RegisterGroupWithCategory<SystemGroup>(
+            // Реєстрація Core-систем
+            var coreGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "CoreServices",
                 SystemPriorities.Core,
                 SystemInitializationCategory.OnBoot,
-                logger,
-                new[] {
-                    typeof(IEventThrottlerUpdateSystem),
-                    typeof(ISystemRegistry)
-                }
+                logger
             );
+            coreGroup.AddSystem(container.Resolve<IEventThrottlerUpdateSystem>());
+           
 
-            // Реєстрація групи UI систем
-            systemRegistry.RegisterGroupWithCategory<SystemGroup>(
+            // Реєстрація UI-систем
+            var uiGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "UIServices",
                 SystemPriorities.UI,
                 SystemInitializationCategory.OnBoot,
-                logger,
-                new[] {
-                    typeof(IUISystem)
-                }
+                logger
             );
+           
 
-            // Реєстрація групи ресурсних систем
-            systemRegistry.RegisterGroupWithCategory<SystemGroup>(
+            // Реєстрація ресурсних систем
+            var resourceGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "ResourceSystems",
                 SystemPriorities.Core - 10,
                 SystemInitializationCategory.OnBoot,
-                logger,
-                new[] {
-                    typeof(IPreloadManager),
-                    typeof(IPoolManager),
-                    typeof(IResourceManager)
-                }
+                logger
             );
+          
 
             logger.LogInfo("Базові системи (OnBoot) встановлено успішно", "Installer");
         }

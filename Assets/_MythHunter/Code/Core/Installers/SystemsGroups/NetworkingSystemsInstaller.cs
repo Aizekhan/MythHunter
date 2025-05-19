@@ -6,6 +6,7 @@ using MythHunter.Networking.Core;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;
 using MythHunter.Systems.Groups;
+using MythHunter.Core.ECS;
 
 namespace MythHunter.Core.Installers
 {
@@ -21,23 +22,21 @@ namespace MythHunter.Core.Installers
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
 
-            // Перевіряємо наявність мережевої системи
-            bool hasNetworkSystem = container.IsRegistered<INetworkSystem>();
-
-            if (hasNetworkSystem)
+            if (container.IsRegistered<INetworkSystem>())
             {
-                // Реєстрація групи мережевих систем з конкретними типами
-                systemRegistry.RegisterGroupWithCategory<SystemGroup>(
+                var systems = new ISystem[]
+                {
+                };
+
+                var networkGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                     "NetworkSystems",
                     SystemPriorities.Network,
                     SystemInitializationCategory.OnBoot,
-                    logger,
-                    new[] {
-                        typeof(INetworkSystem),
-                        typeof(IClientNetworkSystem),
-                        typeof(IServerNetworkSystem)
-                    }
+                    logger
                 );
+
+                foreach (var system in systems)
+                    networkGroup.AddSystem(system);
 
                 logger.LogInfo("Мережеві системи встановлено успішно", "Installer");
             }

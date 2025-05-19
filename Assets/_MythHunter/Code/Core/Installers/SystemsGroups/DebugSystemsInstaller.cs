@@ -6,8 +6,9 @@ using MythHunter.Debug;
 using MythHunter.Debug.Profiling;
 using MythHunter.Debug.Events;
 using MythHunter.Debug.Pool;
-using MythHunter.Debug.UI;
 using MythHunter.Systems.Groups;
+using MythHunter.Core.ECS;
+using MythHunter.Debug.UI;
 
 namespace MythHunter.Core.Installers
 {
@@ -23,19 +24,20 @@ namespace MythHunter.Core.Installers
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
 
-            // Реєстрація групи систем відлагодження з конкретними типами
-            systemRegistry.RegisterGroupWithCategory<SystemGroup>(
+            var systems = new ISystem[]
+            {
+             
+            };
+
+            var debugGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "DebugSystems",
                 SystemPriorities.Analytics,
                 SystemInitializationCategory.Manual,
-                logger,
-                new[] {
-                    typeof(SystemProfiler),
-                    typeof(PerformanceMonitor),
-                    typeof(EventDebugTool),
-                    typeof(PoolDebugTool)
-                }
+                logger
             );
+
+            foreach (var system in systems)
+                debugGroup.AddSystem(system);
 
             logger.LogInfo("Системи відлагодження встановлено успішно", "Installer");
         }

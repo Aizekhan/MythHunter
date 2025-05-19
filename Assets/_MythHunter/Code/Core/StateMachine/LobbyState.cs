@@ -33,8 +33,7 @@ namespace MythHunter.States
             // Отримання реєстру систем
             var systemRegistry = Container.Resolve<ISystemRegistry>();
 
-            // Ініціалізуємо всі системи з категорією OnDemand
-            systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
+           
 
             // Публікуємо подію зміни стану гри
             _eventBus.Publish(new GameStateChangedEvent

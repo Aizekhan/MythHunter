@@ -6,6 +6,9 @@ using MythHunter.Utils.Logging;
 using MythHunter.Systems.Heroes;
 using MythHunter.Systems.Groups;
 using MythHunter.UI.Presenters;
+using MythHunter.Entities.Heroes;
+using MythHunter.Entities.Archetypes;
+using MythHunter.Services.Heroes;
 
 namespace MythHunter.Core.Installers
 {
@@ -20,26 +23,45 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення систем лобі...", "Installer");
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
+
+            // Реєстрація систем через DI
             BindSingleton<ILobbySystem, LobbySystem>(container);
             BindSingleton<IHeroSelectionSystem, HeroSelectionSystem>(container);
+            BindSingleton<IHeroSystem, HeroSystem>(container);
+            BindSingleton<IRaceClassBonusSystem, RaceClassBonusSystem>(container);
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
-            // Реєстрація групи систем лобі
-            systemRegistry.RegisterGroupWithCategory<SystemGroup, ILobbySystem, IHeroSelectionSystem>(
+            BindSingleton<IHeroFactory, HeroFactory>(container);
+            BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
+            BindSingleton<IHeroDataService, LocalHeroDataService>(container);
+
+            // Отримуємо інстанси
+            var lobbySystem = container.Resolve<ILobbySystem>();
+            var selectionSystem = container.Resolve<IHeroSelectionSystem>();
+            var heroSystem = container.Resolve<IHeroSystem>();
+            var bonusSystem = container.Resolve<IRaceClassBonusSystem>();
+         
+
+            // Група Lobby
+            var lobbyGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "LobbySystems",
                 SystemPriorities.UI + 10,
                 SystemInitializationCategory.Lobby,
                 logger
             );
+            lobbyGroup.AddSystem(lobbySystem);
+            lobbyGroup.AddSystem(selectionSystem);
 
-            // Реєстрація групи систем героїв
-            BindSingleton<IHeroSystem, HeroSystem>(container);
-            BindSingleton<IRaceClassBonusSystem, RaceClassBonusSystem>(container);
-            systemRegistry.RegisterGroupWithCategory<SystemGroup, IRaceClassBonusSystem, IHeroSystem>(
+            // Група HeroSystems
+            var heroGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "HeroSystems",
                 SystemPriorities.Active - 5,
                 SystemInitializationCategory.Lobby,
                 logger
             );
+            heroGroup.AddSystem(heroSystem);
+            heroGroup.AddSystem(bonusSystem);
+           
+
 
             logger.LogInfo("Системи лобі встановлено успішно", "Installer");
         }
