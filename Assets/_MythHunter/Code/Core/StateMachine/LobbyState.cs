@@ -31,6 +31,7 @@ namespace MythHunter.States
         {
             _logger.LogInfo("Entering LobbyState", "GameState");
             _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
+            _logger.LogInfo("LobbyStateEnteredEvent опубліковано", "LobbyState");
             // Публікуємо подію зміни стану гри
             _eventBus.Publish(new GameStateChangedEvent
             {

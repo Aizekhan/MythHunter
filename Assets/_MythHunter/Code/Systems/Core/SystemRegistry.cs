@@ -278,6 +278,13 @@ namespace MythHunter.Systems.Core
                 _logger.LogInfo($"System {reg.SystemType} {(isActive ? "activated" : "deactivated")}", "Systems");
             }
         }
+        public T GetSystem<T>() where T : ISystem
+        {
+            return _allSystems
+                .Where(r => r.System is T)
+                .Select(r => (T)r.System)
+                .FirstOrDefault();
+        }
 
         /// <summary>
         /// Отримує всі зареєстровані системи

@@ -10,11 +10,13 @@ namespace MythHunter.Core.SceneManagement
         UniTask LoadSceneAsync(string sceneName);
         UniTask LoadSceneAdditiveAsync(string sceneName);
         UniTask UnloadSceneAsync(string sceneName);
+        UniTask LoadGameSceneAsync(string[] selectedHeroArchetypes);
         string GetActiveScene();
         bool IsSceneLoaded(string sceneName);
 
         // Метод для передачі даних між сценами
         void SetSceneData<T>(string key, T data);
-      
+        T GetSceneData<T>(string key, T defaultValue = default);
+
     }
 }

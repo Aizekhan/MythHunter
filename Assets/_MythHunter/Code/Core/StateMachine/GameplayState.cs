@@ -35,7 +35,7 @@ namespace MythHunter.Core.Game
             var dispatcher = Container.Resolve<ISceneDispatcher>();
             var eventBus = Container.Resolve<IEventBus>();
 
-            var heroes = SceneDispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
+            var heroes = dispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
 
             if (heroes != null)
             {

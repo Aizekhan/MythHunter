@@ -200,6 +200,7 @@ namespace MythHunter.UI.Views
                 }
             }
         }
+        // Assets/_MythHunter/Code/UI/Views/LobbyView.cs
         public void PopulateHeroCards(List<HeroCardModel> heroes)
         {
             if (heroes == null || heroes.Count == 0)
@@ -210,35 +211,56 @@ namespace MythHunter.UI.Views
 
             _logger.LogInfo($"PopulateHeroCards викликано з {heroes.Count} героями", "LobbyView");
 
-            ClearHeroCards();
-
-            foreach (var hero in heroes)
+            try
             {
-                try
+                ClearHeroCards();
+
+                foreach (var hero in heroes)
                 {
-                    var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
-                    var ui = card.GetComponent<HeroCardUI>();
-
-                    if (ui != null)
+                    try
                     {
-                        // Ін'єкція залежностей через GameBootstrapper
-                        GameBootstrapper.Instance?.RegisterForInjection(ui);
+                        if (_heroCardPrefab == null)
+                        {
+                            _logger.LogError("_heroCardPrefab є null!", "LobbyView");
+                            continue;
+                        }
 
-                        ui.Setup(hero);
-                        ui.OnHeroSelected += OnHeroCardSelected;
-                        _createdCards.Add(ui);
+                        var card = Instantiate(_heroCardPrefab, _heroCardsContainer);
+                        var ui = card.GetComponent<HeroCardUI>();
 
-                        _logger.LogInfo($"Створено картку для героя {hero.Name}", "LobbyView");
+                        if (ui != null)
+                        {
+                            // Ін'єкція залежностей через GameBootstrapper
+                            if (GameBootstrapper.Instance != null)
+                            {
+                                GameBootstrapper.Instance.RegisterForInjection(ui);
+                                _logger.LogInfo($"Ін'єкція залежностей для картки героя {hero.Name}", "LobbyView");
+                            }
+                            else
+                            {
+                                _logger.LogWarning("GameBootstrapper.Instance є null!", "LobbyView");
+                            }
+
+                            ui.Setup(hero);
+                            ui.OnHeroSelected += OnHeroCardSelected;
+                            _createdCards.Add(ui);
+
+                            _logger.LogInfo($"Створено картку для героя {hero.Name}", "LobbyView");
+                        }
+                        else
+                        {
+                            _logger.LogError("Не знайдено компонент HeroCardUI на префабі", "LobbyView");
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        _logger.LogError("Не знайдено компонент HeroCardUI на префабі", "LobbyView");
+                        _logger.LogError($"Помилка при створенні картки героя: {ex.Message}", "LobbyView", ex);
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Помилка при створенні картки героя: {ex.Message}", "LobbyView");
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Критична помилка в PopulateHeroCards: {ex.Message}", "LobbyView", ex);
             }
         }
         private void ClearHeroCards()

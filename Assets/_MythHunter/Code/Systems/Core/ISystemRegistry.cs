@@ -16,7 +16,7 @@ namespace MythHunter.Systems.Core
         void InitializeAll();
         void InitializeSystemsByCategory(SystemInitializationCategory category);
         void LogInfo(string message);
-
+        T GetSystem<T>() where T : ISystem;
         // Додамо метод для отримання DI контейнера
         IDIContainer GetContainer();
     }

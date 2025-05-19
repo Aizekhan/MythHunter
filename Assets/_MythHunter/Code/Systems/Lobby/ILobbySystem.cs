@@ -11,6 +11,10 @@ public interface ILobbySystem : ISystem
     List<string> GetAvailableHeroes();
     List<string> GetSelectedHeroes();
     bool AreAllPlayersReady();
+    bool IsInitialized
+    {
+        get;
+    }
 
     // ➕ Додай:
     int GetRemainingManaForCurrentPlayer();

@@ -29,7 +29,10 @@ namespace MythHunter.Networking.Client
             _serializer = serializer;
             _logger = logger;
         }
-
+        public void SimulateMessageReceived(INetworkMessage message)
+        {
+            OnMessageReceived?.Invoke(message);
+        }
         public async UniTask<bool> ConnectAsync(string address, ushort port)
         {
             try

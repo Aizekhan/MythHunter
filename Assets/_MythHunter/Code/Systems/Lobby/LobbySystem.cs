@@ -30,6 +30,7 @@ namespace MythHunter.Systems.Lobby
 
         private int _currentPlayerIndex = 0;
         private bool _isInitialized = false;
+        public bool IsInitialized => _isInitialized;
         private float _selectionTimeLimit = 300f; // 5 хвилин
         private float _selectionTimeLeft = 0f;
         private int _lobbyEntityId = -1;
@@ -37,7 +38,7 @@ namespace MythHunter.Systems.Lobby
 
         // Константи
         private const int DEFAULT_MANA_PER_PLAYER = 4;
-        public bool IsInitialized => _isInitialized;
+        
         [Inject]
         public LobbySystem(
             IEntityManager entityManager,
@@ -120,6 +121,7 @@ namespace MythHunter.Systems.Lobby
             });
 
             _logger.LogInfo($"Lobby initialized with {playerCount} players", "Lobby");
+            _isInitialized = true;
         }
 
         public override void Update(float deltaTime)

@@ -34,6 +34,7 @@ namespace MythHunter.Events
         // Управління асинхронною обробкою
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isProcessing;
+        public bool IsProcessing => _isProcessing;
         private readonly object _syncLock = new object();
 
         // Клас обгортки для синхронного обробника подій

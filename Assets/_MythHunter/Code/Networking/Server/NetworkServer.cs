@@ -31,7 +31,10 @@ namespace MythHunter.Networking.Server
             _serializer = serializer;
             _logger = logger;
         }
-
+        public void SimulateMessageReceived(int clientId, INetworkMessage message)
+        {
+            OnMessageReceived?.Invoke(clientId, message);
+        }
         public void Start(ushort port)
         {
             if (_isRunning)

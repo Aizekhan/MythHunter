@@ -71,20 +71,23 @@ namespace MythHunter.UI.Presenters
             SubscribeToEvents();
             _logger.LogInfo("[LobbyPresenter] Ініціалізовано з представленням", "Lobby");
 
-            // Переконаймося, що HeroSelectionSystem завантажив героїв
-            if (_heroSelectionSystem == null)
+            // Запускаємо асинхронний процес ініціалізації без блокування основного потоку
+            UniTask.Create(async () =>
             {
-                _logger.LogError("[LobbyPresenter] _heroSelectionSystem є null", "Lobby");
-            }
-            else
-            {
-                // Запускаємо Load асинхронно
-                UniTask.Create(async () =>
+                try
                 {
+                    // Завантажуємо героїв - це займе певний час
                     await _heroSelectionSystem.LoadAvailableHeroes();
                     _logger.LogInfo("[LobbyPresenter] Героїв асинхронно завантажено", "Lobby");
-                });
-            }
+
+                    // Оновлюємо UI тільки після успішного завантаження героїв
+                    UpdateUI();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"[LobbyPresenter] Помилка при завантаженні героїв: {ex.Message}", "Lobby");
+                }
+            });
         }
 
         public async UniTask InitializeAsync()
@@ -110,6 +113,7 @@ namespace MythHunter.UI.Presenters
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
+            _eventBus.Subscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
 
             _isSubscribed = true;
         }
@@ -124,6 +128,7 @@ namespace MythHunter.UI.Presenters
             _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
             _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
+            _eventBus.Unsubscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
 
             _isSubscribed = false;
         }
@@ -137,14 +142,15 @@ namespace MythHunter.UI.Presenters
             }
         }
 
-        public void StartLobby(int playerCount)
+        private void OnLobbyStateEntered(LobbyStateEnteredEvent evt)
         {
-            _logger.LogInfo($"[LobbyPresenter] StartLobby викликано для {playerCount} гравців", "Lobby");
+            _logger.LogInfo("[LobbyPresenter] Отримано подію LobbyStateEnteredEvent", "Lobby");
+
+            // Отримуємо кількість гравців
+            int playerCount = _gameSettings.PlayerCount;
 
             // Перевіряємо, чи ініціалізовано лобі
             bool isAlreadyInitialized = false;
-
-            // Перевіряємо ініціалізацію через інтерфейс, якщо така властивість існує
             var propInfo = _lobbySystem.GetType().GetProperty("IsInitialized");
             if (propInfo != null)
             {
@@ -155,13 +161,26 @@ namespace MythHunter.UI.Presenters
             {
                 _lobbySystem.InitializeLobby(playerCount);
             }
+
+            // Оновлюємо UI
+            UpdateUI();
+        }
+
+        public void StartLobby(int playerCount)
+        {
+            _logger.LogInfo($"[LobbyPresenter] StartLobby викликано для {playerCount} гравців", "Lobby");
+
+            // Перевіряємо, чи ініціалізовано лобі через інтерфейсну властивість
+            if (!_lobbySystem.IsInitialized)
+            {
+                _lobbySystem.InitializeLobby(playerCount);
+            }
             else
             {
                 _logger.LogInfo("[LobbyPresenter] Лобі вже ініціалізовано", "Lobby");
             }
 
-            // Оновлюємо UI з актуальними даними
-            UpdateUI();
+            // Не оновлюємо UI тут — чекаємо завантаження героїв
         }
 
         private void UpdateUI()
@@ -169,8 +188,15 @@ namespace MythHunter.UI.Presenters
             if (_view != null)
             {
                 var availableHeroes = GetAvailableHeroes();
-                _view.PopulateHeroCards(availableHeroes);
-                _view.UpdateMana(GetRemainingMana(), 4);
+                if (availableHeroes.Count > 0)
+                {
+                    _view.PopulateHeroCards(availableHeroes);
+                    _view.UpdateMana(GetRemainingMana(), 4);
+                }
+                else
+                {
+                    _logger.LogWarning("[LobbyPresenter] Немає героїв для UI", "Lobby");
+                }
             }
             else
             {

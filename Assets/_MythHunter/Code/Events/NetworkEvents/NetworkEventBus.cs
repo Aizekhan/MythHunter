@@ -85,7 +85,7 @@ namespace MythHunter.Events.Network
                 }
                 catch (Exception ex)
                 {
-                    // Ігноруємо помилки для стійкості системи
+                    ex.ToString();
                 }
             }
         }

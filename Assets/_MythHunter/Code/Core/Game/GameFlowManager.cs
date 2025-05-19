@@ -1,8 +1,11 @@
+// Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
+
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
+using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
 using System;
@@ -12,7 +15,7 @@ namespace MythHunter.Core.Game
     /// <summary>
     /// Централізований сервіс для управління переходами між ігровими станами та сценами
     /// </summary>
-    public class GameFlowManager : IGameFlowManager
+    public class GameFlowManager : IGameFlowManager, IEventSubscriber
     {
         private readonly IGameStateMachine _gameStateMachine;
         private readonly ISceneDispatcher _sceneDispatcher;
@@ -21,6 +24,7 @@ namespace MythHunter.Core.Game
         private readonly ISystemRegistry _systemRegistry;
 
         private string _currentSceneName = string.Empty;
+        private bool _isSubscribed;
 
         [Inject]
         public GameFlowManager(
@@ -35,6 +39,45 @@ namespace MythHunter.Core.Game
             _eventBus = eventBus;
             _logger = logger;
             _systemRegistry = systemRegistry;
+
+            SubscribeToEvents();
+        }
+
+        /// <summary>
+        /// Підписується на події
+        /// </summary>
+        public void SubscribeToEvents()
+        {
+            if (_isSubscribed)
+                return;
+
+            _eventBus.Subscribe<GameStartRequestEvent>(OnGameStartRequested);
+            _isSubscribed = true;
+            _logger.LogInfo("GameFlowManager підписався на події", "GameFlow");
+        }
+
+        /// <summary>
+        /// Відписується від подій
+        /// </summary>
+        public void UnsubscribeFromEvents()
+        {
+            if (!_isSubscribed)
+                return;
+
+            _eventBus.Unsubscribe<GameStartRequestEvent>(OnGameStartRequested);
+            _isSubscribed = false;
+            _logger.LogInfo("GameFlowManager відписався від подій", "GameFlow");
+        }
+
+        /// <summary>
+        /// Обробник події запиту на початок гри
+        /// </summary>
+        private void OnGameStartRequested(GameStartRequestEvent evt)
+        {
+            _logger.LogInfo("Отримано запит на початок гри", "GameFlow");
+
+            // Запускаємо асинхронний перехід до Gameplay без очікування завершення
+            EnterGameplayAsync().Forget();
         }
 
         /// <summary>
@@ -48,9 +91,9 @@ namespace MythHunter.Core.Game
             {
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
                 _currentSceneName = "LobbyScene";
-                
+
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
-               _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
+                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
 
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
 
@@ -71,7 +114,7 @@ namespace MythHunter.Core.Game
         /// </summary>
         public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null)
         {
-            _logger.LogInfo("Початок переходу до Gameplay", "GameFlow");
+            _logger.LogInfo($"Початок переходу до Gameplay з {selectedHeroArchetypes?.Length ?? 0} вибраними героями", "GameFlow");
 
             try
             {
@@ -82,7 +125,16 @@ namespace MythHunter.Core.Game
                     _logger.LogInfo($"Дані про вибраних героїв ({selectedHeroArchetypes.Length}) передано в наступну сцену", "GameFlow");
                 }
 
-                await _sceneDispatcher.LoadSceneAsync("GameScene");
+                // Використовуємо спеціальний метод для завантаження ігрової сцени з вибраними героями
+                if (selectedHeroArchetypes != null && selectedHeroArchetypes.Length > 0)
+                {
+                    await _sceneDispatcher.LoadGameSceneAsync(selectedHeroArchetypes);
+                }
+                else
+                {
+                    await _sceneDispatcher.LoadSceneAsync("GameScene");
+                }
+
                 _currentSceneName = "GameScene";
 
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Gameplay);
@@ -91,6 +143,12 @@ namespace MythHunter.Core.Game
 
                 // Публікуємо подію зміни стану гри
                 PublishStateChange(GameStateType.Lobby, GameStateType.Game);
+
+                // Публікуємо подію початку гри
+                _eventBus.Publish(new GameStartedEvent
+                {
+                    Timestamp = DateTime.UtcNow
+                });
 
                 _logger.LogInfo("Перехід до Gameplay завершено", "GameFlow");
             }
@@ -200,5 +258,16 @@ namespace MythHunter.Core.Game
                 Timestamp = DateTime.UtcNow
             });
         }
+
+        /// <summary>
+        /// Звільнення ресурсів при знищенні об'єкту
+        /// </summary>
+        public void Dispose()
+        {
+            UnsubscribeFromEvents();
+            _logger.LogInfo("GameFlowManager видалено", "GameFlow");
+        }
     }
+
+   
 }

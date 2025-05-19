@@ -24,6 +24,7 @@ namespace MythHunter.Entities.Archetypes
             LoadAllHeroArchetypes();
         }
 
+        // Assets/_MythHunter/Code/Entities/Heroes/HeroArchetypeRegistry.cs
         private void LoadAllHeroArchetypes()
         {
             // Завантаження архетипів
@@ -35,6 +36,13 @@ namespace MythHunter.Entities.Archetypes
                 {
                     _logger.LogWarning($"Hero archetype {archetype.name} has empty ArchetypeId. Skipping.", "HeroArchetype");
                     continue;
+                }
+
+                // Перевірка на дублікати
+                if (_heroArchetypes.ContainsKey(archetype.ArchetypeId))
+                {
+                    _logger.LogError($"Duplicate hero archetype ID found: {archetype.ArchetypeId}. This will cause conflicts.", "HeroArchetype");
+                    continue; // Пропускаємо дублікати
                 }
 
                 // Зберігаємо тільки посилання на архетип

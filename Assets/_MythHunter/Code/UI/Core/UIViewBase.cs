@@ -16,7 +16,7 @@ namespace MythHunter.UI.Core
         protected virtual void Awake()
         {
             // Отримуємо UISystem через GameBootstrapper
-            var bootstrapper = FindObjectOfType<GameBootstrapper>();
+            var bootstrapper = FindFirstObjectByType<GameBootstrapper>();
             if (bootstrapper != null)
             {
                 var container = bootstrapper.GetContainer();

@@ -67,7 +67,7 @@ namespace MythHunter.Core.SceneManagement
         /// <summary>
         /// Отримання переданих даних у новій сцені
         /// </summary>
-        public static T GetSceneData<T>(string key, T defaultValue = default)
+        public T GetSceneData<T>(string key, T defaultValue = default)
         {
             if (_sceneData.TryGetValue(key, out var value) && value is T typed)
                 return typed;

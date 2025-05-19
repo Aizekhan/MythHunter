@@ -18,8 +18,8 @@ namespace MythHunter.Resources.Pool
         [Tooltip("Автоматично повертати в пул при деактивації")]
         [SerializeField] private bool _autoReturn = true;
 
-        [Tooltip("Відстежувати час життя об'єкта")]
-        [SerializeField] private bool _trackLifetime = true;
+        //[Tooltip("Відстежувати час життя об'єкта")]
+        //[SerializeField] private bool _trackLifetime = true;
 
         [Tooltip("Максимальний час життя об'єкта (в секундах), 0 = необмежено")]
         [SerializeField] private float _maxLifetime = 0f;

@@ -43,10 +43,19 @@ namespace MythHunter.Systems.Lobby
         public override async void Initialize()
         {
             base.Initialize();
-            await LoadAvailableHeroes();
+
+            try
+            {
+                await LoadAvailableHeroes();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при ініціалізації HeroSelectionSystem: {ex.Message}", "HeroSelection", ex);
+            }
         }
 
-        public async UniTask LoadAvailableHeroes()
+        // Assets/_MythHunter/Code/Systems/Lobby/HeroSelectionSystem.cs
+        public  UniTask LoadAvailableHeroes() // правильно
         {
             _heroInfos.Clear();
 
@@ -54,28 +63,33 @@ namespace MythHunter.Systems.Lobby
 
             try
             {
-                var archetypeIds = _archetypeTemplateRegistry.GetAllTemplateIds()
-                    .Where(id => id.StartsWith("Character") || id.StartsWith("Hero"))
-                    .ToList();
+                // Спробуємо отримати архетипи з різних шляхів
+                var heroArchetypes = UnityEngine.Resources.LoadAll<HeroArchetypeSO>("ScriptableObjects/Heroes");
 
-                _logger.LogInfo($"Знайдено {archetypeIds.Count} архетипів героїв", "HeroSelection");
+                _logger.LogInfo($"Знайдено {heroArchetypes.Length} архетипів героїв", "HeroSelection");
 
-                foreach (var archetypeId in archetypeIds)
+                // Обробляємо знайдені архетипи напряму
+                foreach (var heroArchetype in heroArchetypes)
                 {
                     try
                     {
-                        var heroArchetype = await _resourceManager.LoadAsync<HeroArchetypeSO>($"ScriptableObjects/Heroes/{archetypeId}");
-
-                        if (heroArchetype == null)
+                        if (string.IsNullOrEmpty(heroArchetype.ArchetypeId))
                         {
-                            _logger.LogWarning($"HeroArchetypeSO not found for ID: {archetypeId}", "HeroSelection");
+                            _logger.LogWarning($"HeroArchetype {heroArchetype.name} має порожній ArchetypeId", "HeroSelection");
+                            continue;
+                        }
+
+                        // Додаткова перевірка на дублікати
+                        if (_heroInfos.ContainsKey(heroArchetype.ArchetypeId))
+                        {
+                            _logger.LogWarning($"Дублікат архетипу героя: {heroArchetype.ArchetypeId}. Пропускаємо.", "HeroSelection");
                             continue;
                         }
 
                         var heroInfo = new HeroInfo
                         {
-                            ArchetypeId = archetypeId,
-                            Name = heroArchetype.HeroName,
+                            ArchetypeId = heroArchetype.ArchetypeId,
+                            Name = string.IsNullOrEmpty(heroArchetype.HeroName) ? heroArchetype.ArchetypeId : heroArchetype.HeroName,
                             Description = heroArchetype.Description,
                             Race = heroArchetype.Race.ToString(),
                             Class = heroArchetype.Class.ToString(),
@@ -84,26 +98,16 @@ namespace MythHunter.Systems.Lobby
                             IconPath = heroArchetype.IconPath
                         };
 
-                        if (string.IsNullOrWhiteSpace(heroInfo.Name))
-                        {
-                            heroInfo.Name = archetypeId;
-                            _logger.LogWarning($"Hero archetype {archetypeId} має порожнє Name", "HeroSelection");
-                        }
-
-                        if (string.IsNullOrWhiteSpace(heroInfo.IconPath))
-                        {
-                            _logger.LogWarning($"Hero archetype {archetypeId} має порожній IconPath", "HeroSelection");
-                        }
-
-                        _heroInfos.Add(archetypeId, heroInfo);
+                        _heroInfos.Add(heroArchetype.ArchetypeId, heroInfo);
+                        _logger.LogInfo($"Додано героя: {heroInfo.Name} (ID: {heroInfo.ArchetypeId})", "HeroSelection");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Помилка завантаження архетипу {archetypeId}: {ex.Message}", "HeroSelection");
+                        _logger.LogError($"Помилка при обробці архетипу {heroArchetype.name}: {ex.Message}", "HeroSelection", ex);
                     }
                 }
 
-                // Додаємо тестові дані, якщо немає героїв
+                // Якщо не знайдено жодного героя, додаємо тестові дані
                 if (_heroInfos.Count == 0)
                 {
                     _logger.LogWarning("Не знайдено жодного архетипу героя, додаємо тестові дані", "HeroSelection");
@@ -114,62 +118,56 @@ namespace MythHunter.Systems.Lobby
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при завантаженні героїв: {ex.Message}", "HeroSelection");
-                // У разі помилки додаємо тестові дані
+                _logger.LogError($"Критична помилка при завантаженні героїв: {ex.Message}", "HeroSelection", ex);
                 AddTestHeroes();
             }
+            return UniTask.CompletedTask;
         }
         private void AddTestHeroes()
         {
-           
-                _logger.LogWarning("Додаємо тестові дані для героїв", "HeroSelection");
+            _logger.LogWarning("Додаємо тестові дані для героїв", "HeroSelection");
 
-                // Додавання тестових героїв
-                _heroInfos.Add("TestWarrior", new HeroInfo
-                {
-                    ArchetypeId = "TestWarrior",
-                    Name = "Воїн",
-                    Description = "Потужний воїн близького бою",
-                    Race = "Human",
-                    Class = "Warrior",
-                    ManaCost = 2,
-                    Category = "Бійці",
-                    IconPath = "UI/Icons/warrior_icon"
-                });
+            // Додавання тестових героїв
+            _heroInfos.Add("TestWarrior", new HeroInfo
+            {
+                ArchetypeId = "TestWarrior",
+                Name = "Воїн",
+                Description = "Потужний воїн близького бою",
+                Race = "Human",
+                Class = "Warrior",
+                ManaCost = 2,
+                Category = "Бійці",
+                IconPath = "UI/Icons/warrior_icon"
+            });
 
-                _heroInfos.Add("TestMage", new HeroInfo
-                {
-                    ArchetypeId = "TestMage",
-                    Name = "Маг",
-                    Description = "Могутній маг з дальніми атаками",
-                    Race = "Elf",
-                    Class = "Mage",
-                    ManaCost = 3,
-                    Category = "Маги",
-                    IconPath = "UI/Icons/mage_icon"
-                });
+            _heroInfos.Add("TestMage", new HeroInfo
+            {
+                ArchetypeId = "TestMage",
+                Name = "Маг",
+                Description = "Могутній маг з дальніми атаками",
+                Race = "Elf",
+                Class = "Mage",
+                ManaCost = 3,
+                Category = "Маги",
+                IconPath = "UI/Icons/mage_icon"
+            });
 
-                _heroInfos.Add("TestRogue", new HeroInfo
-                {
-                    ArchetypeId = "TestRogue",
-                    Name = "Розбійник",
-                    Description = "Швидкий і небезпечний розбійник",
-                    Race = "Human",
-                    Class = "Rogue",
-                    ManaCost = 1,
-                    Category = "Вбивці",
-                    IconPath = "UI/Icons/rogue_icon"
-                });
+            _heroInfos.Add("TestRogue", new HeroInfo
+            {
+                ArchetypeId = "TestRogue",
+                Name = "Розбійник",
+                Description = "Швидкий і небезпечний розбійник",
+                Race = "Human",
+                Class = "Rogue",
+                ManaCost = 1,
+                Category = "Вбивці",
+                IconPath = "UI/Icons/rogue_icon"
+            });
 
-                _logger.LogInfo($"Додано {_heroInfos.Count} тестових героїв", "HeroSelection");
-                return;
-            
-
-           
-
-            
+            _logger.LogInfo($"Додано {_heroInfos.Count} тестових героїв", "HeroSelection");
+            return;
         }
-        
+
         public HeroInfo GetHeroInfo(string archetypeId)
         {
             if (_heroInfos.TryGetValue(archetypeId, out var heroInfo))
@@ -196,15 +194,16 @@ namespace MythHunter.Systems.Lobby
             }
 
             // Перевіряємо, чи не вибраний цей герой іншим гравцем
-            foreach (var entityId in _entityManager.GetEntitiesWith<HeroSelectionComponent>())
-            {
-                var selection = _entityManager.GetComponent<HeroSelectionComponent>(entityId);
+            // Тут використовуємо більш надійний спосіб перевірки вибраних героїв
+            var selectedHeroes = _entityManager.GetEntitiesWith<HeroSelectionComponent>()
+                .Select(id => _entityManager.GetComponent<HeroSelectionComponent>(id))
+                .Where(selection => selection.IsSelected && selection.ArchetypeId == archetypeId && selection.PlayerIndex != playerIndex)
+                .ToList();
 
-                if (selection.ArchetypeId == archetypeId && selection.IsSelected && selection.PlayerIndex != playerIndex)
-                {
-                    _logger.LogInfo($"Hero {archetypeId} already selected by player {selection.PlayerIndex}", "HeroSelection");
-                    return false;
-                }
+            if (selectedHeroes.Any())
+            {
+                _logger.LogInfo($"Hero {archetypeId} already selected by another player", "HeroSelection");
+                return false;
             }
 
             return true;
