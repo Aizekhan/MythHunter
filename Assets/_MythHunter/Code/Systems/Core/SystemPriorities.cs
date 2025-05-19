@@ -17,6 +17,8 @@ namespace MythHunter.Systems.Core
         public const int Input = 800;
         // Системи планування
         public const int Planning = 700;
+      
+        public const int Network = 650;
         // Системи руху
         public const int Active = 600;
        
@@ -28,6 +30,7 @@ namespace MythHunter.Systems.Core
         public const int Gameplay = 200;
         // Системи UI
         public const int UI = 100;
+       
         // Системи аналітики та діагностики (останні)
         public const int Analytics = 0;
 
@@ -46,6 +49,8 @@ namespace MythHunter.Systems.Core
                 return "Planning";
             if (priority >= Active)
                 return "Active";
+            if (priority >= Network)
+                return "Network";
             if (priority >= AI)
                 return "AI";
             if (priority >= Physics)
@@ -54,6 +59,7 @@ namespace MythHunter.Systems.Core
                 return "Gameplay";
             if (priority >= UI)
                 return "UI";
+            
             return "Analytics";
         }
     }

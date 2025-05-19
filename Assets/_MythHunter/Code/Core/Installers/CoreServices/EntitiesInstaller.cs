@@ -3,8 +3,6 @@ using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities;
 using MythHunter.Entities.Archetypes;
-using MythHunter.Events;
-using MythHunter.Systems.Core;
 using MythHunter.Systems.Gameplay;
 using MythHunter.Utils.Logging;
 
@@ -43,11 +41,6 @@ namespace MythHunter.Core.Installers
 
             // EntitySpawnSystem
             BindSingleton<IEntitySpawnSystem, EntitySpawnSystem>(container);
-
-            // Реєстрація в SystemRegistry
-            var systemRegistry = container.Resolve<ISystemRegistry>();
-            systemRegistry.RegisterSystem(container.Resolve<IArchetypeSystem>());
-            systemRegistry.RegisterSystem(container.Resolve<IEntitySpawnSystem>());
 
             logger.LogInfo("Встановлення залежностей Entities System завершено", "Installer");
         }

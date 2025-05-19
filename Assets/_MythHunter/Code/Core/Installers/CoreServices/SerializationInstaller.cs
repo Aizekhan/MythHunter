@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/SerializationInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Data.Serialization;
 using MythHunter.Utils.Logging;

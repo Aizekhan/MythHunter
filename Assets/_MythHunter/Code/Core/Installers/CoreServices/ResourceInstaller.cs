@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/ResourceInstaller.cs
 using MythHunter.Core.DI;
 using MythHunter.Resources;
 using MythHunter.Resources.Core;
@@ -35,7 +36,6 @@ namespace MythHunter.Core.Installers
 
             // Основні сервіси
             BindSingleton<IResourceManager, ResourceManager>(container);
-           
 
             logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
         }

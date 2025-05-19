@@ -9,7 +9,7 @@ namespace MythHunter.Core.Installers
     /// <summary>
     /// Інсталятор для розширеної системи пулінгу об'єктів
     /// </summary>
-    public class PoolSystemInstaller : DIInstaller
+    public class PoolInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)
         {

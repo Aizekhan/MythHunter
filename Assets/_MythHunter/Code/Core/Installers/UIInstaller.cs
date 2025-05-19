@@ -4,9 +4,7 @@ using MythHunter.Core.DI;
 using MythHunter.UI.Core;
 using MythHunter.UI.Presenters;
 using MythHunter.UI.Models;
-using MythHunter.Events;
 using MythHunter.Utils.Logging;
-using MythHunter.Resources.Core;
 using MythHunter.UI.Services;
 
 namespace MythHunter.Core.Installers
@@ -23,8 +21,6 @@ namespace MythHunter.Core.Installers
 
             // DI-реєстрація основних UI сервісів
             BindSingleton<ISpriteService, SpriteService>(container);
-    
-
             BindSingleton<IUIComponentFactory, UIComponentFactory>(container);
             BindSingleton<IUIViewFactory, UIViewFactory>(container);
             BindSingleton<IUISystem, UISystem>(container);

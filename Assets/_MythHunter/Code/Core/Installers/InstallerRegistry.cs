@@ -2,7 +2,6 @@
 using MythHunter.Core.DI;
 using MythHunter.Core.Installers;
 using MythHunter.Utils.Logging;
-using MythHunter.Resources;
 
 namespace MythHunter.Core
 {
@@ -18,27 +17,25 @@ namespace MythHunter.Core
 
             // Інсталятори в порядку залежностей
             var installers = new DIInstaller[]
-        {
-new CoreInstaller(),
-new NetworkingInstaller(),
-new EventsInstaller(),
-new ResourceInstaller(),
-new SerializationInstaller(),
-new UIInstaller(),           
-new PoolSystemInstaller(),
+            {
+                // Базові інсталятори для сервісів (OnBoot)
+                new CoreInstaller(),
+                new NetworkingInstaller(),
+                new EventsInstaller(),
+                new ResourceInstaller(),
+                new SerializationInstaller(),
+                new UIInstaller(),
+                new PoolInstaller(),
+                new EntitiesInstaller(),
+                new DebugToolsInstaller(),
 
-new EntitiesInstaller(),
-//Gameplay
-new GameplayInstaller(),
-new MovementInstaller(),
-new CombatSystemInstaller(),
-
-new HeroesInstaller(),
-     // Додаємо інсталятор лоббі
-new LobbyInstaller(),
-//Debug
-new DebugToolsInstaller()
-   };
+                // Інсталятори систем (за категоріями)
+                new OnBootSystemsInstaller(),
+                new NetworkingSystemsInstaller(),
+                new LobbySystemsInstaller(),
+                new GameplaySystemsInstaller(),
+                new DebugSystemsInstaller(),
+            };
 
             // Встановлюємо залежності для кожного інсталятора
             foreach (var installer in installers)
