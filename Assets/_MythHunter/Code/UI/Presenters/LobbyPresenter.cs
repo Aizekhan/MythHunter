@@ -16,6 +16,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Core.Game;
 using MythHunter.Services.GameSettings;
 using MythHunter.UI.Services;
+using MythHunter.UI.Navigation;
 
 namespace MythHunter.UI.Presenters
 {
@@ -36,6 +37,7 @@ namespace MythHunter.UI.Presenters
 
         private readonly List<HeroCardUI> _createdHeroCards = new();
         private readonly List<HeroCardUI> _selectedHeroCards = new();
+        private readonly INavigationService _navigationService;
 
         [Inject]
         public LobbyPresenter(
@@ -46,7 +48,8 @@ namespace MythHunter.UI.Presenters
             ILobbyModel model,
             IGameFlowManager gameFlowManager,
             IGameSettingsService gameSettings,
-            IHeroCardService heroCardService)
+            IHeroCardService heroCardService,
+            INavigationService navigationService) // 👈 Додали
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -56,6 +59,7 @@ namespace MythHunter.UI.Presenters
             _gameFlowManager = gameFlowManager;
             _gameSettings = gameSettings;
             _heroCardService = heroCardService;
+            _navigationService = navigationService; // 👈 Ініціалізували
         }
 
         public async UniTask InitializeAsync()
@@ -325,5 +329,31 @@ namespace MythHunter.UI.Presenters
         public int GetRemainingMana() => _lobbySystem.GetRemainingManaForCurrentPlayer();
 
         public float GetRemainingTime() => 300f;
+
+        public async UniTask OpenHeroSelectorAsync()
+        {
+            var parameters = new NavigationParameters();
+            parameters.Add("PlayerCount", _gameSettings.PlayerCount);
+            parameters.Add("ManaPerPlayer", _gameSettings.ManaPerPlayer);
+
+            await _navigationService.NavigateToAsync<HeroCardSelectorView>(
+                screenId: "HeroCardSelector",
+                parameters: parameters,
+                transition: TransitionType.SlideLeft
+            );
+        }
+
+        public async UniTask<bool> ShowConfirmationAsync(string message)
+        {
+            var parameters = new NavigationParameters();
+            parameters.Add("Message", message);
+
+            bool result = await _navigationService.ShowModalAsync<ConfirmationDialog, bool>(
+                modalId: "ConfirmDialog",
+                parameters: parameters
+            );
+
+            return result;
+        }
     }
 }

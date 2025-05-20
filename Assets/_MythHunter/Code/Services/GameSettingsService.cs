@@ -9,10 +9,15 @@ namespace MythHunter.Services.GameSettings
         {
             get;
         }
+        float ManaPerPlayer
+        {
+            get;
+        } // ← ДОДАЙ ОЦЕ
     }
 
     public class GameSettingsService : IGameSettingsService
     {
         public int PlayerCount => 2; // 🔧 тимчасово хардкод, потім можна зробити меню налаштувань
+        public float ManaPerPlayer => 4f; // ← реалізація значення
     }
 }

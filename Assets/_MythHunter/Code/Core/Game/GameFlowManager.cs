@@ -118,7 +118,7 @@ namespace MythHunter.Core.Game
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
 
                 // Встановлення початкового екрану лоббі
-                await _navigationService.SetInitialScreen<LobbyView>("Lobby");
+                await _navigationService.SetInitialScreen<LobbyView>("LobbyView");
 
                 // Публікуємо подію зміни стану гри
                 PublishStateChange(GameStateType.Boot, GameStateType.Lobby);
