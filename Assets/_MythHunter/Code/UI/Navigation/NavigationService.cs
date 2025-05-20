@@ -104,7 +104,7 @@ namespace MythHunter.UI.Navigation
         /// Навігація до нового екрану
         /// </summary>
         public async UniTask<TView> NavigateToAsync<TView>(string screenId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-            where TView : Component, IView
+     where TView : Component, IView
         {
             _logger.LogInfo($"Навігація до екрану: {screenId}", "Navigation");
 
@@ -128,10 +128,11 @@ namespace MythHunter.UI.Navigation
                     return null;
                 }
 
-                var newView = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
+                var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
+                var newView = rawView as TView;
                 if (newView == null)
                 {
-                    _logger.LogError($"Не вдалося створити екран: {screenId}", "Navigation");
+                    _logger.LogError($"Не вдалося привести View до типу {typeof(TView).Name}", "Navigation");
                     return null;
                 }
 

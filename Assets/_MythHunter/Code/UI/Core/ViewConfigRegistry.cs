@@ -7,11 +7,11 @@ namespace MythHunter.UI.Core
 {
     public class ViewConfigRegistry : IViewConfigRegistry
     {
-        private readonly Dictionary<string, LobbyViewConfig> _configs = new();
+        private readonly Dictionary<string, ViewConfig> _configs = new();
 
         public ViewConfigRegistry()
         {
-            var configs = UnityEngine.Resources.LoadAll<LobbyViewConfig>("UI/ViewConfigs");
+            var configs = UnityEngine.Resources.LoadAll<ViewConfig>("UI/ViewConfigs");
             foreach (var config in configs)
             {
                 if (!_configs.ContainsKey(config.ViewId))
@@ -19,12 +19,12 @@ namespace MythHunter.UI.Core
             }
         }
 
-        public LobbyViewConfig Get(string viewId)
+        public ViewConfig Get(string viewId)
         {
             _configs.TryGetValue(viewId, out var config);
             return config;
         }
 
-        public IReadOnlyList<LobbyViewConfig> GetAll() => _configs.Values.ToList();
+        public IReadOnlyList<ViewConfig> GetAll() => _configs.Values.ToList();
     }
 }

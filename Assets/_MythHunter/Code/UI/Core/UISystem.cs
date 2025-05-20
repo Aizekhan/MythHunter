@@ -1,3 +1,4 @@
+// Шлях: Assets/_MythHunter/Code/UI/Core/UISystem.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,7 @@ using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using MythHunter.UI.Navigation;
+using MythHunter.UI.Core;
 
 namespace MythHunter.UI.Core
 {
@@ -15,25 +17,37 @@ namespace MythHunter.UI.Core
     public class UISystem : IUISystem
     {
         private readonly Dictionary<Type, Component> _registeredViews = new Dictionary<Type, Component>();
-        private readonly IResourceProvider _resourceProvider;
+        private readonly IResourceManager _resourceManager;
         private readonly IUIViewFactory _viewFactory;
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
-        private readonly Transform _uiRoot;
 
         [Inject]
-        public UISystem(IResourceProvider resourceProvider, IUIViewFactory viewFactory, IMythLogger logger, IDIContainer container)
+        public UISystem(IResourceManager resourceManager, IUIViewFactory viewFactory, IMythLogger logger, IDIContainer container)
         {
-            _resourceProvider = resourceProvider;
+            _resourceManager = resourceManager;
             _viewFactory = viewFactory;
             _logger = logger;
             _container = container;
-           
         }
+
         public INavigationService GetNavigationService()
         {
             return _container.Resolve<INavigationService>();
         }
+
+        public async UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath)
+        {
+            var prefab = await _resourceManager.LoadAsync<GameObject>(prefabPath);
+            var instance = GameObject.Instantiate(prefab, UIRoot.RootTransform);
+            var view = instance.GetComponent(viewType) as IView;
+
+            if (view == null)
+                _logger.LogError($"Не знайдено компонент {viewType.Name} у префабі {prefabPath}", "UISystem");
+
+            return view;
+        }
+
         public void ShowView<TView>() where TView : Component, IView
         {
             if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
@@ -65,7 +79,6 @@ namespace MythHunter.UI.Core
         {
             try
             {
-                // Спробуємо отримати вже зареєстроване представлення
                 if (_registeredViews.TryGetValue(typeof(TView), out var existingView) && existingView is TView typedView)
                 {
                     typedView.gameObject.SetActive(true);
@@ -73,7 +86,6 @@ namespace MythHunter.UI.Core
                     return typedView;
                 }
 
-                // Створюємо нове представлення
                 var view = await _viewFactory.CreateViewAsync<TView>(prefabPath);
                 if (view != null)
                 {
@@ -138,19 +150,5 @@ namespace MythHunter.UI.Core
 
             return false;
         }
-        public async UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath)
-        {
-            var prefab = await _resourceProvider.LoadAssetAsync<GameObject>(prefabPath);
-            var instance = GameObject.Instantiate(prefab, UIRoot.RootTransform); // або _uiRoot, якщо в тебе DI
-            var view = instance.GetComponent(viewType) as IView;
-
-            if (view == null)
-            {
-                _logger.LogError($"Не знайдено компонент {viewType.Name} у префабі {prefabPath}", "UISystem");
-            }
-
-            return view;
-        }
-
     }
 }

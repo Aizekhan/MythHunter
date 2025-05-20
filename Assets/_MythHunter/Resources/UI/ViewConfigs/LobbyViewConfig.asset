@@ -16,3 +16,4 @@ MonoBehaviour:
   PrefabPath: UI/Lobby/LobbyView
   IsPopup: 0
   IsCached: 1
+  ViewTypeName: MythHunter.UI.Views.LobbyView

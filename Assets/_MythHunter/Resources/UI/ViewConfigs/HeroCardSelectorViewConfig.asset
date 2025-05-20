@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df04bd6159f86941b20303af29d0658, type: 3}
   m_Name: HeroCardSelectorViewConfig
   m_EditorClassIdentifier: 
-  ViewId: Lobby
-  PrefabPath: UI/Lobby/LobbyView
+  ViewId: HeroSelector
+  PrefabPath: UI/Lobby/HeroCardSelectorView
   IsPopup: 0
-  IsCached: 1
+  IsCached: 0
+  ViewTypeName: MythHunter.UI.Views.HeroCardSelectorView

@@ -5,7 +5,7 @@ namespace MythHunter.UI.Core
 {
     public interface IViewConfigRegistry
     {
-        LobbyViewConfig Get(string viewId);
-        IReadOnlyList<LobbyViewConfig> GetAll();
+        ViewConfig Get(string viewId);
+        IReadOnlyList<ViewConfig> GetAll();
     }
 }

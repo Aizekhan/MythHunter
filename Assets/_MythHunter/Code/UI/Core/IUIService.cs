@@ -13,6 +13,8 @@ namespace MythHunter.UI.Core
         /// <summary>
         /// Показує вказаний екран за його ідентифікатором
         /// </summary>
+        UniTask<TView> ShowScreenAsync<TView>(string screenId) where TView : Component, IView;
+
         UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath);
 
         /// <summary>

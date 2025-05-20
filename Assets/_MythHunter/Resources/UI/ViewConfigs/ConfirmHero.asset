@@ -16,3 +16,4 @@ MonoBehaviour:
   PrefabPath: UI/Dialogs/ConfirmationDialog
   IsPopup: 1
   IsCached: 0
+  ViewTypeName: 'MythHunter.UI.Views.ConfirmationDialog '

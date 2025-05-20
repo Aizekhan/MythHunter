@@ -1,6 +1,7 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.UI.Navigation;
+using System;
 
 namespace MythHunter.UI.Core
 {
@@ -17,5 +18,6 @@ namespace MythHunter.UI.Core
         TView GetView<TView>() where TView : Component, IView;
         bool IsViewActive<TView>() where TView : Component, IView;
         INavigationService GetNavigationService();
+        UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath);
     }
 }
