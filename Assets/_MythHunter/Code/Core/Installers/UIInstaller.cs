@@ -6,6 +6,7 @@ using MythHunter.UI.Presenters;
 using MythHunter.UI.Models;
 using MythHunter.Utils.Logging;
 using MythHunter.UI.Services;
+using MythHunter.UI.Navigation;
 
 namespace MythHunter.Core.Installers
 {
@@ -28,6 +29,11 @@ namespace MythHunter.Core.Installers
 
             // Додаємо високорівневий UIService
             BindSingleton<IUIService, UIService>(container);
+
+            // Анімації переходів
+            BindSingleton<IScreenTransition, ScreenTransition>(container);
+            // Сервіс навігації
+            BindSingleton<INavigationService, NavigationService>(container);
 
             // Моделі
             BindSingleton<IMainMenuModel, MainMenuModel>(container);
