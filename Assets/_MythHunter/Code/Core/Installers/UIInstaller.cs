@@ -47,6 +47,8 @@ namespace MythHunter.Core.Installers
             BindSingleton<IInventoryPresenter, InventoryPresenter>(container);
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
 
+            BindSingleton<IHeroCardSelectorPresenter, HeroCardSelectorPresenter>(container);
+
             logger.LogInfo("Встановлення залежностей UISystem завершено", "Installer");
         }
     }

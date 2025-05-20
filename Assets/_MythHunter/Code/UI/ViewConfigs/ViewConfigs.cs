@@ -10,5 +10,6 @@ namespace MythHunter.UI.Core
         public string PrefabPath = "UI/Lobby/LobbyView";
         public bool IsPopup;
         public bool IsCached = true;
+        public string ViewTypeName; // = typeof(LobbyView).AssemblyQualifiedName;
     }
 }

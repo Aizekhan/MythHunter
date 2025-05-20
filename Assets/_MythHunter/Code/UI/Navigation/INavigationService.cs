@@ -11,6 +11,11 @@ namespace MythHunter.UI.Navigation
     /// </summary>
     public interface INavigationService
     {
+        // Новий метод для налаштування початкової навігації при завантаженні сцени
+        UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters = null);
+
+        // Метод для отримання сповіщення про зміну сцени
+        void OnSceneChanged(string previousScene, string newScene);
         /// <summary>
         /// Навігація до нового екрану з додаванням у стек історії
         /// </summary>

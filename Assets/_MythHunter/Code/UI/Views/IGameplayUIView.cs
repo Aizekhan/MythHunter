@@ -1,3 +1,4 @@
+// Assets/_MythHunter/Code/UI/Views/IGameplayUIView.cs
 using MythHunter.UI.Core;
 
 namespace MythHunter.UI.Views

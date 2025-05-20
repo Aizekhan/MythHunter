@@ -5,6 +5,7 @@ using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.UI.Core;
+using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace MythHunter.UI.Navigation
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
-
+        private readonly IViewConfigRegistry _viewConfigRegistry;
         // Стек навігації для зберігання історії екранів
         private readonly Stack<NavigationEntry> _navigationStack = new Stack<NavigationEntry>();
 
@@ -46,17 +47,19 @@ namespace MythHunter.UI.Navigation
 
         [Inject]
         public NavigationService(
-            IUIService uiService,
-            IScreenTransition transition,
-            IEventBus eventBus,
-            IMythLogger logger,
-            IDIContainer container)
+     IUIService uiService,
+     IScreenTransition transition,
+     IEventBus eventBus,
+     IMythLogger logger,
+     IDIContainer container,
+     IViewConfigRegistry viewConfigRegistry)
         {
             _uiService = uiService;
             _transition = transition;
             _eventBus = eventBus;
             _logger = logger;
             _container = container;
+            _viewConfigRegistry = viewConfigRegistry;
 
             SubscribeToEvents();
         }
@@ -111,7 +114,21 @@ namespace MythHunter.UI.Navigation
                 IView currentView = _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
                 // Створюємо новий екран
-                var newView = await _uiService.ShowScreenAsync<TView>(screenId);
+                var viewConfig = _viewConfigRegistry.Get(screenId);
+                if (viewConfig == null)
+                {
+                    _logger.LogError($"ViewConfig не знайдено: {screenId}", "Navigation");
+                    return null;
+                }
+
+                Type viewType = Type.GetType(viewConfig.ViewTypeName);
+                if (viewType == null)
+                {
+                    _logger.LogError($"Тип не знайдено: {viewConfig.ViewTypeName}", "Navigation");
+                    return null;
+                }
+
+                var newView = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
                 if (newView == null)
                 {
                     _logger.LogError($"Не вдалося створити екран: {screenId}", "Navigation");
@@ -527,33 +544,33 @@ namespace MythHunter.UI.Navigation
         /// <summary>
         /// Встановлення початкового екрану для сцени
         /// </summary>
-        public async UniTask<TView> SetInitialScreen<TView>(string screenId, NavigationParameters parameters = null)
-            where TView : Component, IView
+        public async UniTask<TView> SetInitialScreen<TView>(string prefabPath, NavigationParameters parameters = null)
+     where TView : UnityEngine.Component, IView
         {
-            _logger.LogInfo($"Встановлення початкового екрану: {screenId}", "Navigation");
+            _logger.LogInfo($"Встановлення початкового екрану: {prefabPath}", "Navigation");
 
             // Очищаємо стек навігації
             await ClearStackAsync();
 
             // Створюємо новий екран
-            var newView = await _uiService.ShowScreenAsync<TView>(screenId);
+            var newView = await _uiService.ShowScreenAsync<TView>(prefabPath);
             if (newView == null)
             {
-                _logger.LogError($"Не вдалося створити початковий екран: {screenId}", "Navigation");
+                _logger.LogError($"Не вдалося створити початковий екран: {prefabPath}", "Navigation");
                 return null;
             }
 
-            // Викликаємо методи життєвого циклу для нового екрану
-            if (newView is INavigableView newNavigableView)
+            // Викликаємо методи життєвого циклу для нового екрану (якщо підтримуються)
+            if (newView is INavigableView navigableView)
             {
-                await newNavigableView.OnViewCreatedAsync(parameters ?? new NavigationParameters());
-                await newNavigableView.OnViewNavigatedToAsync(parameters ?? new NavigationParameters());
+                await navigableView.OnViewCreatedAsync(parameters ?? new NavigationParameters());
+                await navigableView.OnViewNavigatedToAsync(parameters ?? new NavigationParameters());
             }
 
             // Додаємо новий екран у стек навігації
             _navigationStack.Push(new NavigationEntry
             {
-                ScreenId = screenId,
+                ScreenId = prefabPath, // Використовуємо шлях як ідентифікатор
                 View = newView,
                 Parameters = parameters ?? new NavigationParameters()
             });
@@ -578,6 +595,86 @@ namespace MythHunter.UI.Navigation
 
             // Очищаємо стек навігації
             ClearStackAsync().Forget();
+        }
+
+        public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters = null)
+        {
+            _logger.LogInfo($"Налаштування навігації для сцени: {sceneName}", "Navigation");
+
+            // Очистити стек навігації
+            await ClearStackAsync();
+
+            // Визначити, який екран завантажити залежно від сцени
+            string initialScreenId = GetInitialScreenForScene(sceneName);
+            if (string.IsNullOrEmpty(initialScreenId))
+            {
+                _logger.LogWarning($"Не знайдено початковий екран для сцени: {sceneName}", "Navigation");
+                return;
+            }
+
+            // Додати параметри сцени до навігаційних параметрів
+            var navParams = parameters ?? new NavigationParameters();
+            navParams.Add("SceneName", sceneName);
+
+            // Завантажити відповідний екран
+            await LoadInitialScreenAsync(initialScreenId, navParams);
+        }
+
+        // Приватний метод для визначення початкового екрану сцени
+        private string GetInitialScreenForScene(string sceneName)
+        {
+            switch (sceneName.ToLower())
+            {
+                case "lobbyscene":
+                case "mainmenu":
+                    return "Lobby";
+                case "gamescene":
+                    return "GameUI";
+                case "loadingscene":
+                    return "LoadingUI";
+                default:
+                    return null;
+            }
+        }
+
+        // Приватний метод для завантаження початкового екрана
+        private async UniTask LoadInitialScreenAsync(string screenId, NavigationParameters parameters)
+        {
+            var viewConfigRegistry = _container.Resolve<IViewConfigRegistry>();
+            var viewConfig = viewConfigRegistry.Get(screenId);
+
+            if (viewConfig == null)
+            {
+                _logger.LogError($"ViewConfig не знайдено: {screenId}", "Navigation");
+                return;
+            }
+
+            Type viewType = Type.GetType(viewConfig.ViewTypeName);
+            if (viewType == null)
+            {
+                _logger.LogError($"Не вдалося отримати Type з ViewTypeName: {viewConfig.ViewTypeName}", "Navigation");
+                return;
+            }
+
+            var view = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
+            if (view is INavigableView navigableView)
+            {
+                await navigableView.OnViewCreatedAsync(parameters ?? new NavigationParameters());
+                await navigableView.OnViewNavigatedToAsync(parameters ?? new NavigationParameters());
+            }
+        }
+
+
+        public void OnSceneChanged(string previousScene, string newScene)
+        {
+            _logger.LogInfo($"Зміна сцени: {previousScene} -> {newScene}", "Navigation");
+
+            // Налаштування для нової сцени
+            var parameters = new NavigationParameters();
+            parameters.Add("PreviousScene", previousScene);
+
+            // Асинхронно налаштовуємо навігацію для нової сцени
+            SetupForSceneAsync(newScene, parameters).Forget();
         }
     }
 }

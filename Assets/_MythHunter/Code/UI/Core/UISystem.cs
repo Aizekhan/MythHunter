@@ -6,6 +6,7 @@ using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using MythHunter.UI.Navigation;
+
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -18,6 +19,7 @@ namespace MythHunter.UI.Core
         private readonly IUIViewFactory _viewFactory;
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
+        private readonly Transform _uiRoot;
 
         [Inject]
         public UISystem(IResourceProvider resourceProvider, IUIViewFactory viewFactory, IMythLogger logger, IDIContainer container)
@@ -26,7 +28,7 @@ namespace MythHunter.UI.Core
             _viewFactory = viewFactory;
             _logger = logger;
             _container = container;
-       
+           
         }
         public INavigationService GetNavigationService()
         {
@@ -136,5 +138,19 @@ namespace MythHunter.UI.Core
 
             return false;
         }
+        public async UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath)
+        {
+            var prefab = await _resourceProvider.LoadAssetAsync<GameObject>(prefabPath);
+            var instance = GameObject.Instantiate(prefab, UIRoot.RootTransform); // або _uiRoot, якщо в тебе DI
+            var view = instance.GetComponent(viewType) as IView;
+
+            if (view == null)
+            {
+                _logger.LogError($"Не знайдено компонент {viewType.Name} у префабі {prefabPath}", "UISystem");
+            }
+
+            return view;
+        }
+
     }
 }

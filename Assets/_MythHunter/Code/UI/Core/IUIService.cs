@@ -1,6 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/UI/Core/IUIService.cs
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using System;
 
 namespace MythHunter.UI.Core
 {
@@ -12,7 +13,7 @@ namespace MythHunter.UI.Core
         /// <summary>
         /// Показує вказаний екран за його ідентифікатором
         /// </summary>
-        UniTask<TView> ShowScreenAsync<TView>(string screenId) where TView : Component, IView;
+        UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath);
 
         /// <summary>
         /// Ховає вказаний екран
@@ -23,5 +24,7 @@ namespace MythHunter.UI.Core
         /// Перевіряє чи екран активний
         /// </summary>
         bool IsScreenActive<TView>() where TView : Component, IView;
+
+
     }
 }

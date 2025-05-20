@@ -101,14 +101,15 @@ namespace MythHunter.UI.Presenters
             if (_isSubscribed)
                 return;
 
+            _eventBus.Subscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
             _eventBus.Subscribe<LobbyInitializedEvent>(OnLobbyInitialized);
             _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
             _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
-            _eventBus.Subscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
 
             _isSubscribed = true;
+            _logger.LogInfo("LobbyPresenter підписаний на події", "UI");
         }
 
         public void UnsubscribeFromEvents()
@@ -205,12 +206,13 @@ namespace MythHunter.UI.Presenters
 
         private void OnLobbyStateEntered(LobbyStateEnteredEvent evt)
         {
-            if (!_lobbySystem.IsInitialized)
-            {
-                _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
-            }
+            _logger.LogInfo("Отримано подію LobbyStateEnteredEvent", "UI");
 
             UniTask.Create(async () => {
+                if (!_lobbySystem.IsInitialized)
+                {
+                    _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
+                }
                 await PopulateHeroCardsAsync();
             });
         }

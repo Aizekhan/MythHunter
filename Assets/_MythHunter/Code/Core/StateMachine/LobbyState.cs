@@ -29,9 +29,8 @@ namespace MythHunter.States
 
         public override async void Enter(GameStateType previousState)
         {
-            _logger.LogInfo("Entering LobbyState", "GameState");
-            _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
-            _logger.LogInfo("LobbyStateEnteredEvent опубліковано", "LobbyState");
+            _logger.LogInfo("Вхід у LobbyState", "GameState");
+
             // Публікуємо подію зміни стану гри
             _eventBus.Publish(new GameStateChangedEvent
             {
@@ -40,18 +39,24 @@ namespace MythHunter.States
                 Timestamp = DateTime.UtcNow
             });
 
-            // Не ініціалізуємо LobbySystem напряму - це відповідальність GameFlowManager
-            // Тільки показуємо UI, якщо потрібно
+            // Асинхронно ініціалізуємо UI з невеликою затримкою, щоб системи встигли підписатися
+            await UniTask.Delay(100);
+
+            // Потім публікуємо подію входу в Lobby
+            _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
+            _logger.LogInfo("LobbyStateEnteredEvent опубліковано", "LobbyState");
+
+            // Показуємо UI, якщо потрібно
             if (!_uiService.IsScreenActive<UI.Views.LobbyView>())
             {
                 var view = await _uiService.ShowScreenAsync<UI.Views.LobbyView>("Lobby");
                 if (view != null)
                 {
-                    _logger.LogInfo("LobbyView created and shown", "LobbyState");
+                    _logger.LogInfo("LobbyView створено і показано", "LobbyState");
                 }
                 else
                 {
-                    _logger.LogError("Failed to show LobbyView", "LobbyState");
+                    _logger.LogError("Не вдалося показати LobbyView", "LobbyState");
                 }
             }
         }

@@ -9,6 +9,7 @@ using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using MythHunter.Utils.Extensions;
 using MythHunter.Events.Domain.Lobby;
+using UnityEditor;
 
 namespace MythHunter.Events
 {
@@ -23,6 +24,10 @@ namespace MythHunter.Events
         // Додаємо делегат для обробки подій різних типів
         private readonly Dictionary<Type, Action<IEvent>> _eventProcessors = new Dictionary<Type, Action<IEvent>>();
         private readonly Dictionary<Type, Func<IEvent, UniTask>> _asyncDispatchers = new Dictionary<Type, Func<IEvent, UniTask>>();
+
+        // Додайте кешування подій без обробників
+        private readonly Dictionary<Type, List<IEvent>> _pendingEvents = new Dictionary<Type, List<IEvent>>();
+        private readonly HashSet<Type> _monitoredEventTypes = new HashSet<Type>();
 
         private readonly IEventPool _eventPool;
         private readonly IMythLogger _logger;
@@ -107,7 +112,7 @@ namespace MythHunter.Events
         /// Підписується на синхронну обробку події
         /// </summary>
         public void Subscribe<TEvent>(Action<TEvent> handler, EventPriority priority = EventPriority.Normal)
-            where TEvent : struct, IEvent
+     where TEvent : struct, IEvent
         {
             if (handler == null)
             {
@@ -117,6 +122,7 @@ namespace MythHunter.Events
 
             Type eventType = typeof(TEvent);
 
+            // Додаємо обробник в список
             if (!_syncHandlers.TryGetValue(eventType, out var handlers))
             {
                 handlers = new List<SyncEventHandler>();
@@ -132,6 +138,28 @@ namespace MythHunter.Events
             RegisterProcessor(eventType);
 
             _logger.LogDebug($"Subscribed to event {eventType.Name} with priority {priority}");
+
+            // Перевірка відкладених подій для нового підписника
+            if (_pendingEvents.TryGetValue(eventType, out var pendingEvents) && pendingEvents.Count > 0)
+            {
+                _logger.LogInfo($"Processing {pendingEvents.Count} pending events of type {eventType.Name}", "EventBus");
+
+                foreach (var evt in pendingEvents.ToList())
+                {
+                    if (evt is TEvent typedEvent)
+                    {
+                        try
+                        {
+                            handler(typedEvent);
+                            pendingEvents.Remove(evt);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error processing pending event {typedEvent.GetEventId()}: {ex.Message}", "EventBus", ex);
+                        }
+                    }
+                }
+            }
         }
 
         // Оновити кеш процесорів для типу події
@@ -180,6 +208,7 @@ namespace MythHunter.Events
         /// <summary>
         /// Публікує подію для синхронної обробки
         /// </summary>
+        // Метод публікації з кешуванням подій без обробників
         public virtual void Publish<TEvent>(TEvent eventData) where TEvent : struct, IEvent
         {
             // Перевірка на дефолтне значення структури
@@ -188,7 +217,26 @@ namespace MythHunter.Events
                 _logger.LogWarning($"Trying to publish default event of type {typeof(TEvent).Name}", "EventBus");
                 return;
             }
+
             Type eventType = typeof(TEvent);
+
+            // Перевірка наявності обробників для цього типу подій
+            bool hasHandlers = HasHandlersForEvent<TEvent>();
+
+            if (!hasHandlers && _monitoredEventTypes.Contains(eventType))
+            {
+                // Якщо немає обробників, але тип події моніториться - зберігаємо для відкладеної обробки
+                if (!_pendingEvents.TryGetValue(eventType, out var events))
+                {
+                    events = new List<IEvent>();
+                    _pendingEvents[eventType] = events;
+                }
+
+                events.Add(eventData);
+                _logger.LogDebug($"Event {eventType.Name} with ID {eventData.GetEventId()} cached until handlers are registered", "EventBus");
+                return;
+            }
+
             if (!_logExcludedEvents.Contains(typeof(TEvent)))
             {
                 _logger.LogDebug($"Publishing event {eventType.Name} with ID {eventData.GetEventId()} and priority {eventData.GetPriority()}");
@@ -205,6 +253,7 @@ namespace MythHunter.Events
                 Enqueue(eventData);
             }
         }
+
 
         /// <summary>
         /// Негайно обробляє подію, минаючи чергу
@@ -637,7 +686,24 @@ namespace MythHunter.Events
             // Додайте інші типи подій за потреби
         }
         #endregion
+        // Додати метод для моніторингу типів подій
+        public void MonitorEventType<TEvent>() where TEvent : struct, IEvent
+        {
+            var eventType = typeof(TEvent);
+            _monitoredEventTypes.Add(eventType);
 
+            if (!_pendingEvents.ContainsKey(eventType))
+            {
+                _pendingEvents[eventType] = new List<IEvent>();
+            }
+        }
+        // Додати метод перевірки наявності обробників
+        private bool HasHandlersForEvent<TEvent>() where TEvent : struct, IEvent
+        {
+            Type eventType = typeof(TEvent);
+            return (_syncHandlers.TryGetValue(eventType, out var syncHandlers) && syncHandlers.Count > 0) ||
+                   (_asyncHandlers.TryGetValue(eventType, out var asyncHandlers) && asyncHandlers.Count > 0);
+        }
         /// <summary>
         /// Очищає всі підписки
         /// </summary>
