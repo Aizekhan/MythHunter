@@ -24,8 +24,8 @@ namespace MythHunter.Core.Installers
         {
             // Логер з GameBotstrapper.cs
             var logger = container.Resolve<IMythLogger>();
-            BindSingleton<IDependencyInjector, DependencyInjector>(container);
-            // Базові сервіси
+
+            
             BindSingleton<IEntityManager, EntityManager>(container);
             BindSingleton<IEventPool, EventPool>(container);
 

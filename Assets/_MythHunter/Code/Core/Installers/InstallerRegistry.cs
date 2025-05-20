@@ -18,6 +18,7 @@ namespace MythHunter.Core
             // Інсталятори в порядку залежностей
             var installers = new DIInstaller[]
             {
+                 new LazyDependencyInjectorInstaller(),
                 // Базові інсталятори для сервісів (OnBoot)
                 new CoreInstaller(),
                 new NetworkingInstaller(),
