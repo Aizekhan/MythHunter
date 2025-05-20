@@ -134,8 +134,7 @@ namespace MythHunter.Resources.Pool.Editor
                 if (gameBootstrapper != null)
                 {
                     // Якщо ми в редакторі і є доступ до GameBootstrapper
-                    _poolManager = gameBootstrapper.GetComponent<MythHunter.Core.Game.GameBootstrapper>()
-                        .GetPoolManager();
+                    _poolManager = PoolManagerDebugProxy.Instance;
                 }
             }
 

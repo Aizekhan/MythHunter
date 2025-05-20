@@ -11,6 +11,7 @@ using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
 using MythHunter.Services.GameSettings;
 using MythHunter.Entities;
+using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.Core.Installers
 {
@@ -23,7 +24,7 @@ namespace MythHunter.Core.Installers
         {
             // Логер з GameBotstrapper.cs
             var logger = container.Resolve<IMythLogger>();
-
+            BindSingleton<IDependencyInjector, DependencyInjector>(container);
             // Базові сервіси
             BindSingleton<IEntityManager, EntityManager>(container);
             BindSingleton<IEventPool, EventPool>(container);

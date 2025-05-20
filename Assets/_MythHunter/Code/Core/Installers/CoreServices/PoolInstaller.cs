@@ -18,7 +18,8 @@ namespace MythHunter.Core.Installers
 
             // Реєструємо основні компоненти системи пулінгу
             BindSingleton<IPoolManager, PoolManager>(container);
-
+            var poolManager = container.Resolve<IPoolManager>();
+            PoolManagerDebugProxy.Register(poolManager);
             // Моніторинг та діагностика
             InstallPoolMonitoring(container);
 
