@@ -9,10 +9,11 @@ using UnityEngine.UI;
 using MythHunter.Core.DI;
 using MythHunter.UI.Services;
 using Cysharp.Threading.Tasks;
+using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.UI.Views
 {
-    public class HeroCardUI : MonoBehaviour, IHeroCardUI
+    public class HeroCardUI : LazyMonoBehaviour, IHeroCardUI
     {
         [SerializeField] private TextMeshProUGUI _nameText;
         [SerializeField] private TextMeshProUGUI _descriptionText;
@@ -24,18 +25,23 @@ namespace MythHunter.UI.Views
         [SerializeField] private Sprite _defaultIcon;
 
         private string _archetypeId;
-        private IMythLogger _logger;
-        private ISpriteService _spriteService;
+
+        [Inject] private IMythLogger _logger;
+        [Inject] private ISpriteService _spriteService;
 
         public string ArchetypeId => _archetypeId;
         public event Action<string> OnHeroSelected;
 
-        [Inject]
-        public void Construct(IMythLogger logger, ISpriteService spriteService)
+        // Метод, який викликається після ін'єкції залежностей
+        protected override void OnInitialized()
         {
-            _logger = logger;
-            _spriteService = spriteService;
-            _logger.LogInfo("HeroCardUI ініціалізовано через DI", "HeroCardUI");
+            _logger.LogInfo("HeroCardUI ініціалізовано через LazyMonoBehaviour", "HeroCardUI");
+
+            // Додаємо базову ініціалізацію кнопки
+            if (_selectButton)
+            {
+                _selectButton.onClick.AddListener(OnSelectButtonClicked);
+            }
         }
 
         public void Setup(HeroCardModel model)
@@ -135,6 +141,8 @@ namespace MythHunter.UI.Views
             OnHeroSelected?.Invoke(_archetypeId);
         }
 
+        // Використовуємо стандартний метод Unity OnDestroy замість override
+        // LazyMonoBehaviour, ймовірно, не перевизначає цей метод
         private void OnDestroy()
         {
             if (_selectButton)
