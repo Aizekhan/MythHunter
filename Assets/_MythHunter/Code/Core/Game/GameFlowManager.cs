@@ -7,6 +7,8 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Core;
+using MythHunter.UI.Navigation;
+using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
 using System;
 
@@ -22,23 +24,25 @@ namespace MythHunter.Core.Game
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
         private readonly ISystemRegistry _systemRegistry;
-
+        private readonly INavigationService _navigationService;
         private string _currentSceneName = string.Empty;
         private bool _isSubscribed;
 
         [Inject]
         public GameFlowManager(
-            IGameStateMachine gameStateMachine,
-            ISceneDispatcher sceneDispatcher,
-            IEventBus eventBus,
-            IMythLogger logger,
-            ISystemRegistry systemRegistry)
+     IGameStateMachine gameStateMachine,
+     ISceneDispatcher sceneDispatcher,
+     IEventBus eventBus,
+     IMythLogger logger,
+     ISystemRegistry systemRegistry,
+     INavigationService navigationService)
         {
             _gameStateMachine = gameStateMachine;
             _sceneDispatcher = sceneDispatcher;
             _eventBus = eventBus;
             _logger = logger;
             _systemRegistry = systemRegistry;
+            _navigationService = navigationService;
 
             SubscribeToEvents();
         }
@@ -95,12 +99,16 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Запускає перехід від Boot до Lobby
         /// </summary>
+        // Оновіть метод для переходу до лоббі:
         public async UniTask EnterLobbyAsync()
         {
             _logger.LogInfo("Початок переходу до Lobby", "GameFlow");
 
             try
             {
+                // Підготовка до зміни сцени
+                await _navigationService.PrepareForSceneChangeAsync();
+
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
                 _currentSceneName = "LobbyScene";
 
@@ -108,6 +116,9 @@ namespace MythHunter.Core.Game
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
 
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
+
+                // Встановлення початкового екрану лоббі
+                await _navigationService.SetInitialScreen<LobbyView>("Lobby");
 
                 // Публікуємо подію зміни стану гри
                 PublishStateChange(GameStateType.Boot, GameStateType.Lobby);

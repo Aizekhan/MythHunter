@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using MythHunter.UI.Navigation;
 
 namespace MythHunter.UI.Core
 {
@@ -15,5 +16,6 @@ namespace MythHunter.UI.Core
         void UnregisterView<TView>(TView view) where TView : Component, IView;
         TView GetView<TView>() where TView : Component, IView;
         bool IsViewActive<TView>() where TView : Component, IView;
+        INavigationService GetNavigationService();
     }
 }

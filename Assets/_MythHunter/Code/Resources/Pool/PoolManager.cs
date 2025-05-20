@@ -83,7 +83,7 @@ namespace MythHunter.Resources.Pool
                 {
                     pooledObj = go.AddComponent<PooledObject>();
                 }
-                pooledObj.Initialize(key, this);
+                pooledObj.Initialize(key);
             }
 
             // Відстеження активного об'єкта

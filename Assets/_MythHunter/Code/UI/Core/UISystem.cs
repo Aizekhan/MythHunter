@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using MythHunter.UI.Navigation;
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -16,15 +17,21 @@ namespace MythHunter.UI.Core
         private readonly IResourceProvider _resourceProvider;
         private readonly IUIViewFactory _viewFactory;
         private readonly IMythLogger _logger;
+        private readonly IDIContainer _container;
 
         [Inject]
-        public UISystem(IResourceProvider resourceProvider, IUIViewFactory viewFactory, IMythLogger logger)
+        public UISystem(IResourceProvider resourceProvider, IUIViewFactory viewFactory, IMythLogger logger, IDIContainer container)
         {
             _resourceProvider = resourceProvider;
             _viewFactory = viewFactory;
             _logger = logger;
+            _container = container;
+       
         }
-
+        public INavigationService GetNavigationService()
+        {
+            return _container.Resolve<INavigationService>();
+        }
         public void ShowView<TView>() where TView : Component, IView
         {
             if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)

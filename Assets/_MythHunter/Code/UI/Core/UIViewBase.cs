@@ -13,6 +13,10 @@ namespace MythHunter.UI.Core
         [Inject] protected IUISystem _uiSystem;
         protected bool _isRegistered = false;
 
+        // Реалізація властивості gameObject з інтерфейсу IView
+        UnityEngine.GameObject IView.gameObject => this.gameObject;
+
+
         protected override void OnInitialized()
         {
             RegisterWithUISystem();

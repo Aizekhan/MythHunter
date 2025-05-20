@@ -1,16 +1,13 @@
 // Assets/_MythHunter/Code/UI/Core/UIRoot.cs
 using UnityEngine;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.MonoBehaviours;
-using MythHunter.Core.DI;
 
 namespace MythHunter.UI.Core
 {
-    public class UIRoot : LazyMonoBehaviour
+    public class UIRoot : MonoBehaviour
     {
         private static UIRoot _instance;
-
-        [Inject] private IMythLogger _logger;
+        private static IMythLogger _logger;
 
         public static Transform RootTransform
         {
@@ -18,10 +15,16 @@ namespace MythHunter.UI.Core
             {
                 if (_instance == null)
                 {
+                    if (_logger == null)
+                    {
+                        _logger = MythLoggerFactory.GetDefaultLogger();
+                    }
+
                     var root = FindFirstObjectByType<UIRoot>();
                     if (root != null)
                     {
                         _instance = root;
+                        _logger.LogInfo($"Знайдено існуючий UIRoot ({root.name})", "UIRoot");
                     }
                     else
                     {
@@ -31,6 +34,7 @@ namespace MythHunter.UI.Core
 
                         // Налаштовуємо як глобальний об'єкт
                         DontDestroyOnLoad(newRootObject);
+                        _logger.LogInfo("Створено новий UIRoot програмно", "UIRoot");
                     }
                 }
 
@@ -38,8 +42,13 @@ namespace MythHunter.UI.Core
             }
         }
 
-        protected override void OnInitialized()
+        private void Awake()
         {
+            if (_logger == null)
+            {
+                _logger = MythLoggerFactory.GetDefaultLogger();
+            }
+
             if (_instance == null)
             {
                 _instance = this;

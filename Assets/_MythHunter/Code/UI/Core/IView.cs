@@ -7,5 +7,10 @@ namespace MythHunter.UI.Core
     {
         void Show();
         void Hide();
+        // Додаємо доступ до GameObject
+        UnityEngine.GameObject gameObject
+        {
+            get;
+        }
     }
 }
