@@ -80,7 +80,12 @@ namespace MythHunter.UI.Navigation
         public async UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
         {
             _logger.LogInfo($"Навігація до екрану: {viewId}", "Navigation");
-
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null)
+            {
+                _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
+                return null;
+            }
             try
             {
                 IView currentView = _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;

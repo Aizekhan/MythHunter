@@ -78,15 +78,26 @@ namespace MythHunter.UI.Core
             }
         }
 
-        public async UniTask<T> CreateViewFromPoolAsync<T>(string prefabPath) where T : Component, IView
+        /// <summary>
+        /// Створює представлення з об'єктного пулу за його ідентифікатором
+        /// </summary>
+        /// <param name="viewId">Ідентифікатор представлення</param>
+        /// <returns>Створене представлення з пулу</returns>
+        public async UniTask<IView> CreateViewFromPoolAsync(ViewId viewId)
         {
-            _logger.LogInfo($"[UIFactory] Creating pooled view: {typeof(T).Name} from path {prefabPath}", "UI");
+            // Отримуємо конфігурацію за ViewId
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null)
+            {
+                _logger.LogError($"Не знайдено конфігурацію для viewId: {viewId}", "UIViewFactory");
+                return null;
+            }
+
+            string prefabPath = config.prefabPath;
+            _logger.LogInfo($"[UIFactory] Creating pooled view: {viewId} from path {prefabPath}", "UI");
 
             try
             {
-                // Завантажуємо префаб для створення пулу, якщо потрібно
-                GameObject prefab = null;
-
                 // Спробуємо отримати об'єкт з пулу
                 GameObject instance = null;
 
@@ -97,10 +108,10 @@ namespace MythHunter.UI.Core
                 catch (System.Exception)
                 {
                     // Якщо пул не існує, створюємо його
-                    prefab = await _resourceProvider.LoadAsync<GameObject>(prefabPath);
+                    var prefab = await _resourceProvider.LoadAsync<GameObject>(prefabPath);
                     if (prefab == null)
                     {
-                        _logger.LogError($"[UIFactory] Failed to load prefab at path: {prefabPath}", "UI");
+                        _logger.LogError($"[UIFactory] Не вдалося завантажити префаб за шляхом: {prefabPath}", "UI");
                         return null;
                     }
 
@@ -110,7 +121,7 @@ namespace MythHunter.UI.Core
 
                 if (instance == null)
                 {
-                    _logger.LogError($"[UIFactory] Failed to get instance from pool for {prefabPath}", "UI");
+                    _logger.LogError($"[UIFactory] Не вдалося отримати екземпляр з пулу для {prefabPath}", "UI");
                     return null;
                 }
 
@@ -119,34 +130,55 @@ namespace MythHunter.UI.Core
                 instance.SetActive(true);
 
                 // Отримуємо компонент view
-                var view = instance.GetComponent<T>();
+                var view = instance.GetComponent<IView>();
                 if (view == null)
                 {
-                    _logger.LogError($"[UIFactory] Instance from pool doesn't have component of type {typeof(T).Name}", "UI");
+                    _logger.LogError($"[UIFactory] Екземпляр з пулу не містить компонента, що реалізує IView", "UI");
                     _poolManager.ReturnToPool(prefabPath, instance);
                     return null;
                 }
 
                 // Виконуємо ін'єкцію залежностей
-                _container.InjectDependencies(view);
+                _container.InjectDependencies(instance);
 
                 return view;
             }
             catch (System.Exception ex)
             {
-                _logger.LogError($"[UIFactory] Exception creating view from pool: {ex.Message}", "UI", ex);
+                _logger.LogError($"[UIFactory] Помилка при створенні представлення з пулу для {viewId}: {ex.Message}", "UI", ex);
                 return null;
             }
         }
 
-        public void ReturnViewToPool<T>(T view) where T : Component, IView
+        /// <summary>
+        /// Повертає представлення в пул
+        /// </summary>
+        /// <param name="viewId">Ідентифікатор представлення</param>
+        /// <param name="view">Представлення для повернення в пул</param>
+        public void ReturnViewToPool(ViewId viewId, IView view)
         {
             if (view == null)
                 return;
 
             try
             {
-                GameObject gameObject = view.gameObject;
+                // Отримуємо конфігурацію за ViewId для шляху до префабу
+                var config = _viewConfigRegistry.Get(viewId);
+                if (config == null)
+                {
+                    _logger.LogWarning($"Не знайдено конфігурацію для viewId: {viewId}, об'єкт буде знищено", "UIViewFactory");
+                    if (view is Component component)
+                        UnityEngine.Object.Destroy(component.gameObject);
+                    return;
+                }
+
+                string prefabPath = config.prefabPath;
+                GameObject gameObject = (view as Component)?.gameObject;
+                if (gameObject == null)
+                {
+                    _logger.LogWarning($"View не є Component, неможливо повернути в пул", "UIViewFactory");
+                    return;
+                }
 
                 // Перевіряємо, чи є у GameObject компонент PooledObject
                 var pooledObject = gameObject.GetComponent<PooledObject>();
@@ -157,21 +189,19 @@ namespace MythHunter.UI.Core
                 }
                 else
                 {
-                    // Використовуємо ім'я префабу як ключ пулу
-                    string poolKey = gameObject.name.Replace("(Clone)", "").Trim();
-
                     // Вимикаємо GameObject перед поверненням у пул
                     gameObject.SetActive(false);
 
-                    // Повертаємо у пул
-                    _poolManager.ReturnToPool(poolKey, gameObject);
+                    // Повертаємо у пул за шляхом з конфігурації
+                    _poolManager.ReturnToPool(prefabPath, gameObject);
                 }
             }
             catch (System.Exception ex)
             {
-                _logger.LogError($"[UIFactory] Error returning view to pool: {ex.Message}", "UI", ex);
+                _logger.LogError($"[UIFactory] Помилка при поверненні представлення в пул: {ex.Message}", "UI", ex);
                 // Знищуємо об'єкт, якщо не вдалося повернути його в пул
-                UnityEngine.Object.Destroy(view.gameObject);
+                if (view is Component component)
+                    UnityEngine.Object.Destroy(component.gameObject);
             }
         }
 
