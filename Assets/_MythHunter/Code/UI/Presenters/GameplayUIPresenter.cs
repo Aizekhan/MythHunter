@@ -17,15 +17,16 @@ namespace MythHunter.UI.Presenters
     public class GameplayUIPresenter : BasePresenter, IGameplayUIPresenter
     {
         private readonly IGameplayUIModel _model;
-        private IGameplayUIView _view;
+      
         private ViewId _viewId = ViewId.GameplayUI;
         private bool _isInitialized = false;
-
+        protected IGameplayUIView GameplayView => base._view as IGameplayUIView;
         [Inject]
         public GameplayUIPresenter(IGameplayUIModel model, IEventBus eventBus, IMythLogger logger)
-            : base(eventBus, logger)
+    : base(eventBus, logger)
         {
             _model = model;
+            base._viewId = ViewId.GameplayUI;
         }
 
         /// <summary>
@@ -46,7 +47,6 @@ namespace MythHunter.UI.Presenters
         /// </summary>
         public void SetView(IGameplayUIView view)
         {
-            _view = view;
             base.Initialize(view, _viewId);
             UpdateView();
         }
@@ -136,18 +136,18 @@ namespace MythHunter.UI.Presenters
         /// </summary>
         private void UpdateView()
         {
-            if (_view == null)
+            if (GameplayView == null)
                 return;
 
-            _view.UpdatePhaseInfo(_model.CurrentPhase, _model.PhaseTimeRemaining);
+            GameplayView.UpdatePhaseInfo(_model.CurrentPhase, _model.PhaseTimeRemaining);
 
             if (_model.IsRunePhaseActive)
             {
-                _view.ShowRuneValue(_model.RuneValue);
+                GameplayView.ShowRuneValue(_model.RuneValue);
             }
             else
             {
-                _view.HideRuneValue();
+                GameplayView.HideRuneValue();
             }
         }
     }

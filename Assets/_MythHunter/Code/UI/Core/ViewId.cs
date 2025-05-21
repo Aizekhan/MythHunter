@@ -18,5 +18,6 @@ namespace MythHunter.UI.Core
         ConfirmDialog,
 
         // Інші представлення (додавати тут)
+        HeroCard, // Для карток героїв
     }
 }
