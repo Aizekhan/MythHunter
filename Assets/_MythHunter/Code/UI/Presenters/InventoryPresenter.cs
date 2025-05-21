@@ -8,31 +8,38 @@ using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Presenters
 {
-    public class InventoryPresenter : IInventoryPresenter, IEventSubscriber
+    public class InventoryPresenter : BasePresenter, IInventoryPresenter
     {
         private readonly IInventoryModel _model;
-        private readonly IEventBus _eventBus;
-        private readonly IMythLogger _logger;
-        private IInventoryView _view;
+        // Додаємо властивість для типізованого доступу до представлення
+        private IInventoryView _typedView => _view as IInventoryView;
 
         [Inject]
         public InventoryPresenter(IInventoryModel model, IEventBus eventBus, IMythLogger logger)
+            : base(eventBus, logger)
         {
             _model = model;
-            _eventBus = eventBus;
-            _logger = logger;
+
+            // Встановлюємо ViewId (необхідно перевірити наявність у ViewId)
+            _viewId = ViewId.Inventory;
         }
 
-        public async UniTask InitializeAsync()
+        public override async UniTask InitializeAsync()
         {
-            SubscribeToEvents();
+            await base.InitializeAsync();
             _logger.LogInfo("InventoryPresenter initialized", "UI");
-            await UniTask.CompletedTask;
         }
 
+        // Метод для зворотної сумісності
         public void SetView(IInventoryView view)
         {
-            _view = view;
+            Initialize(view, _viewId);
+        }
+
+        // Перевизначення методу з BasePresenter
+        public override void Initialize(IView view, ViewId viewId = ViewId.None)
+        {
+            base.Initialize(view, viewId);
             UpdateView();
         }
 
@@ -63,28 +70,23 @@ namespace MythHunter.UI.Presenters
             }
         }
 
-        public void Dispose()
+        // Перевизначення замість імплементації
+        protected override void OnSubscribeToEvents()
         {
-            UnsubscribeFromEvents();
-            _logger.LogInfo("InventoryPresenter disposed", "UI");
+            // Підписка на події
         }
 
-        public void SubscribeToEvents()
+        protected override void OnUnsubscribeFromEvents()
         {
-            // Subscribe to necessary events
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            // Unsubscribe from events
+            // Відписка від подій
         }
 
         private void UpdateView()
         {
-            if (_view != null)
+            if (_typedView != null)
             {
-                _view.UpdateItems(_model.Items);
-                _view.UpdateSelection(_model.SelectedItemIndex);
+                _typedView.UpdateItems(_model.Items);
+                _typedView.UpdateSelection(_model.SelectedItemIndex);
             }
         }
     }

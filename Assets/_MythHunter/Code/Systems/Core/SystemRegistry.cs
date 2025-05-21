@@ -133,6 +133,8 @@ namespace MythHunter.Systems.Core
         {
             int count = 0;
 
+            _logger.LogInfo($"Початок ініціалізації систем категорії {category}", "Systems");
+
             foreach (var reg in _allSystems.Where(r => r.Category == category))
             {
                 if (!_initializedSystems.Contains(reg.System))
@@ -142,16 +144,16 @@ namespace MythHunter.Systems.Core
                         reg.System.Initialize();
                         _initializedSystems.Add(reg.System);
                         count++;
-                        _logger.LogDebug($"Initialized system: {reg.SystemType}", "Systems");
+                        _logger.LogDebug($"Ініціалізовано систему: {reg.SystemType}", "Systems");
                     }
                     catch (System.Exception ex)
                     {
-                        _logger.LogError($"Error initializing system {reg.SystemType}: {ex.Message}", "Systems", ex);
+                        _logger.LogError($"Помилка ініціалізації системи {reg.SystemType}: {ex.Message}", "Systems", ex);
                     }
                 }
             }
 
-            _logger.LogInfo($"Initialized {count} systems of category {category}", "Systems");
+            _logger.LogInfo($"Ініціалізовано {count} систем категорії {category}", "Systems");
         }
         public virtual void UpdateAll(float deltaTime)
         {

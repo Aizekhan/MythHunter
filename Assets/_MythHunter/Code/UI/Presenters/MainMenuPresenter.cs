@@ -8,31 +8,42 @@ using Cysharp.Threading.Tasks;
 
 namespace MythHunter.UI.Presenters
 {
-    public class MainMenuPresenter : IMainMenuPresenter, IEventSubscriber
+    /// <summary>
+    /// Презентер головного меню з підтримкою ViewId-архітектури
+    /// </summary>
+    public class MainMenuPresenter : BasePresenter, IMainMenuPresenter
     {
         private readonly IMainMenuModel _model;
-        private readonly IEventBus _eventBus;
-        private readonly IMythLogger _logger;
-        private IMainMenuView _view;
+
+        // Властивість для типізованого доступу до представлення
+        private IMainMenuView _typedView => _view as IMainMenuView;
 
         [Inject]
         public MainMenuPresenter(IMainMenuModel model, IEventBus eventBus, IMythLogger logger)
+            : base(eventBus, logger)
         {
             _model = model;
-            _eventBus = eventBus;
-            _logger = logger;
+
+            // Встановлюємо ViewId (перевірте, що ViewId.MainMenu існує в енумерації)
+            _viewId = ViewId.MainMenu;
         }
 
-        public async UniTask InitializeAsync()
+        public override async UniTask InitializeAsync()
         {
-            SubscribeToEvents();
+            await base.InitializeAsync();
             _logger.LogInfo("MainMenuPresenter initialized", "UI");
-            await UniTask.CompletedTask;
         }
 
+        // Метод для зворотної сумісності
         public void SetView(IMainMenuView view)
         {
-            _view = view;
+            Initialize(view, _viewId);
+        }
+
+        // Перевизначення методу з BasePresenter
+        public override void Initialize(IView view, ViewId viewId = ViewId.None)
+        {
+            base.Initialize(view, viewId);
             UpdateView();
         }
 
@@ -54,30 +65,29 @@ namespace MythHunter.UI.Presenters
             // TODO: Exit game logic
         }
 
-        public void Dispose()
+        // Перевизначення замість імплементації
+        protected override void OnSubscribeToEvents()
         {
-            UnsubscribeFromEvents();
-            _logger.LogInfo("MainMenuPresenter disposed", "UI");
+            // Підписка на необхідні події
+            // Наприклад:
+            // _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
         }
 
-        public void SubscribeToEvents()
+        protected override void OnUnsubscribeFromEvents()
         {
-            // Subscribe to necessary events
-        }
-
-        public void UnsubscribeFromEvents()
-        {
-            // Unsubscribe from events
+            // Відписка від подій
+            // Наприклад:
+            // _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
         }
 
         private void UpdateView()
         {
-            if (_view != null)
+            if (_typedView != null)
             {
-                _view.SetTitle(_model.Title);
-                _view.SetPlayButtonEnabled(_model.IsPlayButtonEnabled);
-                _view.SetSettingsButtonEnabled(_model.IsSettingsButtonEnabled);
-                _view.SetExitButtonEnabled(_model.IsExitButtonEnabled);
+                _typedView.SetTitle(_model.Title);
+                _typedView.SetPlayButtonEnabled(_model.IsPlayButtonEnabled);
+                _typedView.SetSettingsButtonEnabled(_model.IsSettingsButtonEnabled);
+                _typedView.SetExitButtonEnabled(_model.IsExitButtonEnabled);
             }
         }
     }

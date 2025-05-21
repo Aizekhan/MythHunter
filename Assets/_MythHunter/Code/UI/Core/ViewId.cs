@@ -19,5 +19,6 @@ namespace MythHunter.UI.Core
 
         // Інші представлення (додавати тут)
         HeroCard, // Для карток героїв
+        Inventory, // Для карток героїв
     }
 }

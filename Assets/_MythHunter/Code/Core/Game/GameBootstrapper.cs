@@ -33,16 +33,7 @@ namespace MythHunter.Core.Game
             InitializeAsync().Forget();
         }
 
-        private async UniTaskVoid InitializeAsync()
-        {
-            InitializeCore();
-            InitializeGameSystems();
-
-            _logger.LogInfo("GameBootstrapper initialized successfully");
-
-            await InitializeServicesAsync();
-        }
-
+      
         private void Update()
         {
             _ecsWorld?.Update(Time.deltaTime);
@@ -54,7 +45,21 @@ namespace MythHunter.Core.Game
             _ecsWorld?.Dispose();
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
         }
+        private async UniTaskVoid InitializeAsync()
+        {
+            InitializeCore();
+            InitializeGameSystems();
 
+            _logger.LogInfo("GameBootstrapper ініціалізовано успішно");
+
+            await InitializeServicesAsync();
+
+            // Додаємо затримку для завершення всіх ініціалізацій
+            await UniTask.DelayFrame(5);
+
+            // Змінюємо стан на Boot
+            _stateMachine?.ChangeState(GameStateType.Boot);
+        }
         private void InitializeCore()
         {
             var logger = MythLogger.CreateDefaultLogger();
@@ -87,20 +92,20 @@ namespace MythHunter.Core.Game
             var debugService = _container.Resolve<IDebugService>();
             debugService.CreateDebugDashboard();
 
-            _logger.LogInfo("Game systems initialized", "Bootstrapper");
+            _logger.LogInfo("Ігрові системи ініціалізовано", "Bootstrapper");
         }
 
         private async UniTask InitializeServicesAsync()
         {
-            _logger.LogInfo("Starting async services initialization", "Bootstrapper");
+            _logger.LogInfo("Початок асинхронної ініціалізації сервісів", "Bootstrapper");
 
             await UniTask.Delay(100);
             _sceneDispatcher = _container.Resolve<ISceneDispatcher>();
 
+            // Явно ініціалізуємо GameFlowManager перед зміною стану
             var gameFlowManager = _container.Resolve<IGameFlowManager>();
-            _stateMachine.ChangeState(GameStateType.Boot);
 
-            _logger.LogInfo("Async services initialization completed", "Bootstrapper");
+            _logger.LogInfo("Асинхронна ініціалізація сервісів завершена", "Bootstrapper");
         }
     }
 }

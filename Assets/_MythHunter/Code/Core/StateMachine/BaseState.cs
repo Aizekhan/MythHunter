@@ -1,19 +1,16 @@
-// Файл: Assets/_MythHunter/Code/Core/StateMachine/BaseState.cs
-using System;
+// Assets/_MythHunter/Code/Core/StateMachine/BaseState.cs
+using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 
 namespace MythHunter.Core.StateMachine
 {
-    /// <summary>
-    /// Базовий абстрактний клас для станів
-    /// </summary>
-    public abstract class BaseState<T> : IState<T> where T : Enum
+    public abstract class BaseState<T>
     {
-        protected readonly IDIContainer Container;
+        protected readonly IDIContainer _container;
 
         protected BaseState(IDIContainer container)
         {
-            Container = container;
+            _container = container;
         }
 
         public abstract T StateId
@@ -21,23 +18,24 @@ namespace MythHunter.Core.StateMachine
             get;
         }
 
-        /// <summary>
-        /// Виконується при вході в стан
-        /// </summary>
-        /// <param name="previousState">Попередній стан або default</param>
         public virtual void Enter(T previousState)
         {
-            // Базова реалізація
         }
 
-        public virtual void Update()
+        // Додаємо асинхронний метод EnterAsync
+        public virtual async UniTask EnterAsync(T previousState)
         {
-            // Базова реалізація
+            // За замовчуванням викликаємо синхронний метод
+            Enter(previousState);
+            await UniTask.CompletedTask;
         }
 
         public virtual void Exit()
         {
-            // Базова реалізація
+        }
+
+        public virtual void Update()
+        {
         }
     }
 }

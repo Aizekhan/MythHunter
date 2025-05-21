@@ -17,7 +17,8 @@ namespace MythHunter.UI.Presenters
         void OnHeroSelected(string archetypeId);
         void OnSelectionConfirmed();
         UniTask StartGameAsync();
-
+        // Додатковий метод для явного запуску ініціалізації лоббі
+        UniTask InitializeLobbyAsync(int playerCount);
         // Методи отримання даних
         List<HeroCardModel> GetAvailableHeroes();
         List<HeroCardModel> GetSelectedHeroes();

@@ -22,6 +22,13 @@ namespace MythHunter.UI.Presenters
 {
     public class LobbyPresenter : ILobbyPresenter, IEventSubscriber
     {
+        // Додаємо властивість IsInitialized
+        private bool _isInitialized = false;
+        public bool IsInitialized => _isInitialized;
+        // Додаємо семафор для уникнення повторних ініціалізацій
+        private readonly object _initializationLock = new object();
+        private bool _isInitializing = false;
+
         private readonly ILobbySystem _lobbySystem;
         private readonly IHeroSelectionSystem _heroSelectionSystem;
         private readonly IEventBus _eventBus;
@@ -64,33 +71,61 @@ namespace MythHunter.UI.Presenters
 
         public async UniTask InitializeAsync()
         {
-            SubscribeToEvents();
-            await _heroCardService.InitializeAsync();
-            await _heroSelectionSystem.LoadAvailableHeroes();
+            if (_isInitialized)
+                return;
 
-            if (!_lobbySystem.IsInitialized)
+            lock (_initializationLock)
             {
-                _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
+                if (_isInitializing)
+                    return;
+                _isInitializing = true;
+            }
+
+            try
+            {
+                SubscribeToEvents();
+                await _heroCardService.InitializeAsync();
+                await _heroSelectionSystem.LoadAvailableHeroes();
+
+                _isInitialized = true;
+                _logger.LogInfo("LobbyPresenter ініціалізовано", "UI");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при ініціалізації LobbyPresenter: {ex.Message}", "UI", ex);
+            }
+            finally
+            {
+                lock (_initializationLock)
+                {
+                    _isInitializing = false;
+                }
             }
         }
 
         public void Initialize(ILobbyView view)
         {
             _view = view;
-            SubscribeToEvents();
             UniTask.Create(async () => {
-                await _heroCardService.InitializeAsync();
-                await _heroSelectionSystem.LoadAvailableHeroes();
-
-                if (!_lobbySystem.IsInitialized)
-                {
-                    _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
-                }
-
+                await InitializeAsync();
                 await PopulateHeroCardsAsync();
             });
         }
+        public async UniTask InitializeLobbyAsync(int playerCount)
+        {
+            if (!_isInitialized)
+                await InitializeAsync();
 
+            // Ініціалізуємо лобі, якщо воно ще не ініціалізоване
+            if (!_lobbySystem.IsInitialized)
+            {
+                _lobbySystem.InitializeLobby(playerCount);
+                _logger.LogInfo($"Lobby ініціалізовано з {playerCount} гравцями", "UI");
+            }
+
+            // Оновлюємо картки героїв
+            await PopulateHeroCardsAsync();
+        }
         public void Dispose()
         {
             UnsubscribeFromEvents();
@@ -213,11 +248,14 @@ namespace MythHunter.UI.Presenters
             _logger.LogInfo("Отримано подію LobbyStateEnteredEvent", "UI");
 
             UniTask.Create(async () => {
-                if (!_lobbySystem.IsInitialized)
+                try
                 {
-                    _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
+                    await InitializeLobbyAsync(_gameSettings.PlayerCount);
                 }
-                await PopulateHeroCardsAsync();
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при обробці LobbyStateEnteredEvent: {ex.Message}", "UI", ex);
+                }
             });
         }
 
