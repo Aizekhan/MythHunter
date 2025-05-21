@@ -171,7 +171,7 @@ namespace MythHunter.UI.Core
             {
                 _logger.LogError($"[UIFactory] Error returning view to pool: {ex.Message}", "UI", ex);
                 // Знищуємо об'єкт, якщо не вдалося повернути його в пул
-                Object.Destroy(view.gameObject);
+                UnityEngine.Object.Destroy(view.gameObject);
             }
         }
 

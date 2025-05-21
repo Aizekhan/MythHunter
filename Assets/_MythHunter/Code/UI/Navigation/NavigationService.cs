@@ -8,6 +8,7 @@ using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MythHunter.UI.Navigation
@@ -74,7 +75,7 @@ namespace MythHunter.UI.Navigation
                 ClearStackAsync().Forget();
         }
 
-
+      
 
         public async UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
         {
@@ -101,7 +102,12 @@ namespace MythHunter.UI.Navigation
                 if (currentView is INavigableView currentNavView)
                     await currentNavView.OnViewNavigatedFromAsync();
 
-                await _transition.PlayTransitionAsync(currentView as GameObject, newView as GameObject, transition, true);
+                await _transition.PlayTransitionAsync(
+                      (currentView as Component)?.gameObject,
+                      (newView as Component)?.gameObject,
+                       transition,
+                              true
+                                                   );
 
                 if (newView is INavigableView navView)
                 {
@@ -137,11 +143,11 @@ namespace MythHunter.UI.Navigation
                 await navFrom.OnViewNavigatedFromAsync();
 
             await _transition.PlayTransitionAsync(
-                currentEntry.View as GameObject,
-                previousEntry.View as GameObject,
-                TransitionType.Default,
-                false
-            );
+     (currentEntry.View as Component)?.gameObject,
+     (previousEntry.View as Component)?.gameObject,
+     TransitionType.Default,
+     false
+ );
 
             if (previousEntry.View is INavigableView navTo)
                 await navTo.OnViewNavigatedToAsync(parameters ?? previousEntry.Parameters);
@@ -175,14 +181,19 @@ namespace MythHunter.UI.Navigation
                 if (entry.View is INavigableView navDestroy)
                     await navDestroy.OnViewDestroyedAsync();
 
-               
+                // Деактивуємо об'єкт
                 if (entry.View is Component component)
                 {
                     component.gameObject.SetActive(false);
                 }
             }
 
-            await _transition.PlayTransitionAsync(currentEntry.View?.gameObject, rootEntry.View?.gameObject, TransitionType.Default, false);
+            await _transition.PlayTransitionAsync(
+                currentEntry.View?.gameObject,
+                rootEntry.View?.gameObject,
+                TransitionType.Default,
+                false
+            );
 
             if (rootEntry.View is INavigableView navTo)
                 await navTo.OnViewNavigatedToAsync(parameters ?? rootEntry.Parameters);
@@ -190,21 +201,6 @@ namespace MythHunter.UI.Navigation
             return rootEntry.View;
         }
 
-        public async UniTask PrepareForSceneChangeAsync()
-        {
-            await ClearStackAsync();
-        }
-
-        public bool HasScreensInStack() => _navigationStack.Count > 0;
-
-        // Метод для отримання ViewId за типом
-        public ViewId GetViewIdForType<TView>() where TView : Component, IView
-        {
-            var config = _viewConfigRegistry.GetByType<TView>();
-            return config != null ? config.viewId : ViewId.None;
-        }
-
-        // Змінити метод ShowModalAsync, щоб використовувати правильну змінну
         public async UniTask<TResult> ShowModalAsync<TResult>(ViewId viewId, NavigationParameters parameters = null)
         {
             var viewConfig = _viewConfigRegistry.Get(viewId);
@@ -246,29 +242,6 @@ namespace MythHunter.UI.Navigation
             }
         }
 
-        public void CloseModal<TResult>(TResult result = default)
-        {
-            if (_currentModal == null || _modalTcs == null)
-                return;
-
-            if (_modalTcs is UniTaskCompletionSource<TResult> tcs)
-            {
-                if (_currentModal is Component comp)
-                    _uiService.HideScreen(comp.GetType());
-
-                tcs.TrySetResult(result);
-                _currentModal = null;
-                _modalTcs = null;
-            }
-        }
-
-        public async UniTask<TView> SetInitialScreen<TView>(ViewId viewId, NavigationParameters parameters = null)
-            where TView : Component, IView
-        {
-            await ClearStackAsync();
-            return await NavigateToAsync<TView>(viewId, parameters);
-        }
- 
         public async UniTask ClearStackAsync()
         {
             while (_navigationStack.Count > 0)
@@ -279,6 +252,7 @@ namespace MythHunter.UI.Navigation
                 entry.View.Hide();
             }
         }
+
         public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters)
         {
             await ClearStackAsync();
@@ -299,22 +273,13 @@ namespace MythHunter.UI.Navigation
             }
         }
 
-        private Type GetViewTypeByViewId(ViewId viewId)
+        public async UniTask PrepareForSceneChangeAsync()
         {
-            var config = _viewConfigRegistry.Get(viewId);
-            if (config == null || string.IsNullOrEmpty(config.viewTypeName))
-                return null;
-
-            try
-            {
-                return Type.GetType(config.viewTypeName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Не вдалося знайти тип {config.viewTypeName}: {ex.Message}", "Navigation");
-                return null;
-            }
+            await ClearStackAsync();
         }
+
+        public bool HasScreensInStack() => _navigationStack.Count > 0;
+
         public IView GetCurrentScreen() => _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
         public void Dispose()

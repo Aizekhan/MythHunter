@@ -7,6 +7,7 @@ using MythHunter.UI.Models;
 using MythHunter.Utils.Logging;
 using MythHunter.UI.Services;
 using MythHunter.UI.Navigation;
+using MythHunter.UI.Runtime;
 
 namespace MythHunter.Core.Installers
 {

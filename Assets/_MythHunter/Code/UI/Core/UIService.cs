@@ -1,3 +1,4 @@
+// Assets/_MythHunter/Code/UI/Core/UIService.cs
 using System;
 using MythHunter.UI.Core;
 using Cysharp.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace MythHunter.UI.Runtime
                 return null;
             }
 
-            // Створюємо представлення через фабрику, яка тепер використовує тільки ViewId
+            // Створюємо представлення через фабрику
             var view = await _viewFactory.CreateViewAsync(viewId);
             if (view == null)
             {
@@ -46,7 +47,6 @@ namespace MythHunter.UI.Runtime
             view.Show();
             return view;
         }
-
 
         public void HideScreen(ViewId viewId)
         {

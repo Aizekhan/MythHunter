@@ -6,12 +6,11 @@ namespace MythHunter.UI.Core
 {
     public interface IUIService
     {
-        UniTask<TView> ShowScreenAsync<TView>() where TView : Component, IView;
-        void HideScreen<TView>() where TView : Component, IView;
+        // Основні методи з ViewId
+        UniTask<IView> ShowScreenAsync(ViewId viewId);
+        void HideScreen(ViewId viewId);
+        bool IsScreenActive(ViewId viewId);
 
-        // Додати метод для сумісності зі старим кодом
-        void HideScreen(Type viewType);
-
-        bool IsScreenActive<TView>() where TView : Component, IView;
+       
     }
 }

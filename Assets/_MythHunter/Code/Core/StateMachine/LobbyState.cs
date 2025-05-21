@@ -57,7 +57,7 @@ namespace MythHunter.States
         public override void Exit()
         {
             _logger.LogInfo("Exiting LobbyState", "GameState");
-            _uiService.HideScreen<UI.Views.LobbyView>();
+            _uiService.HideScreen(ViewId.Lobby);
         }
 
         // Метод для переходу в ігровий режим (викликається з презентера лобі)

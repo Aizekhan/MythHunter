@@ -5,17 +5,14 @@ using UnityEngine;
 
 namespace MythHunter.UI.Core
 {
-    /// <summary>
-    /// Базовий клас для усіх UI View з автоматичною реєстрацією в IUISystem через DI
-    /// </summary>
     public abstract class UIViewBase : LazyMonoBehaviour, IView
     {
         [Inject] protected IUISystem _uiSystem;
+        [Inject] protected IViewConfigRegistry _viewConfigRegistry;
         protected bool _isRegistered = false;
 
         // Реалізація властивості gameObject з інтерфейсу IView
         UnityEngine.GameObject IView.gameObject => this.gameObject;
-
 
         protected override void OnInitialized()
         {
@@ -26,8 +23,19 @@ namespace MythHunter.UI.Core
         {
             if (_uiSystem != null && !_isRegistered)
             {
-                _uiSystem.RegisterView(this);
-                _isRegistered = true;
+                // Отримуємо ViewId на основі типу компонента
+                var config = _viewConfigRegistry.GetByType<UIViewBase>();
+                if (config != null)
+                {
+                    _uiSystem.RegisterView(config.viewId, this);
+                    _isRegistered = true;
+                }
+                else
+                {
+                    // Запасний варіант - реєструємо через типи (для зворотної сумісності)
+                    _uiSystem.RegisterView(this);
+                    _isRegistered = true;
+                }
             }
         }
 
@@ -35,7 +43,15 @@ namespace MythHunter.UI.Core
         {
             if (_uiSystem != null && _isRegistered)
             {
-                _uiSystem.UnregisterView(this);
+                var config = _viewConfigRegistry.GetByType<UIViewBase>();
+                if (config != null)
+                {
+                    _uiSystem.UnregisterView(config.viewId);
+                }
+                else
+                {
+                    _uiSystem.UnregisterView(this);
+                }
                 _isRegistered = false;
             }
         }

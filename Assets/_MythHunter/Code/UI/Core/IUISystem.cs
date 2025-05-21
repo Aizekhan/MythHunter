@@ -5,16 +5,20 @@ using MythHunter.UI.Core;
 
 public interface IUISystem
 {
-    // Змінюємо методи, щоб працювали з ViewId замість Type
+    // Використовуємо ViewId як основний параметр
     UniTask<IView> ShowViewAsync(ViewId viewId);
     void ShowView(ViewId viewId);
     void HideView(ViewId viewId);
 
-    // Реєстрація представлень тепер з ViewId
+    // Реєстрація з ViewId
     void RegisterView(ViewId viewId, IView view);
     void UnregisterView(ViewId viewId);
 
-    // Отримання представлення за ViewId
+    // Методи для зворотної сумісності
+    void RegisterView(IView view);
+    void UnregisterView(IView view);
+
+    // Отримання представлення
     IView GetView(ViewId viewId);
     bool IsViewActive(ViewId viewId);
 }

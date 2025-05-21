@@ -123,7 +123,7 @@ namespace MythHunter.Core.Game
 
                 // Налаштування навігації для сцени - використовуємо enum
                 var parameters = new NavigationParameters();
-                await _navigationService.NavigateToAsync<LobbyView>(ViewId.Lobby, parameters);
+                await _navigationService.NavigateToAsync(ViewId.Lobby, parameters);
 
                 // Публікуємо подію зміни стану гри
                 PublishStateChange(GameStateType.Boot, GameStateType.Lobby);

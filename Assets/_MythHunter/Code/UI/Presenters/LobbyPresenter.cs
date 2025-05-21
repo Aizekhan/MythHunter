@@ -330,17 +330,15 @@ namespace MythHunter.UI.Presenters
 
         public float GetRemainingTime() => 300f;
 
+      
         public async UniTask OpenHeroSelectorAsync()
         {
             var parameters = new NavigationParameters();
             parameters.Add("PlayerCount", _gameSettings.PlayerCount);
             parameters.Add("ManaPerPlayer", _gameSettings.ManaPerPlayer);
 
-            // Найкраща практика - використання типізованого методу без явного ID
-            await _navigationService.NavigateToAsync<HeroCardSelectorView>(
-                parameters: parameters,
-                transition: TransitionType.SlideLeft
-            );
+            // Використовуємо ViewId замість типу
+            await _navigationService.NavigateToAsync(ViewId.HeroCardSelector, parameters, TransitionType.SlideLeft);
         }
 
         public async UniTask<bool> ShowConfirmationAsync(string message)
@@ -348,10 +346,10 @@ namespace MythHunter.UI.Presenters
             var parameters = new NavigationParameters();
             parameters.Add("Message", message);
 
-            // Використання enum замість string
-            bool result = await _navigationService.ShowModalAsync<ConfirmationDialog, bool>(
-                viewId: ViewId.ConfirmDialog,
-                parameters: parameters
+            // Використовуємо ViewId
+            bool result = await _navigationService.ShowModalAsync<bool>(
+                ViewId.ConfirmDialog,
+                parameters
             );
 
             return result;
