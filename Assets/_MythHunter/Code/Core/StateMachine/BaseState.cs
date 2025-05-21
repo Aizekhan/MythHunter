@@ -6,6 +6,7 @@ namespace MythHunter.Core.StateMachine
 {
     public abstract class BaseState<T>
     {
+        protected object _stateContext;
         protected readonly IDIContainer _container;
 
         protected BaseState(IDIContainer container)
@@ -22,12 +23,23 @@ namespace MythHunter.Core.StateMachine
         {
         }
 
+
         // Додаємо асинхронний метод EnterAsync
         public virtual async UniTask EnterAsync(T previousState)
         {
             // За замовчуванням викликаємо синхронний метод
             Enter(previousState);
             await UniTask.CompletedTask;
+        }
+
+        public void SetStateContext(object context)
+        {
+            _stateContext = context;
+        }
+
+        protected TContext GetStateContext<TContext>() where TContext : class
+        {
+            return _stateContext as TContext;
         }
 
         public virtual void Exit()

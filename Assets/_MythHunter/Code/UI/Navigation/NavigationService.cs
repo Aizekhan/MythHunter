@@ -355,7 +355,7 @@ namespace MythHunter.UI.Navigation
                     "LobbyScene" => ViewId.Lobby,
                     "GameScene" => ViewId.GameplayUI,
                     "MainMenuScene" => ViewId.MainMenu,
-                    "LoadingScene" => ViewId.Loading,
+                    "LoadingScene" => ViewId.LoadingScreen,
                     _ => ViewId.None
                 };
 

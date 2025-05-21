@@ -33,7 +33,7 @@ namespace MythHunter.Core.Game
             RegisterState(GameStateType.Boot, new BootState(_container));
             RegisterState(GameStateType.MainMenu, new MainMenuState(_container));
             RegisterState(GameStateType.Loading, new LoadingState(_container));
-            RegisterState(GameStateType.Game, new GameplayState(_container));
+            RegisterState(GameStateType.Gameplay, new GameplayState(_container));
             RegisterState(GameStateType.Lobby, new LobbyState(_container));
 
             // Налаштування переходів (можна залишити, якщо потрібно для логування)
@@ -101,7 +101,45 @@ namespace MythHunter.Core.Game
                 }
             });
         }
+        public void ChangeState(GameStateType newState, object context)
+        {
+            if (_currentState != null && _currentState.StateId == newState)
+                return;
 
+            GameStateType previousStateId = _currentState?.StateId ?? GameStateType.None;
+            var previousState = _currentState;
+
+            if (!_states.TryGetValue(newState, out var nextState))
+            {
+                _logger.LogError($"Стан {newState} не зареєстровано в StateMachine", "StateMachine");
+                return;
+            }
+
+            _logger.LogInfo($"Зміна стану з {previousStateId} на {newState} (з контекстом)", "StateMachine");
+
+            previousState?.Exit();
+            _currentState = nextState;
+
+            UniTask.Create(async () =>
+            {
+                try
+                {
+                    if (_currentState is BaseState<GameStateType> baseStateWithContext)
+                    {
+                        baseStateWithContext.SetStateContext(context);
+                        await baseStateWithContext.EnterAsync(previousStateId);
+                    }
+                    else
+                    {
+                        _currentState.Enter(previousStateId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка при вході в стан {newState}: {ex.Message}", "StateMachine", ex);
+                }
+            });
+        }
         public GameStateType CurrentState => _currentState?.StateId ?? GameStateType.None;
     }
 }

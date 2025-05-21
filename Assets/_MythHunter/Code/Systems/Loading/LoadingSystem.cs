@@ -15,7 +15,8 @@ using MythHunter.Utils.Logging;
 using MythHunter.Entities;
 using MythHunter.Entities.Archetypes;
 using UnityEngine;
-
+using MythHunter.Core.Game;
+using MythHunter.Resources;
 namespace MythHunter.Systems.Loading
 {
     /// <summary>
@@ -356,7 +357,7 @@ namespace MythHunter.Systems.Loading
                 if (entry.Key != "map")
                 {
                     string poolKey = $"Hero_{entry.Key}";
-                    await _resourceManager.InitializePoolAsync<GameObject>(poolKey, entry.Value, 2);
+                    _poolManager.CreatePool<GameObject>(poolKey, entry.Value, 10);
                     _logger.LogInfo($"Створено пул для героя {entry.Key}", "Loading");
                 }
             }

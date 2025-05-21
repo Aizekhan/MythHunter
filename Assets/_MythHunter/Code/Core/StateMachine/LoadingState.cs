@@ -25,6 +25,7 @@ namespace MythHunter.States
         private readonly ILoadingSystem _loadingSystem;
         private readonly INavigationService _navigationService;
         private readonly ISystemRegistry _systemRegistry;
+        private readonly IGameStateMachine _stateMachine;
 
         private string[] _selectedHeroArchetypes;
         private string _mapId;
@@ -40,6 +41,7 @@ namespace MythHunter.States
             _loadingSystem = container.Resolve<ILoadingSystem>();
             _navigationService = container.Resolve<INavigationService>();
             _systemRegistry = container.Resolve<ISystemRegistry>();
+            _stateMachine = container.Resolve<IGameStateMachine>();
         }
 
         public override GameStateType StateId => GameStateType.Loading;
@@ -78,7 +80,7 @@ namespace MythHunter.States
                 _logger.LogInfo("GameStateChangedEvent опубліковано", "LoadingState");
 
                 // Отримуємо параметри з контексту
-                var context = GetStateContext();
+                var context = GetStateContext<LoadingStateContext>();
                 ExtractContextParameters(context);
 
                 // Налаштовуємо навігацію для екрану завантаження
@@ -158,13 +160,15 @@ namespace MythHunter.States
                     await _loadingSystem.FinishLoadingAsync();
 
                     // Переходимо в ігровий стан
-                    StateMachine.ChangeState(GameStateType.Gameplay);
+                    _stateMachine.ChangeState(GameStateType.Gameplay);
+
                 }
                 else
                 {
                     // Завантаження не вдалося, повертаємося в лобі
                     _logger.LogWarning("Завантаження не вдалося, повернення в лобі", "LoadingState");
-                    StateMachine.ChangeState(GameStateType.Lobby);
+                    _stateMachine.ChangeState(GameStateType.Gameplay);
+
                 }
             }
             catch (Exception ex)
@@ -172,7 +176,8 @@ namespace MythHunter.States
                 _logger.LogError($"Помилка в процесі завантаження: {ex.Message}", "LoadingState", ex);
 
                 // При критичній помилці повертаємося в лобі
-                StateMachine.ChangeState(GameStateType.Lobby);
+                _stateMachine.ChangeState(GameStateType.Gameplay);
+
             }
         }
 

@@ -29,7 +29,7 @@ namespace MythHunter.States
             _gameFlowManager = container.Resolve<IGameFlowManager>();
         }
 
-        public override GameStateType StateId => GameStateType.Game;
+        public override GameStateType StateId => GameStateType.Gameplay;
 
         public override async void Enter(GameStateType previousState)
         {

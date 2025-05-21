@@ -157,7 +157,7 @@ namespace MythHunter.Core.Game
                 };
 
                 // Змінюємо стан на Loading з передачею контексту
-                _stateMachine.ChangeState(GameStateType.Loading, loadingContext);
+                _gameStateMachine.ChangeState(GameStateType.Loading, loadingContext);
 
                 // Не чекаємо завершення зміни стану, бо це може бути тривалий процес
                 _logger.LogInfo("Перехід до стану завантаження ініційовано", "GameFlow");

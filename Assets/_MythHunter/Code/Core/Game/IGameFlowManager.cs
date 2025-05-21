@@ -15,7 +15,7 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Запускає перехід від Lobby до Gameplay
         /// </summary>
-        UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null);
+        UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null, string mapId = "default");
 
         /// <summary>
         /// Повертається з будь-якого стану до головного меню

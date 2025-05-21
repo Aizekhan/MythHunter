@@ -45,4 +45,15 @@ namespace MythHunter.Events.Domain
         public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
         public EventPriority GetPriority() => EventPriority.High;
     }
+    /// <summary>
+    /// Подія, яка сигналізує про критичну помилку в ігровому процесі
+    /// </summary>
+    public struct GameErrorEvent : IEvent
+    {
+        public string ErrorMessage;
+        public DateTime Timestamp;
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Critical;
+    }
 }

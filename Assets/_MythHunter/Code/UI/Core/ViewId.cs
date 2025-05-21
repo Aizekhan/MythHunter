@@ -11,7 +11,7 @@ namespace MythHunter.UI.Core
         Lobby,
         GameplayUI,
         MainMenu,
-        Loading,
+        LoadingScreen,
 
         // Діалоги та спеціальні представлення
         HeroCardSelector,

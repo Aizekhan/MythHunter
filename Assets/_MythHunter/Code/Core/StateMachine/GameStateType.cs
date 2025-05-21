@@ -10,7 +10,7 @@ namespace MythHunter.Core.Game
         Boot,
         MainMenu,
         Loading,
-        Game,
+        Gameplay,
         Pause,
         GameOver
     }
