@@ -628,6 +628,23 @@ namespace MythHunter.UI.Navigation
             {
                 case "lobbyscene":
                 case "mainmenu":
+                    return ViewIdConstants.Lobby;
+                case "gamescene":
+                    return ViewIdConstants.GameplayUI;
+                case "loadingscene":
+                    return ViewIdConstants.Loading;
+                default:
+                    return null;
+            }
+        }
+
+        // Приватний метод для визначення початкового екрану сцени
+        private string GetInitialScreenForScene(string sceneName)
+        {
+            switch (sceneName.ToLower())
+            {
+                case "lobbyscene":
+                case "mainmenu":
                     return "Lobby";
                 case "gamescene":
                     return "GameUI";

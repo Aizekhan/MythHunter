@@ -7,6 +7,7 @@ using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Core;
 using MythHunter.UI.Core;
+using MythHunter.UI.Navigation;
 using MythHunter.Utils.Logging;
 using System;
 
@@ -18,6 +19,7 @@ namespace MythHunter.States
         private readonly IMythLogger _logger;
         private readonly IEventBus _eventBus;
         private readonly IGameFlowManager _gameFlowManager;
+        private readonly INavigationService _navigationService;
 
         public LobbyState(IDIContainer container) : base(container)
         {
@@ -25,6 +27,7 @@ namespace MythHunter.States
             _logger = container.Resolve<IMythLogger>();
             _eventBus = container.Resolve<IEventBus>();
             _gameFlowManager = container.Resolve<IGameFlowManager>();
+            _navigationService = container.Resolve<INavigationService>();
         }
 
         public override async void Enter(GameStateType previousState)
@@ -39,26 +42,14 @@ namespace MythHunter.States
                 Timestamp = DateTime.UtcNow
             });
 
-            // Асинхронно ініціалізуємо UI з невеликою затримкою, щоб системи встигли підписатися
-            await UniTask.Delay(100);
+            // Асинхронно налаштовуємо навігацію для сцени
+            var parameters = new NavigationParameters();
+            parameters.Add("PreviousState", previousState.ToString());
+            await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
 
-            // Потім публікуємо подію входу в Lobby
+            // Публікуємо подію входу в Lobby
             _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
             _logger.LogInfo("LobbyStateEnteredEvent опубліковано", "LobbyState");
-
-            // Показуємо UI, якщо потрібно
-            if (!_uiService.IsScreenActive<UI.Views.LobbyView>())
-            {
-                var view = await _uiService.ShowScreenAsync<UI.Views.LobbyView>("Lobby");
-                if (view != null)
-                {
-                    _logger.LogInfo("LobbyView створено і показано", "LobbyState");
-                }
-                else
-                {
-                    _logger.LogError("Не вдалося показати LobbyView", "LobbyState");
-                }
-            }
         }
 
         public override GameStateType StateId => GameStateType.Lobby;

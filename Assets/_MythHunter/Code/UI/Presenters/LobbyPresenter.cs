@@ -336,8 +336,8 @@ namespace MythHunter.UI.Presenters
             parameters.Add("PlayerCount", _gameSettings.PlayerCount);
             parameters.Add("ManaPerPlayer", _gameSettings.ManaPerPlayer);
 
+            // Найкраща практика - використання типізованого методу без явного ID
             await _navigationService.NavigateToAsync<HeroCardSelectorView>(
-                screenId: "HeroCardSelector",
                 parameters: parameters,
                 transition: TransitionType.SlideLeft
             );
@@ -348,8 +348,9 @@ namespace MythHunter.UI.Presenters
             var parameters = new NavigationParameters();
             parameters.Add("Message", message);
 
+            // Використання enum замість string
             bool result = await _navigationService.ShowModalAsync<ConfirmationDialog, bool>(
-                modalId: "ConfirmDialog",
+                viewId: ViewId.ConfirmDialog,
                 parameters: parameters
             );
 

@@ -7,6 +7,7 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Systems.Core;
+using MythHunter.UI.Core;
 using MythHunter.UI.Navigation;
 using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
@@ -109,16 +110,20 @@ namespace MythHunter.Core.Game
                 // Підготовка до зміни сцени
                 await _navigationService.PrepareForSceneChangeAsync();
 
+                // Завантажуємо сцену
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
                 _currentSceneName = "LobbyScene";
 
+                // Ініціалізуємо системи
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
 
+                // Змінюємо стан гри
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
 
-                // Встановлення початкового екрану лоббі
-                await _navigationService.SetInitialScreen<LobbyView>("LobbyView");
+                // Налаштування навігації для сцени - використовуємо enum
+                var parameters = new NavigationParameters();
+                await _navigationService.NavigateToAsync<LobbyView>(ViewId.Lobby, parameters);
 
                 // Публікуємо подію зміни стану гри
                 PublishStateChange(GameStateType.Boot, GameStateType.Lobby);
@@ -131,7 +136,6 @@ namespace MythHunter.Core.Game
                 throw;
             }
         }
-
         /// <summary>
         /// Запускає перехід від Lobby до Gameplay
         /// </summary>
