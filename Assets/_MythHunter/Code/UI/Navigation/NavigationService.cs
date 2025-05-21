@@ -5,7 +5,7 @@ using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.UI.Core;
-using MythHunter.UI.Views;
+
 using MythHunter.Utils.Logging;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,7 @@ namespace MythHunter.UI.Navigation
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
         private readonly IViewConfigRegistry _viewConfigRegistry;
+
         // Стек навігації для зберігання історії екранів
         private readonly Stack<NavigationEntry> _navigationStack = new Stack<NavigationEntry>();
 
@@ -40,19 +41,19 @@ namespace MythHunter.UI.Navigation
         // Структура для збереження інформації про екран у стеку
         private struct NavigationEntry
         {
-            public string ScreenId;
+            public ViewId ViewId;
             public IView View;
             public NavigationParameters Parameters;
         }
 
         [Inject]
         public NavigationService(
-     IUIService uiService,
-     IScreenTransition transition,
-     IEventBus eventBus,
-     IMythLogger logger,
-     IDIContainer container,
-     IViewConfigRegistry viewConfigRegistry)
+            IUIService uiService,
+            IScreenTransition transition,
+            IEventBus eventBus,
+            IMythLogger logger,
+            IDIContainer container,
+            IViewConfigRegistry viewConfigRegistry)
         {
             _uiService = uiService;
             _transition = transition;
@@ -101,34 +102,52 @@ namespace MythHunter.UI.Navigation
         }
 
         /// <summary>
-        /// Навігація до нового екрану
+        /// Навігація до нового екрану за типом View
         /// </summary>
-        public async UniTask<TView> NavigateToAsync<TView>(string screenId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-     where TView : Component, IView
+        public async UniTask<TView> NavigateToAsync<TView>(NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
+            where TView : Component, IView
         {
-            _logger.LogInfo($"Навігація до екрану: {screenId}", "Navigation");
+            // Отримуємо ViewId за типом
+            ViewId viewId = GetViewIdForType<TView>();
+
+            if (viewId == ViewId.None)
+            {
+                _logger.LogError($"Не знайдено ViewId для типу {typeof(TView).Name}", "Navigation");
+                return null;
+            }
+
+            return await NavigateToAsync<TView>(viewId, parameters, transition);
+        }
+
+        /// <summary>
+        /// Навігація до нового екрану за допомогою ViewId
+        /// </summary>
+        public async UniTask<TView> NavigateToAsync<TView>(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
+            where TView : Component, IView
+        {
+            _logger.LogInfo($"Навігація до екрану: {viewId}", "Navigation");
 
             try
             {
                 // Отримуємо поточний екран (якщо є)
                 IView currentView = _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
-                // Створюємо новий екран
-                var viewConfig = _viewConfigRegistry.Get(screenId);
+                // Отримати конфіг представлення
+                var viewConfig = _viewConfigRegistry.Get(viewId);
                 if (viewConfig == null)
                 {
-                    _logger.LogError($"ViewConfig не знайдено: {screenId}", "Navigation");
+                    _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
                     return null;
                 }
 
-                Type viewType = Type.GetType(viewConfig.ViewTypeName);
+                Type viewType = Type.GetType(viewConfig.viewTypeName);
                 if (viewType == null)
                 {
-                    _logger.LogError($"Тип не знайдено: {viewConfig.ViewTypeName}", "Navigation");
+                    _logger.LogError($"Тип не знайдено: {viewConfig.viewTypeName}", "Navigation");
                     return null;
                 }
 
-                var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
+                var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.prefabPath);
                 var newView = rawView as TView;
                 if (newView == null)
                 {
@@ -160,7 +179,7 @@ namespace MythHunter.UI.Navigation
                 // Додаємо новий екран у стек навігації
                 _navigationStack.Push(new NavigationEntry
                 {
-                    ScreenId = screenId,
+                    ViewId = viewId,
                     View = newView,
                     Parameters = parameters ?? new NavigationParameters()
                 });
@@ -169,7 +188,7 @@ namespace MythHunter.UI.Navigation
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при навігації до екрану {screenId}: {ex.Message}", "Navigation", ex);
+                _logger.LogError($"Помилка при навігації до екрану {viewId}: {ex.Message}", "Navigation", ex);
                 return null;
             }
         }
@@ -312,30 +331,69 @@ namespace MythHunter.UI.Navigation
         }
 
         /// <summary>
-        /// Заміна поточного екрану без додавання в стек
+        /// Заміна поточного екрану без додавання в стек за типом View
         /// </summary>
-        public async UniTask<TView> ReplaceCurrentAsync<TView>(string screenId, NavigationParameters parameters = null)
+        public async UniTask<TView> ReplaceCurrentAsync<TView>(NavigationParameters parameters = null)
             where TView : Component, IView
         {
-            _logger.LogInfo($"Заміна поточного екрану на: {screenId}", "Navigation");
+            // Отримуємо ViewId за типом
+            ViewId viewId = GetViewIdForType<TView>();
+
+            if (viewId == ViewId.None)
+            {
+                _logger.LogError($"Не знайдено ViewId для типу {typeof(TView).Name}", "Navigation");
+                return null;
+            }
+
+            return await ReplaceCurrentAsync<TView>(viewId, parameters);
+        }
+
+        /// <summary>
+        /// Заміна поточного екрану без додавання в стек за ViewId
+        /// </summary>
+        public async UniTask<TView> ReplaceCurrentAsync<TView>(ViewId viewId, NavigationParameters parameters = null)
+            where TView : Component, IView
+        {
+            _logger.LogInfo($"Заміна поточного екрану на: {viewId}", "Navigation");
 
             try
             {
                 // Якщо стек порожній, просто додаємо новий екран
                 if (_navigationStack.Count == 0)
                 {
-                    return await NavigateToAsync<TView>(screenId, parameters);
+                    return await NavigateToAsync<TView>(viewId, parameters);
                 }
 
                 // Отримуємо поточний екран
                 var currentEntry = _navigationStack.Pop();
                 IView currentView = currentEntry.View;
 
-                // Створюємо новий екран
-                var newView = await _uiService.ShowScreenAsync<TView>(screenId);
+                // Отримати конфіг представлення
+                var viewConfig = _viewConfigRegistry.Get(viewId);
+                if (viewConfig == null)
+                {
+                    _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
+
+                    // Повертаємо поточний екран назад у стек
+                    _navigationStack.Push(currentEntry);
+                    return null;
+                }
+
+                Type viewType = Type.GetType(viewConfig.viewTypeName);
+                if (viewType == null)
+                {
+                    _logger.LogError($"Тип не знайдено: {viewConfig.viewTypeName}", "Navigation");
+
+                    // Повертаємо поточний екран назад у стек
+                    _navigationStack.Push(currentEntry);
+                    return null;
+                }
+
+                var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.prefabPath);
+                var newView = rawView as TView;
                 if (newView == null)
                 {
-                    _logger.LogError($"Не вдалося створити екран: {screenId}", "Navigation");
+                    _logger.LogError($"Не вдалося привести View до типу {typeof(TView).Name}", "Navigation");
 
                     // Повертаємо поточний екран назад у стек
                     _navigationStack.Push(currentEntry);
@@ -373,7 +431,7 @@ namespace MythHunter.UI.Navigation
                 // Додаємо новий екран у стек навігації
                 _navigationStack.Push(new NavigationEntry
                 {
-                    ScreenId = screenId,
+                    ViewId = viewId,
                     View = newView,
                     Parameters = parameters ?? new NavigationParameters()
                 });
@@ -388,12 +446,30 @@ namespace MythHunter.UI.Navigation
         }
 
         /// <summary>
-        /// Показ модального вікна з очікуванням результату
+        /// Показ модального вікна з очікуванням результату за типом View
         /// </summary>
-        public async UniTask<TResult> ShowModalAsync<TView, TResult>(string modalId, NavigationParameters parameters = null)
+        public async UniTask<TResult> ShowModalAsync<TView, TResult>(NavigationParameters parameters = null)
             where TView : Component, IModalView<TResult>
         {
-            _logger.LogInfo($"Показ модального вікна: {modalId}", "Navigation");
+            // Отримуємо ViewId за типом
+            ViewId viewId = GetViewIdForType<TView>();
+
+            if (viewId == ViewId.None)
+            {
+                _logger.LogError($"Не знайдено ViewId для типу {typeof(TView).Name}", "Navigation");
+                throw new InvalidOperationException($"Не знайдено ViewId для типу {typeof(TView).Name}");
+            }
+
+            return await ShowModalAsync<TView, TResult>(viewId, parameters);
+        }
+
+        /// <summary>
+        /// Показ модального вікна з очікуванням результату за ViewId
+        /// </summary>
+        public async UniTask<TResult> ShowModalAsync<TView, TResult>(ViewId viewId, NavigationParameters parameters = null)
+            where TView : Component, IModalView<TResult>
+        {
+            _logger.LogInfo($"Показ модального вікна: {viewId}", "Navigation");
 
             try
             {
@@ -401,12 +477,27 @@ namespace MythHunter.UI.Navigation
                 var tcs = new UniTaskCompletionSource<TResult>();
                 _modalTcs = tcs;
 
-                // Створюємо модальне вікно
-                var modalView = await _uiService.ShowScreenAsync<TView>(modalId);
+                // Отримати конфіг представлення
+                var viewConfig = _viewConfigRegistry.Get(viewId);
+                if (viewConfig == null)
+                {
+                    _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
+                    throw new InvalidOperationException($"ViewConfig не знайдено для: {viewId}");
+                }
+
+                Type viewType = Type.GetType(viewConfig.viewTypeName);
+                if (viewType == null)
+                {
+                    _logger.LogError($"Тип не знайдено: {viewConfig.viewTypeName}", "Navigation");
+                    throw new InvalidOperationException($"Тип не знайдено: {viewConfig.viewTypeName}");
+                }
+
+                var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.prefabPath);
+                var modalView = rawView as TView;
                 if (modalView == null)
                 {
-                    _logger.LogError($"Не вдалося створити модальне вікно: {modalId}", "Navigation");
-                    throw new InvalidOperationException($"Не вдалося створити модальне вікно: {modalId}");
+                    _logger.LogError($"Не вдалося привести View до типу {typeof(TView).Name}", "Navigation");
+                    throw new InvalidOperationException($"Не вдалося привести View до типу {typeof(TView).Name}");
                 }
 
                 _currentModal = modalView;
@@ -432,7 +523,7 @@ namespace MythHunter.UI.Navigation
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при показі модального вікна {modalId}: {ex.Message}", "Navigation", ex);
+                _logger.LogError($"Помилка при показі модального вікна {viewId}: {ex.Message}", "Navigation", ex);
                 throw;
             }
         }
@@ -543,21 +634,54 @@ namespace MythHunter.UI.Navigation
         }
 
         /// <summary>
-        /// Встановлення початкового екрану для сцени
+        /// Встановлення початкового екрану для сцени за типом View
         /// </summary>
-        public async UniTask<TView> SetInitialScreen<TView>(string prefabPath, NavigationParameters parameters = null)
-     where TView : UnityEngine.Component, IView
+        public async UniTask<TView> SetInitialScreen<TView>(NavigationParameters parameters = null)
+            where TView : Component, IView
         {
-            _logger.LogInfo($"Встановлення початкового екрану: {prefabPath}", "Navigation");
+            // Отримуємо ViewId за типом
+            ViewId viewId = GetViewIdForType<TView>();
+
+            if (viewId == ViewId.None)
+            {
+                _logger.LogError($"Не знайдено ViewId для типу {typeof(TView).Name}", "Navigation");
+                return null;
+            }
+
+            return await SetInitialScreen<TView>(viewId, parameters);
+        }
+
+        /// <summary>
+        /// Встановлення початкового екрану для сцени за ViewId
+        /// </summary>
+        public async UniTask<TView> SetInitialScreen<TView>(ViewId viewId, NavigationParameters parameters = null)
+            where TView : Component, IView
+        {
+            _logger.LogInfo($"Встановлення початкового екрану: {viewId}", "Navigation");
 
             // Очищаємо стек навігації
             await ClearStackAsync();
 
-            // Створюємо новий екран
-            var newView = await _uiService.ShowScreenAsync<TView>(prefabPath);
+            // Отримати конфіг представлення
+            var viewConfig = _viewConfigRegistry.Get(viewId);
+            if (viewConfig == null)
+            {
+                _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
+                return null;
+            }
+
+            Type viewType = Type.GetType(viewConfig.viewTypeName);
+            if (viewType == null)
+            {
+                _logger.LogError($"Тип не знайдено: {viewConfig.viewTypeName}", "Navigation");
+                return null;
+            }
+
+            var rawView = await _uiService.ShowScreenAsync(viewType, viewConfig.prefabPath);
+            var newView = rawView as TView;
             if (newView == null)
             {
-                _logger.LogError($"Не вдалося створити початковий екран: {prefabPath}", "Navigation");
+                _logger.LogError($"Не вдалося привести View до типу {typeof(TView).Name}", "Navigation");
                 return null;
             }
 
@@ -571,7 +695,7 @@ namespace MythHunter.UI.Navigation
             // Додаємо новий екран у стек навігації
             _navigationStack.Push(new NavigationEntry
             {
-                ScreenId = prefabPath, // Використовуємо шлях як ідентифікатор
+                ViewId = viewId,
                 View = newView,
                 Parameters = parameters ?? new NavigationParameters()
             });
@@ -588,16 +712,17 @@ namespace MythHunter.UI.Navigation
         }
 
         /// <summary>
-        /// Звільнення ресурсів
+        /// Отримання ViewId для вказаного типу View
         /// </summary>
-        public void Dispose()
+        public ViewId GetViewIdForType<TView>() where TView : Component, IView
         {
-            UnsubscribeFromEvents();
-
-            // Очищаємо стек навігації
-            ClearStackAsync().Forget();
+            var viewConfig = _viewConfigRegistry.GetByType<TView>();
+            return viewConfig != null ? viewConfig.viewId : ViewId.None;
         }
 
+        /// <summary>
+        /// Налаштування навігації для сцени
+        /// </summary>
         public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters = null)
         {
             _logger.LogInfo($"Налаштування навігації для сцени: {sceneName}", "Navigation");
@@ -606,8 +731,8 @@ namespace MythHunter.UI.Navigation
             await ClearStackAsync();
 
             // Визначити, який екран завантажити залежно від сцени
-            string initialScreenId = GetInitialScreenForScene(sceneName);
-            if (string.IsNullOrEmpty(initialScreenId))
+            ViewId initialViewId = GetInitialViewIdForScene(sceneName);
+            if (initialViewId == ViewId.None)
             {
                 _logger.LogWarning($"Не знайдено початковий екран для сцени: {sceneName}", "Navigation");
                 return;
@@ -618,71 +743,12 @@ namespace MythHunter.UI.Navigation
             navParams.Add("SceneName", sceneName);
 
             // Завантажити відповідний екран
-            await LoadInitialScreenAsync(initialScreenId, navParams);
+            await LoadInitialScreenAsync(initialViewId, navParams);
         }
 
-        // Приватний метод для визначення початкового екрану сцени
-        private string GetInitialScreenForScene(string sceneName)
-        {
-            switch (sceneName.ToLower())
-            {
-                case "lobbyscene":
-                case "mainmenu":
-                    return ViewIdConstants.Lobby;
-                case "gamescene":
-                    return ViewIdConstants.GameplayUI;
-                case "loadingscene":
-                    return ViewIdConstants.Loading;
-                default:
-                    return null;
-            }
-        }
-
-        // Приватний метод для визначення початкового екрану сцени
-        private string GetInitialScreenForScene(string sceneName)
-        {
-            switch (sceneName.ToLower())
-            {
-                case "lobbyscene":
-                case "mainmenu":
-                    return "Lobby";
-                case "gamescene":
-                    return "GameUI";
-                case "loadingscene":
-                    return "LoadingUI";
-                default:
-                    return null;
-            }
-        }
-
-        // Приватний метод для завантаження початкового екрана
-        private async UniTask LoadInitialScreenAsync(string screenId, NavigationParameters parameters)
-        {
-            var viewConfigRegistry = _container.Resolve<IViewConfigRegistry>();
-            var viewConfig = viewConfigRegistry.Get(screenId);
-
-            if (viewConfig == null)
-            {
-                _logger.LogError($"ViewConfig не знайдено: {screenId}", "Navigation");
-                return;
-            }
-
-            Type viewType = Type.GetType(viewConfig.ViewTypeName);
-            if (viewType == null)
-            {
-                _logger.LogError($"Не вдалося отримати Type з ViewTypeName: {viewConfig.ViewTypeName}", "Navigation");
-                return;
-            }
-
-            var view = await _uiService.ShowScreenAsync(viewType, viewConfig.PrefabPath);
-            if (view is INavigableView navigableView)
-            {
-                await navigableView.OnViewCreatedAsync(parameters ?? new NavigationParameters());
-                await navigableView.OnViewNavigatedToAsync(parameters ?? new NavigationParameters());
-            }
-        }
-
-
+        /// <summary>
+        /// Отримання сповіщення про зміну сцени
+        /// </summary>
         public void OnSceneChanged(string previousScene, string newScene)
         {
             _logger.LogInfo($"Зміна сцени: {previousScene} -> {newScene}", "Navigation");
@@ -693,6 +759,59 @@ namespace MythHunter.UI.Navigation
 
             // Асинхронно налаштовуємо навігацію для нової сцени
             SetupForSceneAsync(newScene, parameters).Forget();
+        }
+
+        /// <summary>
+        /// Звільнення ресурсів
+        /// </summary>
+        public void Dispose()
+        {
+            UnsubscribeFromEvents();
+
+            // Очищаємо стек навігації
+            ClearStackAsync().Forget();
+        }
+
+        // Приватний метод для визначення початкового екрану сцени
+        private ViewId GetInitialViewIdForScene(string sceneName)
+        {
+            switch (sceneName.ToLower())
+            {
+                case "lobbyscene":
+                case "mainmenu":
+                    return ViewId.Lobby;
+                case "gamescene":
+                    return ViewId.GameplayUI;
+                case "loadingscene":
+                    return ViewId.Loading;
+                default:
+                    return ViewId.None;
+            }
+        }
+
+        // Приватний метод для завантаження початкового екрана
+        private async UniTask LoadInitialScreenAsync(ViewId viewId, NavigationParameters parameters)
+        {
+            var viewConfig = _viewConfigRegistry.Get(viewId);
+            if (viewConfig == null)
+            {
+                _logger.LogError($"ViewConfig не знайдено для: {viewId}", "Navigation");
+                return;
+            }
+
+            Type viewType = Type.GetType(viewConfig.viewTypeName);
+            if (viewType == null)
+            {
+                _logger.LogError($"Не вдалося отримати Type з ViewTypeName: {viewConfig.viewTypeName}", "Navigation");
+                return;
+            }
+
+            var view = await _uiService.ShowScreenAsync(viewType, viewConfig.prefabPath);
+            if (view is INavigableView navigableView)
+            {
+                await navigableView.OnViewCreatedAsync(parameters ?? new NavigationParameters());
+                await navigableView.OnViewNavigatedToAsync(parameters ?? new NavigationParameters());
+            }
         }
     }
 }

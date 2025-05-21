@@ -1,6 +1,7 @@
 using UnityEngine;
+using MythHunter.UI.Core;
 
-namespace MythHunter.UI.Core
+namespace MythHunter.UI.ViewConfigs
 {
     [CreateAssetMenu(menuName = "UI/View Config", fileName = "ViewConfig")]
     public class ViewConfig : ScriptableObject
@@ -19,8 +20,5 @@ namespace MythHunter.UI.Core
 
         [Tooltip("Повне ім'я типу представлення (з простором імен)")]
         public string viewTypeName = "";
-
-        // Backward compatibility для старого коду
-        public string ViewId => viewId.ToString();
     }
 }

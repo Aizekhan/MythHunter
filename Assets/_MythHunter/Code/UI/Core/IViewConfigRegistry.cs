@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MythHunter.UI.ViewConfigs;
 
 namespace MythHunter.UI.Core
 {
