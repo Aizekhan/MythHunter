@@ -294,6 +294,18 @@ namespace MythHunter.Core.Game
             UnsubscribeFromEvents();
             _logger.LogInfo("GameFlowManager видалено", "GameFlow");
         }
+        private async void EnterLobby()
+        {
+            // Підготовка параметрів
+            var parameters = new NavigationParameters();
+            parameters.Add("Mode", "Standard");
+
+            // Налаштування представлень для сцени
+            await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
+
+            // Публікуємо подію входу в лобі
+            _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
+        }
     }
 
    

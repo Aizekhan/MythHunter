@@ -6,27 +6,17 @@ namespace MythHunter.UI.Navigation
 {
     public interface INavigationService
     {
-        UniTask<TView> NavigateToAsync<TView>(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-            where TView : Component, IView;
-
-        UniTask<TView> NavigateToAsync<TView>(NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-            where TView : Component, IView;
-
-        UniTask<TResult> ShowModalAsync<TView, TResult>(ViewId viewId, NavigationParameters parameters = null)
-            where TView : Component, IModalView<TResult>;
-
+        // Всі методи працюють тільки з ViewId
+        UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default);
+        UniTask<TResult> ShowModalAsync<TResult>(ViewId viewId, NavigationParameters parameters = null);
         UniTask<IView> GoBackAsync(NavigationParameters parameters = null);
-
         UniTask<IView> GoToRootAsync(NavigationParameters parameters = null);
-
         UniTask ClearStackAsync();
-
         IView GetCurrentScreen();
-
         UniTask PrepareForSceneChangeAsync();
-
         bool HasScreensInStack();
 
-        ViewId GetViewIdForType<TView>() where TView : Component, IView;
+        // Навігація при зміні сцени
+        UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters);
     }
 }

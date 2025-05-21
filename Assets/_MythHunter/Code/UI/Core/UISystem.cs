@@ -16,7 +16,7 @@ namespace MythHunter.UI.Core
     /// </summary>
     public class UISystem : IUISystem
     {
-        private readonly Dictionary<Type, Component> _registeredViews = new Dictionary<Type, Component>();
+        private readonly Dictionary<ViewId, IView> _registeredViews = new Dictionary<ViewId, IView>();
         private readonly IResourceManager _resourceManager;
         private readonly IUIViewFactory _viewFactory;
         private readonly IMythLogger _logger;
@@ -36,88 +36,83 @@ namespace MythHunter.UI.Core
             return _container.Resolve<INavigationService>();
         }
 
-        public async UniTask<TView> ShowViewAsync<TView>() where TView : Component, IView
+        public async UniTask<IView> ShowViewAsync(ViewId viewId)
         {
-            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            if (_registeredViews.TryGetValue(viewId, out var view))
             {
-                view.gameObject.SetActive(true);
-                ((IView)view).Show();
-                _logger.LogInfo($"Showing view: {typeof(TView).Name}", "UI");
+                view.Show();
+                _logger.LogInfo($"Showing view: {viewId}", "UI");
                 return view;
             }
 
-            _logger.LogWarning($"View {typeof(TView).Name} not registered", "UI");
+            _logger.LogWarning($"View {viewId} not registered", "UI");
             return null;
         }
 
-        public void ShowView<TView>() where TView : Component, IView
+        public void ShowView(ViewId viewId)
         {
-            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            if (_registeredViews.TryGetValue(viewId, out var view))
             {
-                view.gameObject.SetActive(true);
-                ((IView)view).Show();
-                _logger.LogInfo($"Showing view: {typeof(TView).Name}", "UI");
+                view.Show();
+                _logger.LogInfo($"Showing view: {viewId}", "UI");
             }
             else
             {
-                _logger.LogWarning($"View {typeof(TView).Name} not registered", "UI");
+                _logger.LogWarning($"View {viewId} not registered", "UI");
             }
         }
 
-        public void HideView<TView>() where TView : Component, IView
+        public void HideView(ViewId viewId)
         {
-            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            if (_registeredViews.TryGetValue(viewId, out var view))
             {
-                ((IView)view).Hide();
-                _logger.LogInfo($"Hiding view: {typeof(TView).Name}", "UI");
+                view.Hide();
+                _logger.LogInfo($"Hiding view: {viewId}", "UI");
             }
             else
             {
-                _logger.LogWarning($"View {typeof(TView).Name} not registered", "UI");
+                _logger.LogWarning($"View {viewId} not registered", "UI");
             }
         }
 
-        public void RegisterView<TView>(TView view) where TView : Component, IView
+        public void RegisterView(ViewId viewId, IView view)
         {
-            Type viewType = typeof(TView);
-            if (_registeredViews.ContainsKey(viewType))
+            if (_registeredViews.ContainsKey(viewId))
             {
-                _registeredViews[viewType] = view;
-                _logger.LogInfo($"Updated registered view: {viewType.Name}", "UI");
+                _registeredViews[viewId] = view;
+                _logger.LogInfo($"Updated registered view: {viewId}", "UI");
             }
             else
             {
-                _registeredViews.Add(viewType, view);
-                _logger.LogInfo($"Registered view: {viewType.Name}", "UI");
+                _registeredViews.Add(viewId, view);
+                _logger.LogInfo($"Registered view: {viewId}", "UI");
             }
         }
 
-        public void UnregisterView<TView>(TView view) where TView : Component, IView
+        public void UnregisterView(ViewId viewId)
         {
-            Type viewType = typeof(TView);
-            if (_registeredViews.TryGetValue(viewType, out var registeredView) && registeredView == view)
+            if (_registeredViews.Remove(viewId))
             {
-                _registeredViews.Remove(viewType);
-                _logger.LogInfo($"Unregistered view: {viewType.Name}", "UI");
+                _logger.LogInfo($"Unregistered view: {viewId}", "UI");
             }
         }
 
-        public TView GetView<TView>() where TView : Component, IView
+        public IView GetView(ViewId viewId)
         {
-            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            if (_registeredViews.TryGetValue(viewId, out var view))
             {
                 return view;
             }
 
-            _logger.LogWarning($"View {typeof(TView).Name} not found", "UI");
+            _logger.LogWarning($"View {viewId} not found", "UI");
             return null;
         }
 
-        public bool IsViewActive<TView>() where TView : Component, IView
+        public bool IsViewActive(ViewId viewId)
         {
-            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            if (_registeredViews.TryGetValue(viewId, out var view))
             {
-                return view.gameObject.activeInHierarchy;
+                return view is Component component && component.gameObject.activeInHierarchy;
             }
 
             return false;

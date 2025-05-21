@@ -1,5 +1,7 @@
 
 // IUIViewFactory.cs
+using Cysharp.Threading.Tasks;
+
 namespace MythHunter.UI.Core
 {
     /// <summary>
@@ -7,7 +9,8 @@ namespace MythHunter.UI.Core
     /// </summary>
     public interface IUIViewFactory
     {
-        Cysharp.Threading.Tasks.UniTask<T> CreateViewAsync<T>(string prefabPath) where T : UnityEngine.Component, IView;
-        void ReleaseView<T>(T view) where T : UnityEngine.Component, IView;
+        // Фабрика тепер працює тільки з ViewId
+        UniTask<IView> CreateViewAsync(ViewId viewId);
+        void ReleaseView(ViewId viewId, IView view);
     }
 }

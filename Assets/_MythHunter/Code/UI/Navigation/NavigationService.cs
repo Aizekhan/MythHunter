@@ -74,20 +74,9 @@ namespace MythHunter.UI.Navigation
                 ClearStackAsync().Forget();
         }
 
-        public async UniTask<TView> NavigateToAsync<TView>(NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-    where TView : Component, IView
-        {
-            var viewId = GetViewIdForType<TView>();
-            if (viewId == ViewId.None)
-            {
-                _logger.LogError($"Не знайдено ViewId для типу {typeof(TView).Name}", "Navigation");
-                return null;
-            }
-            return await NavigateToAsync<TView>(viewId, parameters, transition);
-        }
 
-        public async UniTask<TView> NavigateToAsync<TView>(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
-            where TView : Component, IView
+
+        public async UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
         {
             _logger.LogInfo($"Навігація до екрану: {viewId}", "Navigation");
 
@@ -102,17 +91,17 @@ namespace MythHunter.UI.Navigation
                     return null;
                 }
 
-                var newView = await _uiService.ShowScreenAsync<TView>();
+                var newView = await _uiService.ShowScreenAsync(viewId);
                 if (newView == null)
                 {
-                    _logger.LogError($"Не вдалося створити екран {typeof(TView).Name} для ViewId {viewId}", "Navigation");
+                    _logger.LogError($"Не вдалося створити екран для ViewId {viewId}", "Navigation");
                     return null;
                 }
 
                 if (currentView is INavigableView currentNavView)
                     await currentNavView.OnViewNavigatedFromAsync();
 
-                await _transition.PlayTransitionAsync(currentView?.gameObject, newView.gameObject, transition, true);
+                await _transition.PlayTransitionAsync(currentView as GameObject, newView as GameObject, transition, true);
 
                 if (newView is INavigableView navView)
                 {
@@ -131,7 +120,7 @@ namespace MythHunter.UI.Navigation
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при навігації до екрану {viewId}: {ex.Message}", "Navigation", ex);
+                _logger.LogError($"Помилка при навігації до екрану {viewId}: {ex.Message}", "Navigation");
                 return null;
             }
         }
@@ -147,7 +136,12 @@ namespace MythHunter.UI.Navigation
             if (currentEntry.View is INavigableView navFrom)
                 await navFrom.OnViewNavigatedFromAsync();
 
-            await _transition.PlayTransitionAsync(currentEntry.View?.gameObject, previousEntry.View?.gameObject, TransitionType.Default, false);
+            await _transition.PlayTransitionAsync(
+                currentEntry.View as GameObject,
+                previousEntry.View as GameObject,
+                TransitionType.Default,
+                false
+            );
 
             if (previousEntry.View is INavigableView navTo)
                 await navTo.OnViewNavigatedToAsync(parameters ?? previousEntry.Parameters);
@@ -155,13 +149,8 @@ namespace MythHunter.UI.Navigation
             if (currentEntry.View is INavigableView navDestroy)
                 await navDestroy.OnViewDestroyedAsync();
 
-            // Виправлено: використовуємо generic-версію HideScreen якщо можливо
-            if (currentEntry.View is Component component)
-            {
-                // Знаходимо тип і робимо виклик через _uiService.HideScreen<TView>()
-                // Тут потрібно використати рефлексію або убезпечитись іншим чином
-                _uiService.HideScreen<Component>(); // Примітка: це не точне рішення, але напрямок правильний
-            }
+            // Ховаємо поточне представлення
+            _uiService.HideScreen(currentEntry.ViewId);
 
             return previousEntry.View;
         }
@@ -186,11 +175,10 @@ namespace MythHunter.UI.Navigation
                 if (entry.View is INavigableView navDestroy)
                     await navDestroy.OnViewDestroyedAsync();
 
-                // Виправляємо цей виклик
+               
                 if (entry.View is Component component)
                 {
-                    // Подібне рішення як в GoBackAsync
-                    _uiService.HideScreen<Component>(); // Примітка: не точне рішення
+                    component.gameObject.SetActive(false);
                 }
             }
 
@@ -217,8 +205,7 @@ namespace MythHunter.UI.Navigation
         }
 
         // Змінити метод ShowModalAsync, щоб використовувати правильну змінну
-        public async UniTask<TResult> ShowModalAsync<TView, TResult>(ViewId viewId, NavigationParameters parameters = null)
-            where TView : Component, IModalView<TResult>
+        public async UniTask<TResult> ShowModalAsync<TResult>(ViewId viewId, NavigationParameters parameters = null)
         {
             var viewConfig = _viewConfigRegistry.Get(viewId);
             if (viewConfig == null)
@@ -230,25 +217,33 @@ namespace MythHunter.UI.Navigation
             var tcs = new UniTaskCompletionSource<TResult>();
             _modalTcs = tcs;
 
-            // Виправлено: var newView замість modalView
-            var newView = await _uiService.ShowScreenAsync<TView>();
-            if (newView == null) // Виправлено: перевірка newView замість modalView
+            var newView = await _uiService.ShowScreenAsync(viewId);
+            if (newView == null)
             {
                 _logger.LogError($"Не вдалося створити модальне вікно для ViewId: {viewId}", "Navigation");
                 return default;
             }
 
-            _currentModal = newView; // Виправлено: використання newView
-            await newView.InitializeAsync(parameters ?? new NavigationParameters()); // Виправлено: використання newView
-            newView.SetCompletionCallback(result =>
+            if (newView is IModalView<TResult> modalView)
             {
-                _uiService.HideScreen<TView>(); // Виправлено: використання generic-параметра
-                tcs.TrySetResult(result);
-                _currentModal = null;
-                _modalTcs = null;
-            });
+                _currentModal = modalView;
+                await modalView.InitializeAsync(parameters ?? new NavigationParameters());
+                modalView.SetCompletionCallback(result =>
+                {
+                    _uiService.HideScreen(viewId);
+                    tcs.TrySetResult(result);
+                    _currentModal = null;
+                    _modalTcs = null;
+                });
 
-            return await tcs.Task;
+                return await tcs.Task;
+            }
+            else
+            {
+                _logger.LogError($"View для ViewId {viewId} не реалізує IModalView<{typeof(TResult).Name}>", "Navigation");
+                _uiService.HideScreen(viewId);
+                return default;
+            }
         }
 
         public void CloseModal<TResult>(TResult result = default)
@@ -273,7 +268,7 @@ namespace MythHunter.UI.Navigation
             await ClearStackAsync();
             return await NavigateToAsync<TView>(viewId, parameters);
         }
-
+ 
         public async UniTask ClearStackAsync()
         {
             while (_navigationStack.Count > 0)
@@ -284,7 +279,42 @@ namespace MythHunter.UI.Navigation
                 entry.View.Hide();
             }
         }
+        public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters)
+        {
+            await ClearStackAsync();
 
+            // Перетворюємо назву сцени у ViewId
+            ViewId initialScreenId = sceneName switch
+            {
+                "LobbyScene" => ViewId.Lobby,
+                "GameScene" => ViewId.GameplayUI,
+                "MainMenuScene" => ViewId.MainMenu,
+                "LoadingScene" => ViewId.Loading,
+                _ => ViewId.None
+            };
+
+            if (initialScreenId != ViewId.None)
+            {
+                await NavigateToAsync(initialScreenId, parameters);
+            }
+        }
+
+        private Type GetViewTypeByViewId(ViewId viewId)
+        {
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null || string.IsNullOrEmpty(config.viewTypeName))
+                return null;
+
+            try
+            {
+                return Type.GetType(config.viewTypeName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Не вдалося знайти тип {config.viewTypeName}: {ex.Message}", "Navigation");
+                return null;
+            }
+        }
         public IView GetCurrentScreen() => _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
         public void Dispose()

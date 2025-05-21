@@ -1,21 +1,20 @@
-using UnityEngine;
+// Шлях: Assets/_MythHunter/Code/UI/Core/IUISystem.cs
+
 using Cysharp.Threading.Tasks;
-using MythHunter.UI.Navigation;
-using System;
+using MythHunter.UI.Core;
 
-namespace MythHunter.UI.Core
+public interface IUISystem
 {
-    /// <summary>
-    /// Інтерфейс системи UI
-    /// </summary>
-    public interface IUISystem
-    {
-        UniTask<TView> ShowViewAsync<TView>() where TView : Component, IView;
-        void HideView<TView>();
-        void RegisterView<TView>(TView view);
-        TView GetView<TView>();
-        bool IsViewActive<TView>();
+    // Змінюємо методи, щоб працювали з ViewId замість Type
+    UniTask<IView> ShowViewAsync(ViewId viewId);
+    void ShowView(ViewId viewId);
+    void HideView(ViewId viewId);
 
+    // Реєстрація представлень тепер з ViewId
+    void RegisterView(ViewId viewId, IView view);
+    void UnregisterView(ViewId viewId);
 
-    }
+    // Отримання представлення за ViewId
+    IView GetView(ViewId viewId);
+    bool IsViewActive(ViewId viewId);
 }

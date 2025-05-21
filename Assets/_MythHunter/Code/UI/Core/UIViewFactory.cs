@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/UI/Core/UIViewFactory.cs
 
+using System;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Resources.Core;
@@ -18,57 +19,61 @@ namespace MythHunter.UI.Core
         private readonly IMythLogger _logger;
         private readonly IPoolManager _poolManager;
         private readonly IDIContainer _container;
-
+        private readonly IViewConfigRegistry _viewConfigRegistry;
         [Inject]
         public UIViewFactory(
             IResourceProvider resourceProvider,
             IMythLogger logger,
             IPoolManager poolManager,
-            IDIContainer container)
+            IDIContainer container,
+            IViewConfigRegistry viewConfigRegistry)
         {
             _resourceProvider = resourceProvider;
             _logger = logger;
             _poolManager = poolManager;
             _container = container;
+            _viewConfigRegistry = viewConfigRegistry;
         }
 
-        public async UniTask<T> CreateViewAsync<T>(string prefabPath) where T : Component, IView
+        public async UniTask<IView> CreateViewAsync(ViewId viewId)
         {
-            _logger.LogInfo($"[UIFactory] Creating view: {typeof(T).Name} from path {prefabPath}", "UI");
+            // Отримуємо конфігурацію за ViewId
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null)
+            {
+                _logger.LogError($"Не знайдено конфігурацію для viewId: {viewId}", "UIViewFactory");
+                return null;
+            }
+
             try
             {
-                var prefab = await _resourceProvider.LoadAsync<GameObject>(prefabPath);
+                // Використовуємо prefabPath з конфігурації
+                var prefab = await _resourceProvider.LoadAsync<GameObject>(config.prefabPath);
                 if (prefab == null)
                 {
-                    _logger.LogError($"[UIFactory] Failed to load UI prefab at path: {prefabPath}", "UI");
+                    _logger.LogError($"Не вдалося завантажити префаб за шляхом {config.prefabPath}", "UIViewFactory");
                     return null;
                 }
 
-                // Визначаємо parent — GlobalCanvas (UIRoot)
-                Transform parent = UIRoot.RootTransform;
-                if (parent == null)
-                {
-                    _logger.LogError("[UIFactory] UIRoot.RootTransform not found. UI will not appear correctly!", "UI");
-                }
-
-                var instance = Object.Instantiate(prefab, parent);
-                var view = instance.GetComponent<T>();
+                // Створення екземпляра
+                var instance = UnityEngine.Object.Instantiate(prefab, UIRoot.RootTransform);
+                var view = instance.GetComponent<IView>();
 
                 if (view == null)
                 {
-                    _logger.LogError($"[UIFactory] Prefab '{prefab.name}' is missing component of type {typeof(T).Name}", "UI");
-                    Object.Destroy(instance);
+                    _logger.LogError($"Префаб не містить компонента, що реалізує IView", "UIViewFactory");
+                    UnityEngine.Object.Destroy(instance);
                     return null;
                 }
 
-                // Виконуємо ін'єкцію залежностей
-                _container.InjectDependencies(view);
+                // Ін'єкція залежностей
+                _container.InjectDependencies(instance);
 
                 return view;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError($"[UIFactory] Exception creating view: {ex.Message}", "UI", ex);
+                _logger.LogError($"Помилка при створенні представлення {viewId}: {ex.Message}", "UIViewFactory");
                 return null;
             }
         }
@@ -170,20 +175,11 @@ namespace MythHunter.UI.Core
             }
         }
 
-        public void ReleaseView<T>(T view) where T : Component, IView
+        public void ReleaseView(ViewId viewId, IView view)
         {
-            if (view != null)
+            if (view is Component component)
             {
-                // Спочатку спробуємо повернути в пул, якщо не вийде - знищимо
-                try
-                {
-                    ReturnViewToPool(view);
-                }
-                catch (System.Exception)
-                {
-                    // Якщо не вдалося повернути в пул, знищуємо
-                    Object.Destroy(view.gameObject);
-                }
+                UnityEngine.Object.Destroy(component.gameObject);
             }
         }
     }
