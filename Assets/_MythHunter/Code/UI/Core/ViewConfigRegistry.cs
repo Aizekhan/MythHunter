@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -8,8 +7,8 @@ namespace MythHunter.UI.Core
 {
     public class ViewConfigRegistry : IViewConfigRegistry
     {
-        private readonly Dictionary<ViewId, ViewConfig> _configsByEnum = new Dictionary<ViewId, ViewConfig>();
-        private readonly Dictionary<Type, ViewConfig> _configsByType = new Dictionary<Type, ViewConfig>();
+        private readonly Dictionary<ViewId, ViewConfig> _configsById = new();
+        private readonly Dictionary<string, ViewConfig> _configsByName = new(); // Якщо потрібно доступ через nameof(ViewId)
 
         public ViewConfigRegistry()
         {
@@ -19,34 +18,34 @@ namespace MythHunter.UI.Core
         private void LoadAllConfigs()
         {
             var configs = UnityEngine.Resources.LoadAll<ViewConfig>("UI/ViewConfigs");
+
             foreach (var config in configs)
             {
-                if (!_configsByEnum.ContainsKey(config.viewId))
+                if (!_configsById.ContainsKey(config.viewId))
                 {
-                    _configsByEnum.Add(config.viewId, config);
-
-                    // Реєструємо також за типом, якщо можливо
-                    Type viewType = Type.GetType(config.viewTypeName);
-                    if (viewType != null && !_configsByType.ContainsKey(viewType))
-                    {
-                        _configsByType.Add(viewType, config);
-                    }
+                    _configsById.Add(config.viewId, config);
+                    _configsByName.Add(config.viewId.ToString(), config);
                 }
             }
         }
-
+     
         public ViewConfig Get(ViewId viewId)
         {
-            _configsByEnum.TryGetValue(viewId, out var config);
+            _configsById.TryGetValue(viewId, out var config);
             return config;
         }
-
-        public ViewConfig GetByType<T>() where T : UnityEngine.Component, IView
+        public ViewConfig GetByType<T>() where T : Component, IView
         {
-            _configsByType.TryGetValue(typeof(T), out var config);
-            return config;
-        }
+            foreach (var config in _configsById.Values)
+            {
+                if (config.prefabPath.ToLower().Contains(typeof(T).Name.ToLower()))
+                    return config;
+            }
 
-        public IReadOnlyList<ViewConfig> GetAll() => _configsByEnum.Values.ToList();
+            return null;
+        }
+        public IReadOnlyList<ViewConfig> GetAll() => _configsById.Values.ToList();
+
+        
     }
 }

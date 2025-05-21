@@ -18,7 +18,6 @@ namespace MythHunter.UI.ViewConfigs
         [Tooltip("Чи кешувати представлення")]
         public bool isCached = true;
 
-        [Tooltip("Повне ім'я типу представлення (з простором імен)")]
-        public string viewTypeName = "";
+       
     }
 }

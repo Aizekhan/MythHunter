@@ -10,22 +10,11 @@ namespace MythHunter.UI.Core
     /// </summary>
     public interface IUIService
     {
-        /// <summary>
-        /// Показує вказаний екран за його ідентифікатором
-        /// </summary>
-        UniTask<TView> ShowScreenAsync<TView>(string screenId) where TView : Component, IView;
 
-        UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath);
 
-        /// <summary>
-        /// Ховає вказаний екран
-        /// </summary>
-        void HideScreen<TView>() where TView : Component, IView;
-
-        /// <summary>
-        /// Перевіряє чи екран активний
-        /// </summary>
-        bool IsScreenActive<TView>() where TView : Component, IView;
+        UniTask<TView> ShowScreenAsync<TView>();
+        void HideScreen<TView>();
+        bool IsScreenActive<TView>();
 
 
     }

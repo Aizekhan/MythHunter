@@ -36,16 +36,18 @@ namespace MythHunter.UI.Core
             return _container.Resolve<INavigationService>();
         }
 
-        public async UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath)
+        public async UniTask<TView> ShowViewAsync<TView>() where TView : Component, IView
         {
-            var prefab = await _resourceManager.LoadAsync<GameObject>(prefabPath);
-            var instance = GameObject.Instantiate(prefab, UIRoot.RootTransform);
-            var view = instance.GetComponent(viewType) as IView;
+            if (_registeredViews.TryGetValue(typeof(TView), out var component) && component is TView view)
+            {
+                view.gameObject.SetActive(true);
+                ((IView)view).Show();
+                _logger.LogInfo($"Showing view: {typeof(TView).Name}", "UI");
+                return view;
+            }
 
-            if (view == null)
-                _logger.LogError($"Не знайдено компонент {viewType.Name} у префабі {prefabPath}", "UISystem");
-
-            return view;
+            _logger.LogWarning($"View {typeof(TView).Name} not registered", "UI");
+            return null;
         }
 
         public void ShowView<TView>() where TView : Component, IView
@@ -72,36 +74,6 @@ namespace MythHunter.UI.Core
             else
             {
                 _logger.LogWarning($"View {typeof(TView).Name} not registered", "UI");
-            }
-        }
-
-        public async UniTask<TView> ShowViewAsync<TView>(string prefabPath) where TView : Component, IView
-        {
-            try
-            {
-                if (_registeredViews.TryGetValue(typeof(TView), out var existingView) && existingView is TView typedView)
-                {
-                    typedView.gameObject.SetActive(true);
-                    ((IView)typedView).Show();
-                    return typedView;
-                }
-
-                var view = await _viewFactory.CreateViewAsync<TView>(prefabPath);
-                if (view != null)
-                {
-                    RegisterView(view);
-                    view.gameObject.SetActive(true);
-                    ((IView)view).Show();
-                    return view;
-                }
-
-                _logger.LogError($"Failed to load view from path: {prefabPath}", "UI");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error showing view: {ex.Message}", "UI", ex);
-                return null;
             }
         }
 

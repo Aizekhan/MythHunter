@@ -1,48 +1,54 @@
-// Шлях: Assets/_MythHunter/Code/UI/Core/UIService.cs
-using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
-using MythHunter.Utils.Logging;
-using UnityEngine;
 using System;
 using MythHunter.UI.Core;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+using MythHunter.Utils.Logging;
 
-namespace MythHunter.UI.Core
+namespace MythHunter.UI.Runtime
 {
-    /// <summary>
-    /// Реалізація високорівневого сервісу для управління UI екранами
-    /// </summary>
     public class UIService : IUIService
     {
         private readonly IUISystem _uiSystem;
+        private readonly IViewConfigRegistry _viewConfigRegistry;
         private readonly IMythLogger _logger;
+        private readonly IUIViewFactory _viewFactory;
 
-        [Inject]
-        public UIService(IUISystem uiSystem, IMythLogger logger)
+        public UIService(
+            IUISystem uiSystem,
+            IViewConfigRegistry viewConfigRegistry,
+            IMythLogger logger,
+            IUIViewFactory viewFactory)
         {
             _uiSystem = uiSystem;
+            _viewConfigRegistry = viewConfigRegistry;
             _logger = logger;
+            _viewFactory = viewFactory;
         }
 
-        public async UniTask<TView> ShowScreenAsync<TView>(string screenId)
-            where TView : Component, IView
+        public async UniTask<TView> ShowScreenAsync<TView>() where TView : Component, IView
         {
-            _logger.LogInfo($"Показ екрана {screenId} з типом {typeof(TView).Name}", "UIService");
-            return await _uiSystem.ShowViewAsync<TView>(screenId);
-        }
+            var config = _viewConfigRegistry.GetByType<TView>();
+            if (config == null)
+            {
+                _logger.LogError($"ViewConfig не знайдено для типу {typeof(TView).Name}", "UIService");
+                return null;
+            }
 
-        public async UniTask<IView> ShowScreenAsync(Type viewType, string prefabPath)
-        {
-            var view = await _uiSystem.ShowScreenAsync(viewType, prefabPath);
+            var view = await _viewFactory.CreateViewAsync<TView>(config.prefabPath);
             if (view == null)
-                _logger.LogError($"Не вдалося показати View {viewType.Name}", "UIService");
+            {
+                _logger.LogError($"Не вдалося створити View: {typeof(TView).Name}", "UIService");
+                return null;
+            }
+
+            _uiSystem.RegisterView(view);
+            view.Show();
             return view;
         }
 
         public void HideScreen<TView>() where TView : Component, IView
         {
-            _logger.LogInfo($"HideScreen<{typeof(TView).Name}> викликано", "UIService");
             _uiSystem.HideView<TView>();
-            _logger.LogInfo($"Екран {typeof(TView).Name} приховано", "UIService");
         }
 
         public bool IsScreenActive<TView>() where TView : Component, IView
