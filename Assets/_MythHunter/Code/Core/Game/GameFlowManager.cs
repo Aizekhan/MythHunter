@@ -6,6 +6,7 @@ using MythHunter.Core.SceneManagement;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
+using MythHunter.States;
 using MythHunter.Systems.Core;
 using MythHunter.UI.Core;
 using MythHunter.UI.Navigation;
@@ -18,7 +19,7 @@ namespace MythHunter.Core.Game
     /// <summary>
     /// Централізований сервіс для управління переходами між ігровими станами та сценами
     /// </summary>
-    public class GameFlowManager : IGameFlowManager, IEventSubscriber
+    public class GameFlowManager : IGameFlowManager
     {
         private readonly IGameStateMachine _gameStateMachine;
         private readonly ISceneDispatcher _sceneDispatcher;
@@ -139,49 +140,39 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Запускає перехід від Lobby до Gameplay
         /// </summary>
-        public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null)
+        public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
         {
-            _logger.LogInfo($"Початок переходу до Gameplay з {selectedHeroArchetypes?.Length ?? 0} вибраними героями", "GameFlow");
+            _logger.LogInfo($"Запуск переходу до ігрового процесу з {selectedHeroArchetypes?.Length ?? 0} героями", "GameFlow");
 
             try
             {
-                // Якщо передано дані про вибраних героїв, зберігаємо їх для наступної сцени
-                if (selectedHeroArchetypes != null && selectedHeroArchetypes.Length > 0)
+                // Підготовка до зміни сцени
+                await _navigationService.PrepareForSceneChangeAsync();
+
+                // Створюємо контекст завантаження
+                var loadingContext = new LoadingStateContext
                 {
-                    _sceneDispatcher.SetSceneData("SelectedHeroArchetypes", selectedHeroArchetypes);
-                    _logger.LogInfo($"Дані про вибраних героїв ({selectedHeroArchetypes.Length}) передано в наступну сцену", "GameFlow");
-                }
+                    SelectedHeroArchetypes = selectedHeroArchetypes,
+                    MapId = mapId
+                };
 
-                // Використовуємо спеціальний метод для завантаження ігрової сцени з вибраними героями
-                if (selectedHeroArchetypes != null && selectedHeroArchetypes.Length > 0)
-                {
-                    await _sceneDispatcher.LoadGameSceneAsync(selectedHeroArchetypes);
-                }
-                else
-                {
-                    await _sceneDispatcher.LoadSceneAsync("GameScene");
-                }
+                // Змінюємо стан на Loading з передачею контексту
+                _stateMachine.ChangeState(GameStateType.Loading, loadingContext);
 
-                _currentSceneName = "GameScene";
-
-                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Gameplay);
-
-                _gameStateMachine.ChangeState(GameStateType.Game);
-
-                // Публікуємо подію зміни стану гри
-                PublishStateChange(GameStateType.Lobby, GameStateType.Game);
-
-                // Публікуємо подію початку гри
-                _eventBus.Publish(new GameStartedEvent
-                {
-                    Timestamp = DateTime.UtcNow
-                });
-
-                _logger.LogInfo("Перехід до Gameplay завершено", "GameFlow");
+                // Не чекаємо завершення зміни стану, бо це може бути тривалий процес
+                _logger.LogInfo("Перехід до стану завантаження ініційовано", "GameFlow");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при переході до Gameplay: {ex.Message}", "GameFlow", ex);
+                _logger.LogError($"Помилка при переході до ігрового процесу: {ex.Message}", "GameFlow", ex);
+
+                // Публікуємо подію помилки
+                _eventBus.Publish(new GameErrorEvent
+                {
+                    ErrorMessage = $"Не вдалося запустити гру: {ex.Message}",
+                    Timestamp = DateTime.UtcNow
+                });
+
                 throw;
             }
         }
