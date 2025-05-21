@@ -46,9 +46,24 @@ namespace MythHunter.UI.Runtime
             return view;
         }
 
-        public void HideScreen<TView>() where TView : Component, IView
+        public void HideScreen(Type viewType)
         {
-            _uiSystem.HideView<TView>();
+            // Імплементація для підтримки коду, який ще використовує Type
+            // Це тимчасове рішення, яке потрібно поступово замінити на generic-версію
+            foreach (var view in _registeredViews)
+            {
+                if (view.Key == viewType || view.Key.IsSubclassOf(viewType))
+                {
+                    if (view.Value is IView iview)
+                    {
+                        iview.Hide();
+                        _logger.LogInfo($"Hiding view: {viewType.Name}", "UI");
+                        return;
+                    }
+                }
+            }
+
+            _logger.LogWarning($"View {viewType.Name} not found", "UI");
         }
 
         public bool IsScreenActive<TView>() where TView : Component, IView

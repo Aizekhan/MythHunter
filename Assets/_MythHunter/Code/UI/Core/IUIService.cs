@@ -1,21 +1,17 @@
-// Шлях: Assets/_MythHunter/Code/UI/Core/IUIService.cs
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using System;
 
 namespace MythHunter.UI.Core
 {
-    /// <summary>
-    /// Високорівневий сервіс для управління UI екранами
-    /// </summary>
     public interface IUIService
     {
+        UniTask<TView> ShowScreenAsync<TView>() where TView : Component, IView;
+        void HideScreen<TView>() where TView : Component, IView;
 
+        // Додати метод для сумісності зі старим кодом
+        void HideScreen(Type viewType);
 
-        UniTask<TView> ShowScreenAsync<TView>();
-        void HideScreen<TView>();
-        bool IsScreenActive<TView>();
-
-
+        bool IsScreenActive<TView>() where TView : Component, IView;
     }
 }

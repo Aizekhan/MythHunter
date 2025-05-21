@@ -25,8 +25,6 @@ namespace MythHunter.UI.Navigation
 
         UniTask PrepareForSceneChangeAsync();
 
-   
-
         bool HasScreensInStack();
 
         ViewId GetViewIdForType<TView>() where TView : Component, IView;
