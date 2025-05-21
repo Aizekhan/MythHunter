@@ -82,7 +82,7 @@ namespace MythHunter.UI.Services
                 _logger.LogError($"Не знайдено конфігурацію для ViewId: {_heroCardViewId}", nameof(HeroCardService));
 
                 // Запасний варіант, якщо конфігурація не знайдена
-                var prefabLegacy = await _componentFactory.CreateComponentAsync<HeroCardUI>("UI/Prefabs/HeroCardUI");
+                var prefabLegacy = await _componentFactory.CreateComponentAsync<HeroCardUI>("UI/Lobby/HeroCardUI");
                 if (prefabLegacy == null)
                 {
                     _logger.LogError("Не вдалося завантажити HeroCardUI префаб", nameof(HeroCardService));

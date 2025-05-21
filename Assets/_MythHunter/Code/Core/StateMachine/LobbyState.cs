@@ -154,19 +154,23 @@ namespace MythHunter.States
             try
             {
                 var lobbySystem = _container.Resolve<ILobbySystem>();
+                var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
 
+                // Спочатку ініціалізуємо презентер
+                await lobbyPresenter.InitializeAsync();
+
+                // Потім ініціалізуємо систему
                 if (!lobbySystem.IsInitialized)
                 {
                     _logger.LogInfo($"Ініціалізація LobbySystem з {_gameSettings.PlayerCount} гравцями", "LobbyState");
                     lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
                 }
 
-                // Переконуємося, що LobbyPresenter також знає про ініціалізацію
-                var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
-                await lobbyPresenter.InitializeLobbyAsync(_gameSettings.PlayerCount);
-
-                // Даємо час для повної ініціалізації UI
+                // Чекаємо на ініціалізацію системи
                 await UniTask.DelayFrame(3);
+
+                // Повідомляємо презентер про ініціалізацію
+                await lobbyPresenter.InitializeLobbyAsync(_gameSettings.PlayerCount);
             }
             catch (Exception ex)
             {

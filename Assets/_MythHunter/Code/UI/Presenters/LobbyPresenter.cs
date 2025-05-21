@@ -106,8 +106,17 @@ namespace MythHunter.UI.Presenters
         public void Initialize(ILobbyView view)
         {
             _view = view;
+
+            // Спочатку ініціалізуємо і лише потім працюємо з картками
             UniTask.Create(async () => {
+                // Спочатку ініціалізація
                 await InitializeAsync();
+                // Переконуємось, що LobbySystem ініціалізований
+                if (_lobbySystem != null && !_lobbySystem.IsInitialized && _gameSettings != null)
+                {
+                    _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
+                }
+                // Тільки після цього працюємо з картками
                 await PopulateHeroCardsAsync();
             });
         }
@@ -261,6 +270,18 @@ namespace MythHunter.UI.Presenters
 
         private async UniTask PopulateHeroCardsAsync()
         {
+            if (_heroCardService == null)
+            {
+                _logger.LogError("_heroCardService is null", "UI");
+                return;
+            }
+
+            if (_view == null || _view.HeroCardsContainer == null)
+            {
+                _logger.LogError("_view or HeroCardsContainer is null", "UI");
+                return;
+            }
+
             _heroCardService.ReturnAll(_createdHeroCards);
             _createdHeroCards.Clear();
 
@@ -274,6 +295,7 @@ namespace MythHunter.UI.Presenters
                     _createdHeroCards.Add(card);
                 }
             }
+
             await UpdateSelectedHeroesAsync();
         }
 
