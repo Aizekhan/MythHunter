@@ -12,6 +12,8 @@ using MythHunter.UI.Navigation;
 using MythHunter.Utils.Logging;
 using System.Threading;
 using MythHunter.Systems.Core;
+using MythHunter.Events.Domain.Lobby;
+using MythHunter.Core.SceneManagement;
 
 namespace MythHunter.States
 {
@@ -26,6 +28,7 @@ namespace MythHunter.States
         private readonly INavigationService _navigationService;
         private readonly ISystemRegistry _systemRegistry;
         private readonly IGameStateMachine _stateMachine;
+        private readonly ISceneDispatcher _sceneDispatcher;
         private GameStateType _nextState;
         private string[] _selectedHeroArchetypes;
         private string _mapId;
@@ -42,18 +45,158 @@ namespace MythHunter.States
             _navigationService = container.Resolve<INavigationService>();
             _systemRegistry = container.Resolve<ISystemRegistry>();
             _stateMachine = container.Resolve<IGameStateMachine>();
+            _sceneDispatcher = container.Resolve<ISceneDispatcher>();
+
         }
 
         public override GameStateType StateId => GameStateType.Loading;
 
+
         public override void Enter(GameStateType previousState)
         {
-            _logger.LogInfo("[LIFECYCLE] Початок входу в LoadingState", "GameState");
+            _logger.LogInfo("🏠 LobbyState: Завантаження LobbyScene та ініціалізація", "LobbyState");
 
-            // Запускаємо асинхронний процес входу
-            EnterAsyncProcess(previousState).Forget();
+            EnterLobbyAsync(previousState).Forget();
+        }
+        private async UniTaskVoid EnterLobbyAsync(GameStateType previousState)
+        {
+            try
+            {
+                await _enterSemaphore.WaitAsync();
+                if (_isEntered)
+                    return;
+                _isEntered = true;
+
+                // 1. Завантажуємо LobbyScene (LoadingScene → LobbyScene)
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+
+                // 2. Налаштовуємо навігацію для лобі
+                var parameters = new NavigationParameters();
+                parameters.Add("PreviousState", previousState.ToString());
+                await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
+
+                // 3. Ініціалізуємо системи лобі
+                await InitializeStateSystemsAsync();
+                await InitializeLobbyAsync();
+
+                // 4. Публікуємо події
+                _eventBus.Publish(new GameStateChangedEvent
+                {
+                    PreviousState = previousState,
+                    NewState = GameStateType.Lobby,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _eventBus.Publish(new LobbyStateEnteredEvent
+                {
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _logger.LogInfo("✅ LobbyState: Повністю ініціалізовано", "LobbyState");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ LobbyState помилка: {ex.Message}", "LobbyState", ex);
+            }
+            finally
+            {
+                _enterSemaphore.Release();
+            }
+        }
+        private async UniTask InitializeAndStartLoadingAsync()
+        {
+            _logger.LogInfo("🔧 LoadingState: Ініціалізація LoadingSystem", "LoadingState");
+
+            // 1. Ініціалізуємо системи завантаження
+            _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
+
+            // 2. Запускаємо LoadingSystem
+            bool success = false;
+
+            if (_nextState == GameStateType.Lobby)
+            {
+                // Для лобі - легке завантаження
+                _logger.LogInfo("🎯 LoadingState: Легке завантаження для лобі", "LoadingState");
+                await UniTask.Delay(1000); // Показуємо UI завантаження
+                success = true;
+            }
+            else if (_nextState == GameStateType.Gameplay)
+            {
+                // Для геймплею - повне завантаження через LoadingSystem
+                _logger.LogInfo("🎯 LoadingState: Повне завантаження для геймплею", "LoadingState");
+                success = await _loadingSystem.StartLoadingGameAsync(_selectedHeroArchetypes, _mapId);
+            }
+
+            // 3. Завершуємо і переходимо до цільового стану
+            if (success)
+            {
+                await _loadingSystem.FinishLoadingAsync();
+                _stateMachine.ChangeState(_nextState);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ LoadingState: Завантаження не вдалося", "LoadingState");
+                _stateMachine.ChangeState(GameStateType.MainMenu);
+            }
+        }
+        private async UniTask InitializeStateSystemsAsync()
+        {
+            _logger.LogInfo("Ініціалізація систем Lobby...", "LoadingState");
+            _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
+            await UniTask.Yield(); // щоб прибрати CS1998
         }
 
+        private async UniTask InitializeLobbyAsync()
+        {
+            _logger.LogInfo("Ініціалізація Lobby логіки...", "LoadingState");
+
+            // Приклад: резолв та ініціалізація LobbySystem, якщо потрібно
+            var lobbySystem = _container.Resolve<ILobbySystem>();
+            lobbySystem.Initialize(); // якщо такий метод є
+
+            await UniTask.Yield();
+        }
+        private async UniTaskVoid ManageLoadingProcessAsync(GameStateType previousState)
+        {
+            try
+            {
+                await _enterSemaphore.WaitAsync();
+
+                if (_isEntered)
+                    return;
+                _isEntered = true;
+
+                // 1. Отримуємо контекст від GameFlowManager
+                var context = GetStateContext<LoadingStateContext>();
+                ExtractContextParameters(context);
+
+                // 2. Публікуємо подію зміни стану
+                _eventBus.Publish(new GameStateChangedEvent
+                {
+                    PreviousState = previousState,
+                    NewState = GameStateType.Loading,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                // 3. Показуємо UI завантаження (LoadingScene вже активна)
+                await _navigationService.SetupForSceneAsync("LoadingScene", new NavigationParameters());
+                await _container.Resolve<IUIService>().ShowScreenAsync(ViewId.LoadingScreen);
+
+                // 4. Ініціалізуємо LoadingSystem і запускаємо завантаження
+                await InitializeAndStartLoadingAsync();
+
+                _logger.LogInfo("✅ LoadingState: Завантаження завершено, передаємо контроль цільовому стану", "LoadingState");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ LoadingState помилка: {ex.Message}", "LoadingState", ex);
+                _stateMachine.ChangeState(GameStateType.MainMenu);
+            }
+            finally
+            {
+                _enterSemaphore.Release();
+            }
+        }
         private async UniTaskVoid EnterAsyncProcess(GameStateType previousState)
         {
             try
@@ -108,7 +251,7 @@ namespace MythHunter.States
                 _enterSemaphore.Release();
             }
         }
-
+       
         private void ExtractContextParameters(object context)
         {
             if (context is LoadingStateContext loadingContext)

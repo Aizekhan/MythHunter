@@ -17,6 +17,9 @@ using MythHunter.Entities.Archetypes;
 using UnityEngine;
 using MythHunter.Core.Game;
 using MythHunter.Resources;
+using MythHunter.Systems.Lobby;
+using MythHunter.UI.Core;
+using MythHunter.UI.ViewConfigs;
 namespace MythHunter.Systems.Loading
 {
     /// <summary>
@@ -31,6 +34,7 @@ namespace MythHunter.Systems.Loading
         private readonly IArchetypeSystem _archetypeSystem;
         private readonly ISystemRegistry _systemRegistry;
         private readonly IEventThrottler _eventThrottler;
+        private readonly DIContainer _container;
 
         private float _loadingProgress = 0f;
         private string _loadingStatus = "Готуємося до завантаження...";
@@ -53,7 +57,8 @@ namespace MythHunter.Systems.Loading
             ISystemRegistry systemRegistry,
             IEventBus eventBus,
             IEventThrottler eventThrottler,
-            IMythLogger logger)
+            IMythLogger logger,
+            DIContainer container)
             : base(logger, eventBus)
         {
             _resourceManager = resourceManager;
@@ -62,9 +67,11 @@ namespace MythHunter.Systems.Loading
             _archetypeSystem = archetypeSystem;
             _systemRegistry = systemRegistry;
             _eventThrottler = eventThrottler;
+            _container = container;
 
             // Реєстрація обмеження для подій прогресу (максимум 4 рази на секунду)
             _eventThrottler.RegisterThrottle<LoadingProgressEvent>(0.25f);
+            _container = container;
         }
 
         public override void Initialize()
@@ -110,55 +117,55 @@ namespace MythHunter.Systems.Loading
 
         public async UniTask<bool> StartLoadingGameAsync(string[] selectedHeroArchetypes, string mapId = "default")
         {
+            _logger.LogInfo("🔄 LoadingSystem: Початок завантаження", "Loading");
+
             if (_isLoadingInProgress)
-            {
-                _logger.LogWarning("Спроба почати завантаження, коли процес вже виконується", "Loading");
                 return false;
-            }
 
             _isLoadingInProgress = true;
             _isLoadingComplete = false;
-            _loadingProgress = 0f;
-            _loadingStatus = "Початок завантаження...";
-            _currentStage = LoadingStage.None;
-            _loadingCompletionSource = new UniTaskCompletionSource<bool>();
-            _selectedHeroArchetypes = selectedHeroArchetypes;
+            _selectedHeroArchetypes = selectedHeroArchetypes ?? Array.Empty<string>();
             _mapId = mapId;
-            _prefabCache.Clear();
-            _createdEntityIds.Clear();
 
-            // Публікуємо подію початку завантаження
-            Publish(new LoadingStartedEvent
-            {
-                SelectedHeroArchetypes = selectedHeroArchetypes,
-                MapId = mapId,
-                Timestamp = DateTime.UtcNow
-            });
+            // Визначаємо тип завантаження
+            LoadingType loadingType = DetermineLoadingType(mapId, selectedHeroArchetypes);
+
+            _logger.LogInfo($"🎯 Тип завантаження: {loadingType}", "Loading");
 
             try
             {
-                // Запускаємо процес завантаження
-                await ExecuteLoadingSequenceAsync();
-                return await _loadingCompletionSource.Task;
+                bool result = loadingType switch
+                {
+                    LoadingType.LobbyPreparation => await ExecuteLobbyLoadingAsync(),
+                    LoadingType.GameplayFull => await ExecuteGameplayLoadingAsync(),
+                    _ => await ExecuteMinimalLoadingAsync()
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Помилка при завантаженні: {ex.Message}", "Loading", ex);
-
-                // Публікуємо подію помилки завантаження
-                Publish(new LoadingErrorEvent
-                {
-                    ErrorMessage = ex.Message,
-                    Stage = _currentStage,
-                    Timestamp = DateTime.UtcNow
-                });
-
-                _isLoadingInProgress = false;
-                _loadingCompletionSource.TrySetResult(false);
+                _logger.LogError($"❌ LoadingSystem помилка: {ex.Message}", "Loading", ex);
                 return false;
             }
         }
+        private LoadingType DetermineLoadingType(string mapId, string[] heroArchetypes)
+        {
+            // Якщо це перехід до лобі - потрібно підготувати все для вибору героїв
+            if (mapId.Contains("lobby", StringComparison.OrdinalIgnoreCase) ||
+                heroArchetypes.Length == 0)
+            {
+                return LoadingType.LobbyPreparation;
+            }
 
+            // Якщо є вибрані герої - повне завантаження для гри
+            if (heroArchetypes.Length > 0)
+            {
+                return LoadingType.GameplayFull;
+            }
+
+            return LoadingType.Minimal;
+        }
         private async UniTask ExecuteLoadingSequenceAsync()
         {
             try
@@ -214,6 +221,279 @@ namespace MythHunter.Systems.Loading
                 throw;
             }
         }
+
+
+        /// <summary>
+        /// Завантаження для Lobby - підготовка вибору героїв
+        /// </summary>
+        private async UniTask<bool> ExecuteLobbyLoadingAsync()
+        {
+            _logger.LogInfo("🏠 LoadingSystem: Підготовка Lobby сцени", "Loading");
+
+            try
+            {
+                // Етап 1: Підготовка базових ресурсів (10%)
+                await ExecuteLoadingStageAsync(LoadingStage.PreparingResources, 0.1f,
+                    "Підготовка системи...", PrepareBasicResourcesAsync);
+
+                // Етап 2: Завантаження всіх доступних архетипів героїв (30%)
+                await ExecuteLoadingStageAsync(LoadingStage.LoadingHeroPrefabs, 0.3f,
+                    "Завантаження архетипів героїв...", LoadAllHeroArchetypesAsync);
+
+                // Етап 3: Підготовка UI ресурсів для лобі (20%)
+                await ExecuteLoadingStageAsync(LoadingStage.LoadingMapData, 0.2f,
+                    "Підготовка UI лобі...", LoadLobbyUIResourcesAsync);
+
+                // Етап 4: Ініціалізація пулів для карток героїв (20%)
+                await ExecuteLoadingStageAsync(LoadingStage.InitializingPools, 0.2f,
+                    "Підготовка карток героїв...", InitializeLobbyPoolsAsync);
+
+                // Етап 5: Ініціалізація систем лобі (10%)
+                await ExecuteLoadingStageAsync(LoadingStage.SettingUpSystems, 0.1f,
+                    "Налаштування систем лобі...", SetupLobbySystemsAsync);
+
+                // Етап 6: Фінальне налаштування (10%)
+                await ExecuteLoadingStageAsync(LoadingStage.FinalSetup, 0.1f,
+                    "Завершення підготовки...", FinalLobbySetupAsync);
+
+                _isLoadingComplete = true;
+                _loadingProgress = 1.0f;
+
+                Publish(new LoadingCompletedEvent
+                {
+                    Success = true,
+                    CreatedEntityIds = Array.Empty<string>(), // Для лобі не створюємо entity
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _logger.LogInfo("✅ LoadingSystem: Lobby підготовлено", "Loading");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка підготовки Lobby: {ex.Message}", "Loading", ex);
+                return false;
+            }
+        }
+        /// <summary>
+        /// Завантаження всіх архетипів героїв для показу в лобі
+        /// </summary>
+        private async UniTask LoadAllHeroArchetypesAsync()
+        {
+            _logger.LogInfo("📋 Завантаження всіх архетипів героїв...", "Loading");
+
+            try
+            {
+                // Отримуємо всі архетипи героїв з ресурсів
+                var heroArchetypes = await _resourceManager.LoadAllAsync<HeroArchetypeSO>("ScriptableObjects/Heroes");
+
+                _logger.LogInfo($"Знайдено {heroArchetypes.Count} архетипів героїв", "Loading");
+
+                // Завантажуємо іконки для всіх героїв
+                float progressStep = 1.0f / (heroArchetypes.Count + 1);
+
+                for (int i = 0; i < heroArchetypes.Count; i++)
+                {
+                    var archetype = heroArchetypes[i];
+                    _loadingStatus = $"Завантаження героя {archetype.HeroName}...";
+
+                    try
+                    {
+                        // Завантажуємо іконку героя
+                        if (!string.IsNullOrEmpty(archetype.IconPath))
+                        {
+                            var icon = await _resourceManager.LoadAsync<Sprite>(archetype.IconPath);
+                            if (icon != null)
+                            {
+                                _logger.LogDebug($"Завантажено іконку для {archetype.HeroName}", "Loading");
+                            }
+                        }
+
+                        // Можемо також завантажити базовий префаб героя для прев'ю
+                        string prefabPath = GetPrefabPathForArchetype(archetype.ArchetypeId);
+                        var prefab = await _resourceManager.LoadAsync<GameObject>(prefabPath);
+
+                        if (prefab != null)
+                        {
+                            _prefabCache[archetype.ArchetypeId] = prefab;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Не вдалося завантажити ресурси для {archetype.HeroName}: {ex.Message}", "Loading");
+                    }
+
+                    // Оновлюємо прогрес
+                    float newProgress = _loadingProgress + progressStep * (i + 1);
+                    PublishProgressUpdate(newProgress, _loadingStatus, _currentStage);
+
+                    await UniTask.Delay(50); // Для плавності UI
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Критична помилка завантаження архетипів: {ex.Message}", "Loading", ex);
+                throw;
+            }
+        }
+        /// <summary>
+        /// Завантаження UI ресурсів для лобі на основі ViewConfig категорій
+        /// </summary>
+        private async UniTask LoadLobbyUIResourcesAsync()
+        {
+            _logger.LogInfo("🎨 Завантаження UI ресурсів лобі через категорії...", "Loading");
+
+            try
+            {
+                var viewConfigRegistry = _container.Resolve<IViewConfigRegistry>();
+                var allConfigs = viewConfigRegistry.GetAll();
+
+                // Завантажуємо всі UI з категорії Lobby + Common
+                var targetConfigs = allConfigs.Where(config =>
+                    config.category == UICategory.Lobby ||
+                    config.category == UICategory.Common
+                ).ToList();
+
+                _logger.LogInfo($"Знайдено {targetConfigs.Count()} UI компонентів для завантаження", "Loading");
+
+                if (targetConfigs.Count() == 0)
+                {
+                    _logger.LogWarning("Не знайдено жодного ViewConfig для Lobby/Common категорій", "Loading");
+                    return;
+                }
+
+                float progressStep = 1.0f / targetConfigs.Count();
+
+                for (int i = 0; i < targetConfigs.Count(); i++)
+                {
+                    var config = targetConfigs[i];
+
+                    if (string.IsNullOrEmpty(config.prefabPath))
+                    {
+                        _logger.LogWarning($"ViewConfig {config.viewId} має порожній prefabPath", "Loading");
+                        continue;
+                    }
+
+                    _loadingStatus = $"Завантаження UI: {config.viewId}...";
+
+                    try
+                    {
+                        // Завантажуємо префаб за шляхом з конфігурації
+                        var prefab = await _resourceManager.LoadAsync<GameObject>(config.prefabPath);
+
+                        if (prefab != null)
+                        {
+                            _logger.LogDebug($"✅ Завантажено UI префаб для {config.viewId}: {config.prefabPath}", "Loading");
+
+                            // Зберігаємо в кеш для можливого використання
+                            _prefabCache[$"UI_{config.viewId}"] = prefab;
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"❌ Не вдалося завантажити префаб для {config.viewId} з {config.prefabPath}", "Loading");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Помилка завантаження UI для {config.viewId}: {ex.Message}", "Loading");
+                    }
+
+                    // Оновлюємо прогрес
+                    float newProgress = _loadingProgress + progressStep * (i + 1);
+                    PublishProgressUpdate(newProgress, _loadingStatus, _currentStage);
+
+                    await UniTask.Delay(50); // Для плавності UI
+                }
+
+                _logger.LogInfo($"✅ Завантажено UI ресурси для {targetConfigs.Count()} компонентів", "Loading");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Критична помилка завантаження UI лобі: {ex.Message}", "Loading", ex);
+                throw;
+            }
+        }
+        /// <summary>
+        /// Ініціалізація пулів для лобі (особливо для карток героїв)
+        /// </summary>
+        private async UniTask InitializeLobbyPoolsAsync()
+        {
+            _logger.LogInfo("🏊 Ініціалізація пулів для лобі...", "Loading");
+
+            try
+            {
+                // Пул для карток героїв - найважливіший
+                var heroCardPrefab = await _resourceManager.LoadAsync<GameObject>("UI/Lobby/HeroCardUI");
+                if (heroCardPrefab != null)
+                {
+                    _poolManager.CreatePool<GameObject>("HeroCardUI", heroCardPrefab, 20); // 20 карток в пулі
+                    _logger.LogInfo("Створено пул для карток героїв (20 штук)", "Loading");
+                }
+
+                // Пул для selected hero cards
+                var selectedCardPrefab = await _resourceManager.LoadAsync<GameObject>("UI/Lobby/SelectedHeroCard");
+                if (selectedCardPrefab != null)
+                {
+                    _poolManager.CreatePool<GameObject>("SelectedHeroCard", selectedCardPrefab, 8);
+                    _logger.LogInfo("Створено пул для вибраних карток (8 штук)", "Loading");
+                }
+
+                // Пул для tooltip-ів та інших UI елементів
+                await InitializeCommonUIPoolsAsync();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка ініціалізації пулів лобі: {ex.Message}", "Loading", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Налаштування систем специфічних для лобі
+        /// </summary>
+        private async UniTask SetupLobbySystemsAsync()
+        {
+            _logger.LogInfo("⚙️ Налаштування систем лобі...", "Loading");
+
+            try
+            {
+                // Ініціалізуємо системи категорії Lobby
+                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
+
+                // Додаткова ініціалізація HeroSelectionSystem
+                var heroSelectionSystem = _systemRegistry.GetSystem<IHeroSelectionSystem>();
+                if (heroSelectionSystem != null)
+                {
+                    await heroSelectionSystem.LoadAvailableHeroes();
+                    _logger.LogInfo("HeroSelectionSystem ініціалізовано", "Loading");
+                }
+
+                await UniTask.Delay(200); // Даємо час системам на ініціалізацію
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка налаштування систем лобі: {ex.Message}", "Loading", ex);
+                throw;
+            }
+        }
+
+        private async UniTask FinalLobbySetupAsync()
+        {
+            _logger.LogInfo("🏁 Фінальне налаштування лобі...", "Loading");
+
+            // Очищаємо тимчасовий кеш префабів (залишаємо тільки потрібне)
+            _prefabCache.Clear();
+
+            // Оптимізуємо пули
+            _poolManager.TrimExcessObjects(15);
+
+            await UniTask.Delay(100);
+            _logger.LogInfo("Лобі готове до використання", "Loading");
+        }
+
+        // Enum для типів завантаження
+      
 
         private async UniTask ExecuteLoadingStageAsync(
             LoadingStage stage,
@@ -633,6 +913,32 @@ namespace MythHunter.Systems.Loading
                 return path.Substring(lastSlashIndex + 1, lastDotIndex - lastSlashIndex - 1);
             }
         }
+        private async UniTask PrepareBasicResourcesAsync()
+        {
+            _logger.LogInfo("🔧 Заглушка: PrepareBasicResourcesAsync", "Loading");
+            await UniTask.Delay(100);
+        }
+
+        private async UniTask InitializeCommonUIPoolsAsync()
+        {
+            _logger.LogInfo("🔧 Заглушка: InitializeCommonUIPoolsAsync", "Loading");
+            await UniTask.Delay(100);
+        }
+
+        private async UniTask<bool> ExecuteMinimalLoadingAsync()
+        {
+            _logger.LogInfo("🔧 Заглушка: ExecuteMinimalLoadingAsync", "Loading");
+            await UniTask.Delay(100);
+            return true;
+        }
+
+        private async UniTask<bool> ExecuteGameplayLoadingAsync()
+        {
+            _logger.LogInfo("🔧 Заглушка: ExecuteGameplayLoadingAsync", "Loading");
+            await ExecuteLoadingSequenceAsync();
+            return true;
+        }
+
     }
    
 }

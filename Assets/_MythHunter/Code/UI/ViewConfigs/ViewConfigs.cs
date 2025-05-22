@@ -18,6 +18,21 @@ namespace MythHunter.UI.ViewConfigs
         [Tooltip("Чи кешувати представлення")]
         public bool isCached = true;
 
-       
+        // 🟢 ДОДАТИ ЦЕ ПОЛЕ
+        [Tooltip("Категорія для групування завантаження")]
+        public UICategory category = UICategory.Common;
+
+
+    }
+
+    public enum UICategory
+    {
+        Common,
+        Lobby,
+        Gameplay,
+        Loading,
+        Debug,
+        MainMenu,
+        Settings
     }
 }

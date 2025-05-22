@@ -9,6 +9,8 @@ using MythHunter.Core.StateMachine;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Gameplay;
+using MythHunter.Systems.Core;
+using MythHunter.UI.Navigation;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.States
@@ -31,27 +33,43 @@ namespace MythHunter.States
 
         public override GameStateType StateId => GameStateType.Gameplay;
 
-        public override async void Enter(GameStateType previousState)
+
+        public override void Enter(GameStateType previousState)
         {
-            _logger.LogInfo("Entering gameplay state");
+            _logger.LogInfo("🎮 GameplayState: Завантаження GameScene та початок гри", "GameplayState");
 
-            var dispatcher = _container.Resolve<ISceneDispatcher>();
-            var eventBus = _container.Resolve<IEventBus>();
-            var heroes = dispatcher.GetSceneData<List<string>>("SelectedHeroTypes");
-
-            if (heroes != null)
-            {
-                foreach (var hero in heroes)
-                {
-                    eventBus.Publish(new SpawnCharacterEvent { CharacterName = hero });
-                }
-            }
-
-            eventBus.Publish(new GameStartedEvent { Timestamp = DateTime.UtcNow });
-
-            await UniTask.Delay(100);
+            EnterGameplayAsync(previousState).Forget();
         }
+        private async UniTaskVoid EnterGameplayAsync(GameStateType previousState)
+        {
+            try
+            {
+                // 1. Завантажуємо GameScene
+                var sceneDispatcher = _container.Resolve<ISceneDispatcher>();
+                await sceneDispatcher.LoadSceneAsync("GameScene");
 
+                // 2. Налаштовуємо навігацію для гри
+                var heroes = sceneDispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
+                var parameters = new NavigationParameters();
+                parameters.Add("SelectedHeroArchetypes", heroes);
+
+                var navigationService = _container.Resolve<INavigationService>();
+                await navigationService.SetupForSceneAsync("GameScene", parameters);
+
+                // 3. Ініціалізуємо ігрові системи
+                var systemRegistry = _container.Resolve<ISystemRegistry>();
+                systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Gameplay);
+
+                // 4. Публікуємо події початку гри
+                _eventBus.Publish(new GameStartedEvent { Timestamp = DateTime.UtcNow });
+
+                _logger.LogInfo("✅ GameplayState: Гра почалася", "GameplayState");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ GameplayState помилка: {ex.Message}", "GameplayState", ex);
+            }
+        }
         public override void Exit()
         {
             _logger.LogInfo("Exiting gameplay state");

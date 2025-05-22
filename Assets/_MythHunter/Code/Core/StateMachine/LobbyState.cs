@@ -14,6 +14,7 @@ using MythHunter.Systems.Lobby;
 using MythHunter.UI.Presenters;
 using System;
 using System.Threading;
+using MythHunter.Core.SceneManagement;
 
 namespace MythHunter.States
 {
@@ -26,7 +27,8 @@ namespace MythHunter.States
         private readonly INavigationService _navigationService;
         private readonly ISystemRegistry _systemRegistry;
         private readonly IGameSettingsService _gameSettings;
-
+        private readonly ISceneDispatcher _sceneDispatcher;
+        
         // Додаємо семафор для уникнення паралельного входу
         private readonly SemaphoreSlim _enterSemaphore = new SemaphoreSlim(1, 1);
         private bool _isEntered = false;
@@ -40,6 +42,8 @@ namespace MythHunter.States
             _navigationService = container.Resolve<INavigationService>();
             _systemRegistry = container.Resolve<ISystemRegistry>();
             _gameSettings = container.Resolve<IGameSettingsService>();
+            _sceneDispatcher = container.Resolve<ISceneDispatcher>();
+           
         }
 
         public override GameStateType StateId => GameStateType.Lobby;
@@ -47,14 +51,60 @@ namespace MythHunter.States
         /// <summary>
         /// Вхід у стан - синхронний метод, що ініціює асинхронний процес
         /// </summary>
+        // Assets/_MythHunter/Code/Core/StateMachine/LobbyState.cs
+
         public override void Enter(GameStateType previousState)
         {
-            _logger.LogInfo("[LIFECYCLE] Початок входу в LobbyState", "GameState");
+            _logger.LogInfo("🏠 LobbyState: Завантаження LobbyScene та ініціалізація", "LobbyState");
 
-            // Запускаємо асинхронний вхід, не чекаючи його завершення
-            EnterAsyncProcess(previousState).Forget();
+            EnterLobbyAsync(previousState).Forget();
         }
 
+        private async UniTaskVoid EnterLobbyAsync(GameStateType previousState)
+        {
+            try
+            {
+                await _enterSemaphore.WaitAsync();
+                if (_isEntered)
+                    return;
+                _isEntered = true;
+
+                // 1. Завантажуємо LobbyScene (LoadingScene → LobbyScene)
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+
+                // 2. Налаштовуємо навігацію для лобі
+                var parameters = new NavigationParameters();
+                parameters.Add("PreviousState", previousState.ToString());
+                await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
+
+                // 3. Ініціалізуємо системи лобі
+                await InitializeStateSystemsAsync();
+                await InitializeLobbyAsync();
+
+                // 4. Публікуємо події
+                _eventBus.Publish(new GameStateChangedEvent
+                {
+                    PreviousState = previousState,
+                    NewState = GameStateType.Lobby,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _eventBus.Publish(new LobbyStateEnteredEvent
+                {
+                    Timestamp = DateTime.UtcNow
+                });
+
+                _logger.LogInfo("✅ LobbyState: Повністю ініціалізовано", "LobbyState");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ LobbyState помилка: {ex.Message}", "LobbyState", ex);
+            }
+            finally
+            {
+                _enterSemaphore.Release();
+            }
+        }
         /// <summary>
         /// Асинхронна реалізація входу в стан
         /// </summary>

@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/_MythHunter/Scenes/Bootstrap.unity
     guid: cab9b99b84c0f274da5109a9691dbd28
   - enabled: 1
+    path: Assets/_MythHunter/Scenes/LoadingScene.unity
+    guid: c241dbe540679774da24d12b74b29380
+  - enabled: 1
     path: Assets/_MythHunter/Scenes/LobbyScene.unity
     guid: 2536079558ea9dc4abde7efce151055b
   - enabled: 1

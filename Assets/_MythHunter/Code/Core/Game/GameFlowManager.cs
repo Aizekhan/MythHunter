@@ -102,32 +102,99 @@ namespace MythHunter.Core.Game
         /// Запускає перехід від Boot до Lobby
         /// </summary>
         // Оновіть метод для переходу до лоббі:
-        public UniTask EnterLobbyAsync()
-        {
-            var context = new LoadingStateContext
-            {
-                SelectedHeroArchetypes = new[] { "Hero1", "Hero2", "Hero3", "Hero4" },
-                MapId = "Lobby",
-                NextState = GameStateType.Lobby
-            };
+        // Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
 
-            _gameStateMachine.ChangeState(GameStateType.Loading, context);
-            return UniTask.CompletedTask;
+        public async UniTask EnterLobbyAsync()
+        {
+            _logger.LogInfo("🚀 GameFlowManager: Ініціація переходу до лобі", "GameFlow");
+
+            try
+            {
+                // 1. Ініціюємо зміну стану на Loading
+                var context = new LoadingStateContext
+                {
+                    SelectedHeroArchetypes = Array.Empty<string>(),
+                    MapId = "lobby_preload",
+                    NextState = GameStateType.Lobby
+                };
+
+                // 2. Завантажуємо LoadingScene
+                await _sceneDispatcher.LoadSceneAsync("LoadingScene");
+                _currentSceneName = "LoadingScene";
+
+                // 3. Можемо зробити preload базових ресурсів
+                await PreloadBasicResourcesAsync();
+
+                // 4. Переходимо в LoadingState (він покаже UI і запустить LoadingSystem)
+                _gameStateMachine.ChangeState(GameStateType.Loading, context);
+
+                _logger.LogInfo("✅ GameFlowManager: Ініціація завершена, контроль передано LoadingState", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ GameFlowManager помилка: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
         }
-        /// <summary>
-        /// Запускає перехід від Lobby до Gameplay
-        /// </summary>
-        public UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
-        {
-            var context = new LoadingStateContext
-            {
-                SelectedHeroArchetypes = selectedHeroArchetypes,
-                MapId = mapId,
-                NextState = GameStateType.Gameplay
-            };
 
-            _gameStateMachine.ChangeState(GameStateType.Loading, context);
-            return UniTask.CompletedTask;
+        public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
+        {
+            _logger.LogInfo("🚀 GameFlowManager: Ініціація переходу до геймплею", "GameFlow");
+
+            try
+            {
+                // 1. Контекст з повними даними для важкого завантаження
+                var context = new LoadingStateContext
+                {
+                    SelectedHeroArchetypes = selectedHeroArchetypes,
+                    MapId = mapId,
+                    NextState = GameStateType.Gameplay
+                };
+
+                // 2. Завантажуємо LoadingScene
+                await _sceneDispatcher.LoadSceneAsync("LoadingScene");
+                _currentSceneName = "LoadingScene";
+
+                // 3. Можемо preload-ити критичні ресурси
+                await PreloadCriticalResourcesAsync();
+
+                // 4. Переходимо в LoadingState для важкого завантаження
+                _gameStateMachine.ChangeState(GameStateType.Loading, context);
+
+                _logger.LogInfo("✅ GameFlowManager: Ініціація завершена, LoadingState займеться рештою", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ GameFlowManager помилка: {ex.Message}", "GameFlow", ex);
+                await ReturnToLobbyAsync();
+            }
+        }
+        public async UniTask ReturnToLobbyAsync()
+        {
+            _logger.LogInfo("Повернення до лобі після помилки", "GameFlow");
+
+            try
+            {
+                await EnterLobbyAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при поверненні в лобі: {ex.Message}", "GameFlow", ex);
+                throw;
+            }
+        }
+        private async UniTask PreloadBasicResourcesAsync()
+        {
+            _logger.LogInfo("📦 GameFlowManager: Preload базових ресурсів", "GameFlow");
+            // Можемо завантажити UI prefab-и, іконки тощо
+            await UniTask.Delay(200); // Симуляція
+        }
+
+        private async UniTask PreloadCriticalResourcesAsync()
+        {
+            _logger.LogInfo("📦 GameFlowManager: Preload критичних ресурсів", "GameFlow");
+            // Можемо завантажити основні системи, базові префаби
+            await UniTask.Delay(500); // Симуляція
         }
 
         /// <summary>
