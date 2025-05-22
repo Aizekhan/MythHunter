@@ -29,7 +29,7 @@ namespace MythHunter.Core
                 new PoolInstaller(),
                 new EntitiesInstaller(),
                 new DebugToolsInstaller(),
-              
+                new LoadingSystemsInstaller(),
                 // Інсталятори систем (за категоріями)
                 new OnBootSystemsInstaller(),
                 new NetworkingSystemsInstaller(),
