@@ -46,6 +46,8 @@ namespace MythHunter.UI.Views
 
         public void Setup(HeroCardModel model)
         {
+            _logger?.LogInfo($"🎴 Setup card: {model.Name}, IconPath: {model.IconPath}", "HeroCardUI");
+            _logger?.LogInfo($"🎴 SpriteService is null: {_spriteService == null}", "HeroCardUI");
             if (model == null)
             {
                 if (_logger != null)
@@ -129,10 +131,23 @@ namespace MythHunter.UI.Views
 
         private async UniTaskVoid LoadIconAsync(string iconPath)
         {
+            _logger?.LogInfo($"🖼️ LoadIconAsync викликано для: {iconPath}", "HeroCardUI");
+
+            if (_spriteService == null)
+            {
+                _logger?.LogError($"❌ SpriteService is null в LoadIconAsync!", "HeroCardUI");
+                return;
+            }
+
             var sprite = await _spriteService.GetSpriteAsync(iconPath, _defaultIcon);
             if (this != null && _iconImage != null)
             {
                 _iconImage.sprite = sprite;
+                _logger?.LogInfo($"✅ Іконка встановлена для: {iconPath}", "HeroCardUI");
+            }
+            else
+            {
+                _logger?.LogWarning($"⚠️ Об'єкт або _iconImage знищено під час завантаження: {iconPath}", "HeroCardUI");
             }
         }
 
@@ -151,5 +166,64 @@ namespace MythHunter.UI.Views
             if (_logger != null)
                 _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
         }
+        /// <summary>
+        /// Налаштування картки з явною передачею SpriteService
+        /// </summary>
+        public void SetupWithSpriteService(HeroCardModel model, ISpriteService spriteService)
+        {
+            if (model == null)
+            {
+                if (_logger != null)
+                    _logger.LogError("Setup викликано з null моделлю", "HeroCardUI");
+                return;
+            }
+
+            // ✅ Явно встановлюємо SpriteService
+            _spriteService = spriteService;
+
+            _archetypeId = model.ArchetypeId;
+
+            // Встановлюємо текстові поля
+            if (_nameText)
+                _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
+            if (_descriptionText)
+                _descriptionText.text = model.Description;
+            if (_raceClassText)
+                _raceClassText.text = $"{model.Race} - {model.Class}";
+            if (_manaCostText)
+                _manaCostText.text = $"Вартість: {model.ManaCost}";
+
+            // ✅ Логування для дебагу
+            _logger?.LogInfo($"🎴 SetupWithSpriteService: {model.Name}, IconPath: {model.IconPath}, SpriteService: {_spriteService != null}", "HeroCardUI");
+
+            // Асинхронне завантаження іконки
+            if (!string.IsNullOrEmpty(model.IconPath) && _spriteService != null)
+            {
+                LoadIconAsync(model.IconPath).Forget();
+            }
+            else
+            {
+                if (_iconImage)
+                    _iconImage.sprite = _defaultIcon;
+
+                if (string.IsNullOrEmpty(model.IconPath))
+                    _logger?.LogWarning($"⚠️ IconPath порожній для {model.Name}", "HeroCardUI");
+                if (_spriteService == null)
+                    _logger?.LogWarning($"⚠️ SpriteService все ще null для {model.Name}", "HeroCardUI");
+            }
+
+            if (_selectedIndicator)
+                _selectedIndicator.SetActive(model.IsSelected);
+            SetInteractable(model.IsSelectable);
+
+            // Налаштування кнопки
+            if (_selectButton)
+            {
+                _selectButton.onClick.RemoveAllListeners();
+                _selectButton.onClick.AddListener(OnSelectButtonClicked);
+            }
+        }
+
+      
     }
 }

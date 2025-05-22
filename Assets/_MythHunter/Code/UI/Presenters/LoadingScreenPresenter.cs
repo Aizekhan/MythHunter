@@ -64,6 +64,7 @@ namespace MythHunter.UI.Presenters
             _eventBus.Subscribe<LoadingErrorEvent>(OnLoadingError);
 
             _isSubscribed = true;
+            _logger.LogInfo("LoadingScreenPresenter підписався на події", "LoadingUI"); // 🔥 ДОДАЛИ ЦЕ
         }
 
         protected override void OnUnsubscribeFromEvents()

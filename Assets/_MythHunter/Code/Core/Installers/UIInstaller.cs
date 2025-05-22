@@ -30,12 +30,12 @@ namespace MythHunter.Core.Installers
 
             // Додаємо високорівневий UIService
             BindSingleton<IUIService, UIService>(container);
-
+            BindSingleton<LoadingScreenPresenter, LoadingScreenPresenter>(container);
             // Анімації переходів
             BindSingleton<IScreenTransition, ScreenTransition>(container);
             // Сервіс навігації
             BindSingleton<INavigationService, NavigationService>(container);
-
+           
             // Моделі
             BindSingleton<IMainMenuModel, MainMenuModel>(container);
             BindSingleton<IGameplayUIModel, GameplayUIModel>(container);

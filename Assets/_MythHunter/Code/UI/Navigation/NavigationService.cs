@@ -9,6 +9,7 @@ using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -363,6 +364,10 @@ namespace MythHunter.UI.Navigation
         {
             try
             {
+                // 🔥 КРИТИЧНО: Спочатку приховуємо ВСІ активні UI
+                await HideAllActiveScreensAsync();
+
+                // Потім очищаємо стек
                 await ClearStackAsync();
 
                 // Перетворюємо назву сцени у ViewId
@@ -377,12 +382,11 @@ namespace MythHunter.UI.Navigation
 
                 if (initialScreenId != ViewId.None)
                 {
-                    // Додаємо інформацію про сцену до параметрів
                     parameters ??= new NavigationParameters();
                     parameters.Add("SceneName", sceneName);
                     parameters.Add("IsSceneRoot", true);
 
-                    await NavigateToAsync(initialScreenId, parameters, TransitionType.None); // Без переходу для початкового екрану
+                    await NavigateToAsync(initialScreenId, parameters, TransitionType.None);
                 }
             }
             catch (Exception ex)
@@ -390,7 +394,30 @@ namespace MythHunter.UI.Navigation
                 _logger.LogError($"Помилка при налаштуванні навігації для сцени {sceneName}: {ex.Message}", "Navigation", ex);
             }
         }
+        // 🆕 ДОДАЙТЕ НОВИЙ МЕТОД:
+        // Assets/_MythHunter/Code/UI/Navigation/NavigationService.cs
+        private async UniTask HideAllActiveScreensAsync()
+        {
+            var allViewIds = Enum.GetValues(typeof(ViewId)).Cast<ViewId>();
 
+            foreach (var viewId in allViewIds)
+            {
+                if (viewId != ViewId.None && _uiService.IsScreenActive(viewId))
+                {
+                    _uiService.HideScreen(viewId);
+
+                    // 🔥 ВИКОРИСТОВУЙТЕ UISystem замість UIService:
+                    var uiSystem = _container.Resolve<IUISystem>();
+                    var view = uiSystem.GetView(viewId);
+                    if (view != null && view.gameObject != null)
+                    {
+                        UnityEngine.Object.Destroy(view.gameObject);
+                    }
+                }
+            }
+
+            await UniTask.DelayFrame(2);
+        }
         /// <summary>
         /// Підготовка до зміни сцени
         /// </summary>

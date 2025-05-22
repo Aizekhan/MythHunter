@@ -50,6 +50,8 @@ namespace MythHunter.UI.Services
         private readonly IPoolManager _poolManager;
         private readonly IMythLogger _logger;
         private readonly IViewConfigRegistry _viewConfigRegistry;
+        private readonly IDIContainer _container;
+        private readonly ISpriteService _spriteService; 
 
         private const string POOL_KEY = "HeroCardUI";
         private bool _initialized = false;
@@ -60,12 +62,16 @@ namespace MythHunter.UI.Services
             IUIComponentFactory componentFactory,
             IPoolManager poolManager,
             IMythLogger logger,
-            IViewConfigRegistry viewConfigRegistry)
+            IViewConfigRegistry viewConfigRegistry,
+            IDIContainer container,
+            ISpriteService spriteService)
         {
             _componentFactory = componentFactory;
             _poolManager = poolManager;
             _logger = logger;
             _viewConfigRegistry = viewConfigRegistry;
+            _container = container;
+            _spriteService = spriteService;
         }
 
         /// <summary>
@@ -139,8 +145,13 @@ namespace MythHunter.UI.Services
                 return null;
             }
 
+            // ✅ ВИПРАВЛЕННЯ: Примусова ін'єкція + передача SpriteService
+            _container.InjectDependencies(card);
+
             card.Reset();
-            card.Setup(model);
+            // ✅ Використовуй новий метод з явною передачею сервісу
+            card.SetupWithSpriteService(model, _spriteService);
+
             go.transform.SetParent(parent, false);
             go.SetActive(true);
 
@@ -176,5 +187,7 @@ namespace MythHunter.UI.Services
                 ReturnCard(card);
             }
         }
+
+
     }
 }

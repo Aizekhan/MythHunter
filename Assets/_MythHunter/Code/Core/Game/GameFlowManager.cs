@@ -110,6 +110,7 @@ namespace MythHunter.Core.Game
 
             try
             {
+              
                 // 1. Контекст для мінімального завантаження
                 var context = new LoadingStateContext
                 {

@@ -337,11 +337,16 @@ namespace MythHunter.States
         {
             _logger.LogInfo("[LIFECYCLE] Вихід зі стану LoadingState", "GameState");
 
+            // 🔥 КРИТИЧНО: Приховуємо LoadingScreen при виході
+            var uiService = _container.Resolve<IUIService>();
+            uiService.HideScreen(ViewId.LoadingScreen);
+
             // Скидаємо стан
             _isEntered = false;
             _selectedHeroArchetypes = null;
             _mapId = null;
         }
+
     }
 
     /// <summary>

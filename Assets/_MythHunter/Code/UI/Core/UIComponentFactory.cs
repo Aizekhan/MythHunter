@@ -122,8 +122,12 @@ namespace MythHunter.UI.Core
                 instance.transform.SetParent(parent ?? UIRoot.RootTransform, false);
                 instance.SetActive(true);
 
-                // Ін'єкція залежностей
-                _container.InjectDependencies(instance);
+                // ✅ ВИПРАВЛЕННЯ: Ін'єкція в ВСІ MonoBehaviour компоненти
+                var components = instance.GetComponentsInChildren<MonoBehaviour>();
+                foreach (var component in components)
+                {
+                    _container.InjectDependencies(component);
+                }
 
                 return instance;
             }

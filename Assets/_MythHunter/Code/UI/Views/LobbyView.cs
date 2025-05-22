@@ -2,11 +2,15 @@
 using UnityEngine;
 using MythHunter.UI.Core;
 using TMPro;
+using MythHunter.Utils.Logging;
+using MythHunter.Core.DI;
 
 namespace MythHunter.UI.Views
 {
     public class LobbyView : UIViewBase, ILobbyView
     {
+        [Inject] private IMythLogger _logger;
+
         [Header("Контейнери")]
         [SerializeField] private Transform _heroCardsContainer;
         [SerializeField] private Transform _selectedHeroesContainer;
@@ -19,6 +23,7 @@ namespace MythHunter.UI.Views
         [SerializeField] private GameObject[] _playerReadyIndicators;
         [SerializeField] private GameObject _gameStartingPanel;
 
+        
         public Transform HeroCardsContainer => _heroCardsContainer;
         public Transform SelectedHeroesContainer => _selectedHeroesContainer;
 
@@ -60,6 +65,18 @@ namespace MythHunter.UI.Views
             if (_gameStartingPanel != null)
             {
                 _gameStartingPanel.SetActive(true);
+            }
+        }
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            // 🔥 КРИТИЧНО: Логуємо стан контейнерів
+            _logger?.LogInfo($"LobbyView ініціалізовано. HeroCardsContainer: {(_heroCardsContainer != null ? "OK" : "NULL")}", "UI");
+
+            if (_heroCardsContainer == null)
+            {
+                _logger?.LogError("⚠️ HeroCardsContainer не призначений в інспекторі!", "UI");
             }
         }
     }
