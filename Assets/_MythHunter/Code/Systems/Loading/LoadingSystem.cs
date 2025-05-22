@@ -35,6 +35,7 @@ namespace MythHunter.Systems.Loading
         private readonly ISystemRegistry _systemRegistry;
         private readonly IEventThrottler _eventThrottler;
         private readonly IDIContainer _container;
+        private readonly IPrefabProvider _prefabProvider;
 
         private float _loadingProgress = 0f;
         private string _loadingStatus = "Готуємося до завантаження...";
@@ -58,7 +59,8 @@ namespace MythHunter.Systems.Loading
             IEventBus eventBus,
             IEventThrottler eventThrottler,
             IMythLogger logger,
-            IDIContainer container)
+            IDIContainer container,
+            IPrefabProvider prefabProvider)
             : base(logger, eventBus)
         {
             _resourceManager = resourceManager;
@@ -72,6 +74,7 @@ namespace MythHunter.Systems.Loading
             // Реєстрація обмеження для подій прогресу (максимум 4 рази на секунду)
             _eventThrottler.RegisterThrottle<LoadingProgressEvent>(0.25f);
             _container = container;
+            _prefabProvider = prefabProvider;
         }
 
         public override void Initialize()
@@ -321,8 +324,7 @@ namespace MythHunter.Systems.Loading
                         }
 
                         // Можемо також завантажити базовий префаб героя для прев'ю
-                        string prefabPath = GetPrefabPathForArchetype(archetype.ArchetypeId);
-                        var prefab = await _resourceManager.LoadAsync<GameObject>(prefabPath);
+                        var prefab = await _prefabProvider.LoadPrefabByArchetypeAsync(archetype.ArchetypeId);
 
                         if (prefab != null)
                         {
@@ -504,8 +506,47 @@ namespace MythHunter.Systems.Loading
         }
 
         // Enum для типів завантаження
-      
 
+        private async UniTask LoadHeroPrefabsAsync()
+        {
+            _logger.LogInfo($"Завантаження префабів героїв: {string.Join(", ", _selectedHeroArchetypes)}", "Loading");
+
+            float progressStep = 1.0f / (_selectedHeroArchetypes.Length + 1);
+            float baseProgress = _loadingProgress;
+
+            for (int i = 0; i < _selectedHeroArchetypes.Length; i++)
+            {
+                string archetypeId = _selectedHeroArchetypes[i];
+                _loadingStatus = $"Завантаження героя {i + 1}/{_selectedHeroArchetypes.Length}...";
+
+                try
+                {
+                    // ✅ Використовуємо IPrefabProvider (архітектурно правильно)
+                    var prefab = await _prefabProvider.LoadPrefabByArchetypeAsync(archetypeId);
+
+                    if (prefab != null)
+                    {
+                        _prefabCache[archetypeId] = prefab;
+                        _logger.LogInfo($"Завантажено префаб для {archetypeId}", "Loading");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Не вдалося завантажити префаб для архетипу {archetypeId}", "Loading");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Помилка завантаження префабу для {archetypeId}: {ex.Message}", "Loading", ex);
+                }
+
+                // ✅ Додаємо прогрес та візуалізацію
+                float newProgress = baseProgress + progressStep * (i + 1);
+                PublishProgressUpdate(newProgress, _loadingStatus, _currentStage);
+
+                // Невелика затримка для візуалізації
+                await UniTask.Delay(50);
+            }
+        }
         private async UniTask ExecuteLoadingStageAsync(
             LoadingStage stage,
             float progressWeight,
@@ -555,56 +596,7 @@ namespace MythHunter.Systems.Loading
             await UniTask.Delay(100); // Симуляція роботи
         }
 
-        private async UniTask LoadHeroPrefabsAsync()
-        {
-            _logger.LogInfo($"Завантаження префабів героїв: {string.Join(", ", _selectedHeroArchetypes)}", "Loading");
-
-            float progressStep = 1.0f / (_selectedHeroArchetypes.Length + 1);
-            float baseProgress = _loadingProgress;
-
-            for (int i = 0; i < _selectedHeroArchetypes.Length; i++)
-            {
-                string archetypeId = _selectedHeroArchetypes[i];
-                _loadingStatus = $"Завантаження героя {i + 1}/{_selectedHeroArchetypes.Length}...";
-
-                try
-                {
-                    // Отримуємо шлях до префаба для архетипу
-                    string prefabPath = GetPrefabPathForArchetype(archetypeId);
-
-                    // Завантажуємо префаб
-                    var prefab = await _resourceManager.LoadAsync<GameObject>(prefabPath);
-
-                    if (prefab != null)
-                    {
-                        _prefabCache[archetypeId] = prefab;
-                        _logger.LogInfo($"Завантажено префаб {prefabPath} для архетипу {archetypeId}", "Loading");
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Не вдалося завантажити префаб для архетипу {archetypeId}", "Loading");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Помилка при завантаженні префабу для архетипу {archetypeId}: {ex.Message}", "Loading", ex);
-                }
-
-                // Оновлюємо прогрес
-                float newProgress = baseProgress + progressStep * (i + 1);
-                PublishProgressUpdate(newProgress, _loadingStatus, _currentStage);
-
-                // Невелика затримка для візуалізації
-                await UniTask.Delay(50);
-            }
-        }
-
-        private string GetPrefabPathForArchetype(string archetypeId)
-        {
-            // Логіка визначення шляху до префабу за ідентифікатором архетипу
-            // В реальній реалізації це може бути більш складна логіка
-            return $"Prefabs/Heroes/{archetypeId}";
-        }
+      
 
         private async UniTask LoadMapDataAsync()
         {

@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
-  m_Name: Hero_Human_Tank_d962aa64
+  m_Name: Two
   m_EditorClassIdentifier: 
-  IconPath: 
+  IconPath: UI/Icons/Heroes/hero_Atakhan
   ManaCost: 1
-  ArchetypeId: Hero_Human_Tank_d962aa64
-  HeroName: 3
-  Description: "\u0417\u0430\u0445\u0438\u0441\u043D\u0438\u043A \u0456\u0437 \u0432\u0438\u0441\u043E\u043A\u0438\u043C
-    HP"
-  Race: 0
-  Class: 5
+  ArchetypeId: Two
+  HeroName: Two
+  Description: "\u041C\u0430\u0433 \u0456\u0437 \u043F\u043E\u0442\u0443\u0436\u043D\u043E\u044E
+    \u0430\u0442\u0430\u043A\u043E\u044E"
+  Race: 2
+  Class: 3
   Religion: 
   Ideology: 
   _professions:
@@ -47,6 +47,24 @@ MonoBehaviour:
     Value: 1
   - Type: 7
     Value: 5
+  - Type: 0
+    Value: 1
+  - Type: 8
+    Value: 30
+  - Type: 19
+    Value: 50
+  - Type: 28
+    Value: 50
+  - Type: 14
+    Value: 0.1
+  - Type: 16
+    Value: 1
+  - Type: 55
+    Value: 1
+  - Type: 56
+    Value: 1
+  - Type: 57
+    Value: 1
   AggressiveAttackMod: 1.5
   AggressiveDefenseMod: 0.7
   AggressiveDodgeMod: 0.7
@@ -57,9 +75,9 @@ MonoBehaviour:
   DefensiveBlockMod: 1.5
   Skins: []
   _passiveSkills:
-  - Id: versatility
+  - Id: nature_affinity
     Level: 1
   _activeSkills:
-  - Id: taunt
+  - Id: teleport
     Level: 1
   TeamId: 0

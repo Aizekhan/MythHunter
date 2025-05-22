@@ -170,5 +170,84 @@ namespace MythHunter.Editor
                 EditorGUI.indentLevel--;
             }
         }
+
+        private void ValidatePrefabPath()
+        {
+            var heroArchetype = (HeroArchetypeSO)target;
+
+            if (!string.IsNullOrEmpty(heroArchetype.ArchetypeId))
+            {
+                string expectedPath = $"Assets/Resources/Prefabs/Heroes/{heroArchetype.ArchetypeId}.prefab";
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(expectedPath);
+
+                if (prefab == null)
+                {
+                    EditorGUILayout.HelpBox($"⚠️ Префаб не знайдено: {expectedPath}", MessageType.Warning);
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox($"✅ Префаб знайдено: {expectedPath}", MessageType.Info);
+                }
+            }
+        }
+
+
+
+        private void CreatePrefabForArchetype(HeroArchetypeSO heroArchetype)
+        {
+            if (string.IsNullOrEmpty(heroArchetype.ArchetypeId))
+            {
+                EditorUtility.DisplayDialog("Помилка", "ArchetypeId не може бути порожнім", "OK");
+                return;
+            }
+
+            try
+            {
+                // Створюємо шлях для нового префабу
+                string prefabDirectory = "Assets/Resources/Prefabs/Heroes/";
+                string prefabPath = $"{prefabDirectory}{heroArchetype.ArchetypeId}.prefab";
+
+                // Створюємо директорію, якщо вона не існує
+                if (!System.IO.Directory.Exists(prefabDirectory))
+                {
+                    System.IO.Directory.CreateDirectory(prefabDirectory);
+                    AssetDatabase.Refresh();
+                }
+
+                // Створюємо порожній GameObject
+                GameObject newPrefab = new GameObject(heroArchetype.ArchetypeId);
+
+                // Додаємо базові компоненти, які потрібні для героя
+                // (залежно від вашої архітектури)
+                // Наприклад:
+                // newPrefab.AddComponent<HeroComponent>();
+                // newPrefab.AddComponent<SpriteRenderer>();
+                // newPrefab.AddComponent<Collider2D>();
+
+                // Зберігаємо як префаб
+                GameObject prefabAsset = PrefabUtility.SaveAsPrefabAsset(newPrefab, prefabPath);
+
+                if (prefabAsset != null)
+                {
+                    EditorUtility.DisplayDialog("Успіх", $"Префаб створено: {prefabPath}", "OK");
+
+                    // Вибираємо створений префаб в Project вікні
+                    Selection.activeObject = prefabAsset;
+                    EditorGUIUtility.PingObject(prefabAsset);
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Помилка", "Не вдалося створити префаб", "OK");
+                }
+
+                // Видаляємо тимчасовий GameObject зі сцени
+                DestroyImmediate(newPrefab);
+            }
+            catch (System.Exception ex)
+            {
+                EditorUtility.DisplayDialog("Помилка", $"Помилка при створенні префабу: {ex.Message}", "OK");
+                UnityEngine.Debug.LogError($"Помилка при створенні префабу: {ex}", heroArchetype);
+            }
+        }
     }
 }

@@ -35,7 +35,7 @@ namespace MythHunter.Core.Installers
             BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
             BindSingleton<IHeroDataService, LocalHeroDataService>(container);
             BindSingleton<IHeroCardService, HeroCardService>(container);
-
+            BindSingleton<IPrefabProvider, PrefabProvider>(container);
             // Отримуємо інстанси для реєстрації
             var lobbyPresenter = container.Resolve<ILobbyPresenter>();
             var lobbySystem = container.Resolve<ILobbySystem>();
