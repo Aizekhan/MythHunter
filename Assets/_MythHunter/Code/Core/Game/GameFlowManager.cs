@@ -110,7 +110,7 @@ namespace MythHunter.Core.Game
 
             try
             {
-                // 1. Ініціюємо зміну стану на Loading
+                // 1. Контекст для мінімального завантаження
                 var context = new LoadingStateContext
                 {
                     SelectedHeroArchetypes = Array.Empty<string>(),
@@ -122,13 +122,16 @@ namespace MythHunter.Core.Game
                 await _sceneDispatcher.LoadSceneAsync("LoadingScene");
                 _currentSceneName = "LoadingScene";
 
-                // 3. Можемо зробити preload базових ресурсів
+                // 3. Preload критичних ресурсів
                 await PreloadBasicResourcesAsync();
 
-                // 4. Переходимо в LoadingState (він покаже UI і запустить LoadingSystem)
+                // 4. ✅ ЗАТРИМКА для показу Loading UI
+                await UniTask.Delay(500); // Показуємо Loading хоча б півсекунди
+
+                // 5. Переходимо в LoadingState
                 _gameStateMachine.ChangeState(GameStateType.Loading, context);
 
-                _logger.LogInfo("✅ GameFlowManager: Ініціація завершена, контроль передано LoadingState", "GameFlow");
+                _logger.LogInfo("✅ GameFlowManager: Loading розпочато", "GameFlow");
             }
             catch (Exception ex)
             {
@@ -136,7 +139,6 @@ namespace MythHunter.Core.Game
                 throw;
             }
         }
-
         public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
         {
             _logger.LogInfo("🚀 GameFlowManager: Ініціація переходу до геймплею", "GameFlow");

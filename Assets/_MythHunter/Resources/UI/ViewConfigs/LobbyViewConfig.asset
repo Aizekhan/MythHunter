@@ -16,3 +16,4 @@ MonoBehaviour:
   prefabPath: UI/Lobby/LobbyView
   isPopup: 0
   isCached: 1
+  category: 1

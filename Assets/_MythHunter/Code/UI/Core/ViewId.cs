@@ -12,7 +12,7 @@ namespace MythHunter.UI.Core
         GameplayUI,
         MainMenu,
         LoadingScreen,
-
+        Settings,
         // Діалоги та спеціальні представлення
         HeroCardSelector,
         ConfirmDialog,

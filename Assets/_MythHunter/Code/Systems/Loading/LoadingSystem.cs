@@ -232,29 +232,40 @@ namespace MythHunter.Systems.Loading
 
             try
             {
-                // Етап 1: Підготовка базових ресурсів (10%)
-                await ExecuteLoadingStageAsync(LoadingStage.PreparingResources, 0.1f,
+                // Етап 1: Підготовка базових ресурсів (20%)
+                await ExecuteLoadingStageAsync(LoadingStage.PreparingResources, 0.2f,
                     "Підготовка системи...", PrepareBasicResourcesAsync);
 
-                // Етап 2: Завантаження всіх доступних архетипів героїв (30%)
-                await ExecuteLoadingStageAsync(LoadingStage.LoadingHeroPrefabs, 0.3f,
+                // ✅ ЗАТРИМКА для візуалізації
+                await UniTask.Delay(300);
+
+                // Етап 2: Завантаження архетипів героїв (40%)
+                await ExecuteLoadingStageAsync(LoadingStage.LoadingHeroPrefabs, 0.4f,
                     "Завантаження архетипів героїв...", LoadAllHeroArchetypesAsync);
 
-                // Етап 3: Підготовка UI ресурсів для лобі (20%)
+                // ✅ ЗАТРИМКА
+                await UniTask.Delay(300);
+
+                // Етап 3: Підготовка UI ресурсів (20%)
                 await ExecuteLoadingStageAsync(LoadingStage.LoadingMapData, 0.2f,
                     "Підготовка UI лобі...", LoadLobbyUIResourcesAsync);
 
-                // Етап 4: Ініціалізація пулів для карток героїв (20%)
-                await ExecuteLoadingStageAsync(LoadingStage.InitializingPools, 0.2f,
+                // ✅ ЗАТРИМКА
+                await UniTask.Delay(200);
+
+                // Етап 4: Ініціалізація пулів (10%)
+                await ExecuteLoadingStageAsync(LoadingStage.InitializingPools, 0.1f,
                     "Підготовка карток героїв...", InitializeLobbyPoolsAsync);
 
-                // Етап 5: Ініціалізація систем лобі (10%)
-                await ExecuteLoadingStageAsync(LoadingStage.SettingUpSystems, 0.1f,
-                    "Налаштування систем лобі...", SetupLobbySystemsAsync);
+                // ✅ ЗАТРИМКА
+                await UniTask.Delay(200);
 
-                // Етап 6: Фінальне налаштування (10%)
+                // Етап 5: Фінальне налаштування (10%)
                 await ExecuteLoadingStageAsync(LoadingStage.FinalSetup, 0.1f,
                     "Завершення підготовки...", FinalLobbySetupAsync);
+
+                // ✅ ОБОВ'ЯЗКОВА ЗАТРИМКА перед завершенням
+                await UniTask.Delay(500);
 
                 _isLoadingComplete = true;
                 _loadingProgress = 1.0f;
@@ -262,7 +273,7 @@ namespace MythHunter.Systems.Loading
                 Publish(new LoadingCompletedEvent
                 {
                     Success = true,
-                    CreatedEntityIds = Array.Empty<string>(), // Для лобі не створюємо entity
+                    CreatedEntityIds = Array.Empty<string>(),
                     Timestamp = DateTime.UtcNow
                 });
 

@@ -23,26 +23,41 @@ namespace MythHunter.UI.Services
 
         public async UniTask<Sprite> GetSpriteAsync(string path, Sprite defaultSprite = null)
         {
+            _logger.LogInfo($"🖼️ SpriteService: Запит на завантаження {path}", "SpriteService");
+
             if (string.IsNullOrEmpty(path))
+            {
+                _logger.LogWarning("⚠️ SpriteService: Порожній шлях", "SpriteService");
                 return defaultSprite;
+            }
 
             if (_cache.TryGetValue(path, out var sprite))
+            {
+                _logger.LogInfo($"✅ SpriteService: Знайдено в кеші {path}", "SpriteService");
                 return sprite;
+            }
 
             try
             {
+                _logger.LogInfo($"🔄 SpriteService: Завантажуємо з ResourceProvider {path}", "SpriteService");
                 sprite = await _resourceProvider.LoadAsync<Sprite>(path);
                 if (sprite != null)
                 {
                     _cache[path] = sprite;
+                    _logger.LogInfo($"✅ SpriteService: Успішно завантажено {path}", "SpriteService");
                     return sprite;
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ SpriteService: ResourceProvider повернув null для {path}", "SpriteService");
                 }
             }
             catch (System.Exception ex)
             {
-                _logger.LogWarning($"Failed to load sprite from {path}: {ex.Message}", "SpriteService");
+                _logger.LogWarning($"❌ SpriteService: Помилка завантаження {path}: {ex.Message}", "SpriteService");
             }
 
+            _logger.LogInfo($"🔄 SpriteService: Повертаємо defaultSprite для {path}", "SpriteService");
             return defaultSprite;
         }
 

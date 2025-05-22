@@ -69,10 +69,10 @@ namespace MythHunter.States
                     return;
                 _isEntered = true;
 
-                // 1. Завантажуємо LobbyScene (LoadingScene → LobbyScene)
+                // 1. Завантажуємо LobbyScene
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
 
-                // 2. Налаштовуємо навігацію для лобі
+                // 2. Налаштовуємо навігацію
                 var parameters = new NavigationParameters();
                 parameters.Add("PreviousState", previousState.ToString());
                 await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
@@ -81,7 +81,10 @@ namespace MythHunter.States
                 await InitializeStateSystemsAsync();
                 await InitializeLobbyAsync();
 
-                // 4. Публікуємо події
+                // 4. ЗАТРИМКА для завершення всіх підписок
+                await UniTask.DelayFrame(5);
+
+                // 5. СПОЧАТКУ GameStateChangedEvent (не очищує UI)
                 _eventBus.Publish(new GameStateChangedEvent
                 {
                     PreviousState = previousState,
@@ -89,6 +92,10 @@ namespace MythHunter.States
                     Timestamp = DateTime.UtcNow
                 });
 
+                // 6. Ще одна затримка
+                await UniTask.DelayFrame(2);
+
+                // 7. ПОТІМ LobbyStateEnteredEvent (коли все готове)
                 _eventBus.Publish(new LobbyStateEnteredEvent
                 {
                     Timestamp = DateTime.UtcNow

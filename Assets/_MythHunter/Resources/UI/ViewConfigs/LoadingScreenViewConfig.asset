@@ -16,3 +16,4 @@ MonoBehaviour:
   prefabPath: UI/Loading/LoadingScreenView
   isPopup: 0
   isCached: 1
+  category: 3

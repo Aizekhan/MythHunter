@@ -107,9 +107,16 @@ namespace MythHunter.Systems.Heroes
 
         public override void Update(float deltaTime)
         {
-            // Оновлення всіх кешів компонентів
-            _statsCache.Update();
-            _healthCache.Update();
+            // Оновлення всіх кешів компонентів з перевіркою
+            if (_statsCache != null)
+                _statsCache.Update();
+            else
+                _logger.LogDebug("StatsCache is null, skipping update", "HeroSystem");
+
+            if (_healthCache != null)
+                _healthCache.Update();
+            else
+                _logger.LogDebug("HealthCache is null, skipping update", "HeroSystem");
 
             // Додаткова логіка оновлення всіх героїв
         }

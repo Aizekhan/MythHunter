@@ -2,12 +2,14 @@
 
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
+using MythHunter.Core.Game;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace MythHunter.UI.Navigation
@@ -72,8 +74,22 @@ namespace MythHunter.UI.Navigation
 
         private void OnGameStateChanged(GameStateChangedEvent evt)
         {
-            if (evt.PreviousState != evt.NewState)
+            if (evt.PreviousState == evt.NewState)
+                return;
+
+            var previousBehavior = GetNavigationBehavior(evt.PreviousState);
+            var newBehavior = GetNavigationBehavior(evt.NewState);
+
+            // Очищуємо навігацію якщо:
+            // 1. Попередній стан має OnExit поведінку
+            // 2. Новий стан має Always поведінку
+            bool shouldClear = previousBehavior == NavigationClearType.OnExit ||
+                              newBehavior == NavigationClearType.Always;
+
+            if (shouldClear)
+            {
                 ClearStackAsync().Forget();
+            }
         }
 
         /// <summary>
@@ -465,9 +481,22 @@ namespace MythHunter.UI.Navigation
             }
         }
 
+        // Додайте метод для отримання атрибуту
+        private NavigationClearType GetNavigationBehavior(GameStateType state)
+        {
+            var field = typeof(GameStateType).GetField(state.ToString());
+            if (field != null)
+            {
+                var attribute = field.GetCustomAttribute<NavigationBehaviorAttribute>();
+                return attribute?.ClearType ?? NavigationClearType.Never;
+            }
+            return NavigationClearType.Never;
+        }
+
         /// <summary>
         /// Звільнення ресурсів
         /// </summary>
+        ///
         public void Dispose()
         {
             UnsubscribeFromEvents();

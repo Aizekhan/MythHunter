@@ -54,9 +54,9 @@ namespace MythHunter.States
 
         public override void Enter(GameStateType previousState)
         {
-            _logger.LogInfo("🏠 LobbyState: Завантаження LobbyScene та ініціалізація", "LobbyState");
+            _logger.LogInfo("🔄 LoadingState: Початок завантаження", "LoadingState");
 
-            EnterLobbyAsync(previousState).Forget();
+            ManageLoadingProcessAsync(previousState).Forget(); // ✅ ПРАВИЛЬНИЙ МЕТОД
         }
         private async UniTaskVoid EnterLobbyAsync(GameStateType previousState)
         {
@@ -110,27 +110,34 @@ namespace MythHunter.States
             // 1. Ініціалізуємо системи завантаження
             _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
 
+            // ✅ ЗАТРИМКА для ініціалізації UI
+            await UniTask.Delay(500);
+
             // 2. Запускаємо LoadingSystem
             bool success = false;
 
             if (_nextState == GameStateType.Lobby)
             {
-                // Для лобі - легке завантаження
                 _logger.LogInfo("🎯 LoadingState: Легке завантаження для лобі", "LoadingState");
-                await UniTask.Delay(1000); // Показуємо UI завантаження
-                success = true;
+                success = await _loadingSystem.StartLoadingGameAsync(_selectedHeroArchetypes, _mapId);
             }
             else if (_nextState == GameStateType.Gameplay)
             {
-                // Для геймплею - повне завантаження через LoadingSystem
                 _logger.LogInfo("🎯 LoadingState: Повне завантаження для геймплею", "LoadingState");
                 success = await _loadingSystem.StartLoadingGameAsync(_selectedHeroArchetypes, _mapId);
             }
+
+            // ✅ ЗАТРИМКА перед переходом
+            await UniTask.Delay(300);
 
             // 3. Завершуємо і переходимо до цільового стану
             if (success)
             {
                 await _loadingSystem.FinishLoadingAsync();
+
+                // ✅ ЩЕ ОДНА ЗАТРИМКА
+                await UniTask.Delay(200);
+
                 _stateMachine.ChangeState(_nextState);
             }
             else
@@ -178,14 +185,17 @@ namespace MythHunter.States
                     Timestamp = DateTime.UtcNow
                 });
 
-                // 3. Показуємо UI завантаження (LoadingScene вже активна)
+                // 3. ✅ ПОКАЗУЄМО UI ЗАВАНТАЖЕННЯ
                 await _navigationService.SetupForSceneAsync("LoadingScene", new NavigationParameters());
-                await _container.Resolve<IUIService>().ShowScreenAsync(ViewId.LoadingScreen);
 
-                // 4. Ініціалізуємо LoadingSystem і запускаємо завантаження
+                // 4. ✅ СТВОРЮЄМО LOADINGSCREEN VIEW
+                var uiService = _container.Resolve<IUIService>();
+                await uiService.ShowScreenAsync(ViewId.LoadingScreen);
+
+                // 5. Ініціалізуємо LoadingSystem і запускаємо завантаження
                 await InitializeAndStartLoadingAsync();
 
-                _logger.LogInfo("✅ LoadingState: Завантаження завершено, передаємо контроль цільовому стану", "LoadingState");
+                _logger.LogInfo("✅ LoadingState: Завантаження завершено", "LoadingState");
             }
             catch (Exception ex)
             {

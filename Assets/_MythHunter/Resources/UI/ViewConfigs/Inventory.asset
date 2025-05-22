@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df04bd6159f86941b20303af29d0658, type: 3}
   m_Name: Inventory
   m_EditorClassIdentifier: 
-  viewId: 8
+  viewId: 9
   prefabPath: UI/Lobby/Inventory
   isPopup: 1
   isCached: 1
+  category: 2
