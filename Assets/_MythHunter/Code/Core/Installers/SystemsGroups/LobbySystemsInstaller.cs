@@ -29,19 +29,14 @@ namespace MythHunter.Core.Installers
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             BindSingleton<ILobbySystem, LobbySystem>(container);
             BindSingleton<IHeroSelectionSystem, HeroSelectionSystem>(container);
-            BindSingleton<IHeroSystem, HeroSystem>(container);
-            BindSingleton<IRaceClassBonusSystem, RaceClassBonusSystem>(container);
-            BindSingleton<IHeroFactory, HeroFactory>(container);
-            BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
-            BindSingleton<IHeroDataService, LocalHeroDataService>(container);
-            BindSingleton<IHeroCardService, HeroCardService>(container);
-            BindSingleton<IPrefabProvider, PrefabProvider>(container);
+       
+      
+    
             // Отримуємо інстанси для реєстрації
             var lobbyPresenter = container.Resolve<ILobbyPresenter>();
             var lobbySystem = container.Resolve<ILobbySystem>();
             var selectionSystem = container.Resolve<IHeroSelectionSystem>();
-            var heroSystem = container.Resolve<IHeroSystem>();
-            var bonusSystem = container.Resolve<IRaceClassBonusSystem>();
+           
 
             // Група Lobby - з явним порядком систем
             var lobbyGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
@@ -63,8 +58,7 @@ namespace MythHunter.Core.Installers
                 logger
             );
 
-            heroGroup.AddSystem(heroSystem);
-            heroGroup.AddSystem(bonusSystem);
+           
 
             logger.LogInfo("Системи лобі встановлено успішно", "Installer");
         }

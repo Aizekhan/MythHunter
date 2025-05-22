@@ -9,13 +9,18 @@ using MythHunter.Resources.Pool;
 using MythHunter.Resources;
 using MythHunter.Systems.Groups;
 using MythHunter.UI.Core;
+using MythHunter.UI.Services;
+using MythHunter.Entities.Archetypes;
+using MythHunter.Entities.Heroes;
+using MythHunter.Systems.Heroes;
+using MythHunter.Services.Heroes;
 
 namespace MythHunter.Core.Installers
 {
     /// <summary>
     /// Інсталятор для базових систем, що запускаються при завантаженні гри
     /// </summary>
-    public class OnBootSystemsInstaller : DIInstaller
+    public class HeroSystemsInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)
         {
@@ -23,7 +28,16 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення базових систем (OnBoot)...", "Installer");
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
+            BindSingleton<IHeroCardService, HeroCardService>(container);
+            BindSingleton<IPrefabProvider, PrefabProvider>(container);
 
+            BindSingleton<IHeroSystem, HeroSystem>(container);
+            BindSingleton<IRaceClassBonusSystem, RaceClassBonusSystem>(container);
+
+            BindSingleton<IHeroFactory, HeroFactory>(container);
+            BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
+
+            BindSingleton<IHeroDataService, LocalHeroDataService>(container);
             // Реєстрація Core-систем
             var coreGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "CoreServices",
@@ -32,8 +46,8 @@ namespace MythHunter.Core.Installers
                 logger
             );
             coreGroup.AddSystem(container.Resolve<IEventThrottlerUpdateSystem>());
-           
-
+            coreGroup.AddSystem(container.Resolve<IHeroSystem>());
+            coreGroup.AddSystem(container.Resolve<IRaceClassBonusSystem>());
             // Реєстрація UI-систем
             var uiGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "UIServices",

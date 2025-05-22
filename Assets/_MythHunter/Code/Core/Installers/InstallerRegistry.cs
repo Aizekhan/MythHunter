@@ -29,9 +29,11 @@ namespace MythHunter.Core
                 new PoolInstaller(),
                 new EntitiesInstaller(),
                 new DebugToolsInstaller(),
+                new HeroSystemsInstaller(),
+
                 new LoadingSystemsInstaller(),
                 // Інсталятори систем (за категоріями)
-                new OnBootSystemsInstaller(),
+              
                 new NetworkingSystemsInstaller(),
                 new LobbySystemsInstaller(),
                 new GameplaySystemsInstaller(),
