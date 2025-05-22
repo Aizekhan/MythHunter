@@ -34,7 +34,7 @@ namespace MythHunter.Systems.Loading
         private readonly IArchetypeSystem _archetypeSystem;
         private readonly ISystemRegistry _systemRegistry;
         private readonly IEventThrottler _eventThrottler;
-        private readonly DIContainer _container;
+        private readonly IDIContainer _container;
 
         private float _loadingProgress = 0f;
         private string _loadingStatus = "Готуємося до завантаження...";
@@ -58,7 +58,7 @@ namespace MythHunter.Systems.Loading
             IEventBus eventBus,
             IEventThrottler eventThrottler,
             IMythLogger logger,
-            DIContainer container)
+            IDIContainer container)
             : base(logger, eventBus)
         {
             _resourceManager = resourceManager;
