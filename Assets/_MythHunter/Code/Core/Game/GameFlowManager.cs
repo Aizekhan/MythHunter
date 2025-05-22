@@ -102,79 +102,32 @@ namespace MythHunter.Core.Game
         /// Запускає перехід від Boot до Lobby
         /// </summary>
         // Оновіть метод для переходу до лоббі:
-        public async UniTask EnterLobbyAsync()
+        public UniTask EnterLobbyAsync()
         {
-            _logger.LogInfo("Початок переходу до Lobby", "GameFlow");
-
-            try
+            var context = new LoadingStateContext
             {
-                // Підготовка до зміни сцени
-                await _navigationService.PrepareForSceneChangeAsync();
+                SelectedHeroArchetypes = new[] { "Hero1", "Hero2", "Hero3", "Hero4" },
+                MapId = "Lobby",
+                NextState = GameStateType.Lobby
+            };
 
-                // Завантажуємо сцену
-                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
-                _currentSceneName = "LobbyScene";
-
-                // Ініціалізуємо системи
-                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
-                _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.OnDemand);
-
-                // Змінюємо стан гри
-                _gameStateMachine.ChangeState(GameStateType.Lobby);
-
-                // Налаштування навігації для сцени - використовуємо enum
-                var parameters = new NavigationParameters();
-                await _navigationService.NavigateToAsync(ViewId.Lobby, parameters);
-
-                // Публікуємо подію зміни стану гри
-                PublishStateChange(GameStateType.Boot, GameStateType.Lobby);
-
-                _logger.LogInfo("Перехід до Lobby завершено", "GameFlow");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Помилка при переході до Lobby: {ex.Message}", "GameFlow", ex);
-                throw;
-            }
+            _gameStateMachine.ChangeState(GameStateType.Loading, context);
+            return UniTask.CompletedTask;
         }
         /// <summary>
         /// Запускає перехід від Lobby до Gameplay
         /// </summary>
-        public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
+        public UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
         {
-            _logger.LogInfo($"Запуск переходу до ігрового процесу з {selectedHeroArchetypes?.Length ?? 0} героями", "GameFlow");
-
-            try
+            var context = new LoadingStateContext
             {
-                // Підготовка до зміни сцени
-                await _navigationService.PrepareForSceneChangeAsync();
+                SelectedHeroArchetypes = selectedHeroArchetypes,
+                MapId = mapId,
+                NextState = GameStateType.Gameplay
+            };
 
-                // Створюємо контекст завантаження
-                var loadingContext = new LoadingStateContext
-                {
-                    SelectedHeroArchetypes = selectedHeroArchetypes,
-                    MapId = mapId
-                };
-
-                // Змінюємо стан на Loading з передачею контексту
-                _gameStateMachine.ChangeState(GameStateType.Loading, loadingContext);
-
-                // Не чекаємо завершення зміни стану, бо це може бути тривалий процес
-                _logger.LogInfo("Перехід до стану завантаження ініційовано", "GameFlow");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Помилка при переході до ігрового процесу: {ex.Message}", "GameFlow", ex);
-
-                // Публікуємо подію помилки
-                _eventBus.Publish(new GameErrorEvent
-                {
-                    ErrorMessage = $"Не вдалося запустити гру: {ex.Message}",
-                    Timestamp = DateTime.UtcNow
-                });
-
-                throw;
-            }
+            _gameStateMachine.ChangeState(GameStateType.Loading, context);
+            return UniTask.CompletedTask;
         }
 
         /// <summary>

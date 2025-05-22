@@ -26,7 +26,7 @@ namespace MythHunter.States
         private readonly INavigationService _navigationService;
         private readonly ISystemRegistry _systemRegistry;
         private readonly IGameStateMachine _stateMachine;
-
+        private GameStateType _nextState;
         private string[] _selectedHeroArchetypes;
         private string _mapId;
         private bool _isEntered = false;
@@ -93,7 +93,7 @@ namespace MythHunter.States
 
                 // Ініціалізуємо системи завантаження
                 await InitializeLoadingSystemsAsync();
-
+                await _container.Resolve<IUIService>().ShowScreenAsync(ViewId.LoadingScreen);
                 // Починаємо процес завантаження
                 await StartLoadingProcessAsync();
 
@@ -115,14 +115,13 @@ namespace MythHunter.States
             {
                 _selectedHeroArchetypes = loadingContext.SelectedHeroArchetypes;
                 _mapId = loadingContext.MapId;
-
-                _logger.LogInfo($"Отримано параметри: {_selectedHeroArchetypes?.Length ?? 0} героїв, карта: {_mapId}", "LoadingState");
+                _nextState = loadingContext.NextState; // 👈 зберігаємо наступний стан
             }
             else
             {
-                _logger.LogWarning("Контекст стану відсутній або має неправильний тип", "LoadingState");
-                _selectedHeroArchetypes = new string[0];
+                _selectedHeroArchetypes = Array.Empty<string>();
                 _mapId = "default";
+                _nextState = GameStateType.Lobby; // 👈 дефолт
             }
         }
 
@@ -160,14 +159,14 @@ namespace MythHunter.States
                     await _loadingSystem.FinishLoadingAsync();
 
                     // Переходимо в ігровий стан
-                    _stateMachine.ChangeState(GameStateType.Gameplay);
+                    _stateMachine.ChangeState(_nextState);
 
                 }
                 else
                 {
                     // Завантаження не вдалося, повертаємося в лобі
                     _logger.LogWarning("Завантаження не вдалося, повернення в лобі", "LoadingState");
-                    _stateMachine.ChangeState(GameStateType.Gameplay);
+                    _stateMachine.ChangeState(GameStateType.Lobby);
 
                 }
             }
@@ -176,7 +175,7 @@ namespace MythHunter.States
                 _logger.LogError($"Помилка в процесі завантаження: {ex.Message}", "LoadingState", ex);
 
                 // При критичній помилці повертаємося в лобі
-                _stateMachine.ChangeState(GameStateType.Gameplay);
+                _stateMachine.ChangeState(GameStateType.Lobby);
 
             }
         }
@@ -197,10 +196,8 @@ namespace MythHunter.States
     /// </summary>
     public class LoadingStateContext
     {
-        public string[] SelectedHeroArchetypes
-        {
-            get; set;
-        }
+        public string[] SelectedHeroArchetypes { get; set; } = Array.Empty<string>();
         public string MapId { get; set; } = "default";
+        public GameStateType NextState { get; set; } = GameStateType.Gameplay; // 👈 оце головне
     }
 }

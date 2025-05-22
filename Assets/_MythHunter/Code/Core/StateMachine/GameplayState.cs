@@ -35,8 +35,8 @@ namespace MythHunter.States
         {
             _logger.LogInfo("Entering gameplay state");
 
-            var dispatcher = _container.Resolve<ISceneDispatcher>(); // Використовуємо _container замість Container
-            var eventBus = _container.Resolve<IEventBus>(); // Використовуємо _container замість Container
+            var dispatcher = _container.Resolve<ISceneDispatcher>();
+            var eventBus = _container.Resolve<IEventBus>();
             var heroes = dispatcher.GetSceneData<List<string>>("SelectedHeroTypes");
 
             if (heroes != null)
@@ -49,8 +49,7 @@ namespace MythHunter.States
 
             eventBus.Publish(new GameStartedEvent { Timestamp = DateTime.UtcNow });
 
-            // Додатково можна активувати HUD, тощо
-            await UniTask.Delay(100); // якщо потрібно дочекатись ECS
+            await UniTask.Delay(100);
         }
 
         public override void Exit()
