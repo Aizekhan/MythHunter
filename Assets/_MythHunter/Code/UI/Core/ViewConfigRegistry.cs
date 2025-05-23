@@ -4,31 +4,57 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using MythHunter.UI.ViewConfigs;
+using MythHunter.Utils.Logging;
+using NUnit.Framework.Internal;
 
 namespace MythHunter.UI.Core
 {
     public class ViewConfigRegistry : IViewConfigRegistry
     {
+
         private readonly Dictionary<ViewId, ViewConfig> _configsById = new();
         private readonly Dictionary<string, ViewConfig> _configsByName = new();
         private readonly Dictionary<Type, ViewConfig> _configsByType = new(); // Додано для кешування відповідностей
-
+        private readonly IMythLogger _logger;
         public ViewConfigRegistry()
         {
+            _logger = MythLoggerFactory.GetDefaultLogger();
             LoadAllConfigs();
         }
 
         private void LoadAllConfigs()
         {
-            var configs = UnityEngine.Resources.LoadAll<ViewConfig>("UI/ViewConfigs");
-
-            foreach (var config in configs)
+            try
             {
-                if (!_configsById.ContainsKey(config.viewId))
+
+                var configs = UnityEngine.Resources.LoadAll<ViewConfig>("UI/ViewConfigs");
+
+                // ✅ Додайте логування для діагностики
+                _logger?.LogInfo($"Знайдено {configs.Length} ViewConfig файлів", "ViewConfigRegistry");
+
+                foreach (var config in configs)
                 {
-                    _configsById.Add(config.viewId, config);
-                    _configsByName.Add(config.viewId.ToString(), config);
+                    if (config == null)
+                    {
+                        _logger?.LogWarning("Знайдено null ViewConfig", "ViewConfigRegistry");
+                        continue;
+                    }
+
+                    if (!_configsById.ContainsKey(config.viewId))
+                    {
+                        _configsById.Add(config.viewId, config);
+                        _configsByName.Add(config.viewId.ToString(), config);
+                        _logger?.LogInfo($"Зареєстровано ViewConfig: {config.viewId} -> {config.prefabPath}", "ViewConfigRegistry");
+                    }
+                    else
+                    {
+                        _logger?.LogWarning($"Дублікат ViewConfig для {config.viewId}", "ViewConfigRegistry");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError($"Помилка завантаження ViewConfigs: {ex.Message}", "ViewConfigRegistry", ex);
             }
         }
 

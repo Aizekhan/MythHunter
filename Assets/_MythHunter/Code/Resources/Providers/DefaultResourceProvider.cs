@@ -5,6 +5,7 @@ using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.Resources.Core;
 using UnityEngine;
+using System;
 
 namespace MythHunter.Resources.Providers
 {
@@ -20,26 +21,39 @@ namespace MythHunter.Resources.Providers
 
         public override async UniTask<T> LoadAsync<T>(string key)
         {
-            LogDebug($"Loading resource: {key}");
-
-            // Спроба завантажити з кешу
-            if (_loadedResources.TryGetValue(key, out var cached) && cached is T cachedTyped)
+            if (string.IsNullOrEmpty(key))
             {
-                await UniTask.Yield();
-                return cachedTyped;
+                LogWarning($"Порожній ключ для завантаження {typeof(T).Name}");
+                return null;
             }
 
-            // Завантаження через MythResourceUtils
-            T resource = MythResourceUtils.Load<T>(key);
-
-            if (resource != null)
+            try
             {
-                _loadedResources[key] = resource;
-                return resource;
-            }
+                // ✅ Спробуйте різні варіанти шляхів
+                string[] possiblePaths = {
+            key,
+            $"Resources/{key}",
+            key.Replace("UI/", "")
+        };
 
-            LogWarning($"Failed to load resource: {key}");
-            return null;
+                foreach (string path in possiblePaths)
+                {
+                    var resource = UnityEngine.Resources.Load<T>(path);
+                    if (resource != null)
+                    {
+                        LogInfo($"Завантажено {typeof(T).Name} з шляху: {path}");
+                        return resource;
+                    }
+                }
+
+                LogWarning($"Не вдалося завантажити {typeof(T).Name} за ключем: {key}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Помилка завантаження {key}: {ex.Message}");
+                return null;
+            }
         }
 
         public override async UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern)

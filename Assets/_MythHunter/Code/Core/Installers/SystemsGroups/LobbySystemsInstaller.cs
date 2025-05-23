@@ -28,14 +28,14 @@ namespace MythHunter.Core.Installers
             // Реєстрація сервісів та класів
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             BindSingleton<ILobbySystem, LobbySystem>(container);
-            BindSingleton<IHeroSelectionSystem, HeroSelectionSystem>(container);
+          
        
       
     
             // Отримуємо інстанси для реєстрації
             var lobbyPresenter = container.Resolve<ILobbyPresenter>();
             var lobbySystem = container.Resolve<ILobbySystem>();
-            var selectionSystem = container.Resolve<IHeroSelectionSystem>();
+
            
 
             // Група Lobby - з явним порядком систем
@@ -48,7 +48,7 @@ namespace MythHunter.Core.Installers
 
             // Додаємо системи в чіткому порядку
             lobbyGroup.AddSystem(lobbySystem);
-            lobbyGroup.AddSystem(selectionSystem);
+        
 
             // Група HeroSystems
             var heroGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(

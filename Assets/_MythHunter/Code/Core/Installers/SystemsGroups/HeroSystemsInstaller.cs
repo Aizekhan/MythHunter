@@ -14,6 +14,7 @@ using MythHunter.Entities.Archetypes;
 using MythHunter.Entities.Heroes;
 using MythHunter.Systems.Heroes;
 using MythHunter.Services.Heroes;
+using MythHunter.Systems.Lobby;
 
 namespace MythHunter.Core.Installers
 {
@@ -36,7 +37,7 @@ namespace MythHunter.Core.Installers
 
             BindSingleton<IHeroFactory, HeroFactory>(container);
             BindSingleton<IHeroArchetypeRegistry, HeroArchetypeRegistry>(container);
-
+            BindSingleton<IHeroSelectionSystem, HeroSelectionSystem>(container);
             BindSingleton<IHeroDataService, LocalHeroDataService>(container);
             // Реєстрація Core-систем
             var coreGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
@@ -48,6 +49,8 @@ namespace MythHunter.Core.Installers
             coreGroup.AddSystem(container.Resolve<IEventThrottlerUpdateSystem>());
             coreGroup.AddSystem(container.Resolve<IHeroSystem>());
             coreGroup.AddSystem(container.Resolve<IRaceClassBonusSystem>());
+            coreGroup.AddSystem(container.Resolve<IHeroSelectionSystem>());
+         
             // Реєстрація UI-систем
             var uiGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(
                 "UIServices",

@@ -36,6 +36,7 @@ namespace MythHunter.Systems.Loading
         private readonly IEventThrottler _eventThrottler;
         private readonly IDIContainer _container;
         private readonly IPrefabProvider _prefabProvider;
+       
 
         private float _loadingProgress = 0f;
         private string _loadingStatus = "Готуємося до завантаження...";

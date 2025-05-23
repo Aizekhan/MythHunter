@@ -66,7 +66,7 @@ namespace MythHunter.Core.Game
             _container = new DIContainer(logger);
 
             _container.BindSingleton<IMythLogger>(logger);
-            _container.BindSingleton<IDIContainer>(_container);
+         
 
             InstallerRegistry.RegisterInstallers(_container);
 
