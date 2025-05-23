@@ -927,6 +927,45 @@ namespace MythHunter.Systems.Loading
         {
             _logger.LogInfo("🔧 Заглушка: InitializeCommonUIPoolsAsync", "Loading");
             await UniTask.Delay(100);
+
+            /*
+             * private async UniTask InitializeCommonUIPoolsAsync()
+{
+    _logger.LogInfo("🎨 Ініціалізація загальних UI пулів...", "Loading");
+
+    try
+    {
+        // Пул для tooltip-ів
+        var tooltipPrefab = await _resourceManager.LoadAsync<GameObject>("UI/Common/Tooltip");
+        if (tooltipPrefab != null)
+        {
+            _poolManager.CreatePool<GameObject>("Tooltip", tooltipPrefab, 5);
+            _logger.LogInfo("Створено пул для tooltip-ів", "Loading");
+        }
+
+        // Пул для notification-ів  
+        var notificationPrefab = await _resourceManager.LoadAsync<GameObject>("UI/Common/Notification");
+        if (notificationPrefab != null)
+        {
+            _poolManager.CreatePool<GameObject>("Notification", notificationPrefab, 3);
+            _logger.LogInfo("Створено пул для сповіщень", "Loading");
+        }
+
+        // Пул для progress bar-ів
+        var progressPrefab = await _resourceManager.LoadAsync<GameObject>("UI/Common/ProgressBar");
+        if (progressPrefab != null)
+        {
+            _poolManager.CreatePool<GameObject>("ProgressBar", progressPrefab, 2);
+            _logger.LogInfo("Створено пул для progress bar-ів", "Loading");
+        }
+
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError($"Помилка ініціалізації загальних UI пулів: {ex.Message}", "Loading", ex);
+    }
+}
+             */
         }
 
         private async UniTask<bool> ExecuteMinimalLoadingAsync()

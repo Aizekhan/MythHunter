@@ -105,52 +105,56 @@ namespace MythHunter.UI.Presenters
 
         public void Initialize(ILobbyView view)
         {
+            _logger.LogInfo($"🚀 LobbyPresenter.Initialize ПОЧАТОК з view: {view?.GetType().Name ?? "NULL"}", "UI");
+
+            if (view == null)
+            {
+                _logger.LogError("❌ Спроба ініціалізувати LobbyPresenter з null view!", "UI");
+                return;
+            }
+
             _view = view;
+            _logger.LogInfo($"✅ LobbyPresenter._view встановлено успішно", "UI");
 
-            // Спочатку ініціалізуємо і лише потім працюємо з картками
-            UniTask.Create(async () => {
-                try
+            // ✅ ПІДПИСУЄМОСЯ НА ПОДІЇ ОДРАЗУ ПІСЛЯ ВСТАНОВЛЕННЯ _view
+            if (!_isSubscribed)
+            {
+                SubscribeToEvents();
+                _logger.LogInfo("✅ Підписка на події завершена", "UI");
+            }
+
+            // ✅ ВИКЛИКАЄМО СИНХРОННУ ЧАСТИНУ
+            InitializeSync();
+
+            // ✅ ASYNC ЧАСТИНУ ОКРЕМО
+            InitializeAsyncSafe().Forget();
+        }
+
+        private void InitializeSync()
+        {
+            // Синхронна ініціалізація, що не може втратити _view
+            _logger.LogInfo("🔧 InitializeSync виконується", "UI");
+        }
+
+        private async UniTaskVoid InitializeAsyncSafe()
+        {
+            try
+            {
+                await UniTask.DelayFrame(3);
+
+                if (_view == null)
                 {
-                    // 🔥 КРИТИЧНО: Чекаємо повну ініціалізацію Unity сцени
-                    await UniTask.DelayFrame(3);
-
-                    // Перевіряємо, що view все ще існує
-                    if (_view == null)
-                    {
-                        _logger.LogWarning("View стало null під час ініціалізації", "UI");
-                        return;
-                    }
-
-                    // Спочатку ініціалізація
-                    await InitializeAsync();
-
-                    // Переконуємось, що LobbySystem ініціалізований
-                    if (_lobbySystem != null && !_lobbySystem.IsInitialized && _gameSettings != null)
-                    {
-                        _lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
-                    }
-
-                    // 🔥 КРИТИЧНО: Перевіряємо контейнери перед використанням
-                    if (_view.HeroCardsContainer == null)
-                    {
-                        _logger.LogError("HeroCardsContainer is null! Чекаємо ще...", "UI");
-                        await UniTask.DelayFrame(5); // Чекаємо ще
-
-                        if (_view.HeroCardsContainer == null)
-                        {
-                            _logger.LogError("HeroCardsContainer все ще null після очікування!", "UI");
-                            return;
-                        }
-                    }
-
-                    // Тільки після цього працюємо з картками
-                    await PopulateHeroCardsAsync();
+                    _logger.LogError("❌ _view стало null в InitializeAsyncSafe!", "UI");
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Помилка в ініціалізації LobbyPresenter: {ex.Message}", "UI", ex);
-                }
-            });
+
+                await InitializeAsync();
+                // Решта async логіки...
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка в InitializeAsyncSafe: {ex.Message}", "UI", ex);
+            }
         }
         public async UniTask InitializeLobbyAsync(int playerCount)
         {
@@ -169,13 +173,26 @@ namespace MythHunter.UI.Presenters
         }
         public void Dispose()
         {
+            _logger.LogInfo("🗑️ LobbyPresenter.Dispose() викликано", "UI");
+
+            // ✅ СПОЧАТКУ ВІДПИСУЄМОСЯ ВІД ПОДІЙ
             UnsubscribeFromEvents();
-            _heroCardService.ReturnAll(_createdHeroCards);
-            _heroCardService.ReturnAll(_selectedHeroCards);
+
+            // ✅ ПОТІМ ОЧИЩУЄМО РЕСУРСИ
+            if (_heroCardService != null)
+            {
+                _heroCardService.ReturnAll(_createdHeroCards);
+                _heroCardService.ReturnAll(_selectedHeroCards);
+            }
+
             _createdHeroCards.Clear();
             _selectedHeroCards.Clear();
-        }
 
+            // ✅ ОБНУЛЯЄМО _view В КІНЦІ
+            _view = null;
+
+            _logger.LogInfo("✅ LobbyPresenter disposed", "UI");
+        }
         public void SubscribeToEvents()
         {
             if (_isSubscribed)
@@ -197,14 +214,22 @@ namespace MythHunter.UI.Presenters
             if (!_isSubscribed)
                 return;
 
-            _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
-            _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
-            _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-            _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated);
-            _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
-            _eventBus.Unsubscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
+            try
+            {
+                _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
+                _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
+                _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
+                _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnTimerUpdated); // ← Ця подія викликає помилку
+                _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
+                _eventBus.Unsubscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
 
-            _isSubscribed = false;
+                _isSubscribed = false;
+                _logger.LogInfo("✅ LobbyPresenter відписався від подій", "UI");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка при відписці від подій: {ex.Message}", "UI", ex);
+            }
         }
 
         public void OnHeroSelected(string archetypeId)
@@ -233,21 +258,56 @@ namespace MythHunter.UI.Presenters
             await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
         }
 
-        private void OnLobbyInitialized(LobbyInitializedEvent evt)
+    
+
+        // ✅ ОКРЕМИЙ МЕТОД З ДОДАТКОВИМИ ПЕРЕВІРКАМИ
+        private async UniTaskVoid PopulateHeroCardsWithSafetyAsync()
         {
-            UniTask.Create(async () => {
+            try
+            {
+                // Мала затримка для стабілізації UI
+                await UniTask.DelayFrame(1);
+
+                // ✅ ПЕРЕВІРЯЄМО _view ПІСЛЯ ЗАТРИМКИ
+                if (_view == null)
+                {
+                    _logger.LogError("❌ PopulateHeroCardsWithSafetyAsync: _view стало null після затримки!", "UI");
+                    return;
+                }
+
                 await PopulateHeroCardsAsync();
-                _view.UpdateMana(evt.ManaPerPlayer, evt.ManaPerPlayer);
-                _view.UpdateTimer(evt.SelectionTimeLimit, evt.SelectionTimeLimit);
-            });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка в PopulateHeroCardsWithSafetyAsync: {ex.Message}", "UI", ex);
+            }
         }
 
         private void OnHeroSelectedEvent(HeroSelectedEvent evt)
         {
+            if (_view == null)
+            {
+                _logger.LogWarning("⚠️ OnHeroSelectedEvent: _view is null", "UI");
+                return;
+            }
+
             UniTask.Create(async () => {
-                await UpdateSelectedHeroesAsync();
-                _view.UpdateMana(evt.RemainingMana, 4);
-                await UpdateHeroCardsStateAsync();
+                try
+                {
+                    await UpdateSelectedHeroesAsync();
+
+                    // ✅ ПЕРЕВІРЯЄМО _view ПЕРЕД КОЖНИМ ВИКЛИКОМ
+                    if (_view != null)
+                    {
+                        _view.UpdateMana(evt.RemainingMana, 4);
+                    }
+
+                    await UpdateHeroCardsStateAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"❌ Помилка в OnHeroSelectedEvent: {ex.Message}", "UI", ex);
+                }
             });
         }
 
@@ -269,9 +329,26 @@ namespace MythHunter.UI.Presenters
             }
         }
 
+
         private void OnTimerUpdated(SelectionTimerUpdatedEvent evt)
         {
-            _view.UpdateTimer(evt.RemainingTime, 300f);
+            // ✅ ДЕТАЛЬНА ДІАГНОСТИКА
+            _logger.LogDebug($"📨 OnTimerUpdated: _view = {_view?.GetType().Name ?? "NULL"}, time = {evt.RemainingTime}", "UI");
+
+            if (_view == null)
+            {
+                _logger.LogWarning("⚠️ OnTimerUpdated: _view is null, пропускаємо", "UI");
+                return;
+            }
+
+            try
+            {
+                _view.UpdateTimer(evt.RemainingTime, 300f);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ OnTimerUpdated error: {ex.Message}", "UI", ex);
+            }
         }
 
         private void OnGameStateChanged(GameStateChangedEvent evt)
@@ -286,7 +363,13 @@ namespace MythHunter.UI.Presenters
 
         private void OnLobbyStateEntered(LobbyStateEnteredEvent evt)
         {
-            _logger.LogInfo("Отримано подію LobbyStateEnteredEvent", "UI");
+            _logger.LogInfo($"📨 OnLobbyStateEntered: _view = {_view?.GetType().Name ?? "NULL"}", "UI");
+
+            if (_view == null)
+            {
+                _logger.LogError("❌ OnLobbyStateEntered: _view is null!", "UI");
+                return;
+            }
 
             UniTask.Create(async () => {
                 try
@@ -295,54 +378,104 @@ namespace MythHunter.UI.Presenters
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Помилка при обробці LobbyStateEnteredEvent: {ex.Message}", "UI", ex);
+                    _logger.LogError($"❌ Помилка при обробці LobbyStateEnteredEvent: {ex.Message}", "UI", ex);
                 }
             });
         }
 
+        private void OnLobbyInitialized(LobbyInitializedEvent evt)
+        {
+            _logger.LogInfo($"📨 OnLobbyInitialized: _view = {_view?.GetType().Name ?? "NULL"}", "UI");
+
+            // ✅ КРИТИЧНА ПЕРЕВІРКА НА ПОЧАТКУ
+            if (_view == null)
+            {
+                _logger.LogError("❌ OnLobbyInitialized: _view is null! Не можемо обробити подію.", "UI");
+                return;
+            }
+
+            // ✅ НЕ РОБИМО UniTask.Create - ВИКЛИКАЄМО СИНХРОННО
+            try
+            {
+                // Спочатку оновлюємо UI синхронно
+                _view.UpdateMana((int)evt.ManaPerPlayer, (int)evt.ManaPerPlayer);
+                _view.UpdateTimer(evt.SelectionTimeLimit, evt.SelectionTimeLimit);
+
+                // ✅ ПЕРЕВІРЯЄМО _view ПЕРЕД ASYNC ВИКЛИКОМ
+                if (_view != null)
+                {
+                    // Async виклик БЕЗ створення нового контексту
+                    PopulateHeroCardsWithSafetyAsync().Forget();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка в OnLobbyInitialized: {ex.Message}", "UI", ex);
+            }
+        }
+
+
+
         private async UniTask PopulateHeroCardsAsync()
         {
-            // 🔥 КРИТИЧНІ ПЕРЕВІРКИ:
+            // 🔥 ЛОГУЄМО НА САМОМУ ПОЧАТКУ
+            _logger.LogInfo($"🎴 PopulateHeroCardsAsync ПОЧАТОК: _view = {_view?.GetType().Name ?? "NULL"}", "UI");
+
+            // 🔥 КРИТИЧНІ ПЕРЕВІРКИ НА ПОЧАТКУ
             if (_heroCardService == null)
             {
-                _logger.LogError("_heroCardService is null", "UI");
+                _logger.LogError("❌ _heroCardService is null", "UI");
                 return;
             }
 
             if (_view == null)
             {
-                _logger.LogError("_view is null", "UI");
+                _logger.LogError("❌ PopulateHeroCardsAsync: _view is null!", "UI");
                 return;
             }
 
             if (_view.HeroCardsContainer == null)
             {
-                _logger.LogError("_view.HeroCardsContainer is null", "UI");
+                _logger.LogError("❌ _view.HeroCardsContainer is null", "UI");
 
-                // 🔥 ЧЕКАЄМО ДО 5 СЕКУНД:
+                // 🔥 ЧЕКАЄМО З ДОДАТКОВИМИ ПЕРЕВІРКАМИ
                 for (int i = 0; i < 50; i++)
                 {
                     await UniTask.Delay(100);
-                    if (_view?.HeroCardsContainer != null)
+
+                    if (_view == null)
+                    {
+                        _logger.LogError("❌ _view стало null під час очікування!", "UI");
+                        return;
+                    }
+
+                    if (_view.HeroCardsContainer != null)
+                    {
+                        _logger.LogInfo("✅ HeroCardsContainer з'явився після очікування", "UI");
                         break;
+                    }
                 }
 
                 if (_view?.HeroCardsContainer == null)
                 {
-                    _logger.LogError("HeroCardsContainer так і не ініціалізувався!", "UI");
+                    _logger.LogError("❌ HeroCardsContainer так і не ініціалізувався!", "UI");
                     return;
                 }
             }
 
-            // Очищаємо попередні картки
-            _heroCardService.ReturnAll(_createdHeroCards);
-            _createdHeroCards.Clear();
-
+            // Решта коду з додатковими перевірками...
             var heroes = GetAvailableHeroes();
-            _logger.LogInfo($"Створюємо {heroes.Count} карток героїв", "UI");
+            _logger.LogInfo($"🎴 Створюємо {heroes.Count} карток героїв", "UI");
 
             foreach (var hero in heroes)
             {
+                // ✅ ПЕРЕВІРЯЄМО _view НА КОЖНІЙ ІТЕРАЦІЇ
+                if (_view == null)
+                {
+                    _logger.LogError("❌ _view стало null під час створення карток!", "UI");
+                    break;
+                }
+
                 try
                 {
                     var card = await _heroCardService.CreateCardAsync(hero, _view.HeroCardsContainer);
@@ -354,11 +487,11 @@ namespace MythHunter.UI.Presenters
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Помилка створення картки для {hero.ArchetypeId}: {ex.Message}", "UI", ex);
+                    _logger.LogError($"❌ Помилка створення картки для {hero.ArchetypeId}: {ex.Message}", "UI", ex);
                 }
             }
 
-            await UpdateSelectedHeroesAsync();
+            _logger.LogInfo($"✅ PopulateHeroCardsAsync ЗАВЕРШЕНО: створено {_createdHeroCards.Count} карток", "UI");
         }
 
         private async UniTask UpdateSelectedHeroesAsync()

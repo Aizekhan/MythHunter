@@ -15,6 +15,7 @@ using MythHunter.UI.Presenters;
 using System;
 using System.Threading;
 using MythHunter.Core.SceneManagement;
+using MythHunter.UI.Views;
 
 namespace MythHunter.States
 {
@@ -206,6 +207,7 @@ namespace MythHunter.States
         /// <summary>
         /// Ініціалізація LobbySystem
         /// </summary>
+        // У LobbyState.cs - метод InitializeLobbyAsync
         private async UniTask InitializeLobbyAsync()
         {
             try
@@ -213,10 +215,31 @@ namespace MythHunter.States
                 var lobbySystem = _container.Resolve<ILobbySystem>();
                 var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
 
-                // Спочатку ініціалізуємо презентер
+                // ✅ КРИТИЧНО: Спочатку створюємо VIEW
+                var uiService = _container.Resolve<IUIService>();
+                var lobbyView = await uiService.ShowScreenAsync(ViewId.Lobby);
+
+                if (lobbyView == null)
+                {
+                    _logger.LogError("❌ Не вдалося створити LobbyView!", "LobbyState");
+                    throw new Exception("Failed to create LobbyView");
+                }
+
+                // ✅ ПРИВ'ЯЗУЄМО PRESENTER ДО VIEW
+                if (lobbyView is ILobbyView typedLobbyView)
+                {
+                    _logger.LogInfo($"✅ Прив'язуємо LobbyPresenter до LobbyView", "LobbyState");
+                    lobbyPresenter.Initialize(typedLobbyView);
+                }
+                else
+                {
+                    _logger.LogError($"❌ LobbyView не реалізує ILobbyView! Тип: {lobbyView.GetType().Name}", "LobbyState");
+                }
+
+                // ✅ ПОТІМ ініціалізуємо презентер
                 await lobbyPresenter.InitializeAsync();
 
-                // Потім ініціалізуємо систему
+                // ✅ ПОТІМ ініціалізуємо систему
                 if (!lobbySystem.IsInitialized)
                 {
                     _logger.LogInfo($"Ініціалізація LobbySystem з {_gameSettings.PlayerCount} гравцями", "LobbyState");
@@ -263,5 +286,6 @@ namespace MythHunter.States
                 _logger.LogError($"Помилка при переході в ігровий режим: {ex.Message}", "LobbyState", ex);
             }
         }
+
     }
 }

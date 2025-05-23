@@ -79,5 +79,25 @@ namespace MythHunter.UI.Views
                 _logger?.LogError("⚠️ HeroCardsContainer не призначений в інспекторі!", "UI");
             }
         }
+
+        protected override void OnDestroy()
+        {
+            _logger?.LogInfo("🗑️ LobbyView.OnDestroy() викликано", "UI");
+
+            // Виклик базового методу, якщо він є в UIViewBase
+            base.OnDestroy();
+        }
+
+        // ✅ ДОДАЙ ТАКОЖ OnDisable для додаткової діагностики
+        private void OnDisable()
+        {
+            _logger?.LogInfo("⏸️ LobbyView.OnDisable() викликано", "UI");
+        }
+
+        private void OnEnable()
+        {
+            _logger?.LogInfo("▶️ LobbyView.OnEnable() викликано", "UI");
+        }
+
     }
 }
