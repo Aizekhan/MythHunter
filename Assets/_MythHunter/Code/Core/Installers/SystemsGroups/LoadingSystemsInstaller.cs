@@ -5,6 +5,7 @@ using MythHunter.Core.ECS;
 using MythHunter.Systems.Loading;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
+using MythHunter.UI.Presenters;
 
 namespace MythHunter.Core.Installers
 {
@@ -20,11 +21,12 @@ namespace MythHunter.Core.Installers
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
 
-            // Реєстрація сервісів
+            // ✅ Реєстрація інтерфейсів та реалізацій
             BindSingleton<ILoadingSystem, LoadingSystem>(container);
-            BindSingleton<LoadingPhaseProvider, LoadingPhaseProvider>(container);
+            BindSingleton<ILoadingPhaseProvider, LoadingPhaseProvider>(container);
+            BindSingleton<ILoadingScreenPresenter, LoadingScreenPresenter>(container);
 
-            // Реєстрація системи завантаження
+            // ✅ Реєстрація системи завантаження в registry
             var loadingSystem = container.Resolve<ILoadingSystem>();
             systemRegistry.RegisterSystemWithPriority(loadingSystem, SystemPriorities.Active + 5);
 

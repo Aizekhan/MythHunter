@@ -13,7 +13,7 @@ namespace MythHunter.UI.Presenters
     /// <summary>
     /// Презентер для екрану завантаження
     /// </summary>
-    public class LoadingScreenPresenter : BasePresenter, IEventSubscriber
+    public class LoadingScreenPresenter : BasePresenter, ILoadingScreenPresenter
     {
         private ILoadingScreenView _loadingView;
         private bool _isSubscribed = false;
@@ -29,13 +29,23 @@ namespace MythHunter.UI.Presenters
         public override async UniTask InitializeAsync()
         {
             await base.InitializeAsync();
-            _logger.LogInfo("LoadingScreenPresenter ініціалізовано", "UI");
+            _logger.LogInfo("LoadingScreenPresenter ініціалізовано", "LoadingUI");
         }
 
         public void SetView(ILoadingScreenView view)
         {
             _loadingView = view;
             Initialize(view, _viewId);
+
+            if (_loadingView == null)
+            {
+                _logger.LogError("Неможливо встановити представлення екрану завантаження", "LoadingUI");
+                return;
+            }
+
+            // Підписуємося на події
+            SubscribeToEvents();
+            _logger.LogInfo("LoadingScreenPresenter прив'язано до View", "LoadingUI");
         }
 
         public override void Initialize(IView view, ViewId viewId = ViewId.None)
@@ -45,7 +55,7 @@ namespace MythHunter.UI.Presenters
 
             if (_loadingView == null)
             {
-                _logger.LogError("Неможливо встановити представлення екрану завантаження", "UI");
+                _logger.LogError("Неможливо встановити представлення екрану завантаження", "LoadingUI");
                 return;
             }
 
@@ -58,13 +68,15 @@ namespace MythHunter.UI.Presenters
             if (_isSubscribed)
                 return;
 
+            _logger.LogInfo("LoadingScreenPresenter підписується на події завантаження", "LoadingUI");
+
             _eventBus.Subscribe<LoadingStartedEvent>(OnLoadingStarted);
             _eventBus.Subscribe<LoadingProgressEvent>(OnLoadingProgress);
             _eventBus.Subscribe<LoadingCompletedEvent>(OnLoadingCompleted);
             _eventBus.Subscribe<LoadingErrorEvent>(OnLoadingError);
 
             _isSubscribed = true;
-            _logger.LogInfo("LoadingScreenPresenter підписався на події", "LoadingUI"); // 🔥 ДОДАЛИ ЦЕ
+            _logger.LogInfo("LoadingScreenPresenter успішно підписався на події", "LoadingUI");
         }
 
         protected override void OnUnsubscribeFromEvents()
@@ -78,14 +90,18 @@ namespace MythHunter.UI.Presenters
             _eventBus.Unsubscribe<LoadingErrorEvent>(OnLoadingError);
 
             _isSubscribed = false;
+            _logger.LogInfo("LoadingScreenPresenter відписався від подій", "LoadingUI");
         }
 
         private void OnLoadingStarted(LoadingStartedEvent evt)
         {
-            _logger.LogInfo("Початок завантаження...", "LoadingUI");
+            _logger.LogInfo("Отримано подію початку завантаження", "LoadingUI");
 
             if (_loadingView == null)
+            {
+                _logger.LogWarning("_loadingView is null в OnLoadingStarted", "LoadingUI");
                 return;
+            }
 
             _loadingView.UpdateProgress(0f, "Підготовка до завантаження...");
         }
@@ -93,7 +109,10 @@ namespace MythHunter.UI.Presenters
         private void OnLoadingProgress(LoadingProgressEvent evt)
         {
             if (_loadingView == null)
+            {
+                _logger.LogWarning("_loadingView is null в OnLoadingProgress", "LoadingUI");
                 return;
+            }
 
             _loadingView.UpdateProgress(evt.Progress, evt.Status);
             _loadingView.UpdateLoadingStage(evt.Stage, evt.Status);
@@ -101,10 +120,13 @@ namespace MythHunter.UI.Presenters
 
         private void OnLoadingCompleted(LoadingCompletedEvent evt)
         {
-            _logger.LogInfo("Завантаження завершено", "LoadingUI");
+            _logger.LogInfo("Отримано подію завершення завантаження", "LoadingUI");
 
             if (_loadingView == null)
+            {
+                _logger.LogWarning("_loadingView is null в OnLoadingCompleted", "LoadingUI");
                 return;
+            }
 
             _loadingView.UpdateProgress(1f, "Завантаження завершено");
             _loadingView.ShowCompletionScreen();
@@ -112,10 +134,13 @@ namespace MythHunter.UI.Presenters
 
         private void OnLoadingError(LoadingErrorEvent evt)
         {
-            _logger.LogError($"Помилка завантаження: {evt.ErrorMessage}", "LoadingUI");
+            _logger.LogError($"Отримано подію помилки завантаження: {evt.ErrorMessage}", "LoadingUI");
 
             if (_loadingView == null)
+            {
+                _logger.LogWarning("_loadingView is null в OnLoadingError", "LoadingUI");
                 return;
+            }
 
             _loadingView.ShowError(evt.ErrorMessage);
         }
@@ -125,6 +150,7 @@ namespace MythHunter.UI.Presenters
             UnsubscribeFromEvents();
             _loadingView = null;
             base.Dispose();
+            _logger.LogInfo("LoadingScreenPresenter знищено", "LoadingUI");
         }
     }
 }

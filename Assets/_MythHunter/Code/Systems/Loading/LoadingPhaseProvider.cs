@@ -12,7 +12,7 @@ namespace MythHunter.Systems.Loading
     /// <summary>
     /// Провайдер стадій завантаження, який надає інформацію про поточний етап завантаження
     /// </summary>
-    public class LoadingPhaseProvider : IPhaseProvider
+    public class LoadingPhaseProvider : ILoadingPhaseProvider
     {
         private readonly IEventBus _eventBus;
         private readonly IMythLogger _logger;
@@ -39,6 +39,7 @@ namespace MythHunter.Systems.Loading
             _eventBus.Subscribe<LoadingErrorEvent>(OnLoadingError);
 
             _isSubscribed = true;
+            _logger.LogInfo("LoadingPhaseProvider підписався на події", "LoadingPhase");
         }
 
         private void UnsubscribeFromEvents()
@@ -133,6 +134,7 @@ namespace MythHunter.Systems.Loading
         {
             UnsubscribeFromEvents();
             _callbacks.Clear();
+            _logger.LogInfo("LoadingPhaseProvider знищено", "LoadingPhase");
         }
     }
 }

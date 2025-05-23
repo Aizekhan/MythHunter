@@ -81,7 +81,12 @@ namespace MythHunter.UI.Services
         {
             if (_initialized)
                 return;
-
+            if (_poolManager.HasPool(POOL_KEY))
+            {
+                _logger.LogWarning($"Пул {POOL_KEY} вже існує, пропускаємо створення", nameof(HeroCardService));
+                _initialized = true;
+                return;
+            }
             var config = _viewConfigRegistry.Get(_heroCardViewId);
             if (config == null)
             {
