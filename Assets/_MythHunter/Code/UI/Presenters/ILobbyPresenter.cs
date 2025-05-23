@@ -9,6 +9,10 @@ namespace MythHunter.UI.Presenters
 {
     public interface ILobbyPresenter
     {
+        bool IsInitialized
+        {
+            get;
+        }
         void Initialize(ILobbyView view);
         UniTask InitializeAsync();
         void Dispose();

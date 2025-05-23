@@ -18,7 +18,7 @@ namespace MythHunter.UI.Presenters
     {
         private readonly IGameplayUIModel _model;
       
-        private ViewId _viewId = ViewId.GameplayUI;
+
         private bool _isInitialized = false;
         protected IGameplayUIView GameplayView => base._view as IGameplayUIView;
         [Inject]

@@ -35,9 +35,19 @@ namespace MythHunter.UI.Views
         // Метод, який викликається після ін'єкції залежностей
         protected override void OnInitialized()
         {
-            _logger.LogInfo("HeroCardUI ініціалізовано через LazyMonoBehaviour", "HeroCardUI");
+            base.OnInitialized();
 
-            // Додаємо базову ініціалізацію кнопки
+            // ✅ Перевіряємо ін'єкцію
+            if (_logger == null)
+            {
+                _logger.LogError("Logger не ін'єктовано в HeroCardUI!");
+            }
+
+            if (_spriteService == null)
+            {
+                _logger.LogError("SpriteService не ін'єктовано в HeroCardUI!");
+            }
+
             if (_selectButton)
             {
                 _selectButton.onClick.AddListener(OnSelectButtonClicked);

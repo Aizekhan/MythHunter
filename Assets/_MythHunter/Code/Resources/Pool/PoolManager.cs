@@ -169,7 +169,28 @@ namespace MythHunter.Resources.Pool
             {
                 // Контейнер для об'єктів пулу
                 var poolParent = new GameObject($"Pool_{key}");
-                UnityEngine.Object.DontDestroyOnLoad(poolParent);
+
+                // ✅ ВИПРАВЛЕННЯ: Правильне розміщення UI пулів
+                if (key.Contains("UI") || key.Contains("Card") || key.Contains("Hero"))
+                {
+                    // Для UI елементів шукаємо Canvas
+                    var canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
+                    if (canvas != null)
+                    {
+                        poolParent.transform.SetParent(canvas.transform, false);
+                        poolParent.SetActive(false); // Приховуємо контейнер пулу
+                        _logger.LogInfo($"UI pool '{key}' created under Canvas", "Pool");
+                    }
+                    else
+                    {
+                        UnityEngine.Object.DontDestroyOnLoad(poolParent);
+                        _logger.LogWarning($"Canvas not found, UI pool '{key}' created as DontDestroyOnLoad", "Pool");
+                    }
+                }
+                else
+                {
+                    UnityEngine.Object.DontDestroyOnLoad(poolParent);
+                }
 
                 var goPool = new GameObjectPool(prefab as GameObject, initialSize, poolParent.transform, null, null, _logger);
                 pool = goPool;
@@ -178,13 +199,7 @@ namespace MythHunter.Resources.Pool
             {
                 var objPool = new GenericObjectPool<T>(
                     () => UnityEngine.Object.Instantiate(prefab),
-                    null,
-                    null,
-                    null,
-                    initialSize,
-                    100,
-                    _logger,
-                    key
+                    null, null, null, initialSize, 100, _logger, key
                 );
                 pool = new ObjectPoolAdapter<T>(objPool);
             }

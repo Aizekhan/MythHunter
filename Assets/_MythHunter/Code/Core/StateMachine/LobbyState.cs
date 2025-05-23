@@ -181,76 +181,45 @@ namespace MythHunter.States
         /// <summary>
         /// Ініціалізація систем для стану
         /// </summary>
+
         private async UniTask InitializeStateSystemsAsync()
         {
             _logger.LogInfo("Ініціалізація систем для стану Lobby", "LobbyState");
 
             try
             {
-                // Ініціалізуємо системи категорії Lobby
                 _systemRegistry.InitializeSystemsByCategory(SystemInitializationCategory.Lobby);
 
-                // Явно ініціалізуємо LobbyPresenter
+                // ✅ ТІЛЬКИ ОДНА ініціалізація presenter
                 var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
-                await lobbyPresenter.InitializeAsync();
+                if (!lobbyPresenter.IsInitialized)
+                {
+                    await lobbyPresenter.InitializeAsync();
+                }
 
-                // Даємо можливість Unity завершити оновлення UI
                 await UniTask.DelayFrame(2);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Помилка при ініціалізації систем Lobby: {ex.Message}", "LobbyState", ex);
-                throw; // Ретрансляція винятку для обробки на вищому рівні
+                throw;
             }
         }
 
-        /// <summary>
-        /// Ініціалізація LobbySystem
-        /// </summary>
-        // У LobbyState.cs - метод InitializeLobbyAsync
         private async UniTask InitializeLobbyAsync()
         {
             try
             {
                 var lobbySystem = _container.Resolve<ILobbySystem>();
-                var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
 
-                // ✅ КРИТИЧНО: Спочатку створюємо VIEW
-                var uiService = _container.Resolve<IUIService>();
-                var lobbyView = await uiService.ShowScreenAsync(ViewId.Lobby);
-
-                if (lobbyView == null)
-                {
-                    _logger.LogError("❌ Не вдалося створити LobbyView!", "LobbyState");
-                    throw new Exception("Failed to create LobbyView");
-                }
-
-                // ✅ ПРИВ'ЯЗУЄМО PRESENTER ДО VIEW
-                if (lobbyView is ILobbyView typedLobbyView)
-                {
-                    _logger.LogInfo($"✅ Прив'язуємо LobbyPresenter до LobbyView", "LobbyState");
-                    lobbyPresenter.Initialize(typedLobbyView);
-                }
-                else
-                {
-                    _logger.LogError($"❌ LobbyView не реалізує ILobbyView! Тип: {lobbyView.GetType().Name}", "LobbyState");
-                }
-
-                // ✅ ПОТІМ ініціалізуємо презентер
-                await lobbyPresenter.InitializeAsync();
-
-                // ✅ ПОТІМ ініціалізуємо систему
+                // ✅ Тільки ініціалізація системи, БЕЗ повторної ініціалізації presenter
                 if (!lobbySystem.IsInitialized)
                 {
                     _logger.LogInfo($"Ініціалізація LobbySystem з {_gameSettings.PlayerCount} гравцями", "LobbyState");
                     lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
                 }
 
-                // Чекаємо на ініціалізацію системи
                 await UniTask.DelayFrame(3);
-
-                // Повідомляємо презентер про ініціалізацію
-                await lobbyPresenter.InitializeLobbyAsync(_gameSettings.PlayerCount);
             }
             catch (Exception ex)
             {
@@ -258,6 +227,13 @@ namespace MythHunter.States
                 throw;
             }
         }
+
+      
+
+        /// <summary>
+        /// Ініціалізація LobbySystem
+        /// </summary>
+
 
         /// <summary>
         /// Вихід зі стану

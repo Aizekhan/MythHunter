@@ -21,5 +21,16 @@ namespace MythHunter.Resources.Pool
         int GetTotalActiveObjects();
         void SetAutoCleanupInterval(float seconds);
         bool HasPool(string poolKey);
+
+
+        /// <summary>
+        /// Встановлює посилання на PoolMonitor
+        /// </summary>
+        void SetPoolMonitor(PoolMonitor poolMonitor);
+
+        /// <summary>
+        /// Отримує посилання на PoolMonitor
+        /// </summary>
+        PoolMonitor GetPoolMonitor();
     }
 }

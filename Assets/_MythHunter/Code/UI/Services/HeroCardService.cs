@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/UI/Services/HeroCardService.cs
 
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
@@ -51,11 +52,15 @@ namespace MythHunter.UI.Services
         private readonly IMythLogger _logger;
         private readonly IViewConfigRegistry _viewConfigRegistry;
         private readonly IDIContainer _container;
-        private readonly ISpriteService _spriteService; 
+        private readonly ISpriteService _spriteService;
 
-        private const string POOL_KEY = "HeroCardUI";
+        // ✅ Одна константа для пулу карток героїв
+        private const string HERO_CARD_POOL_KEY = "HeroCardUI";
+        private const int DEFAULT_POOL_SIZE = 25;
+
         private bool _initialized = false;
-        private readonly ViewId _heroCardViewId = ViewId.HeroCard; // Припускаємо, що це значення додано в ViewId
+        private readonly object _initializationLock = new object();
+        private readonly ViewId _heroCardViewId = ViewId.HeroCard;
 
         [Inject]
         public HeroCardService(
@@ -80,43 +85,58 @@ namespace MythHunter.UI.Services
         public async UniTask InitializeAsync()
         {
             if (_initialized)
-                return;
-            if (_poolManager.HasPool(POOL_KEY))
             {
-                _logger.LogWarning($"Пул {POOL_KEY} вже існує, пропускаємо створення", nameof(HeroCardService));
-                _initialized = true;
+                _logger.LogInfo("HeroCardService вже ініціалізовано", nameof(HeroCardService));
                 return;
             }
-            var config = _viewConfigRegistry.Get(_heroCardViewId);
-            if (config == null)
-            {
-                _logger.LogError($"Не знайдено конфігурацію для ViewId: {_heroCardViewId}", nameof(HeroCardService));
 
-                // Запасний варіант, якщо конфігурація не знайдена
-                var prefabLegacy = await _componentFactory.CreateComponentAsync<HeroCardUI>("UI/Lobby/HeroCardUI");
-                if (prefabLegacy == null)
+            lock (_initializationLock)
+            {
+                if (_initialized)
+                    return;
+                _initialized = true;
+            }
+
+            try
+            {
+                // ✅ Перевіряємо чи пул вже існує
+                if (_poolManager.HasPool(HERO_CARD_POOL_KEY))
                 {
-                    _logger.LogError("Не вдалося завантажити HeroCardUI префаб", nameof(HeroCardService));
+                    _logger.LogWarning($"Пул {HERO_CARD_POOL_KEY} вже існує, пропускаємо створення", nameof(HeroCardService));
                     return;
                 }
 
-                _poolManager.CreatePool<GameObject>(POOL_KEY, prefabLegacy.gameObject, 20);
-            }
-            else
-            {
-                // Використовуємо новий підхід з ViewId
+                // ✅ Створюємо пул через ViewConfig
+                var config = _viewConfigRegistry.Get(_heroCardViewId);
+                if (config == null)
+                {
+                    _logger.LogError($"Не знайдено конфігурацію для ViewId: {_heroCardViewId}", nameof(HeroCardService));
+                    _initialized = false;
+                    return;
+                }
+
+                // ✅ Створюємо префаб через фабрику компонентів
                 var prefabGO = await _componentFactory.CreateComponentAsync(_heroCardViewId);
                 if (prefabGO == null)
                 {
                     _logger.LogError($"Не вдалося створити компонент для ViewId: {_heroCardViewId}", nameof(HeroCardService));
+                    _initialized = false;
                     return;
                 }
 
-                _poolManager.CreatePool<GameObject>(POOL_KEY, prefabGO, 20);
+                // ✅ Створюємо пул
+                _poolManager.CreatePool<GameObject>(HERO_CARD_POOL_KEY, prefabGO, DEFAULT_POOL_SIZE);
+                _logger.LogInfo($"✅ HeroCardUI пул створено успішно ({DEFAULT_POOL_SIZE} штук)", nameof(HeroCardService));
             }
-
-            _logger.LogInfo("HeroCardUI пул ініціалізовано", nameof(HeroCardService));
-            _initialized = true;
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка ініціалізації HeroCardService: {ex.Message}", nameof(HeroCardService), ex);
+                lock (_initializationLock)
+                {
+                    _initialized = false;
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -129,13 +149,14 @@ namespace MythHunter.UI.Services
                 await InitializeAsync();
             }
 
-            if (!_poolManager.HasPool(POOL_KEY))
+            if (!_poolManager.HasPool(HERO_CARD_POOL_KEY))
             {
-                _logger.LogError("HeroCardUI пул не ініціалізовано", nameof(HeroCardService));
+                _logger.LogError($"Пул {HERO_CARD_POOL_KEY} не ініціалізовано", nameof(HeroCardService));
                 return null;
             }
 
-            var go = _poolManager.GetFromPool<GameObject>(POOL_KEY);
+            // ✅ Отримуємо об'єкт з пулу
+            var go = _poolManager.GetFromPool<GameObject>(HERO_CARD_POOL_KEY);
             if (go == null)
             {
                 _logger.LogError("Не вдалося отримати HeroCard з пулу", nameof(HeroCardService));
@@ -146,21 +167,18 @@ namespace MythHunter.UI.Services
             if (card == null)
             {
                 _logger.LogError("HeroCardUI компонент відсутній у префабі", nameof(HeroCardService));
-                _poolManager.ReturnToPool(POOL_KEY, go);
+                _poolManager.ReturnToPool(HERO_CARD_POOL_KEY, go);
                 return null;
             }
 
-            // ✅ ВИПРАВЛЕННЯ: Примусова ін'єкція + передача SpriteService
+            // ✅ Ін'єкція залежностей та налаштування
             _container.InjectDependencies(card);
-
             card.Reset();
-            // ✅ Використовуй новий метод з явною передачею сервісу
             card.SetupWithSpriteService(model, _spriteService);
 
+            // ✅ Встановлюємо батьківський трансформ та активуємо
             go.transform.SetParent(parent, false);
             go.SetActive(true);
-
-            // Налаштування інтерактивності
             card.SetInteractable(interactive);
 
             return card;
@@ -174,9 +192,21 @@ namespace MythHunter.UI.Services
             if (card == null)
                 return;
 
-            card.Reset();
-            card.gameObject.SetActive(false);
-            _poolManager.ReturnToPool(POOL_KEY, card.gameObject);
+            try
+            {
+                card.Reset();
+                card.gameObject.SetActive(false);
+                _poolManager.ReturnToPool(HERO_CARD_POOL_KEY, card.gameObject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при поверненні картки в пул: {ex.Message}", nameof(HeroCardService), ex);
+                // Запасний варіант - знищення об'єкта
+                if (card != null && card.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(card.gameObject);
+                }
+            }
         }
 
         /// <summary>
@@ -192,7 +222,5 @@ namespace MythHunter.UI.Services
                 ReturnCard(card);
             }
         }
-
-
     }
 }

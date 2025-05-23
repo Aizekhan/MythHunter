@@ -1,65 +1,87 @@
-// Шлях: Assets/_MythHunter/Code/Core/Installers/PoolSystemInstaller.cs
+// Шлях: Assets/_MythHunter/Code/Core/Installers/PoolInstaller.cs
+
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
+using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using UnityEngine;
 
 namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор для розширеної системи пулінгу об'єктів
+    /// Інсталятор для пулінгової системи
     /// </summary>
     public class PoolInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)
         {
             var logger = container.Resolve<IMythLogger>();
-            logger.LogInfo("Installing Pool System...", "Installer");
+            logger.LogInfo("Встановлення пулінгової системи...", "Installer");
 
-            // Реєструємо основні компоненти системи пулінгу
+            // ✅ Основні сервіси пулінгу
             BindSingleton<IPoolManager, PoolManager>(container);
-            var poolManager = container.Resolve<IPoolManager>();
-            PoolManagerDebugProxy.Register(poolManager);
-            // Моніторинг та діагностика
-            InstallPoolMonitoring(container);
 
-            // Інтеграція підсистем
+            // ✅ Інтеграція з підсистемами
             IntegratePoolSubsystems(container);
 
             logger.LogInfo("Pool System installation completed", "Installer");
         }
 
-        private void InstallPoolMonitoring(IDIContainer container)
-        {
-            var logger = container.Resolve<IMythLogger>();
-            logger.LogInfo("Installing Pool Monitoring System...", "Installer");
-
-            var monitorObject = new GameObject("MythHunter_PoolMonitor");
-            var poolMonitor = monitorObject.AddComponent<PoolMonitor>();
-            container.InjectDependencies(poolMonitor);
-            container.RegisterInstance<PoolMonitor>(poolMonitor);
-            Object.DontDestroyOnLoad(monitorObject);
-
-            logger.LogInfo("Pool Monitoring System installed", "Installer");
-        }
-
+        /// <summary>
+        /// Інтеграція підсистем пулінгу
+        /// </summary>
         private void IntegratePoolSubsystems(IDIContainer container)
         {
             var logger = container.Resolve<IMythLogger>();
-            logger.LogInfo("Integrating Pool Subsystems...", "Installer");
+            logger.LogInfo("Інтеграція підсистем пулінгу...", "Installer");
 
-            var poolManager = container.Resolve<IPoolManager>() as PoolManager;
-            var poolMonitor = container.Resolve<PoolMonitor>();
-
-            if (poolManager != null && poolMonitor != null)
+            try
             {
+                var poolManager = container.Resolve<IPoolManager>();
+
+                // ✅ ВИПРАВЛЕНО: Створюємо PoolMonitor правильно
+                var monitorObject = CreatePoolMonitorObject();
+                var poolMonitor = monitorObject.GetComponent<PoolMonitor>();
+
+                if (poolMonitor == null)
+                {
+                    logger.LogError("Не вдалося отримати компонент PoolMonitor", "Installer");
+                    return;
+                }
+
+                // ✅ Встановлюємо зв'язок між PoolManager та PoolMonitor
                 poolManager.SetPoolMonitor(poolMonitor);
-                logger.LogInfo("Pool Manager successfully linked with Pool Monitor", "Installer");
+
+                // ✅ Реєструємо як інстанс в контейнері
+                container.RegisterInstance<PoolMonitor>(poolMonitor);
+
+                logger.LogInfo("Pool Monitoring System ініціалізовано", "Installer");
             }
-            else
+            catch (System.Exception ex)
             {
-                logger.LogWarning("Failed to link Pool Manager with Pool Monitor", "Installer");
+                logger.LogError($"Помилка при інтеграції підсистем пулінгу: {ex.Message}", "Installer", ex);
             }
+        }
+
+        /// <summary>
+        /// Створює GameObject з компонентом PoolMonitor
+        /// </summary>
+        private GameObject CreatePoolMonitorObject()
+        {
+            var monitorObject = new GameObject("MythHunter_PoolMonitor");
+
+            // ✅ ВИПРАВЛЕНО: Використовуємо non-generic версію AddComponent
+            var poolMonitor = monitorObject.AddComponent(typeof(PoolMonitor)) as PoolMonitor;
+
+            if (poolMonitor == null)
+            {
+                throw new System.Exception("Не вдалося створити компонент PoolMonitor");
+            }
+
+            // ✅ Налаштовуємо як persistent об'єкт
+            Object.DontDestroyOnLoad(monitorObject);
+
+            return monitorObject;
         }
     }
 }

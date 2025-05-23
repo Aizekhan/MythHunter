@@ -71,12 +71,19 @@ namespace MythHunter.UI.Views
         {
             base.OnInitialized();
 
-            // 🔥 КРИТИЧНО: Логуємо стан контейнерів
-            _logger?.LogInfo($"LobbyView ініціалізовано. HeroCardsContainer: {(_heroCardsContainer != null ? "OK" : "NULL")}", "UI");
+            // ✅ ДЕТАЛЬНЕ логування
+            _logger?.LogInfo($"🎬 LobbyView ініціалізовано", "UI");
+            _logger?.LogInfo($"HeroCardsContainer: {(_heroCardsContainer != null ? "✅ OK" : "❌ NULL")}", "UI");
+            _logger?.LogInfo($"SelectedHeroesContainer: {(_selectedHeroesContainer != null ? "✅ OK" : "❌ NULL")}", "UI");
 
             if (_heroCardsContainer == null)
             {
                 _logger?.LogError("⚠️ HeroCardsContainer не призначений в інспекторі!", "UI");
+            }
+
+            if (_selectedHeroesContainer == null)
+            {
+                _logger?.LogError("⚠️ SelectedHeroesContainer не призначений в інспекторі!", "UI");
             }
         }
 
