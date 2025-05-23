@@ -23,7 +23,7 @@ namespace MythHunter.UI.Navigation
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
         private readonly IViewConfigRegistry _viewConfigRegistry;
-
+        private readonly ISceneViewRegistry _sceneViewRegistry;
         private readonly Stack<NavigationEntry> _navigationStack = new();
         private const int MaxNavigationDepth = 10; // Максимальна глибина стеку навігації
 
@@ -46,7 +46,9 @@ namespace MythHunter.UI.Navigation
             IEventBus eventBus,
             IMythLogger logger,
             IDIContainer container,
-            IViewConfigRegistry viewConfigRegistry)
+            IViewConfigRegistry viewConfigRegistry,
+            ISceneViewRegistry sceneViewRegistry)
+
         {
             _uiService = uiService;
             _transition = transition;
@@ -54,6 +56,7 @@ namespace MythHunter.UI.Navigation
             _logger = logger;
             _container = container;
             _viewConfigRegistry = viewConfigRegistry;
+            _sceneViewRegistry = sceneViewRegistry;
             SubscribeToEvents();
         }
 
@@ -364,21 +367,23 @@ namespace MythHunter.UI.Navigation
         {
             try
             {
-                // 🔥 КРИТИЧНО: Спочатку приховуємо ВСІ активні UI
-                await HideAllActiveScreensAsync();
+                _logger.LogInfo($"🎬 Налаштування навігації для сцени: {sceneName}", "Navigation");
 
-                // Потім очищаємо стек
+                // Спочатку приховуємо ВСІ активні UI
+                await HideAllActiveScreensAsync();
                 await ClearStackAsync();
 
-                // Перетворюємо назву сцени у ViewId
-                ViewId initialScreenId = sceneName switch
+                // ✅ ПЕРЕВІРЯЄМО, чи не потрібно створювати початковий View
+                bool shouldSkipInitialView = parameters?.GetValue<bool>("DontCreateInitialView", false) ?? false;
+
+                if (shouldSkipInitialView)
                 {
-                    "LobbyScene" => ViewId.Lobby,
-                    "GameScene" => ViewId.GameplayUI,
-                    "MainMenuScene" => ViewId.MainMenu,
-                    "LoadingScene" => ViewId.LoadingScreen,
-                    _ => ViewId.None
-                };
+                    _logger.LogInfo($"⏭️ Пропускаємо автоматичне створення View для {sceneName}", "Navigation");
+                    return;
+                }
+
+                // ✅ ВИКОРИСТОВУЄМО РЕЄСТР замість switch
+                ViewId initialScreenId = _sceneViewRegistry.GetViewIdForScene(sceneName);
 
                 if (initialScreenId != ViewId.None)
                 {
@@ -387,6 +392,11 @@ namespace MythHunter.UI.Navigation
                     parameters.Add("IsSceneRoot", true);
 
                     await NavigateToAsync(initialScreenId, parameters, TransitionType.None);
+                    _logger.LogInfo($"✅ Створено початковий View {initialScreenId} для сцени {sceneName}", "Navigation");
+                }
+                else
+                {
+                    _logger.LogInfo($"ℹ️ Для сцени {sceneName} не визначено початкового View", "Navigation");
                 }
             }
             catch (Exception ex)
@@ -394,6 +404,7 @@ namespace MythHunter.UI.Navigation
                 _logger.LogError($"Помилка при налаштуванні навігації для сцени {sceneName}: {ex.Message}", "Navigation", ex);
             }
         }
+
         // 🆕 ДОДАЙТЕ НОВИЙ МЕТОД:
         // Assets/_MythHunter/Code/UI/Navigation/NavigationService.cs
         private async UniTask HideAllActiveScreensAsync()

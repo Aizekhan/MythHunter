@@ -170,12 +170,11 @@ namespace MythHunter.States
             try
             {
                 await _enterSemaphore.WaitAsync();
-
                 if (_isEntered)
                     return;
                 _isEntered = true;
 
-                // 1. Отримуємо контекст від GameFlowManager
+                // 1. Отримуємо контекст
                 var context = GetStateContext<LoadingStateContext>();
                 ExtractContextParameters(context);
 
@@ -187,38 +186,10 @@ namespace MythHunter.States
                     Timestamp = DateTime.UtcNow
                 });
 
-                // 3. ✅ ПОКАЗУЄМО UI ЗАВАНТАЖЕННЯ
-                await _navigationService.SetupForSceneAsync("LoadingScene", new NavigationParameters());
+                // 3. ✅ ТІЛЬКИ ОДИН ВИКЛИК для створення UI
+                await SetupLoadingUIAsync();
 
-                // ✅ ЧЕКАЄМО НА СТВОРЕННЯ UI
-                await UniTask.DelayFrame(5);
-
-                // 4. ✅ СТВОРЮЄМО LOADINGSCREEN VIEW З ПЕРЕВІРКОЮ
-                var uiService = _container.Resolve<IUIService>();
-                var loadingView = await uiService.ShowScreenAsync(ViewId.LoadingScreen);
-
-                if (loadingView == null)
-                {
-                    _logger.LogError("❌ Не вдалося створити LoadingScreen view!", "LoadingState");
-                    return;
-                }
-
-                // ✅ ПРИВ'ЯЗУЄМО PRESENTER ДО VIEW ЧЕРЕЗ ІНТЕРФЕЙС
-                var loadingPresenter = _container.Resolve<ILoadingScreenPresenter>();
-                if (loadingPresenter != null && loadingView is ILoadingScreenView typedView)
-                {
-                    _logger.LogInfo("🔗 Прив'язування LoadingScreenPresenter до View", "LoadingState");
-                    loadingPresenter.SetView(typedView);
-                }
-                else
-                {
-                    _logger.LogError("❌ Не вдалося прив'язати presenter до view", "LoadingState");
-                }
-
-                // ✅ ЗАТРИМКА для ініціалізації UI
-                await UniTask.Delay(500);
-
-                // 5. Ініціалізуємо LoadingSystem і запускаємо завантаження
+                // 4. Запускаємо завантаження
                 await InitializeAndStartLoadingAsync();
 
                 _logger.LogInfo("✅ LoadingState: Завантаження завершено", "LoadingState");
@@ -232,6 +203,38 @@ namespace MythHunter.States
             {
                 _enterSemaphore.Release();
             }
+        }
+
+        // ✅ НОВИЙ МЕТОД для централізованого створення UI
+        private async UniTask SetupLoadingUIAsync()
+        {
+            _logger.LogInfo("🎬 Налаштування Loading UI...", "LoadingState");
+
+            // ✅ СПОЧАТКУ налаштовуємо навігацію (БЕЗ створення View)
+            var parameters = new NavigationParameters();
+            parameters.Add("DontCreateInitialView", true); // Параметр щоб не створювати View автоматично
+
+            await _navigationService.SetupForSceneAsync("LoadingScene", parameters);
+
+            // ✅ ПОТІМ створюємо View вручну через UIService
+            var uiService = _container.Resolve<IUIService>();
+            var loadingView = await uiService.ShowScreenAsync(ViewId.LoadingScreen);
+
+            if (loadingView == null)
+            {
+                _logger.LogError("❌ Не вдалося створити LoadingScreen view!", "LoadingState");
+                throw new Exception("Failed to create LoadingScreen view");
+            }
+
+            // ✅ Прив'язуємо presenter
+            var loadingPresenter = _container.Resolve<ILoadingScreenPresenter>();
+            if (loadingPresenter != null && loadingView is ILoadingScreenView typedView)
+            {
+                _logger.LogInfo("🔗 Прив'язування LoadingScreenPresenter до View", "LoadingState");
+                loadingPresenter.SetView(typedView);
+            }
+
+            await UniTask.DelayFrame(5); // Час для ініціалізації UI
         }
         private async UniTaskVoid EnterAsyncProcess(GameStateType previousState)
         {
