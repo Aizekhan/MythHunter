@@ -52,7 +52,7 @@ namespace MythHunter.Core.Installers
 
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
             BindSingleton<AutoPreloadConfigurator, AutoPreloadConfigurator>(container);
-
+            BindSingleton<ITimerSystem, TimerSystem>(container);
 
 
             // Реєструємо розширення DI

@@ -24,7 +24,7 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення систем лобі...", "Installer");
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
-
+            var timerSystem = container.Resolve<ITimerSystem>();
             // Реєстрація сервісів та класів
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             BindSingleton<ILobbySystem, LobbySystem>(container);
@@ -48,7 +48,7 @@ namespace MythHunter.Core.Installers
 
             // Додаємо системи в чіткому порядку
             lobbyGroup.AddSystem(lobbySystem);
-        
+            lobbyGroup.AddSystem(timerSystem);
 
             // Група HeroSystems
             var heroGroup = systemRegistry.RegisterGroupWithCategory<SystemGroup>(

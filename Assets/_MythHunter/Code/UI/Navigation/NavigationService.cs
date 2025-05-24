@@ -335,24 +335,27 @@ namespace MythHunter.UI.Navigation
         {
             try
             {
+                // ✅ Додайте перевірки на null
                 while (_navigationStack.Count > 0)
                 {
                     var entry = _navigationStack.Pop();
-                    if (entry.View is INavigableView navView)
-                        await navView.OnViewDestroyedAsync();
-                    entry.View.Hide();
+
+                    // Перевіряємо, чи об'єкт не знищено
+                    if (entry.View != null && entry.View is Component component && component != null)
+                    {
+                        if (entry.View is INavigableView navView)
+                            await navView.OnViewDestroyedAsync();
+                        entry.View.Hide();
+                    }
                 }
 
-                // Якщо є активне модальне вікно, також закриваємо його
-                if (_currentModal != null)
+                // Перевірка модального вікна
+                if (_currentModal != null && _currentModal is Component modalComponent && modalComponent != null)
                 {
-                    if (_currentModal is Component modalComponent)
-                    {
-                        modalComponent.gameObject.SetActive(false);
-                    }
-                    _currentModal = null;
-                    _modalTcs = null;
+                    modalComponent.gameObject.SetActive(false);
                 }
+                _currentModal = null;
+                _modalTcs = null;
             }
             catch (Exception ex)
             {
