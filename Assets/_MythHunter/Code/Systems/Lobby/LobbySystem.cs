@@ -17,27 +17,27 @@ using MythHunter.Systems.Core;
 namespace MythHunter.Systems.Lobby
 {
     /// <summary>
-    /// Система лоббі
+    /// Система лоббі з інтеграцією TimerSystem
     /// </summary>
-  
     public class LobbySystem : SystemBase, ILobbySystem
     {
         private readonly IEntityManager _entityManager;
         private readonly IHeroSelectionSystem _heroSelectionSystem;
         private readonly IArchetypeSystem _archetypeSystem;
         private readonly IArchetypeTemplateRegistry _archetypeTemplateRegistry;
-        private readonly IEventThrottler _eventThrottler;
+        private readonly ITimerSystem _timerSystem;
 
         private int _currentPlayerIndex = 0;
         private bool _isInitialized = false;
         public bool IsInitialized => _isInitialized;
-        private float _selectionTimeLimit = 300f; // 5 хвилин
-        private float _selectionTimeLeft = 0f;
         private int _lobbyEntityId = -1;
         private readonly List<int> _playerEntityIds = new List<int>();
 
         // Константи
         private const int DEFAULT_MANA_PER_PLAYER = 4;
+        private const float SELECTION_TIME_LIMIT = 300f; // 5 хвилин
+        private const string LOBBY_TIMER_ID = "LobbySelectionTimer";
+        private string _lobbyTimerId; // ID таймера
         
         [Inject]
         public LobbySystem(
@@ -45,8 +45,8 @@ namespace MythHunter.Systems.Lobby
             IHeroSelectionSystem heroSelectionSystem,
             IArchetypeSystem archetypeSystem,
             IArchetypeTemplateRegistry archetypeTemplateRegistry,
+            ITimerSystem timerSystem,
             IEventBus eventBus,
-            IEventThrottler eventThrottler,
             IMythLogger logger)
             : base(logger, eventBus)
         {
@@ -54,10 +54,7 @@ namespace MythHunter.Systems.Lobby
             _heroSelectionSystem = heroSelectionSystem;
             _archetypeSystem = archetypeSystem;
             _archetypeTemplateRegistry = archetypeTemplateRegistry;
-            _eventThrottler = eventThrottler;
-
-            // Реєструємо обмеження для подій оновлення таймера (4 рази на секунду)
-            _eventThrottler.RegisterThrottle<SelectionTimerUpdatedEvent>(0.25f);
+            _timerSystem = timerSystem;
         }
 
         public override void Initialize()
@@ -83,7 +80,7 @@ namespace MythHunter.Systems.Lobby
                 IsReady = false,
                 RemainingMana = DEFAULT_MANA_PER_PLAYER,
                 SelectedHeroIds = new int[0],
-                SelectionTimeLeft = _selectionTimeLimit
+                SelectionTimeLeft = SELECTION_TIME_LIMIT
             };
 
             _entityManager.AddComponent(_lobbyEntityId, lobbyState);
@@ -100,7 +97,7 @@ namespace MythHunter.Systems.Lobby
                     IsReady = false,
                     RemainingMana = DEFAULT_MANA_PER_PLAYER,
                     SelectedHeroIds = new int[0],
-                    SelectionTimeLeft = _selectionTimeLimit
+                    SelectionTimeLeft = SELECTION_TIME_LIMIT
                 };
 
                 _entityManager.AddComponent(playerEntityId, playerState);
@@ -108,53 +105,47 @@ namespace MythHunter.Systems.Lobby
             }
 
             _currentPlayerIndex = 0;
-            _selectionTimeLeft = _selectionTimeLimit;
             _isInitialized = true;
+
+            // ✅ ЗАПУСКАЄМО ТАЙМЕР ЧЕРЕЗ TimerSystem
+            _lobbyTimerId = _timerSystem.CreateTimer(LOBBY_TIMER_ID, SELECTION_TIME_LIMIT, OnSelectionTimeExpired, true);
+
 
             // Публікуємо подію ініціалізації лоббі
             Publish(new LobbyInitializedEvent
             {
                 PlayerCount = playerCount,
                 ManaPerPlayer = DEFAULT_MANA_PER_PLAYER,
-                SelectionTimeLimit = _selectionTimeLimit,
+                SelectionTimeLimit = SELECTION_TIME_LIMIT,
                 Timestamp = DateTime.UtcNow
             });
 
-            _logger.LogInfo($"Lobby initialized with {playerCount} players", "Lobby");
-            _isInitialized = true;
+            _logger.LogInfo($"Lobby initialized with {playerCount} players. Timer started for {SELECTION_TIME_LIMIT} seconds.", "Lobby");
         }
 
         public override void Update(float deltaTime)
         {
-            if (!_isInitialized)
-                return;
+            // ✅ ВИДАЛЕНО всю логіку таймера - тепер це робить TimerSystem
+            // Тут може бути інша логіка оновлення лоббі, якщо потрібно
+        }
 
-            // Оновлюємо таймер вибору
-            if (_selectionTimeLeft > 0)
+        /// <summary>
+        /// Викликається коли час вибору закінчився
+        /// </summary>
+        private void OnSelectionTimeExpired()
+        {
+            _logger.LogInfo("Selection time expired, auto-confirming selections for unready players", "Lobby");
+
+            // Автоматично підтверджуємо вибір для всіх неготових гравців
+            for (int i = 0; i < _playerEntityIds.Count; i++)
             {
-                _selectionTimeLeft -= deltaTime;
+                int playerEntityId = _playerEntityIds[i];
+                var playerState = _entityManager.GetComponent<LobbyStateComponent>(playerEntityId);
 
-                // Обмежуємо частоту публікації події оновлення таймера
-                _eventThrottler.PublishThrottled(new SelectionTimerUpdatedEvent
+                if (!playerState.IsReady)
                 {
-                    RemainingTime = _selectionTimeLeft,
-                    Timestamp = DateTime.UtcNow
-                });
-
-                // Якщо час вийшов, автоматично підтверджуємо вибір
-                if (_selectionTimeLeft <= 0)
-                {
-                    for (int i = 0; i < _playerEntityIds.Count; i++)
-                    {
-                        int playerEntityId = _playerEntityIds[i];
-                        var playerState = _entityManager.GetComponent<LobbyStateComponent>(playerEntityId);
-
-                        if (!playerState.IsReady)
-                        {
-                            _currentPlayerIndex = i;
-                            ConfirmSelection();
-                        }
-                    }
+                    _currentPlayerIndex = i;
+                    ConfirmSelection();
                 }
             }
         }
@@ -271,6 +262,12 @@ namespace MythHunter.Systems.Lobby
             // Перевіряємо, чи всі гравці готові
             if (AreAllPlayersReady())
             {
+                // ✅ ЗУПИНЯЄМО ТАЙМЕР коли всі готові
+                if (!string.IsNullOrEmpty(_lobbyTimerId))
+                {
+                    _timerSystem.StopTimer(_lobbyTimerId);
+                }
+
                 // Публікуємо подію запиту на початок гри
                 Publish(new GameStartRequestEvent
                 {
@@ -291,6 +288,12 @@ namespace MythHunter.Systems.Lobby
             {
                 _logger.LogWarning("Cannot start game: not all players are ready", "Lobby");
                 return false;
+            }
+
+            // ✅ ЗУПИНЯЄМО ТАЙМЕР при початку гри
+            if (!string.IsNullOrEmpty(_lobbyTimerId))
+            {
+                _timerSystem.StopTimer(_lobbyTimerId);
             }
 
             // Збираємо всі вибрані архетипи героїв з усіх гравців
@@ -315,13 +318,7 @@ namespace MythHunter.Systems.Lobby
                 selectedArchetypes[i] = archetypes;
             }
 
-            // Створюємо героїв через систему архетипів
-            // Це буде викликано в ігровій сцені після її завантаження
-
             _logger.LogInfo("Starting game...", "Lobby");
-
-            // Тут має бути код завантаження ігрової сцени
-            // Наприклад, через ISceneDispatcher
 
             // Очікуємо завантаження сцени
             await UniTask.Delay(1000); // Імітація завантаження
@@ -359,9 +356,6 @@ namespace MythHunter.Systems.Lobby
 
                         if (entityId >= 0)
                         {
-                            // Тут можна додати додаткові компоненти до створеного героя
-                            // Наприклад, компонент власника (PlayerOwnerComponent)
-
                             _logger.LogInfo($"Created hero entity {entityId} with archetype {archetypeId} for player {playerIndex}", "Lobby");
                         }
                         else
@@ -443,6 +437,7 @@ namespace MythHunter.Systems.Lobby
 
             return true;
         }
+
         public int GetRemainingManaForCurrentPlayer()
         {
             if (!_isInitialized || _currentPlayerIndex >= _playerEntityIds.Count)
@@ -456,6 +451,50 @@ namespace MythHunter.Systems.Lobby
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// Отримує поточний час, що залишився для вибору
+        /// </summary>
+        public float GetRemainingSelectionTime()
+        {
+            if (string.IsNullOrEmpty(_lobbyTimerId))
+                return 0f;
+                
+            return _timerSystem.GetRemainingTime(_lobbyTimerId);
+        }
+
+        /// <summary>
+        /// Перезапускає таймер вибору (якщо потрібно)
+        /// </summary>
+        public void RestartSelectionTimer()
+        {
+            if (_isInitialized)
+            {
+                // Зупиняємо старий таймер
+                if (!string.IsNullOrEmpty(_lobbyTimerId))
+                {
+                    _timerSystem.StopTimer(_lobbyTimerId);
+                }
+
+                // ✅ ВИПРАВЛЕНО: Створюємо новий таймер і зберігаємо його ID
+                _lobbyTimerId = _timerSystem.CreateTimer(LOBBY_TIMER_ID, SELECTION_TIME_LIMIT, OnSelectionTimeExpired, true);
+                _logger.LogInfo("Selection timer restarted", "Lobby");
+            }
+        }
+
+        /// <summary>
+        /// Очищення ресурсів при знищенні системи
+        /// </summary>
+        public override void Dispose()
+        {
+            // ✅ ЗУПИНЯЄМО ТАЙМЕР при dispose
+            if (_isInitialized && !string.IsNullOrEmpty(_lobbyTimerId))
+            {
+                _timerSystem.StopTimer(_lobbyTimerId);
+            }
+
+            base.Dispose();
         }
     }
 }

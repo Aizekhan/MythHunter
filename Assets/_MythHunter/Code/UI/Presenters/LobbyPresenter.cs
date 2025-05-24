@@ -42,7 +42,7 @@ namespace MythHunter.UI.Presenters
         private ILobbyView _view;
         private bool _isSubscribed = false;
         private int _currentPlayerIndex = 0;
-
+        private const float SELECTION_TIME_LIMIT = 300f;
         private readonly List<HeroCardUI> _createdHeroCards = new();
         private readonly List<HeroCardUI> _selectedHeroCards = new();
         private readonly INavigationService _navigationService;
@@ -58,7 +58,7 @@ namespace MythHunter.UI.Presenters
             IGameSettingsService gameSettings,
             IHeroCardService heroCardService,
             INavigationService navigationService,
-             ITimerSystem timerSystem) // 👈 Додали
+            ITimerSystem timerSystem)
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -68,7 +68,7 @@ namespace MythHunter.UI.Presenters
             _gameFlowManager = gameFlowManager;
             _gameSettings = gameSettings;
             _heroCardService = heroCardService;
-            _navigationService = navigationService; // 👈 Ініціалізували
+            _navigationService = navigationService;
             _timerSystem = timerSystem;
         }
 
@@ -152,11 +152,6 @@ namespace MythHunter.UI.Presenters
             });
         }
 
-
-
-
-
-
         public async UniTask InitializeLobbyAsync(int playerCount)
         {
             if (!_isInitialized)
@@ -172,19 +167,23 @@ namespace MythHunter.UI.Presenters
             // Оновлюємо картки героїв
             await PopulateHeroCardsAsync();
         }
-       
+
         public void SubscribeToEvents()
         {
             if (_isSubscribed)
                 return;
+
+            // ✅ ПІДПИСУЄМОСЯ НА НОВІ ПОДІЇ TimerSystem
             _eventBus.Subscribe<TimerUpdatedEvent>(OnTimerUpdated);
             _eventBus.Subscribe<TimerCompletedEvent>(OnTimerCompleted);
+
+            // ✅ ТАКОЖ ПІДПИСУЄМОСЯ НА СТАРУ ПОДІЮ (для сумісності)
+            _eventBus.Subscribe<SelectionTimerUpdatedEvent>(OnSelectionTimerUpdated);
+
             _eventBus.Subscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
             _eventBus.Subscribe<LobbyInitializedEvent>(OnLobbyInitialized);
             _eventBus.Subscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
             _eventBus.Subscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-
-        
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
 
             _isSubscribed = true;
@@ -198,14 +197,18 @@ namespace MythHunter.UI.Presenters
 
             try
             {
+                // ✅ ВІДПИСУЄМОСЯ ВІД НОВИХ ПОДІЙ
                 _eventBus.Unsubscribe<TimerUpdatedEvent>(OnTimerUpdated);
                 _eventBus.Unsubscribe<TimerCompletedEvent>(OnTimerCompleted);
+
+                // ✅ ВІДПИСУЄМОСЯ ВІД СТАРОЇ ПОДІЇ
+                _eventBus.Unsubscribe<SelectionTimerUpdatedEvent>(OnSelectionTimerUpdated);
+
+                _eventBus.Unsubscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
                 _eventBus.Unsubscribe<LobbyInitializedEvent>(OnLobbyInitialized);
                 _eventBus.Unsubscribe<HeroSelectedEvent>(OnHeroSelectedEvent);
                 _eventBus.Unsubscribe<SelectionConfirmedEvent>(OnSelectionConfirmedEvent);
-             
                 _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
-                _eventBus.Unsubscribe<LobbyStateEnteredEvent>(OnLobbyStateEntered);
 
                 _isSubscribed = false;
                 _logger.LogInfo("✅ LobbyPresenter відписався від подій", "UI");
@@ -242,10 +245,7 @@ namespace MythHunter.UI.Presenters
             await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
         }
 
-    
-
-        // ✅ ОКРЕМИЙ МЕТОД З ДОДАТКОВИМИ ПЕРЕВІРКАМИ
-     
+        #region Event Handlers
 
         private void OnHeroSelectedEvent(HeroSelectedEvent evt)
         {
@@ -293,26 +293,46 @@ namespace MythHunter.UI.Presenters
             }
         }
 
-
-        // ✅ Новий метод - тільки UI оновлення
+        // ✅ НОВИЙ метод для подій TimerSystem
         private void OnTimerUpdated(TimerUpdatedEvent evt)
         {
-            // Показуємо тільки таймери категорії "Lobby"
-            if (evt.Category == "Lobby" && _view != null)
+            // Обробляємо тільки таймери категорії "Lobby" або з назвою "LobbySelection"
+            if ((evt.Category == "Lobby" || evt.TimerName == "LobbySelection") && _view != null)
             {
-                _view.UpdateTimer(evt.RemainingTime, evt.TotalTime);
+                _view.UpdateTimer(evt.RemainingTime, 300f);
+                _logger.LogDebug($"Timer updated: {evt.RemainingTime:F1}s remaining", "UI");
             }
         }
-        // ✅ Новий метод - обробка закінчення таймера
+
+        // ✅ НОВИЙ метод для завершення таймера
         private void OnTimerCompleted(TimerCompletedEvent evt)
         {
-            if (evt.Category == "Lobby" && _view != null)
+            if ((evt.Category == "Lobby" || evt.TimerName == "LobbySelection") && _view != null)
             {
                 _view.ShowError("Час вибору закінчився!");
-                // Автоматично підтверджуємо вибір
-                OnSelectionConfirmed();
+                _logger.LogInfo("Lobby selection timer completed", "UI");
             }
         }
+
+        // ✅ СТАРИЙ метод (для зворотної сумісності)
+        private void OnSelectionTimerUpdated(SelectionTimerUpdatedEvent evt)
+        {
+            if (_view == null)
+            {
+                _logger.LogWarning("⚠️ OnSelectionTimerUpdated: _view is null", "UI");
+                return;
+            }
+
+            try
+            {
+                _view.UpdateTimer(evt.RemainingTime, SELECTION_TIME_LIMIT);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ OnSelectionTimerUpdated error: {ex.Message}", "UI", ex);
+            }
+        }
+
         private void OnGameStateChanged(GameStateChangedEvent evt)
         {
             // ✅ Перевіряємо стан перед викликом
@@ -354,7 +374,9 @@ namespace MythHunter.UI.Presenters
             _view?.UpdateTimer(evt.SelectionTimeLimit, evt.SelectionTimeLimit);
         }
 
+        #endregion
 
+        #region Private Methods
 
         private async UniTask PopulateHeroCardsAsync()
         {
@@ -481,6 +503,10 @@ namespace MythHunter.UI.Presenters
             }
         }
 
+        #endregion
+
+        #region Public Methods
+
         public List<HeroCardModel> GetAvailableHeroes()
         {
             var allHeroIds = _heroSelectionSystem.GetHeroesByCategory().SelectMany(x => x.Value).ToList();
@@ -527,9 +553,8 @@ namespace MythHunter.UI.Presenters
 
         public int GetRemainingMana() => _lobbySystem.GetRemainingManaForCurrentPlayer();
 
-        public float GetRemainingTime() => 300f;
+        public float GetRemainingTime() => _lobbySystem.GetRemainingSelectionTime();
 
-      
         public async UniTask OpenHeroSelectorAsync()
         {
             var parameters = new NavigationParameters();
@@ -553,8 +578,6 @@ namespace MythHunter.UI.Presenters
 
             return result;
         }
-
-
 
         public void Dispose()
         {
@@ -585,5 +608,7 @@ namespace MythHunter.UI.Presenters
 
             _logger?.LogInfo("✅ LobbyPresenter disposed", "UI");
         }
+
+        #endregion
     }
 }

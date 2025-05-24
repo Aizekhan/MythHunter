@@ -103,7 +103,7 @@ namespace MythHunter.Core.Game
             }
         }
 
-
+       
         /// <summary>
         /// Обробник події запиту на початок гри
         /// </summary>
@@ -126,15 +126,18 @@ namespace MythHunter.Core.Game
             EnterGameplayAsync(selectedHeroes).Forget();
         }
 
-        /// <summary>
-        /// Запускає перехід від Boot до Lobby
-        /// </summary>
-        // Оновіть метод для переходу до лоббі:
-        // Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
+        private async void EnterLobby()
+        {
+            // Підготовка параметрів
+            var parameters = new NavigationParameters();
+            parameters.Add("Mode", "Standard");
 
-        /// <summary>
-        /// ✅ НОВИЙ підхід: Конфігурація preload + швидкий перехід до лобі
-        /// </summary>
+            // Налаштування представлень для сцени
+            await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
+
+            // Публікуємо подію входу в лобі
+            _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
+        }
         public async UniTask EnterLobbyAsync()
         {
             _logger.LogInfo("🚀 GameFlowManager: Перехід до лобі через PreloadManager", "GameFlow");
@@ -146,8 +149,6 @@ namespace MythHunter.Core.Game
                 _currentSceneName = "LoadingScene";
                 await ShowLoadingUIAsync("Підготовка лобі...");
 
-                // 2. ✅ Конфігуруємо preload для лобі (БЕЗ хардкоду)
-                ConfigureLobbyPreload();
 
                 // 3. Невелика затримка для показу Loading UI
                 await UniTask.Delay(800);
@@ -168,42 +169,7 @@ namespace MythHunter.Core.Game
             }
         }
 
-        /// <summary>
-        /// ✅ Конфігурація preload без хардкоду
-        /// </summary>
-        /// <summary>
-        /// ✅ Конфігурація preload для лобі без хардкоду
-        /// </summary>
-        private void ConfigureLobbyPreload()
-        {
-            _logger.LogInfo("📋 Конфігурація preload для лобі", "GameFlow");
-
-            // Найважливіші ресурси (високий пріоритет)
-            _preloadManager.RegisterScenePreload<HeroArchetypeSO>("LobbyScene", "ScriptableObjects/Heroes", 100);
-            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/LobbyView", 90);
-
-            // UI компоненти (середній пріоритет, з пулами)
-            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/HeroCardUI", 80, true, 20);
-            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/SelectedHeroCard", 70, true, 8);
-
-            // Додаткові ресурси (низький пріоритет)
-            _preloadManager.RegisterScenePreload<Sprite>("LobbyScene", "UI/Icons/hero_icons", 50);
-            _preloadManager.RegisterScenePreload<AudioClip>("LobbyScene", "Audio/UI/lobby_sounds", 30);
-
-            _logger.LogInfo("✅ Preload конфігурація для лобі зареєстрована", "GameFlow");
-        }
-
-        private void ConfigureGameplayPreload(string[] heroArchetypes)
-        {
-            // Реєструємо що потрібно завантажити для гри
-            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "UI/Game/GameplayUIView", 100);
-
-            // Завантажуємо префаби вибраних героїв
-            foreach (var archetypeId in heroArchetypes)
-            {
-                _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}", 90, true, 5);
-            }
-        }
+    
         /// <summary>
         /// ✅ НОВИЙ підхід: Конфігурація preload + швидкий перехід до гри
         /// </summary>
@@ -218,8 +184,7 @@ namespace MythHunter.Core.Game
                 _currentSceneName = "LoadingScene";
                 await ShowLoadingUIAsync("Підготовка гри...");
 
-                // 2. ✅ Конфігуруємо preload для гри (динамічно)
-                ConfigureGameplayPreload(selectedHeroArchetypes, mapId);
+              
 
                 // 3. Зберігаємо дані для передачі
                 _sceneDispatcher.SetSceneData("SelectedHeroArchetypes", selectedHeroArchetypes);
@@ -243,38 +208,8 @@ namespace MythHunter.Core.Game
                 await ReturnToLobbyAsync();
             }
         }
-        /// <summary>
-        /// ✅ Конфігурація preload для гри (динамічна, без хардкоду)
-        /// </summary>
-        private void ConfigureGameplayPreload(string[] selectedHeroArchetypes, string mapId)
-        {
-            _logger.LogInfo($"🎮 Конфігурація preload для гри: {selectedHeroArchetypes?.Length ?? 0} героїв, карта {mapId}", "GameFlow");
 
-            // Базові ігрові ресурси (високий пріоритет)
-            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "UI/Game/GameplayUIView", 100);
-            _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Maps/{mapId}", 95);
-
-            // Завантажуємо префаби вибраних героїв (динамічно)
-            if (selectedHeroArchetypes != null)
-            {
-                foreach (var archetypeId in selectedHeroArchetypes)
-                {
-                    _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}", 90, true, 3);
-                    _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}_Effects", 70, true, 5);
-                }
-            }
-
-            // Загальні ігрові ресурси (середній пріоритет)
-            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "Prefabs/Items/Chest", 60, true, 5);
-            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "Prefabs/Effects/CombatEffects", 50, true, 10);
-
-            // Аудіо та інші ресурси (низький пріоритет)
-            _preloadManager.RegisterScenePreload<AudioClip>("GameScene", "Audio/Game/combat_sounds", 40);
-            _preloadManager.RegisterScenePreload<AudioClip>("GameScene", "Audio/Game/ambient_music", 30);
-
-            _logger.LogInfo("✅ Preload конфігурація для гри зареєстрована", "GameFlow");
-        }
-
+       
         /// <summary>
         /// Показує Loading UI з простою логікою
         /// </summary>
@@ -312,20 +247,7 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Повернення до лобі", "GameFlow");
             await EnterLobbyAsync();
         }
-        private async UniTask PreloadBasicResourcesAsync()
-        {
-            _logger.LogInfo("📦 GameFlowManager: Preload базових ресурсів", "GameFlow");
-            // Можемо завантажити UI prefab-и, іконки тощо
-            await UniTask.Delay(200); // Симуляція
-        }
-
-        private async UniTask PreloadCriticalResourcesAsync()
-        {
-            _logger.LogInfo("📦 GameFlowManager: Preload критичних ресурсів", "GameFlow");
-            // Можемо завантажити основні системи, базові префаби
-            await UniTask.Delay(500); // Симуляція
-        }
-
+       
         /// <summary>
         /// Повертається з будь-якого стану до головного меню
         /// </summary>
@@ -362,10 +284,6 @@ namespace MythHunter.Core.Game
             }
         }
 
-
-        /// <summary>
-        /// Запускає гру з самого початку (Boot)
-        /// </summary>
         public async UniTask RestartGameAsync()
         {
             _logger.LogInfo("Перезапуск гри", "GameFlow");
@@ -408,18 +326,7 @@ namespace MythHunter.Core.Game
             UnsubscribeFromEvents();
             _logger.LogInfo("GameFlowManager знищено", "GameFlow");
         }
-        private async void EnterLobby()
-        {
-            // Підготовка параметрів
-            var parameters = new NavigationParameters();
-            parameters.Add("Mode", "Standard");
-
-            // Налаштування представлень для сцени
-            await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
-
-            // Публікуємо подію входу в лобі
-            _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
-        }
+        
     }
 
    

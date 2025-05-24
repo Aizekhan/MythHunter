@@ -18,4 +18,6 @@ public interface ILobbySystem : ISystem
 
     // ➕ Додай:
     int GetRemainingManaForCurrentPlayer();
+    float GetRemainingSelectionTime();
+    void RestartSelectionTimer();
 }

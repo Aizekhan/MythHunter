@@ -84,7 +84,6 @@ namespace MythHunter.Resources
             _logger.LogInfo($"📝 Реєстрація preload конфігурації для сцени: {config.sceneName}", "PreloadConfig");
 
             int registeredCount = 0;
-
             foreach (var resource in config.resources)
             {
                 // Перевіряємо умови
@@ -95,8 +94,17 @@ namespace MythHunter.Resources
 
                 try
                 {
-                    // Реєструємо ресурс
+                    // ✅ ДОДАТИ ПЕРЕВІРКУ ІСНУВАННЯ РЕСУРСУ
                     var systemType = config.GetSystemType(resource.resourceType);
+                    var testResource = UnityEngine.Resources.Load(resource.resourceKey, systemType);
+
+                    if (testResource == null)
+                    {
+                        _logger.LogWarning($"⚠️ Ресурс не знайдено: {resource.resourceKey}, пропускаємо", "PreloadConfig");
+                        continue;
+                    }
+
+                    // Реєструємо ресурс
                     _preloadManager.RegisterScenePreload(
                         config.sceneName,
                         resource.resourceKey,
@@ -107,11 +115,6 @@ namespace MythHunter.Resources
                     );
 
                     registeredCount++;
-
-                    if (config.enableDebugLogging)
-                    {
-                        _logger.LogDebug($"   ✅ {resource.resourceKey} ({resource.resourceType}, пріоритет: {resource.priority})", "PreloadConfig");
-                    }
                 }
                 catch (System.Exception ex)
                 {

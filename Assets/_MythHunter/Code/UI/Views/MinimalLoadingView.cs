@@ -7,6 +7,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using MythHunter.Core.DI;
+using MythHunter.Utils.Logging;
 
 namespace MythHunter.UI.Views
 {
@@ -18,6 +19,7 @@ namespace MythHunter.UI.Views
         [SerializeField] private TextMeshProUGUI _titleText;
 
         [Inject] private IEventBus _eventBus;
+        [Inject] private  IMythLogger _logger;
 
         protected override void OnInitialized()
         {
@@ -35,6 +37,7 @@ namespace MythHunter.UI.Views
             _eventBus?.Subscribe<LoadingCompletedEvent>(OnLoadingCompleted);
             _eventBus?.Subscribe<PreloadProgressUpdatedEvent>(OnPreloadProgress);
             _eventBus?.Subscribe<PreloadCompletedEvent>(OnPreloadCompleted);
+            _eventBus?.Subscribe<PreloadResourceFailedEvent>(OnPreloadResourceFailed);
         }
 
         public void UnsubscribeFromEvents()
@@ -43,6 +46,7 @@ namespace MythHunter.UI.Views
             _eventBus?.Unsubscribe<LoadingCompletedEvent>(OnLoadingCompleted);
             _eventBus?.Unsubscribe<PreloadProgressUpdatedEvent>(OnPreloadProgress);
             _eventBus?.Unsubscribe<PreloadCompletedEvent>(OnPreloadCompleted);
+            _eventBus?.Unsubscribe<PreloadResourceFailedEvent>(OnPreloadResourceFailed);
         }
 
         public void SetProgress(float progress, string status = "")
@@ -77,6 +81,12 @@ namespace MythHunter.UI.Views
         private void OnPreloadCompleted(PreloadCompletedEvent evt)
         {
             SetProgress(1f, "Ресурси завантажено!");
+        }
+
+        private void OnPreloadResourceFailed(PreloadResourceFailedEvent evt)
+        {
+            SetProgress(_progressBar?.value ?? 0f, $"Помилка: {evt.ErrorMessage}");
+            _logger?.LogError($"Помилка завантаження ресурсу {evt.ResourceKey}: {evt.ErrorMessage}", "Loading");
         }
 
         protected override void OnDestroy()
