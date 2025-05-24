@@ -12,6 +12,7 @@ using MythHunter.Systems.Phase;
 using MythHunter.Services.GameSettings;
 using MythHunter.Entities;
 using MythHunter.Core.MonoBehaviours;
+using MythHunter.Resources;
 
 namespace MythHunter.Core.Installers
 {
@@ -50,7 +51,8 @@ namespace MythHunter.Core.Installers
             BindSingleton<IGameFlowManager, GameFlowManager>(container);
 
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
-      
+            BindSingleton<AutoPreloadConfigurator, AutoPreloadConfigurator>(container);
+
 
 
             // Реєструємо розширення DI

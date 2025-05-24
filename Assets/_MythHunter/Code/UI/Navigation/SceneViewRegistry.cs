@@ -35,7 +35,7 @@ namespace MythHunter.UI.Navigation
             _sceneToViewMap["LobbyScene"] = ViewId.Lobby;
             _sceneToViewMap["GameScene"] = ViewId.GameplayUI;
             _sceneToViewMap["MainMenuScene"] = ViewId.MainMenu;
-            _sceneToViewMap["LoadingScene"] = ViewId.LoadingScreen;
+            _sceneToViewMap["LoadingScene"] = ViewId.MinimalLoading;
 
             _logger.LogInfo($"Зареєстровано {_sceneToViewMap.Count} стандартних зв'язків сцена-ViewId", "SceneViewRegistry");
         }

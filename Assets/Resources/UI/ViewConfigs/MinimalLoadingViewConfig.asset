@@ -9,10 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6625162ed8f610140afebb8b504579cc, type: 3}
-  m_Name: LoadingPreloadConfig
+  m_Script: {fileID: 11500000, guid: 1df04bd6159f86941b20303af29d0658, type: 3}
+  m_Name: MinimalLoadingViewConfig
   m_EditorClassIdentifier: 
-  sceneName: 
-  resources: []
-  autoRegisterOnAwake: 1
-  enableDebugLogging: 0
+  viewId: 0
+  prefabPath: 
+  isPopup: 0
+  isCached: 1
+  category: 0

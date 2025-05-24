@@ -12,7 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6625162ed8f610140afebb8b504579cc, type: 3}
   m_Name: GameScenePreloadConfig
   m_EditorClassIdentifier: 
-  sceneName: 
-  resources: []
+  sceneName: GameScene
+  resources:
+  - resourceKey: UI/Game/GameplayUIView
+    resourceType: 0
+    priority: 100
+    createPool: 0
+    poolSize: 0
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: 
   autoRegisterOnAwake: 1
   enableDebugLogging: 0
