@@ -384,7 +384,11 @@ namespace MythHunter.UI.Presenters
         {
             // 🔥 ЛОГУЄМО НА САМОМУ ПОЧАТКУ
             _logger.LogInfo($"🎴 PopulateHeroCardsAsync ПОЧАТОК: _view = {_view?.GetType().Name ?? "NULL"}", "UI");
-
+            if (_view == null)
+            {
+                _logger.LogError("❌ _view is null! Спочатку потрібно викликати Initialize(view)", "UI");
+                return;
+            }
             // 🔥 КРИТИЧНІ ПЕРЕВІРКИ НА ПОЧАТКУ
             if (_heroCardService == null)
             {

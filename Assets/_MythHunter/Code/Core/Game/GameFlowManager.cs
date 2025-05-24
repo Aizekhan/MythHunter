@@ -3,9 +3,11 @@
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.SceneManagement;
+using MythHunter.Entities.Archetypes;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
+using MythHunter.Resources;
 using MythHunter.States;
 using MythHunter.Systems.Core;
 using MythHunter.UI.Core;
@@ -13,6 +15,7 @@ using MythHunter.UI.Navigation;
 using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
 using System;
+using UnityEngine;
 
 namespace MythHunter.Core.Game
 {
@@ -27,6 +30,8 @@ namespace MythHunter.Core.Game
         private readonly IMythLogger _logger;
         private readonly ISystemRegistry _systemRegistry;
         private readonly INavigationService _navigationService;
+        private readonly IPreloadManager _preloadManager;
+        private readonly AutoPreloadConfigurator _autoPreloadConfigurator;
         private string _currentSceneName = string.Empty;
         private bool _isSubscribed;
 
@@ -37,16 +42,24 @@ namespace MythHunter.Core.Game
      IEventBus eventBus,
      IMythLogger logger,
      ISystemRegistry systemRegistry,
-     INavigationService navigationService)
+     INavigationService navigationService,
+      IPreloadManager preloadManager,
+      AutoPreloadConfigurator autoPreloadConfigurator
+     )
         {
+
             _gameStateMachine = gameStateMachine;
             _sceneDispatcher = sceneDispatcher;
             _eventBus = eventBus;
             _logger = logger;
             _systemRegistry = systemRegistry;
             _navigationService = navigationService;
+            _preloadManager = preloadManager;
+            _autoPreloadConfigurator = autoPreloadConfigurator;
 
+         
             SubscribeToEvents();
+            InitializePreloadConfigsAsync().Forget();
         }
 
         /// <summary>
@@ -62,9 +75,6 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("GameFlowManager підписався на події", "GameFlow");
         }
 
-        /// <summary>
-        /// Відписується від подій
-        /// </summary>
         public void UnsubscribeFromEvents()
         {
             if (!_isSubscribed)
@@ -76,6 +86,25 @@ namespace MythHunter.Core.Game
         }
 
         /// <summary>
+        /// ✅ Ініціалізуємо preload конфігурації зі ScriptableObject-ів
+        /// </summary>
+        private async UniTaskVoid InitializePreloadConfigsAsync()
+        {
+            try
+            {
+                await _autoPreloadConfigurator.LoadAndRegisterAllConfigsAsync();
+
+                var stats = _autoPreloadConfigurator.GetStatistics();
+                _logger.LogInfo($"📊 Preload статистика: {stats.TotalConfigs} конфігурацій, {stats.TotalResources} ресурсів", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка ініціалізації preload конфігурацій: {ex.Message}", "GameFlow", ex);
+            }
+        }
+
+
+        /// <summary>
         /// Обробник події запиту на початок гри
         /// </summary>
 
@@ -84,9 +113,9 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Отримано запит на початок гри", "GameFlow");
 
             // Отримуємо системи для взаємодії з лоббі
-            var lobbySystem = _systemRegistry.GetSystem<ILobbySystem>();
+            var systemRegistry = _systemRegistry;
+            var lobbySystem = systemRegistry.GetSystem<ILobbySystem>();
 
-            // Отримуємо список вибраних героїв, якщо система лоббі доступна
             string[] selectedHeroes = null;
             if (lobbySystem != null)
             {
@@ -94,7 +123,6 @@ namespace MythHunter.Core.Game
                 _logger.LogInfo($"Отримано {selectedHeroes.Length} вибраних героїв з Lobby", "GameFlow");
             }
 
-            // Запускаємо асинхронний перехід до Gameplay без очікування завершення
             EnterGameplayAsync(selectedHeroes).Forget();
         }
 
@@ -104,87 +132,185 @@ namespace MythHunter.Core.Game
         // Оновіть метод для переходу до лоббі:
         // Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
 
+        /// <summary>
+        /// ✅ НОВИЙ підхід: Конфігурація preload + швидкий перехід до лобі
+        /// </summary>
         public async UniTask EnterLobbyAsync()
         {
-            _logger.LogInfo("🚀 GameFlowManager: Ініціація переходу до лобі", "GameFlow");
+            _logger.LogInfo("🚀 GameFlowManager: Перехід до лобі через PreloadManager", "GameFlow");
 
             try
             {
-              
-                // 1. Контекст для мінімального завантаження
-                var context = new LoadingStateContext
-                {
-                    SelectedHeroArchetypes = Array.Empty<string>(),
-                    MapId = "lobby_preload",
-                    NextState = GameStateType.Lobby
-                };
-
-                // 2. Завантажуємо LoadingScene
+                // 1. Показуємо LoadingScene
                 await _sceneDispatcher.LoadSceneAsync("LoadingScene");
                 _currentSceneName = "LoadingScene";
+                await ShowLoadingUIAsync("Підготовка лобі...");
 
-                // 3. Preload критичних ресурсів
-                await PreloadBasicResourcesAsync();
+                // 2. ✅ Конфігуруємо preload для лобі (БЕЗ хардкоду)
+                ConfigureLobbyPreload();
 
-                // 4. ✅ ЗАТРИМКА для показу Loading UI
-                await UniTask.Delay(500); // Показуємо Loading хоча б півсекунди
+                // 3. Невелика затримка для показу Loading UI
+                await UniTask.Delay(800);
 
-                // 5. Переходимо в LoadingState
-                _gameStateMachine.ChangeState(GameStateType.Loading, context);
+                // 4. Переходимо до LobbyScene (PreloadManager автоматично завантажить ресурси)
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+                _currentSceneName = "LobbyScene";
 
-                _logger.LogInfo("✅ GameFlowManager: Loading розпочато", "GameFlow");
+                // 5. Зміна стану (LobbyState сам ініціалізує системи)
+                _gameStateMachine.ChangeState(GameStateType.Lobby);
+
+                _logger.LogInfo("✅ GameFlowManager: Лобі готове з preload ресурсами", "GameFlow");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ GameFlowManager помилка: {ex.Message}", "GameFlow", ex);
-                throw;
+                _logger.LogError($"❌ Помилка переходу до лобі: {ex.Message}", "GameFlow", ex);
+                await ReturnToMainMenuAsync();
             }
         }
+
+        /// <summary>
+        /// ✅ Конфігурація preload без хардкоду
+        /// </summary>
+        /// <summary>
+        /// ✅ Конфігурація preload для лобі без хардкоду
+        /// </summary>
+        private void ConfigureLobbyPreload()
+        {
+            _logger.LogInfo("📋 Конфігурація preload для лобі", "GameFlow");
+
+            // Найважливіші ресурси (високий пріоритет)
+            _preloadManager.RegisterScenePreload<HeroArchetypeSO>("LobbyScene", "ScriptableObjects/Heroes", 100);
+            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/LobbyView", 90);
+
+            // UI компоненти (середній пріоритет, з пулами)
+            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/HeroCardUI", 80, true, 20);
+            _preloadManager.RegisterScenePreload<GameObject>("LobbyScene", "UI/Lobby/SelectedHeroCard", 70, true, 8);
+
+            // Додаткові ресурси (низький пріоритет)
+            _preloadManager.RegisterScenePreload<Sprite>("LobbyScene", "UI/Icons/hero_icons", 50);
+            _preloadManager.RegisterScenePreload<AudioClip>("LobbyScene", "Audio/UI/lobby_sounds", 30);
+
+            _logger.LogInfo("✅ Preload конфігурація для лобі зареєстрована", "GameFlow");
+        }
+
+        private void ConfigureGameplayPreload(string[] heroArchetypes)
+        {
+            // Реєструємо що потрібно завантажити для гри
+            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "UI/Game/GameplayUIView", 100);
+
+            // Завантажуємо префаби вибраних героїв
+            foreach (var archetypeId in heroArchetypes)
+            {
+                _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}", 90, true, 5);
+            }
+        }
+        /// <summary>
+        /// ✅ НОВИЙ підхід: Конфігурація preload + швидкий перехід до гри
+        /// </summary>
         public async UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default")
         {
-            _logger.LogInfo("🚀 GameFlowManager: Ініціація переходу до геймплею", "GameFlow");
+            _logger.LogInfo("🎮 GameFlowManager: Перехід до гри через PreloadManager", "GameFlow");
 
             try
             {
-                // 1. Контекст з повними даними для важкого завантаження
-                var context = new LoadingStateContext
-                {
-                    SelectedHeroArchetypes = selectedHeroArchetypes,
-                    MapId = mapId,
-                    NextState = GameStateType.Gameplay
-                };
-
-                // 2. Завантажуємо LoadingScene
+                // 1. Показуємо LoadingScene
                 await _sceneDispatcher.LoadSceneAsync("LoadingScene");
                 _currentSceneName = "LoadingScene";
+                await ShowLoadingUIAsync("Підготовка гри...");
 
-                // 3. Можемо preload-ити критичні ресурси
-                await PreloadCriticalResourcesAsync();
+                // 2. ✅ Конфігуруємо preload для гри (динамічно)
+                ConfigureGameplayPreload(selectedHeroArchetypes, mapId);
 
-                // 4. Переходимо в LoadingState для важкого завантаження
-                _gameStateMachine.ChangeState(GameStateType.Loading, context);
+                // 3. Зберігаємо дані для передачі
+                _sceneDispatcher.SetSceneData("SelectedHeroArchetypes", selectedHeroArchetypes);
+                _sceneDispatcher.SetSceneData("MapId", mapId);
 
-                _logger.LogInfo("✅ GameFlowManager: Ініціація завершена, LoadingState займеться рештою", "GameFlow");
+                // 4. Більша затримка для завантаження гри
+                await UniTask.Delay(1500);
+
+                // 5. Переходимо до GameScene (PreloadManager автоматично завантажить)
+                await _sceneDispatcher.LoadSceneAsync("GameScene");
+                _currentSceneName = "GameScene";
+
+                // 6. Зміна стану
+                _gameStateMachine.ChangeState(GameStateType.Gameplay);
+
+                _logger.LogInfo("✅ GameFlowManager: Гра готова з preload ресурсами", "GameFlow");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ GameFlowManager помилка: {ex.Message}", "GameFlow", ex);
+                _logger.LogError($"❌ Помилка переходу до гри: {ex.Message}", "GameFlow", ex);
                 await ReturnToLobbyAsync();
+            }
+        }
+        /// <summary>
+        /// ✅ Конфігурація preload для гри (динамічна, без хардкоду)
+        /// </summary>
+        private void ConfigureGameplayPreload(string[] selectedHeroArchetypes, string mapId)
+        {
+            _logger.LogInfo($"🎮 Конфігурація preload для гри: {selectedHeroArchetypes?.Length ?? 0} героїв, карта {mapId}", "GameFlow");
+
+            // Базові ігрові ресурси (високий пріоритет)
+            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "UI/Game/GameplayUIView", 100);
+            _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Maps/{mapId}", 95);
+
+            // Завантажуємо префаби вибраних героїв (динамічно)
+            if (selectedHeroArchetypes != null)
+            {
+                foreach (var archetypeId in selectedHeroArchetypes)
+                {
+                    _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}", 90, true, 3);
+                    _preloadManager.RegisterScenePreload<GameObject>("GameScene", $"Prefabs/Heroes/{archetypeId}_Effects", 70, true, 5);
+                }
+            }
+
+            // Загальні ігрові ресурси (середній пріоритет)
+            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "Prefabs/Items/Chest", 60, true, 5);
+            _preloadManager.RegisterScenePreload<GameObject>("GameScene", "Prefabs/Effects/CombatEffects", 50, true, 10);
+
+            // Аудіо та інші ресурси (низький пріоритет)
+            _preloadManager.RegisterScenePreload<AudioClip>("GameScene", "Audio/Game/combat_sounds", 40);
+            _preloadManager.RegisterScenePreload<AudioClip>("GameScene", "Audio/Game/ambient_music", 30);
+
+            _logger.LogInfo("✅ Preload конфігурація для гри зареєстрована", "GameFlow");
+        }
+
+        /// <summary>
+        /// Показує Loading UI з простою логікою
+        /// </summary>
+        private async UniTask ShowLoadingUIAsync(string message)
+        {
+            var parameters = new NavigationParameters();
+            parameters.Add("Message", message);
+            parameters.Add("ShowProgress", true);
+            await _navigationService.SetupForSceneAsync("LoadingScene", parameters);
+
+            // Мінімальна затримка для відображення UI
+            await UniTask.DelayFrame(3);
+        }
+
+
+
+        public async UniTask ReturnToMainMenuAsync()
+        {
+            _logger.LogInfo("Повернення до головного меню", "GameFlow");
+
+            try
+            {
+                await _sceneDispatcher.LoadSceneAsync("MainMenuScene");
+                _currentSceneName = "MainMenuScene";
+                _gameStateMachine.ChangeState(GameStateType.MainMenu);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Помилка при поверненні до головного меню: {ex.Message}", "GameFlow", ex);
+                throw;
             }
         }
         public async UniTask ReturnToLobbyAsync()
         {
-            _logger.LogInfo("Повернення до лобі після помилки", "GameFlow");
-
-            try
-            {
-                await EnterLobbyAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Помилка при поверненні в лобі: {ex.Message}", "GameFlow", ex);
-                throw;
-            }
+            _logger.LogInfo("Повернення до лобі", "GameFlow");
+            await EnterLobbyAsync();
         }
         private async UniTask PreloadBasicResourcesAsync()
         {
@@ -203,37 +329,14 @@ namespace MythHunter.Core.Game
         /// <summary>
         /// Повертається з будь-якого стану до головного меню
         /// </summary>
-        public async UniTask ReturnToMainMenuAsync()
-        {
-            _logger.LogInfo("Початок повернення до головного меню", "GameFlow");
 
-            try
-            {
-                GameStateType previousState = _gameStateMachine.CurrentState;
-
-                await _sceneDispatcher.LoadSceneAsync("MainMenuScene");
-                _currentSceneName = "MainMenuScene";
-
-                _gameStateMachine.ChangeState(GameStateType.MainMenu);
-
-                // Публікуємо подію зміни стану гри
-                PublishStateChange(previousState, GameStateType.MainMenu);
-
-                _logger.LogInfo("Повернення до головного меню завершено", "GameFlow");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Помилка при поверненні до головного меню: {ex.Message}", "GameFlow", ex);
-                throw;
-            }
-        }
 
         /// <summary>
         /// Перезавантажує поточну сцену
         /// </summary>
         public async UniTask ReloadCurrentSceneAsync()
         {
-            _logger.LogInfo($"Початок перезавантаження поточної сцени: {_currentSceneName}", "GameFlow");
+            _logger.LogInfo($"Перезавантаження поточної сцени: {_currentSceneName}", "GameFlow");
 
             try
             {
@@ -242,11 +345,8 @@ namespace MythHunter.Core.Game
                     _currentSceneName = _sceneDispatcher.GetActiveScene();
                 }
 
-                GameStateType currentState = _gameStateMachine.CurrentState;
-
                 await _sceneDispatcher.LoadSceneAsync(_currentSceneName);
 
-                // Публікуємо подію перезавантаження сцени
                 _eventBus.Publish(new SceneReloadedEvent
                 {
                     SceneName = _currentSceneName,
@@ -262,12 +362,13 @@ namespace MythHunter.Core.Game
             }
         }
 
+
         /// <summary>
         /// Запускає гру з самого початку (Boot)
         /// </summary>
         public async UniTask RestartGameAsync()
         {
-            _logger.LogInfo("Початок перезапуску гри", "GameFlow");
+            _logger.LogInfo("Перезапуск гри", "GameFlow");
 
             try
             {
@@ -278,7 +379,6 @@ namespace MythHunter.Core.Game
 
                 _gameStateMachine.ChangeState(GameStateType.Boot);
 
-                // Публікуємо подію зміни стану гри
                 PublishStateChange(previousState, GameStateType.Boot);
 
                 _logger.LogInfo("Перезапуск гри завершено", "GameFlow");
@@ -306,7 +406,7 @@ namespace MythHunter.Core.Game
         public void Dispose()
         {
             UnsubscribeFromEvents();
-            _logger.LogInfo("GameFlowManager видалено", "GameFlow");
+            _logger.LogInfo("GameFlowManager знищено", "GameFlow");
         }
         private async void EnterLobby()
         {

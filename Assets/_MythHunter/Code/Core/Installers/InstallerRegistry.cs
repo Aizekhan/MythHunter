@@ -31,7 +31,7 @@ namespace MythHunter.Core
                 new DebugToolsInstaller(),
                 new HeroSystemsInstaller(),
 
-                new LoadingSystemsInstaller(),
+            
                 // Інсталятори систем (за категоріями)
               
                 new NetworkingSystemsInstaller(),
