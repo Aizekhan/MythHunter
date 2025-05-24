@@ -9,15 +9,29 @@ namespace MythHunter.Services.GameSettings
         {
             get;
         }
-        float ManaPerPlayer
+        int ManaPerPlayer
         {
             get;
-        } // ← ДОДАЙ ОЦЕ
+        }
+
+        // ✅ ДОДАТИ ці два властивості:
+        float SelectionTimeLimit
+        {
+            get;
+        }
+        string LobbyTimerId
+        {
+            get;
+        }
     }
 
     public class GameSettingsService : IGameSettingsService
     {
         public int PlayerCount => 2; // 🔧 тимчасово хардкод, потім можна зробити меню налаштувань
-        public float ManaPerPlayer => 4f; // ← реалізація значення
+        public int ManaPerPlayer => 4; // ← реалізація значення
+
+        // ✅ ДОДАТИ ці дві реалізації:
+        public float SelectionTimeLimit => 300f; // 5 хвилин на вибір героїв
+        public string LobbyTimerId => "LobbySelectionTimer"; // ID таймера лобі
     }
 }

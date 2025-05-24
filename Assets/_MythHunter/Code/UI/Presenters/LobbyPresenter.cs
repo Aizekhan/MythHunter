@@ -42,7 +42,7 @@ namespace MythHunter.UI.Presenters
         private ILobbyView _view;
         private bool _isSubscribed = false;
         private int _currentPlayerIndex = 0;
-        private const float SELECTION_TIME_LIMIT = 300f;
+   
         private readonly List<HeroCardUI> _createdHeroCards = new();
         private readonly List<HeroCardUI> _selectedHeroCards = new();
         private readonly INavigationService _navigationService;
@@ -325,7 +325,7 @@ namespace MythHunter.UI.Presenters
 
             try
             {
-                _view.UpdateTimer(evt.RemainingTime, SELECTION_TIME_LIMIT);
+                _view.UpdateTimer(evt.RemainingTime, _gameSettings.SelectionTimeLimit);
             }
             catch (Exception ex)
             {

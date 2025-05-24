@@ -4,13 +4,13 @@ using MythHunter.UI.Core;
 using TMPro;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
-
+using MythHunter.UI.Presenters;
 namespace MythHunter.UI.Views
 {
     public class LobbyView : UIViewBase, ILobbyView
     {
         [Inject] private IMythLogger _logger;
-
+        [Inject] private IDIContainer _container;
         [Header("Контейнери")]
         [SerializeField] private Transform _heroCardsContainer;
         [SerializeField] private Transform _selectedHeroesContainer;
@@ -38,9 +38,15 @@ namespace MythHunter.UI.Views
 
         public void UpdateTimer(float current, float max)
         {
+           
+
             if (_timerText != null)
             {
                 _timerText.text = $"{Mathf.CeilToInt(current)} сек";
+            }
+            else
+            {
+                _logger?.LogWarning("⚠️ _timerText is null в UpdateTimer!", "UI");
             }
         }
 
@@ -85,8 +91,37 @@ namespace MythHunter.UI.Views
             {
                 _logger?.LogError("⚠️ SelectedHeroesContainer не призначений в інспекторі!", "UI");
             }
+            ConnectToPresenter();
         }
+        private void ConnectToPresenter()
+        {
+            try
+            {
+                _logger?.LogInfo("🔗 Починаємо зв'язування з LobbyPresenter...", "UI");
 
+                if (_container == null)
+                {
+                    _logger?.LogError("❌ DIContainer не ін'єктовано в LobbyView!", "UI");
+                    return;
+                }
+
+                var presenter = _container.Resolve<ILobbyPresenter>();
+                if (presenter != null)
+                {
+                    _logger?.LogInfo("✅ LobbyPresenter знайдено, викликаємо Initialize(this)", "UI");
+                    presenter.Initialize(this);
+                    _logger?.LogInfo("🎯 LobbyView успішно зв'язано з LobbyPresenter!", "UI");
+                }
+                else
+                {
+                    _logger?.LogError("❌ LobbyPresenter не знайдено в контейнері!", "UI");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger?.LogError($"❌ Помилка зв'язування presenter: {ex.Message}", "UI", ex);
+            }
+        }
         protected override void OnDestroy()
         {
             _logger?.LogInfo("🗑️ LobbyView.OnDestroy() викликано", "UI");
