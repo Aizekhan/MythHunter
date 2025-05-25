@@ -29,7 +29,7 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення базових систем (OnBoot)...", "Installer");
 
             var systemRegistry = container.Resolve<ISystemRegistry>();
-            BindSingleton<IHeroCardService, HeroCardService>(container);
+           
             BindSingleton<IPrefabProvider, PrefabProvider>(container);
 
             BindSingleton<IHeroSystem, HeroSystem>(container);

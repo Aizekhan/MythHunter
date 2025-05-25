@@ -4,23 +4,17 @@ using Cysharp.Threading.Tasks;
 namespace MythHunter.UI.Core
 {
     /// <summary>
-    /// Інтерфейс фабрики представлень UI, що працює виключно через ViewId
+    /// Спрощений інтерфейс фабрики представлень UI
+    /// Всі представлення створюються з пулів через PreloadManager
     /// </summary>
     public interface IUIViewFactory
     {
         /// <summary>
-        /// Створює представлення за його ідентифікатором
+        /// Створює представлення за його ідентифікатором (з пулу)
         /// </summary>
         /// <param name="viewId">Ідентифікатор представлення</param>
         /// <returns>Створене представлення</returns>
         UniTask<IView> CreateViewAsync(ViewId viewId);
-
-        /// <summary>
-        /// Створює представлення з об'єктного пулу за його ідентифікатором
-        /// </summary>
-        /// <param name="viewId">Ідентифікатор представлення</param>
-        /// <returns>Створене представлення з пулу</returns>
-        UniTask<IView> CreateViewFromPoolAsync(ViewId viewId);
 
         /// <summary>
         /// Повертає представлення в пул
@@ -30,10 +24,16 @@ namespace MythHunter.UI.Core
         void ReturnViewToPool(ViewId viewId, IView view);
 
         /// <summary>
-        /// Вивільняє представлення, знищуючи його
+        /// Вивільняє представлення, знищуючи його (рідко використовується)
         /// </summary>
         /// <param name="viewId">Ідентифікатор представлення</param>
         /// <param name="view">Представлення для знищення</param>
         void ReleaseView(ViewId viewId, IView view);
+
+        /// <summary>
+        /// Застарілий метод - використовуйте CreateViewAsync
+        /// </summary>
+        [System.Obsolete("Використовуйте CreateViewAsync - всі View тепер створюються з пулів")]
+        UniTask<IView> CreateViewFromPoolAsync(ViewId viewId);
     }
 }

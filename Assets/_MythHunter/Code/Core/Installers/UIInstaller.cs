@@ -24,7 +24,7 @@ namespace MythHunter.Core.Installers
             // DI-реєстрація основних UI сервісів
             BindSingleton<ISceneViewRegistry, SceneViewRegistry>(container);
             BindSingleton<ISpriteService, SpriteService>(container);
-            BindSingleton<IUIComponentFactory, UIComponentFactory>(container);
+       
             BindSingleton<IUIViewFactory, UIViewFactory>(container);
             BindSingleton<IUISystem, UISystem>(container);
             BindSingleton<IViewConfigRegistry, ViewConfigRegistry>(container);

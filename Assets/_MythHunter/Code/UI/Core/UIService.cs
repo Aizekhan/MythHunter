@@ -1,61 +1,54 @@
 // Assets/_MythHunter/Code/UI/Core/UIService.cs
-using System;
-using MythHunter.UI.Core;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
+using MythHunter.Core.DI;
+using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.UI.Runtime
 {
+    /// <summary>
+    /// Спрощений UI сервіс - прямо працює з UIViewFactory
+    /// </summary>
     public class UIService : IUIService
     {
-        private readonly IUISystem _uiSystem;
-        private readonly IViewConfigRegistry _viewConfigRegistry;
-        private readonly IMythLogger _logger;
         private readonly IUIViewFactory _viewFactory;
+        private readonly IMythLogger _logger;
 
-        public UIService(
-            IUISystem uiSystem,
-            IViewConfigRegistry viewConfigRegistry,
-            IMythLogger logger,
-            IUIViewFactory viewFactory)
+        [Inject]
+        public UIService(IUIViewFactory viewFactory, IMythLogger logger)
         {
-            _uiSystem = uiSystem;
-            _viewConfigRegistry = viewConfigRegistry;
-            _logger = logger;
             _viewFactory = viewFactory;
+            _logger = logger;
         }
 
         public async UniTask<IView> ShowScreenAsync(ViewId viewId)
         {
-            var config = _viewConfigRegistry.Get(viewId);
-            if (config == null)
-            {
-                _logger.LogError($"ViewConfig не знайдено для ViewId {viewId}", "UIService");
-                return null;
-            }
+            _logger.LogInfo($"📺 Показуємо екран: {viewId}", "UIService");
 
-            // Створюємо представлення через фабрику
             var view = await _viewFactory.CreateViewAsync(viewId);
             if (view == null)
             {
-                _logger.LogError($"Не вдалося створити View для ViewId {viewId}", "UIService");
+                _logger.LogError($"❌ Не вдалося створити екран {viewId}", "UIService");
                 return null;
             }
 
-            _uiSystem.RegisterView(viewId, view);
             view.Show();
+            _logger.LogInfo($"✅ Екран {viewId} показано", "UIService");
             return view;
         }
 
         public void HideScreen(ViewId viewId)
         {
-            _uiSystem.HideView(viewId);
+            _logger.LogInfo($"🙈 Приховуємо екран: {viewId}", "UIService");
+            // Тут можна додати логіку пошуку активного екрану і його приховування
+            // Поки що спрощена версія
         }
 
         public bool IsScreenActive(ViewId viewId)
         {
-            return _uiSystem.IsViewActive(viewId);
+            // Спрощена версія - завжди повертає false
+            // Можна розширити при потребі
+            return false;
         }
     }
 }
