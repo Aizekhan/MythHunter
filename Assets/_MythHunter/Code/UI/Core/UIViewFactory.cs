@@ -4,167 +4,225 @@ using System;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
+using MythHunter.UI.ViewConfigs;
 using MythHunter.Utils.Logging;
 using UnityEngine;
 
 namespace MythHunter.UI.Core
 {
     /// <summary>
-    /// Спрощена фабрика представлень UI - працює тільки з пулами
+    /// Фабрика представлень UI з інтеграцією ViewConfig системи
     /// </summary>
     public class UIViewFactory : IUIViewFactory
     {
         private readonly IPoolManager _poolManager;
         private readonly IMythLogger _logger;
         private readonly IDIContainer _container;
+        private readonly IViewConfigRegistry _viewConfigRegistry;
 
         [Inject]
         public UIViewFactory(
             IPoolManager poolManager,
             IMythLogger logger,
-            IDIContainer container)
+            IDIContainer container,
+            IViewConfigRegistry viewConfigRegistry)
         {
             _poolManager = poolManager;
             _logger = logger;
             _container = container;
+            _viewConfigRegistry = viewConfigRegistry;
         }
 
         /// <summary>
-        /// Створює представлення з пулу (основний метод)
+        /// Створює представлення на основі ViewConfig
         /// </summary>
         public async UniTask<IView> CreateViewAsync(ViewId viewId)
         {
-            string poolKey = GetPoolKeyFromViewId(viewId);
-
-            // ✅ СПОЧАТКУ ПЕРЕВІРЯЄМО ЧИ Є ПУЛ
-            if (_poolManager.HasPool(poolKey))
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null)
             {
-                _logger.LogDebug($"🏊 Використовуємо пул для {viewId}", "UIViewFactory");
-                return await CreateFromPoolAsync(viewId, poolKey);
+                _logger.LogError($"❌ ViewConfig не знайдено для {viewId}", "UIViewFactory");
+                return null;
+            }
+
+            _logger.LogDebug($"🏗️ Створення View {viewId} (cached: {config.isCached}, category: {config.category})", "UIViewFactory");
+
+            // 🎯 ЛОГІКА РОЗДІЛЕННЯ: пул чи пряме створення
+            if (ShouldUsePool(config))
+            {
+                return await CreateFromPoolAsync(viewId, config);
             }
             else
             {
-                _logger.LogDebug($"📦 Створюємо напряму для {viewId} (пул відсутній)", "UIViewFactory");
-                return await CreateDirectlyAsync(viewId);
+                return await CreateDirectlyAsync(viewId, config);
             }
         }
-        // ✅ ДОДАЙ НОВИЙ МЕТОД
-        private string GetResourcePathFromViewId(ViewId viewId)
+
+        /// <summary>
+        /// Визначає чи потрібно використовувати пул для цього View
+        /// </summary>
+        private bool ShouldUsePool(ViewConfig config)
         {
-            return viewId switch
-            {
-                ViewId.MinimalLoading => "UI/Loading/MinimalLoadingView",
-                ViewId.Lobby => "UI/Lobby/LobbyView",
-                ViewId.HeroCard => "UI/Common/HeroCardUI",
-                ViewId.GameplayUI => "UI/Gameplay/GameplayUIView",
-                _ => $"UI/{viewId}"
-            };
+            return config.isCached &&
+                   config.category == UICategory.Common &&  // ✅ лише Common!
+                   !config.isPopup;
         }
 
-        // ✅ ВИНЕСИ СПІЛЬНУ ЛОГІКУ
+
+        /// <summary>
+        /// Створює View з пулу
+        /// </summary>
+        private async UniTask<IView> CreateFromPoolAsync(ViewId viewId, ViewConfig config)
+        {
+            string poolKey = config.prefabPath;
+
+            if (!_poolManager.HasPool(poolKey))
+            {
+                _logger.LogError($"❌ Пул '{poolKey}' для {viewId} не знайдено! Перевірте preload конфігурацію.", "UIViewFactory");
+                return null;
+            }
+
+            try
+            {
+                var gameObject = _poolManager.GetFromPool<GameObject>(poolKey);
+                if (gameObject == null)
+                {
+                    _logger.LogError($"❌ Не вдалося отримати GameObject з пулу '{poolKey}'", "UIViewFactory");
+                    return null;
+                }
+
+                var view = SetupViewFromGameObject(gameObject, viewId);
+                _logger.LogDebug($"✅ View {viewId} створено з пулу {poolKey}", "UIViewFactory");
+                return view;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка створення View {viewId} з пулу: {ex.Message}", "UIViewFactory", ex);
+                return null;
+            }
+
+            await UniTask.CompletedTask; // Для сумісності з async
+        }
+
+        /// <summary>
+        /// Створює View напряму з Resources
+        /// </summary>
+        private async UniTask<IView> CreateDirectlyAsync(ViewId viewId, ViewConfig config)
+        {
+            try
+            {
+                var prefab = UnityEngine.Resources.Load<GameObject>(config.prefabPath);
+                if (prefab == null)
+                {
+                    _logger.LogError($"❌ Префаб не знайдено: {config.prefabPath}", "UIViewFactory");
+                    return null;
+                }
+
+                var gameObject = UnityEngine.Object.Instantiate(prefab);
+                var view = SetupViewFromGameObject(gameObject, viewId);
+
+                _logger.LogDebug($"✅ View {viewId} створено напряму з {config.prefabPath}", "UIViewFactory");
+                return view;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка створення View {viewId} напряму: {ex.Message}", "UIViewFactory", ex);
+                return null;
+            }
+
+            await UniTask.CompletedTask; // Для сумісності з async
+        }
+
+        /// <summary>
+        /// Спільна логіка налаштування View з GameObject
+        /// </summary>
         private IView SetupViewFromGameObject(GameObject gameObject, ViewId viewId)
         {
-            gameObject.transform.SetParent(UIRoot.RootTransform, false);
-
-            var view = gameObject.GetComponent<IView>();
-            if (view == null)
-            {
-                _logger.LogError($"❌ GameObject не містить IView компонента: {viewId}", "UIViewFactory");
-                UnityEngine.Object.Destroy(gameObject);
-                return null;
-            }
-
-            _container.InjectDependencies(gameObject);
-            gameObject.SetActive(true);
-
-            _logger.LogDebug($"✅ Створено View {viewId}", "UIViewFactory");
-            return view;
-        }
-
-        /// <summary>
-        /// Застарілий метод - використовуйте CreateViewAsync
-        /// </summary>
-        [Obsolete("Використовуйте CreateViewAsync - всі View тепер створюються з пулів")]
-        private async UniTask<IView> CreateFromPoolAsync(ViewId viewId, string poolKey)
-        {
-            var gameObject = _poolManager.GetFromPool<GameObject>(poolKey);
             if (gameObject == null)
             {
-                _logger.LogError($"❌ Не вдалося отримати GameObject з пулу '{poolKey}'", "UIViewFactory");
+                _logger.LogError($"❌ GameObject є null для {viewId}", "UIViewFactory");
                 return null;
             }
 
-            return SetupView(gameObject, viewId);
-        }
-        private async UniTask<IView> CreateDirectlyAsync(ViewId viewId)
-        {
-            string resourcePath = GetResourcePathFromViewId(viewId);
-            var prefab = UnityEngine.Resources.Load<GameObject>(resourcePath);
-
-            if (prefab == null)
-            {
-                _logger.LogError($"❌ Префаб не знайдено: {resourcePath}", "UIViewFactory");
-                return null;
-            }
-
-            var instance = UnityEngine.Object.Instantiate(prefab, UIRoot.RootTransform, false);
-            return SetupView(instance, viewId);
-        }
-
-        private IView SetupView(GameObject gameObject, ViewId viewId)
-        {
+            // Встановлюємо батьківський об'єкт
             gameObject.transform.SetParent(UIRoot.RootTransform, false);
 
+            // Отримуємо компонент IView
             var view = gameObject.GetComponent<IView>();
             if (view == null)
             {
-                _logger.LogError($"❌ GameObject не містить IView: {viewId}", "UIViewFactory");
+                _logger.LogError($"❌ GameObject не містить компонента IView: {viewId}", "UIViewFactory");
                 UnityEngine.Object.Destroy(gameObject);
                 return null;
             }
 
-            _container.InjectDependencies(gameObject);
+            // Ін'єкція залежностей
+            try
+            {
+                _container.InjectDependencies(gameObject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"⚠️ Помилка ін'єкції залежностей для {viewId}: {ex.Message}", "UIViewFactory");
+            }
+
+            // Активуємо об'єкт
             gameObject.SetActive(true);
 
             return view;
         }
+
         /// <summary>
-        /// Повертає представлення в пул
+        /// Повертає представлення в пул або знищує його
         /// </summary>
         public void ReturnViewToPool(ViewId viewId, IView view)
         {
             if (view == null)
                 return;
 
+            var config = _viewConfigRegistry.Get(viewId);
+            if (config == null)
+            {
+                _logger.LogWarning($"⚠️ ViewConfig не знайдено для {viewId} при поверненні", "UIViewFactory");
+                ReleaseView(viewId, view);
+                return;
+            }
+
+            var gameObject = (view as Component)?.gameObject;
+            if (gameObject == null)
+            {
+                _logger.LogWarning($"⚠️ View {viewId} не є Component", "UIViewFactory");
+                return;
+            }
+
             try
             {
-                string poolKey = GetPoolKeyFromViewId(viewId);
-                var gameObject = (view as Component)?.gameObject;
-
-                if (gameObject == null)
+                if (ShouldUsePool(config))
                 {
-                    _logger.LogWarning($"⚠️ View {viewId} не є Component", "UIViewFactory");
-                    return;
+                    // Повертаємо в пул
+                    gameObject.SetActive(false);
+                    _poolManager.ReturnToPool(config.prefabPath, gameObject);
+                    _logger.LogDebug($"✅ View {viewId} повернено в пул {config.prefabPath}", "UIViewFactory");
                 }
-
-                // Деактивуємо та повертаємо в пул
-                gameObject.SetActive(false);
-                _poolManager.ReturnToPool(poolKey, gameObject);
-
-                _logger.LogDebug($"✅ View {viewId} повернено в пул {poolKey}", "UIViewFactory");
+                else
+                {
+                    // Знищуємо напряму
+                    UnityEngine.Object.Destroy(gameObject);
+                    _logger.LogDebug($"🗑️ View {viewId} знищено (не pooled)", "UIViewFactory");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Помилка повернення View {viewId} в пул: {ex.Message}", "UIViewFactory", ex);
+                _logger.LogError($"❌ Помилка повернення View {viewId}: {ex.Message}", "UIViewFactory", ex);
 
                 // Запасний варіант - знищення
-                if (view is Component component)
-                    UnityEngine.Object.Destroy(component.gameObject);
+                if (gameObject != null)
+                    UnityEngine.Object.Destroy(gameObject);
             }
         }
 
         /// <summary>
-        /// Знищує представлення (рідко використовується)
+        /// Знищує представлення (для випадків коли пул не використовується)
         /// </summary>
         public void ReleaseView(ViewId viewId, IView view)
         {
@@ -176,23 +234,12 @@ namespace MythHunter.UI.Core
         }
 
         /// <summary>
-        /// Конвертує ViewId в ключ пулу
+        /// Застарілий метод - використовуйте CreateViewAsync
         /// </summary>
-        private string GetPoolKeyFromViewId(ViewId viewId)
+        [System.Obsolete("Використовуйте CreateViewAsync - всі View тепер створюються через ViewConfig")]
+        public async UniTask<IView> CreateViewFromPoolAsync(ViewId viewId)
         {
-            return viewId switch
-            {
-                ViewId.Lobby => "LobbyView",
-                ViewId.GameplayUI => "GameplayUIView",
-                ViewId.MainMenu => "MainMenuView",
-                ViewId.MinimalLoading => "MinimalLoadingView",
-                ViewId.Settings => "SettingsView",
-                ViewId.HeroCardSelector => "HeroCardSelectorView",
-                ViewId.ConfirmDialog => "ConfirmationDialog",
-                ViewId.HeroCard => "HeroCardUI",
-                ViewId.Inventory => "InventoryView",
-                _ => viewId.ToString() // Запасний варіант
-            };
+            return await CreateViewAsync(viewId);
         }
     }
 }

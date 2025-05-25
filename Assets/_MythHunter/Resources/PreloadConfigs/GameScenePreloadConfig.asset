@@ -16,6 +16,7 @@ MonoBehaviour:
   resources:
   - resourceKey: UI/Game/GameplayUIView
     resourceType: 0
+    loadingMode: 0
     priority: 100
     createPool: 0
     poolSize: 0
@@ -23,4 +24,4 @@ MonoBehaviour:
     onlyInBuild: 0
     description: 
   autoRegisterOnAwake: 1
-  enableDebugLogging: 0
+  enableDebugLogging: 1

@@ -23,7 +23,7 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: " \u0410\u0440\u0445\u0435\u0442\u0438\u043F\u0438 \u0433\u0435\u0440\u043E\u0457\u0432"
-  - resourceKey: UI/Lobby/HeroCardUI
+  - resourceKey: HeroCardUI
     resourceType: 0
     loadingMode: 0
     priority: 50

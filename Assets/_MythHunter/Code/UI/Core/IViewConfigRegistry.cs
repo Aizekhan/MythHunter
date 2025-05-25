@@ -14,5 +14,6 @@ namespace MythHunter.UI.Core
         // Залишається для зворотної сумісності
         [System.Obsolete("Використовуйте GetByTypeName замість GetByType для відповідності принципам архітектури")]
         ViewConfig GetByType<T>() where T : Component, IView;
+
     }
 }
