@@ -6,6 +6,7 @@ using MythHunter.Core.DI;
 using MythHunter.Resources.Config;
 using MythHunter.Utils.Logging;
 using UnityEngine;
+using static MythHunter.Resources.Config.PreloadSceneConfig;
 
 namespace MythHunter.Resources
 {
@@ -94,24 +95,40 @@ namespace MythHunter.Resources
 
                 try
                 {
-                    // ✅ ДОДАТИ ПЕРЕВІРКУ ІСНУВАННЯ РЕСУРСУ
                     var systemType = config.GetSystemType(resource.resourceType);
-                    var testResource = UnityEngine.Resources.Load(resource.resourceKey, systemType);
 
-                    if (testResource == null)
+                    // ✅ РІЗНА ЛОГІКА ПЕРЕВІРКИ ЗАЛЕЖНО ВІД РЕЖИМУ
+                    bool resourceExists = false;
+
+                    switch (resource.loadingMode)
                     {
-                        _logger.LogWarning($"⚠️ Ресурс не знайдено: {resource.resourceKey}, пропускаємо", "PreloadConfig");
+                        case LoadingMode.SingleResource:
+                            var testResource = UnityEngine.Resources.Load(resource.resourceKey, systemType);
+                            resourceExists = testResource != null;
+                            break;
+
+                        case LoadingMode.AllFromFolder:
+                        case LoadingMode.AllOfTypeFromFolder:
+                            var testResources = UnityEngine.Resources.LoadAll(resource.resourceKey);
+                            resourceExists = testResources.Length > 0;
+                            break;
+                    }
+
+                    if (!resourceExists)
+                    {
+                        _logger.LogWarning($"⚠️ Ресурс(и) не знайдено: {resource.resourceKey}, пропускаємо", "PreloadConfig");
                         continue;
                     }
 
-                    // Реєструємо ресурс
+                    // ✅ ПЕРЕДАЄМО РЕЖИМ ЗАВАНТАЖЕННЯ
                     _preloadManager.RegisterScenePreload(
                         config.sceneName,
                         resource.resourceKey,
                         systemType,
                         resource.priority,
                         resource.createPool,
-                        resource.poolSize
+                        resource.poolSize,
+                        resource.loadingMode // ✅ НОВИЙ ПАРАМЕТР
                     );
 
                     registeredCount++;

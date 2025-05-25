@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Resources/Config/PreloadSceneConfig.cs
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,6 +28,9 @@ namespace MythHunter.Resources.Config
             [Header("Ресурс")]
             public string resourceKey;
             public ResourceType resourceType;
+
+            [Header("Завантаження")]
+            public LoadingMode loadingMode; // ✅ НОВИЙ ЕНУМ
 
             [Header("Пріоритет")]
             [Range(0, 100)]
@@ -57,7 +61,12 @@ namespace MythHunter.Resources.Config
             HeroArchetypeSO,
             Custom
         }
-
+        public enum LoadingMode
+        {
+            SingleResource,     // Один конкретний ресурс
+            AllFromFolder,      // Всі ресурси з папки
+            AllOfTypeFromFolder // Всі ресурси певного типу з папки
+        }
         /// <summary>
         /// Конвертує ResourceType в System.Type
         /// </summary>

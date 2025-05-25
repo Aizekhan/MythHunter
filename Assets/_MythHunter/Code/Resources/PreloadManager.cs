@@ -13,9 +13,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using MythHunter.Events.Domain.Preload;
 using MythHunter.Core.ECS;
+using MythHunter.Resources.Config;
 
 namespace MythHunter.Resources
 {
+   
+
     /// <summary>
     /// Менеджер для прееміптивного завантаження ресурсів
     /// </summary>
@@ -46,6 +49,7 @@ namespace MythHunter.Resources
         {
             public string ResourceKey;
             public Type ResourceType;
+            public PreloadSceneConfig.LoadingMode LoadingMode;
             public int Priority;
             public bool CreatePool;
             public int PoolSize;
@@ -86,17 +90,17 @@ namespace MythHunter.Resources
         }
 
         /// <summary>
-        /// Реєструє ресурс для прееміптивного завантаження для вказаної фази
+        /// Реєструє ресурс для прееміптивного завантаження для вказаної фази (generic)
         /// </summary>
         public void RegisterPhasePreload<T>(string phaseId, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object
         {
-            RegisterPhasePreload(phaseId, resourceKey, typeof(T), priority, createPool, poolSize);
+            RegisterPhasePreload(phaseId, resourceKey, typeof(T), priority, createPool, poolSize, PreloadSceneConfig.LoadingMode.SingleResource);
         }
 
         /// <summary>
         /// Реєструє ресурс для прееміптивного завантаження для вказаної фази
         /// </summary>
-        public void RegisterPhasePreload(string phaseId, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10)
+        public void RegisterPhasePreload(string phaseId, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10, PreloadSceneConfig.LoadingMode loadingMode = PreloadSceneConfig.LoadingMode.SingleResource)
         {
             if (!_phasePreloadConfigs.TryGetValue(phaseId, out var configs))
             {
@@ -108,6 +112,7 @@ namespace MythHunter.Resources
             {
                 ResourceKey = resourceKey,
                 ResourceType = resourceType,
+                LoadingMode = loadingMode,
                 Priority = priority,
                 CreatePool = createPool,
                 PoolSize = poolSize
@@ -120,6 +125,7 @@ namespace MythHunter.Resources
                 {
                     ResourceKey = resourceKey,
                     ResourceType = resourceType,
+                    LoadingMode = loadingMode,
                     Priority = priority,
                     CreatePool = createPool,
                     PoolSize = poolSize
@@ -128,17 +134,17 @@ namespace MythHunter.Resources
         }
 
         /// <summary>
-        /// Реєструє ресурс для прееміптивного завантаження для вказаної сцени
+        /// Реєструє ресурс для прееміптивного завантаження для вказаної сцени (generic)
         /// </summary>
-        public void RegisterScenePreload<T>(string sceneName, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10) where T : UnityEngine.Object
+        public void RegisterScenePreload<T>(string sceneName, string resourceKey, int priority = 0, bool createPool = false, int poolSize = 10, PreloadSceneConfig.LoadingMode loadingMode = PreloadSceneConfig.LoadingMode.SingleResource) where T : UnityEngine.Object
         {
-            RegisterScenePreload(sceneName, resourceKey, typeof(T), priority, createPool, poolSize);
+            RegisterScenePreload(sceneName, resourceKey, typeof(T), priority, createPool, poolSize, loadingMode);
         }
 
         /// <summary>
         /// Реєструє ресурс для прееміптивного завантаження для вказаної сцени
         /// </summary>
-        public void RegisterScenePreload(string sceneName, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10)
+        public void RegisterScenePreload(string sceneName, string resourceKey, Type resourceType, int priority = 0, bool createPool = false, int poolSize = 10, PreloadSceneConfig.LoadingMode loadingMode = PreloadSceneConfig.LoadingMode.SingleResource)
         {
             if (!_scenePreloadConfigs.TryGetValue(sceneName, out var configs))
             {
@@ -150,6 +156,7 @@ namespace MythHunter.Resources
             {
                 ResourceKey = resourceKey,
                 ResourceType = resourceType,
+                LoadingMode = loadingMode,
                 Priority = priority,
                 CreatePool = createPool,
                 PoolSize = poolSize
@@ -162,6 +169,7 @@ namespace MythHunter.Resources
                 {
                     ResourceKey = resourceKey,
                     ResourceType = resourceType,
+                    LoadingMode = loadingMode,
                     Priority = priority,
                     CreatePool = createPool,
                     PoolSize = poolSize
@@ -317,10 +325,10 @@ namespace MythHunter.Resources
                 // Публікуємо оновлення прогресу (початок завантаження ресурсу)
                 PublishProgressUpdate(contextName, config.ResourceKey);
 
-                // Завантажуємо ресурс без рефлексії
-                UnityEngine.Object result = await LoadResourceByTypeAsync(config.ResourceKey, config.ResourceType);
+                // Завантажуємо ресурси за конфігурацією
+                var resources = await LoadResourcesByPathAsync(config.ResourceKey, config.ResourceType, config.LoadingMode);
 
-                if (result == null)
+                if (resources.Length == 0)
                 {
                     // Публікуємо подію помилки
                     if (!contextName.StartsWith("Phase_"))
@@ -329,7 +337,7 @@ namespace MythHunter.Resources
                         {
                             SceneName = contextName,
                             ResourceKey = config.ResourceKey,
-                            ErrorMessage = "Ресурс не знайдено",
+                            ErrorMessage = "Ресурси не знайдено",
                             Timestamp = DateTime.UtcNow
                         });
                     }
@@ -340,24 +348,16 @@ namespace MythHunter.Resources
                         _sceneProgress[contextName] = progressData;
                     }
 
-                    _logger.LogWarning($"⚠️ Помилка preload ресурсу: {config.ResourceKey}", "Preload");
+                    _logger.LogWarning($"⚠️ Помилка preload ресурсів: {config.ResourceKey}", "Preload");
                 }
                 else
                 {
-                    _logger.LogDebug($"✅ Preload ресурсу: {config.ResourceKey}", "Preload");
+                    _logger.LogInfo($"✅ Preload ресурсів: {config.ResourceKey} ({resources.Length} штук)", "Preload");
 
-                    // Створюємо пул, якщо потрібно (тільки для GameObject)
+                    // Створюємо пули для GameObject
                     if (config.CreatePool && config.ResourceType == typeof(GameObject))
                     {
-                        try
-                        {
-                            await _resourceManager.InitializePoolAsync<GameObject>(config.ResourceKey, config.PoolSize);
-                            _logger.LogDebug($"🏊 Створено пул для ресурсу: {config.ResourceKey} (розмір: {config.PoolSize})", "Preload");
-                        }
-                        catch (Exception poolEx)
-                        {
-                            _logger.LogError($"❌ Помилка створення пулу для {config.ResourceKey}: {poolEx.Message}", "Preload", poolEx);
-                        }
+                        await CreatePoolsForGameObjectsAsync(config.ResourceKey, resources.OfType<GameObject>().ToArray(), config.PoolSize);
                     }
                     else if (config.CreatePool && config.ResourceType != typeof(GameObject))
                     {
@@ -390,8 +390,169 @@ namespace MythHunter.Resources
                     });
                 }
 
-                _logger.LogError($"❌ Критична помилка preload ресурсу {config.ResourceKey}: {ex.Message}", "Preload", ex);
+                _logger.LogError($"❌ Критична помилка preload ресурсів {config.ResourceKey}: {ex.Message}", "Preload", ex);
             }
+        }
+
+        /// <summary>
+        /// Завантажує ресурси за шляхом залежно від режиму завантаження
+        /// </summary>
+        private async UniTask<UnityEngine.Object[]> LoadResourcesByPathAsync(string resourcePath, Type resourceType, PreloadSceneConfig.LoadingMode loadingMode)
+        {
+            try
+            {
+                switch (loadingMode)
+                {
+                    case PreloadSceneConfig.LoadingMode.SingleResource:
+                        var singleResource = await LoadResourceByTypeAsync(resourcePath, resourceType);
+                        return singleResource != null ? new[] { singleResource } : new UnityEngine.Object[0];
+
+                    case PreloadSceneConfig.LoadingMode.AllFromFolder:
+                        return await LoadAllFromFolderAsync(resourcePath);
+
+                    case PreloadSceneConfig.LoadingMode.AllOfTypeFromFolder:
+                        return await LoadAllOfTypeFromFolderAsync(resourcePath, resourceType);
+
+                    default:
+                        _logger.LogWarning($"⚠️ Невідомий режим завантаження: {loadingMode}", "Preload");
+                        return new UnityEngine.Object[0];
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка завантаження ресурсів з {resourcePath}: {ex.Message}", "Preload", ex);
+                return new UnityEngine.Object[0];
+            }
+        }
+
+        /// <summary>
+        /// Завантажує всі ресурси з папки
+        /// </summary>
+        private async UniTask<UnityEngine.Object[]> LoadAllFromFolderAsync(string folderPath)
+        {
+            _logger.LogInfo($"📁 Завантаження всіх ресурсів з папки: {folderPath}", "Preload");
+
+            // ✅ ВИКОРИСТОВУЄМО UnityEngine.Resources замість Resources
+            var resources = UnityEngine.Resources.LoadAll(folderPath);
+
+            if (resources.Length == 0)
+            {
+                _logger.LogWarning($"⚠️ Папка {folderPath} порожня або не існує", "Preload");
+            }
+            else
+            {
+                _logger.LogInfo($"✅ Завантажено {resources.Length} ресурсів з папки {folderPath}", "Preload");
+            }
+
+            await UniTask.Yield(); // Даємо Unity обробити
+            return resources;
+        }
+
+        /// <summary>
+        /// Завантажує всі ресурси певного типу з папки
+        /// </summary>
+        private async UniTask<UnityEngine.Object[]> LoadAllOfTypeFromFolderAsync(string folderPath, Type resourceType)
+        {
+            _logger.LogInfo($"📁 Завантаження ресурсів типу {resourceType.Name} з папки: {folderPath}", "Preload");
+
+            UnityEngine.Object[] resources;
+
+            // ✅ ВИКОРИСТОВУЄМО UnityEngine.Resources
+            if (resourceType == typeof(GameObject))
+            {
+                resources = UnityEngine.Resources.LoadAll<GameObject>(folderPath);
+            }
+            else if (resourceType == typeof(Sprite))
+            {
+                resources = UnityEngine.Resources.LoadAll<Sprite>(folderPath);
+            }
+            else if (resourceType == typeof(AudioClip))
+            {
+                resources = UnityEngine.Resources.LoadAll<AudioClip>(folderPath);
+            }
+            else if (resourceType == typeof(ScriptableObject) || resourceType.IsSubclassOf(typeof(ScriptableObject)))
+            {
+                // Для ScriptableObject і його нащадків
+                if (resourceType == typeof(MythHunter.Entities.Archetypes.HeroArchetypeSO))
+                {
+                    resources = UnityEngine.Resources.LoadAll<MythHunter.Entities.Archetypes.HeroArchetypeSO>(folderPath);
+                }
+                else
+                {
+                    resources = UnityEngine.Resources.LoadAll<ScriptableObject>(folderPath);
+                }
+            }
+            else if (resourceType == typeof(Material))
+            {
+                resources = UnityEngine.Resources.LoadAll<Material>(folderPath);
+            }
+            else if (resourceType == typeof(Texture2D))
+            {
+                resources = UnityEngine.Resources.LoadAll<Texture2D>(folderPath);
+            }
+            else
+            {
+                // Запасний варіант - загальне завантаження
+                resources = UnityEngine.Resources.LoadAll(folderPath);
+
+                // Фільтруємо за типом
+                resources = resources.Where(r => resourceType.IsAssignableFrom(r.GetType())).ToArray();
+            }
+
+            if (resources.Length == 0)
+            {
+                _logger.LogWarning($"⚠️ Не знайдено ресурсів типу {resourceType.Name} в папці {folderPath}", "Preload");
+            }
+            else
+            {
+                _logger.LogInfo($"✅ Завантажено {resources.Length} ресурсів типу {resourceType.Name} з папки {folderPath}", "Preload");
+            }
+
+            await UniTask.Yield();
+            return resources;
+        }
+
+        /// <summary>
+        /// Створює пули для масиву GameObject
+        /// </summary>
+        private async UniTask CreatePoolsForGameObjectsAsync(string baseKey, GameObject[] gameObjects, int poolSize)
+        {
+            foreach (var gameObject in gameObjects)
+            {
+                if (gameObject == null)
+                    continue;
+
+                try
+                {
+                    string poolKey;
+
+                    if (gameObjects.Length == 1 && gameObject.name == GetFileNameFromPath(baseKey))
+                    {
+                        // 🟢 Якщо одиночний префаб, і його ім’я збігається з назвою файлу → не додаємо нічого
+                        poolKey = baseKey;
+                    }
+                    else
+                    {
+                        // 🔵 Якщо багато об’єктів — додаємо ім’я об’єкта до шляху
+                        poolKey = $"{baseKey}/{gameObject.name}";
+                    }
+
+                    await _resourceManager.InitializePoolAsync<GameObject>(poolKey, poolSize);
+                    _logger.LogDebug($"🏊 Створено пул для {poolKey} (розмір: {poolSize})", "Preload");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"❌ Помилка створення пулу для {gameObject.name}: {ex.Message}", "Preload", ex);
+                }
+            }
+        }
+        private string GetFileNameFromPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return "";
+
+            var parts = path.Split('/');
+            return parts.Length > 0 ? parts[^1] : path;
         }
 
         /// <summary>
