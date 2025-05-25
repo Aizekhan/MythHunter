@@ -161,8 +161,9 @@ namespace MythHunter.Resources.Pool
 
             if (_pools.ContainsKey(key))
             {
-                _logger.LogWarning($"Pool with key '{key}' already exists", "Pool");
-                return;
+                // ✅ ЗМІНИТИ З WARNING НА DEBUG
+                _logger.LogDebug($"Pool with key '{key}' already exists, skipping creation", "Pool");
+                return; // Просто виходимо без створення
             }
 
             IObjectPool pool;

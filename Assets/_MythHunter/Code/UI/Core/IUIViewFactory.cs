@@ -30,10 +30,6 @@ namespace MythHunter.UI.Core
         /// <param name="view">Представлення для знищення</param>
         void ReleaseView(ViewId viewId, IView view);
 
-        /// <summary>
-        /// Застарілий метод - використовуйте CreateViewAsync
-        /// </summary>
-        [System.Obsolete("Використовуйте CreateViewAsync - всі View тепер створюються з пулів")]
-        UniTask<IView> CreateViewFromPoolAsync(ViewId viewId);
+       
     }
 }

@@ -89,6 +89,7 @@ namespace MythHunter.Resources
             RegisterScenePreload("Gameplay", "Characters/PlayerModels", typeof(GameObject), 100, true, 3);
         }
 
+
         /// <summary>
         /// Реєструє ресурс для прееміптивного завантаження для вказаної фази (generic)
         /// </summary>
@@ -176,6 +177,7 @@ namespace MythHunter.Resources
                 }).Forget();
             }
         }
+
 
         /// <summary>
         /// Обробник зміни фази
@@ -318,12 +320,17 @@ namespace MythHunter.Resources
         /// <summary>
         /// Завантажує один ресурс з відстеженням прогресу
         /// </summary>
+        /// <summary>
+        /// Завантажує один ресурс з відстеженням прогресу
+        /// </summary>
         private async UniTask PreloadSingleResourceAsync(string contextName, PreloadConfig config)
         {
             try
             {
                 // Публікуємо оновлення прогресу (початок завантаження ресурсу)
                 PublishProgressUpdate(contextName, config.ResourceKey);
+
+                _logger.LogInfo($"🔄 Початок завантаження: {config.ResourceKey}, createPool: {config.CreatePool}", "Preload");
 
                 // Завантажуємо ресурси за конфігурацією
                 var resources = await LoadResourcesByPathAsync(config.ResourceKey, config.ResourceType, config.LoadingMode);
@@ -354,14 +361,23 @@ namespace MythHunter.Resources
                 {
                     _logger.LogInfo($"✅ Preload ресурсів: {config.ResourceKey} ({resources.Length} штук)", "Preload");
 
-                    // Створюємо пули для GameObject
-                    if (config.CreatePool && config.ResourceType == typeof(GameObject))
+                    // ✅ ВИПРАВЛЕННЯ: Створюємо пули ТІЛЬКИ якщо це потрібно
+                    if (config.CreatePool)
                     {
-                        await CreatePoolsForGameObjectsAsync(config.ResourceKey, resources.OfType<GameObject>().ToArray(), config.PoolSize);
+                        if (config.ResourceType == typeof(GameObject))
+                        {
+                            await CreatePoolsForGameObjectsAsync(config.ResourceKey, resources.OfType<GameObject>().ToArray(), config.PoolSize);
+                            _logger.LogInfo($"🏊 Створено пул для {config.ResourceKey} (розмір: {config.PoolSize})", "Preload");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ Створення пулу підтримується тільки для GameObject. Ресурс: {config.ResourceKey} ({config.ResourceType.Name})", "Preload");
+                        }
                     }
-                    else if (config.CreatePool && config.ResourceType != typeof(GameObject))
+                    else
                     {
-                        _logger.LogWarning($"⚠️ Створення пулу підтримується тільки для GameObject. Ресурс: {config.ResourceKey} ({config.ResourceType.Name})", "Preload");
+                        // ✅ ДОДАНО: Логування для ресурсів без пулу
+                        _logger.LogInfo($"📦 Ресурс {config.ResourceKey} завантажено БЕЗ створення пулу", "Preload");
                     }
                 }
 
@@ -390,9 +406,20 @@ namespace MythHunter.Resources
                     });
                 }
 
+                // Оновлюємо прогрес навіть при помилці
+                if (_sceneProgress.TryGetValue(contextName, out var errorProgress))
+                {
+                    errorProgress.LoadedResources++;
+                    errorProgress.FailedResources.Add(config.ResourceKey);
+                    _sceneProgress[contextName] = errorProgress;
+                }
+
                 _logger.LogError($"❌ Критична помилка preload ресурсів {config.ResourceKey}: {ex.Message}", "Preload", ex);
             }
         }
+
+
+
 
         /// <summary>
         /// Завантажує ресурси за шляхом залежно від режиму завантаження
@@ -512,6 +539,8 @@ namespace MythHunter.Resources
             return resources;
         }
 
+
+        
         /// <summary>
         /// Створює пули для масиву GameObject
         /// </summary>
