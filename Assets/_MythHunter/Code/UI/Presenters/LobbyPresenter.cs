@@ -77,32 +77,19 @@ namespace MythHunter.UI.Presenters
             if (_isInitialized)
                 return;
 
-            lock (_initializationLock)
-            {
-                if (_isInitializing)
-                    return;
-                _isInitializing = true;
-            }
-
             try
             {
                 SubscribeToEvents();
-                await _heroCardService.InitializeAsync();
-                await _heroSelectionSystem.LoadAvailableHeroes();
 
+                // ❌ ВИДАЛИТИ: await _heroCardService.InitializeAsync();
+                // HeroCardService тепер не потребує ініціалізації
+
+                await _heroSelectionSystem.LoadAvailableHeroes();
                 _isInitialized = true;
-                _logger.LogInfo("LobbyPresenter ініціалізовано", "UI");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Помилка при ініціалізації LobbyPresenter: {ex.Message}", "UI", ex);
-            }
-            finally
-            {
-                lock (_initializationLock)
-                {
-                    _isInitializing = false;
-                }
             }
         }
 
@@ -380,6 +367,28 @@ namespace MythHunter.UI.Presenters
 
         private async UniTask PopulateHeroCardsAsync()
         {
+            // ✅ ПЕРЕВІРЯЄМО ГОТОВНІСТЬ СЕРВІСУ
+            if (!_heroCardService.IsReady)
+            {
+                _logger.LogError("❌ HeroCardService не готовий! Пул HeroCardUI не створено PreloadManager.", "UI");
+                return;
+            }
+            if (_createdHeroCards.Count > 0)
+            {
+                _logger.LogInfo($"🧹 Очищаємо {_createdHeroCards.Count} існуючих карток перед створенням нових", "UI");
+
+                foreach (var card in _createdHeroCards.ToList())
+                {
+                    if (card != null)
+                    {
+                        // ✅ ПРАВИЛЬНА відписка від подій
+                        card.OnHeroSelected -= OnHeroSelected;
+                        // Повертаємо в пул
+                        _heroCardService.ReturnCard(card);
+                    }
+                }
+                _createdHeroCards.Clear();
+            }
             // 🔥 ЛОГУЄМО НА САМОМУ ПОЧАТКУ
             _logger.LogInfo($"🎴 PopulateHeroCardsAsync ПОЧАТОК: _view = {_view?.GetType().Name ?? "NULL"}", "UI");
             if (_view == null)

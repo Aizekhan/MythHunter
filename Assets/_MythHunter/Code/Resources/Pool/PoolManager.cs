@@ -76,8 +76,10 @@ namespace MythHunter.Resources.Pool
             var instance = typedPool.Get();
 
             // Перевірка наявності компонента PooledObject для GameObject
+            // ✅ ВИПРАВЛЕННЯ: Деактивуємо об'єкт перед налаштуванням PooledObject
             if (instance is GameObject go)
             {
+                go.SetActive(false); // Деактивуємо спочатку
                 var pooledObj = go.GetComponent<PooledObject>();
                 if (pooledObj == null)
                 {

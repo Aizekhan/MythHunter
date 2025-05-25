@@ -108,7 +108,7 @@ namespace MythHunter.UI.Views
 
         public void Reset()
         {
-            // Відписуємось від усіх евентів
+            // ✅ ПРАВИЛЬНА відписка від події
             OnHeroSelected = null;
 
             // Скидаємо всі поля до початкових значень
