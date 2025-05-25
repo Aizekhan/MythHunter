@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneName: LobbyScene
   resources:
-  - resourceKey: ' ScriptableObjects/Heroes'
+  - resourceKey: ScriptableObjects/Heroes/
     resourceType: 6
     priority: 100
     createPool: 0
@@ -38,7 +38,7 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: 
-  - resourceKey: ' UI/Lobby/SelectedHeroCard'
+  - resourceKey: UI/Lobby/SelectedHeroCard
     resourceType: 0
     priority: 70
     createPool: 1
@@ -46,7 +46,7 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: 
-  - resourceKey: UI/Icons/hero_icons
+  - resourceKey: UI/Icons/Heroes/
     resourceType: 1
     priority: 50
     createPool: 0

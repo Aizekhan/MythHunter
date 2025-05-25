@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df04bd6159f86941b20303af29d0658, type: 3}
   m_Name: MinimalLoadingViewConfig
   m_EditorClassIdentifier: 
-  viewId: 0
-  prefabPath: 
+  viewId: 4
+  prefabPath: UI/Loading/MinimalLoadingView
   isPopup: 0
   isCached: 1
-  category: 0
+  category: 3

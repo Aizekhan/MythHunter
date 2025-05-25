@@ -23,8 +23,14 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEventThrottler, EventThrottler>(container);
             BindSingleton<IEventThrottlerUpdateSystem, EventThrottlerUpdateSystem>(container);
 
+
             BindSingleton<IEventBatcher, EventBatcher>(container);
             BindSingleton<IEventStore, EventStore>(container);
+
+
+            var systemRegistry = container.Resolve<ISystemRegistry>();
+            BindSingleton<ITimerSystem, TimerSystem>(container);
+            systemRegistry.RegisterSystem(container.Resolve<ITimerSystem>());
 
             // Перевіряємо наявність мережевої системи
             bool hasNetworkSystem = container.IsRegistered<INetworkSystem>();

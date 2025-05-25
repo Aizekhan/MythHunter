@@ -28,10 +28,12 @@ namespace MythHunter.Core.Installers
             // Реєстрація сервісів та класів
             BindSingleton<ILobbyPresenter, LobbyPresenter>(container);
             BindSingleton<ILobbySystem, LobbySystem>(container);
-          
-       
-      
-    
+
+            BindSingleton<ITimerSystem, TimerSystem>(container);
+            systemRegistry.RegisterSystem(container.Resolve<ITimerSystem>());
+
+
+
             // Отримуємо інстанси для реєстрації
             var lobbyPresenter = container.Resolve<ILobbyPresenter>();
             var lobbySystem = container.Resolve<ILobbySystem>();

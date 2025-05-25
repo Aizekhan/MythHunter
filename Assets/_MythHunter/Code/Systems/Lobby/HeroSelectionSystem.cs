@@ -97,9 +97,9 @@ namespace MythHunter.Systems.Lobby
                             Category = GetCategoryFromHeroClass(heroArchetype.Class.ToString()),
                             IconPath = heroArchetype.IconPath
                         };
-
-                        _heroInfos.Add(heroArchetype.ArchetypeId, heroInfo);
                         _logger.LogInfo($"Додано героя: {heroInfo.Name} (ID: {heroInfo.ArchetypeId})", "HeroSelection");
+                        _heroInfos.Add(heroArchetype.ArchetypeId, heroInfo);
+                        
                     }
                     catch (Exception ex)
                     {
