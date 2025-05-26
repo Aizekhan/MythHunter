@@ -14,6 +14,7 @@ using UnityEngine.SceneManagement;
 using MythHunter.Events.Domain.Preload;
 using MythHunter.Core.ECS;
 using MythHunter.Resources.Config;
+using MythHunter.Resources.Pool;
 
 namespace MythHunter.Resources
 {
@@ -31,7 +32,8 @@ namespace MythHunter.Resources
         private readonly IPhaseProvider _phaseProvider;
         private readonly IMythLogger _logger;
         private readonly IEventBus _eventBus;
-
+        private readonly IPoolManager _poolManager;
+        private readonly IDIContainer _container;
         private readonly Dictionary<string, PreloadProgress> _sceneProgress = new();
 
         private string _currentPhaseId = string.Empty;
@@ -56,13 +58,14 @@ namespace MythHunter.Resources
         }
 
         [Inject]
-        public PreloadManager(IResourceManager resourceManager, IPhaseProvider phaseProvider, IMythLogger logger, IEventBus eventBus)
+        public PreloadManager(IResourceManager resourceManager, IPhaseProvider phaseProvider, IMythLogger logger, IEventBus eventBus, IPoolManager poolManager, IDIContainer container)
         {
             _resourceManager = resourceManager;
             _phaseProvider = phaseProvider;
             _logger = logger;
             _eventBus = eventBus;
-
+            _poolManager = poolManager;
+            _container = container;
             // Підписка на зміни фаз і сцен
             _phaseProvider.SubscribeToPhaseChange(OnPhaseChanged);
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -72,6 +75,7 @@ namespace MythHunter.Resources
 
             // Ініціалізуємо конфігурації
             InitializeDefaultConfigs();
+            _poolManager = poolManager;
         }
 
         /// <summary>
@@ -540,12 +544,15 @@ namespace MythHunter.Resources
         }
 
 
-        
+
         /// <summary>
         /// Створює пули для масиву GameObject
         /// </summary>
         private async UniTask CreatePoolsForGameObjectsAsync(string baseKey, GameObject[] gameObjects, int poolSize)
         {
+            // ✅ Отримуємо PoolManager напряму через DI
+            var poolManager = _container.Resolve<IPoolManager>(); // Додати в конструктор
+
             foreach (var gameObject in gameObjects)
             {
                 if (gameObject == null)
@@ -555,19 +562,21 @@ namespace MythHunter.Resources
                 {
                     string poolKey;
 
-                    if (gameObjects.Length == 1 && gameObject.name == GetFileNameFromPath(baseKey))
+                    if (gameObjects.Length == 1)
                     {
-                        // 🟢 Якщо одиночний префаб, і його ім’я збігається з назвою файлу → не додаємо нічого
-                        poolKey = baseKey;
+                        // ✅ Single Resource: пул = ім'я об'єкта
+                        poolKey = gameObject.name;
                     }
                     else
                     {
-                        // 🔵 Якщо багато об’єктів — додаємо ім’я об’єкта до шляху
+                        // ✅ Multiple Resources: пул = базовий_шлях/ім'я_об'єкта
                         poolKey = $"{baseKey}/{gameObject.name}";
                     }
 
-                    await _resourceManager.InitializePoolAsync<GameObject>(poolKey, poolSize);
-                    _logger.LogDebug($"🏊 Створено пул для {poolKey} (розмір: {poolSize})", "Preload");
+                    // ✅ КЛЮЧОВЕ ВИПРАВЛЕННЯ: Створюємо пул напряму з готовим префабом
+                    poolManager.CreatePool(poolKey, gameObject, poolSize);
+
+                    _logger.LogDebug($"🏊 Створено пул '{poolKey}' з готового префабу (розмір: {poolSize})", "Preload");
                 }
                 catch (Exception ex)
                 {

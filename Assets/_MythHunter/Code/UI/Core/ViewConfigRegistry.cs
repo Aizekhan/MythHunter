@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/UI/Core/ViewConfigRegistry.cs
 using System;
+
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,17 +27,14 @@ namespace MythHunter.UI.Core
         {
             try
             {
-
                 var configs = UnityEngine.Resources.LoadAll<ViewConfig>("UI/ViewConfigs");
-
-                // ✅ Додайте логування для діагностики
-                _logger?.LogInfo($"Знайдено {configs.Length} ViewConfig файлів", "ViewConfigRegistry");
 
                 foreach (var config in configs)
                 {
-                    if (config == null)
+                    // ✅ ДОДАТИ валідацію:
+                    if (string.IsNullOrEmpty(config.prefabPath))
                     {
-                        _logger?.LogWarning("Знайдено null ViewConfig", "ViewConfigRegistry");
+                        _logger?.LogError($"❌ ViewConfig {config.name} має порожній prefabPath!", "ViewConfigRegistry");
                         continue;
                     }
 
@@ -44,11 +42,7 @@ namespace MythHunter.UI.Core
                     {
                         _configsById.Add(config.viewId, config);
                         _configsByName.Add(config.viewId.ToString(), config);
-                        _logger?.LogInfo($"Зареєстровано ViewConfig: {config.viewId} -> {config.prefabPath}", "ViewConfigRegistry");
-                    }
-                    else
-                    {
-                        _logger?.LogWarning($"Дублікат ViewConfig для {config.viewId}", "ViewConfigRegistry");
+                        _logger?.LogInfo($"✅ Зареєстровано ViewConfig: {config.viewId} -> {config.prefabPath}", "ViewConfigRegistry");
                     }
                 }
             }

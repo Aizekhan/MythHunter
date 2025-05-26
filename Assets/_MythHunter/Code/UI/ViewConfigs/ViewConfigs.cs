@@ -22,7 +22,12 @@ namespace MythHunter.UI.ViewConfigs
         [Tooltip("Категорія для групування завантаження")]
         public UICategory category = UICategory.Common;
 
+        public string GetPoolKey() => prefabPath; // Єдиний ключ для всіх систем
 
+        /// <summary>
+        /// Перевіряє чи потрібно створювати пул для цього View
+        /// </summary>
+        public bool ShouldCreatePool() => isCached && !isPopup;
     }
 
     public enum UICategory

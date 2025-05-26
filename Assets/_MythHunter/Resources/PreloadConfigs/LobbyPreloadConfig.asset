@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneName: LobbyScene
   resources:
-  - resourceKey: ScriptableObjects/Heroes
+  - relatedViewId: 1
+    resourceKey: ScriptableObjects/Heroes
     resourceType: 6
     loadingMode: 1
     priority: 100
@@ -23,7 +24,8 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: " \u0410\u0440\u0445\u0435\u0442\u0438\u043F\u0438 \u0433\u0435\u0440\u043E\u0457\u0432"
-  - resourceKey: HeroCardUI
+  - relatedViewId: 1
+    resourceKey: UI/Lobby/HeroCardUI
     resourceType: 0
     loadingMode: 0
     priority: 50
@@ -32,7 +34,8 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: "\u041A\u0430\u0440\u0442\u043A\u0438 \u0433\u0435\u0440\u043E\u0457\u0432 "
-  - resourceKey: UI/Lobby/LobbyView
+  - relatedViewId: 1
+    resourceKey: UI/Lobby/LobbyView
     resourceType: 0
     loadingMode: 0
     priority: 94
@@ -41,7 +44,8 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: 
-  - resourceKey: UI/Lobby/SelectedHeroCard
+  - relatedViewId: 1
+    resourceKey: UI/Lobby/SelectedHeroCard
     resourceType: 0
     loadingMode: 0
     priority: 70
@@ -50,7 +54,8 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: 
-  - resourceKey: UI/Icons/Heroes
+  - relatedViewId: 1
+    resourceKey: UI/Icons/Heroes
     resourceType: 1
     loadingMode: 1
     priority: 50

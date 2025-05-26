@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneName: MainMenu
   resources:
-  - resourceKey: UI/Game/GameplayUIView
+  - relatedViewId: 3
+    resourceKey: UI/Game/GameplayUIView
     resourceType: 0
     loadingMode: 0
     priority: 37

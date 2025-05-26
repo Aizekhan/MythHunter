@@ -1,13 +1,14 @@
 // Assets/_MythHunter/Code/Resources/Config/PreloadSceneConfig.cs
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using MythHunter.UI.Core; // ✅ ДОДАНО для ViewId
 
 namespace MythHunter.Resources.Config
 {
     /// <summary>
-    /// ScriptableObject конфігурація preload для сцени
+    /// ScriptableObject конфігурація preload для сцени з інтеграцією ViewConfig системи
     /// </summary>
     [CreateAssetMenu(menuName = "MythHunter/Preload/Scene Config", fileName = "PreloadSceneConfig")]
     public class PreloadSceneConfig : ScriptableObject
@@ -25,29 +26,57 @@ namespace MythHunter.Resources.Config
         [System.Serializable]
         public struct PreloadResourceEntry
         {
-            [Header("Ресурс")]
-            public string resourceKey;
+            [Header("🎯 UI Integration (Пріоритет)")]
+            [Tooltip("ViewId з ViewConfig - має найвищий пріоритет для визначення ключа пулу")]
+            public ViewId relatedViewId;     // ✅ НОВЕ ПОЛЕ
+
+            [Header("📁 Ресурс (Fallback)")]
+            [Tooltip("Використовується тільки якщо relatedViewId = None")]
+            public string resourceKey;       // Стає fallback опцією
             public ResourceType resourceType;
 
-            [Header("Завантаження")]
-            public LoadingMode loadingMode; // ✅ НОВИЙ ЕНУМ
+            [Header("⚙️ Завантаження")]
+            public LoadingMode loadingMode;
 
-            [Header("Пріоритет")]
+            [Header("🎲 Пріоритет")]
             [Range(0, 100)]
             public int priority;
 
-            [Header("Пул об'єктів")]
+            [Header("🏊 Пул об'єктів")]
             public bool createPool;
             [Range(1, 100)]
             public int poolSize;
 
-            [Header("Умови")]
+            [Header("🎛️ Умови")]
             public bool onlyInEditor;
             public bool onlyInBuild;
 
-            [Header("Опис")]
+            [Header("📝 Опис")]
             [TextArea(2, 3)]
             public string description;
+
+            /// <summary>
+            /// ✅ АРХІТЕКТУРНО ПРАВИЛЬНА валідація ресурсу
+            /// </summary>
+            public bool IsValid()
+            {
+                // Має бути або ViewId, або resourceKey
+                return relatedViewId != ViewId.None || !string.IsNullOrEmpty(resourceKey);
+            }
+
+            /// <summary>
+            /// Отримує зрозумілий опис ресурсу для логування
+            /// </summary>
+            public string GetDisplayName()
+            {
+                if (relatedViewId != ViewId.None)
+                    return $"ViewId:{relatedViewId}";
+
+                if (!string.IsNullOrEmpty(resourceKey))
+                    return $"Resource:{resourceKey}";
+
+                return "INVALID";
+            }
         }
 
         public enum ResourceType
@@ -61,12 +90,14 @@ namespace MythHunter.Resources.Config
             HeroArchetypeSO,
             Custom
         }
+
         public enum LoadingMode
         {
             SingleResource,     // Один конкретний ресурс
             AllFromFolder,      // Всі ресурси з папки
             AllOfTypeFromFolder // Всі ресурси певного типу з папки
         }
+
         /// <summary>
         /// Конвертує ResourceType в System.Type
         /// </summary>
@@ -86,34 +117,111 @@ namespace MythHunter.Resources.Config
         }
 
         /// <summary>
-        /// Валідує конфігурацію на наявність помилок
+        /// ✅ РОЗШИРЕНА валідація конфігурації з підтримкою ViewId
         /// </summary>
         public List<string> ValidateConfig()
         {
             var errors = new List<string>();
 
             if (string.IsNullOrEmpty(sceneName))
-                errors.Add("Не вказано назву сцени");
+                errors.Add("❌ Не вказано назву сцени");
 
             for (int i = 0; i < resources.Count; i++)
             {
                 var resource = resources[i];
 
-                if (string.IsNullOrEmpty(resource.resourceKey))
-                    errors.Add($"Ресурс #{i}: не вказано ключ ресурсу");
+                // ✅ НОВА ВАЛІДАЦІЯ для ViewId + resourceKey
+                if (!resource.IsValid())
+                    errors.Add($"❌ Ресурс #{i}: не вказано ні ViewId, ні resourceKey");
 
+                // Валідація пулу
                 if (resource.createPool && resource.poolSize <= 0)
-                    errors.Add($"Ресурс #{i} ({resource.resourceKey}): розмір пулу повинен бути > 0");
+                    errors.Add($"❌ Ресурс #{i} ({resource.GetDisplayName()}): розмір пулу повинен бути > 0");
 
-                // Перевірка на дублікати
+                // Валідація дублікатів
                 for (int j = i + 1; j < resources.Count; j++)
                 {
-                    if (resources[j].resourceKey == resource.resourceKey)
-                        errors.Add($"Дублікат ресурсу: {resource.resourceKey}");
+                    var otherResource = resources[j];
+
+                    // Перевірка дублікатів ViewId
+                    if (resource.relatedViewId != ViewId.None &&
+                        resource.relatedViewId == otherResource.relatedViewId)
+                    {
+                        errors.Add($"❌ Дублікат ViewId: {resource.relatedViewId} у ресурсах #{i} та #{j}");
+                    }
+
+                    // Перевірка дублікатів resourceKey
+                    if (!string.IsNullOrEmpty(resource.resourceKey) &&
+                        resource.resourceKey == otherResource.resourceKey)
+                    {
+                        errors.Add($"❌ Дублікат resourceKey: {resource.resourceKey} у ресурсах #{i} та #{j}");
+                    }
                 }
+
+                // Валідація умов
+                if (resource.onlyInEditor && resource.onlyInBuild)
+                    errors.Add($"⚠️ Ресурс #{i} ({resource.GetDisplayName()}): onlyInEditor та onlyInBuild не можуть бути true одночасно");
             }
 
             return errors;
         }
+
+        /// <summary>
+        /// ✅ СТАТИСТИКА конфігурації для налагодження
+        /// </summary>
+        public ConfigStatistics GetStatistics()
+        {
+            return new ConfigStatistics
+            {
+                TotalResources = resources.Count,
+                ViewIdResources = resources.Count(r => r.relatedViewId != ViewId.None),
+                FallbackResources = resources.Count(r => r.relatedViewId == ViewId.None && !string.IsNullOrEmpty(r.resourceKey)),
+                PooledResources = resources.Count(r => r.createPool),
+                EditorOnlyResources = resources.Count(r => r.onlyInEditor),
+                BuildOnlyResources = resources.Count(r => r.onlyInBuild)
+            };
+        }
+
+        /// <summary>
+        /// Отримує ресурси за типом ViewId
+        /// </summary>
+        public List<PreloadResourceEntry> GetResourcesByViewId(ViewId viewId)
+        {
+            return resources.Where(r => r.relatedViewId == viewId).ToList();
+        }
+
+        /// <summary>
+        /// Отримує всі унікальні ViewId у конфігурації
+        /// </summary>
+        public ViewId[] GetAllViewIds()
+        {
+            return resources
+                .Where(r => r.relatedViewId != ViewId.None)
+                .Select(r => r.relatedViewId)
+                .Distinct()
+                .ToArray();
+        }
+
+        public struct ConfigStatistics
+        {
+            public int TotalResources;
+            public int ViewIdResources;
+            public int FallbackResources;
+            public int PooledResources;
+            public int EditorOnlyResources;
+            public int BuildOnlyResources;
+        }
+
+        // ✅ ВАЛІДАЦІЯ В UNITY EDITOR
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            var errors = ValidateConfig();
+            if (errors.Any())
+            {
+                UnityEngine.Debug.LogWarning($"⚠️ PreloadSceneConfig '{name}' має помилки валідації:\n" + string.Join("\n", errors));
+            }
+        }
+#endif
     }
 }

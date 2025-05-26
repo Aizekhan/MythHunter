@@ -10,10 +10,12 @@ using MythHunter.Core.DI;
 using MythHunter.UI.Services;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.MonoBehaviours;
+using MythHunter.UI.Core; // ✅ ДОДАЙ using для IView
 
 namespace MythHunter.UI.Views
 {
-    public class HeroCardUI : LazyMonoBehaviour, IHeroCardUI
+    // ✅ ГОЛОВНЕ ВИПРАВЛЕННЯ: додай IView
+    public class HeroCardUI : LazyMonoBehaviour, IHeroCardUI, IView
     {
         [SerializeField] private TextMeshProUGUI _nameText;
         [SerializeField] private TextMeshProUGUI _descriptionText;
@@ -32,20 +34,22 @@ namespace MythHunter.UI.Views
         public string ArchetypeId => _archetypeId;
         public event Action<string> OnHeroSelected;
 
-        // Метод, який викликається після ін'єкції залежностей
+        // ✅ РЕАЛІЗАЦІЯ IView:
+        public void Show() => gameObject.SetActive(true);
+        public void Hide() => gameObject.SetActive(false);
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            // ✅ Перевіряємо ін'єкцію
             if (_logger == null)
             {
-                _logger.LogError("Logger не ін'єктовано в HeroCardUI!");
+                _logger?.LogError("Logger не ін'єктовано в HeroCardUI!");
             }
 
             if (_spriteService == null)
             {
-                _logger.LogError("SpriteService не ін'єктовано в HeroCardUI!");
+                _logger?.LogError("SpriteService не ін'єктовано в HeroCardUI!");
             }
 
             if (_selectButton)
@@ -57,7 +61,7 @@ namespace MythHunter.UI.Views
         public void Setup(HeroCardModel model)
         {
             _logger?.LogInfo($"🎴 Setup card: {model.Name}, IconPath: {model.IconPath}", "HeroCardUI");
-            _logger?.LogInfo($"🎴 SpriteService is null: {_spriteService == null}", "HeroCardUI");
+
             if (model == null)
             {
                 if (_logger != null)
@@ -166,8 +170,6 @@ namespace MythHunter.UI.Views
             OnHeroSelected?.Invoke(_archetypeId);
         }
 
-        // Використовуємо стандартний метод Unity OnDestroy замість override
-        // LazyMonoBehaviour, ймовірно, не перевизначає цей метод
         private void OnDestroy()
         {
             if (_selectButton)
@@ -176,64 +178,5 @@ namespace MythHunter.UI.Views
             if (_logger != null)
                 _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
         }
-        /// <summary>
-        /// Налаштування картки з явною передачею SpriteService
-        /// </summary>
-        public void SetupWithSpriteService(HeroCardModel model, ISpriteService spriteService)
-        {
-            if (model == null)
-            {
-                if (_logger != null)
-                    _logger.LogError("Setup викликано з null моделлю", "HeroCardUI");
-                return;
-            }
-
-            // ✅ Явно встановлюємо SpriteService
-            _spriteService = spriteService;
-
-            _archetypeId = model.ArchetypeId;
-
-            // Встановлюємо текстові поля
-            if (_nameText)
-                _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
-            if (_descriptionText)
-                _descriptionText.text = model.Description;
-            if (_raceClassText)
-                _raceClassText.text = $"{model.Race} - {model.Class}";
-            if (_manaCostText)
-                _manaCostText.text = $"Вартість: {model.ManaCost}";
-
-            // ✅ Логування для дебагу
-            _logger?.LogInfo($"🎴 SetupWithSpriteService: {model.Name}, IconPath: {model.IconPath}, SpriteService: {_spriteService != null}", "HeroCardUI");
-
-            // Асинхронне завантаження іконки
-            if (!string.IsNullOrEmpty(model.IconPath) && _spriteService != null)
-            {
-                LoadIconAsync(model.IconPath).Forget();
-            }
-            else
-            {
-                if (_iconImage)
-                    _iconImage.sprite = _defaultIcon;
-
-                if (string.IsNullOrEmpty(model.IconPath))
-                    _logger?.LogWarning($"⚠️ IconPath порожній для {model.Name}", "HeroCardUI");
-                if (_spriteService == null)
-                    _logger?.LogWarning($"⚠️ SpriteService все ще null для {model.Name}", "HeroCardUI");
-            }
-
-            if (_selectedIndicator)
-                _selectedIndicator.SetActive(model.IsSelected);
-            SetInteractable(model.IsSelectable);
-
-            // Налаштування кнопки
-            if (_selectButton)
-            {
-                _selectButton.onClick.RemoveAllListeners();
-                _selectButton.onClick.AddListener(OnSelectButtonClicked);
-            }
-        }
-
-      
     }
 }
