@@ -228,8 +228,15 @@ namespace MythHunter.UI.Presenters
             }
 
             _view?.ShowGameStartingMessage();
-            var selectedHeroes = _lobbySystem.GetSelectedHeroes();
-            await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
+
+            // ✅ АРХІТЕКТУРНО ПРАВИЛЬНО: тільки подія-сигнал
+            _eventBus.Publish(new GameStartRequestEvent
+            {
+                Timestamp = DateTime.UtcNow
+            });
+
+            // ✅ ВИДАЛЕНО: var selectedHeroes = _lobbySystem.GetSelectedHeroes();
+            // ✅ ВИДАЛЕНО: await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
         }
 
         #region Event Handlers

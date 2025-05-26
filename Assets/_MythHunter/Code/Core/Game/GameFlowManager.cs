@@ -103,26 +103,34 @@ namespace MythHunter.Core.Game
             }
         }
 
-       
+
         /// <summary>
         /// Обробник події запиту на початок гри
         /// </summary>
 
+        // Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
         private void OnGameStartRequested(GameStartRequestEvent evt)
         {
             _logger.LogInfo("Отримано запит на початок гри", "GameFlow");
 
-            // Отримуємо системи для взаємодії з лоббі
-            var systemRegistry = _systemRegistry;
-            var lobbySystem = systemRegistry.GetSystem<ILobbySystem>();
-
-            string[] selectedHeroes = null;
-            if (lobbySystem != null)
+            // ✅ ОТРИМУЄМО ГЕРОЇВ ВІД LOBBY SYSTEM
+            var lobbySystem = _systemRegistry.GetSystem<ILobbySystem>();
+            if (lobbySystem == null)
             {
-                selectedHeroes = lobbySystem.GetSelectedHeroes().ToArray();
-                _logger.LogInfo($"Отримано {selectedHeroes.Length} вибраних героїв з Lobby", "GameFlow");
+                _logger.LogError("LobbySystem не знайдено!", "GameFlow");
+                return;
             }
 
+            var selectedHeroes = lobbySystem.GetSelectedHeroes()?.ToArray();
+            if (selectedHeroes == null || selectedHeroes.Length == 0)
+            {
+                _logger.LogWarning("Жодного героя не вибрано!", "GameFlow");
+                selectedHeroes = new string[0];
+            }
+
+            _logger.LogInfo($"Отримано {selectedHeroes.Length} вибраних героїв з Lobby", "GameFlow");
+
+            // ✅ ПЕРЕДАЄМО ЧЕРЕЗ SCENE DISPATCHER (як і було)
             EnterGameplayAsync(selectedHeroes).Forget();
         }
 

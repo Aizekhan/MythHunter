@@ -282,10 +282,27 @@ namespace MythHunter.Systems.Core
         }
         public T GetSystem<T>() where T : ISystem
         {
-            return _allSystems
+            // Спочатку шукаємо в прямо зареєстрованих системах
+            var directSystem = _allSystems
                 .Where(r => r.System is T)
                 .Select(r => (T)r.System)
                 .FirstOrDefault();
+
+            if (directSystem != null)
+                return directSystem;
+
+            // Потім шукаємо в групах
+            foreach (var systemReg in _allSystems)
+            {
+                if (systemReg.System is SystemGroup group)
+                {
+                    var systemInGroup = group.GetSystems().OfType<T>().FirstOrDefault();
+                    if (systemInGroup != null)
+                        return systemInGroup;
+                }
+            }
+
+            return default;
         }
 
         /// <summary>
