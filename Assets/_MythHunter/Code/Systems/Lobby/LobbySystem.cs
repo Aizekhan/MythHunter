@@ -14,6 +14,7 @@ using MythHunter.Entities.Archetypes;
 using MythHunter.Entities;
 using MythHunter.Systems.Core;
 using MythHunter.Services.GameSettings;
+using MythHunter.UI.Core;
 
 namespace MythHunter.Systems.Lobby
 {
@@ -235,13 +236,22 @@ namespace MythHunter.Systems.Lobby
             int playerEntityId = _playerEntityIds[_currentPlayerIndex];
             var playerState = _entityManager.GetComponent<LobbyStateComponent>(playerEntityId);
 
-            // Помічаємо гравця як готового
+            // 🔒 Перевірка: чи залишилась мана
+            if (playerState.RemainingMana > 0)
+            {
+                _logger.LogWarning($"Гравець {_currentPlayerIndex} має {playerState.RemainingMana} мани — підтвердження неможливе!", "Lobby");
+
+               
+                return;
+
+             
+            }
+
+            // ✅ Далі як раніше
             playerState.IsReady = true;
             _entityManager.AddComponent(playerEntityId, playerState);
 
-            // Отримуємо список вибраних героїв
             var selectedArchetypeIds = new List<string>();
-
             foreach (var heroEntityId in playerState.SelectedHeroIds)
             {
                 if (_entityManager.HasComponent<HeroSelectionComponent>(heroEntityId))
@@ -251,7 +261,6 @@ namespace MythHunter.Systems.Lobby
                 }
             }
 
-            // Публікуємо подію підтвердження вибору
             Publish(new SelectionConfirmedEvent
             {
                 PlayerIndex = _currentPlayerIndex,
@@ -261,19 +270,15 @@ namespace MythHunter.Systems.Lobby
 
             _logger.LogInfo($"Player {_currentPlayerIndex} confirmed selection with {selectedArchetypeIds.Count} heroes", "Lobby");
 
-            // Переходимо до наступного гравця
             _currentPlayerIndex = (_currentPlayerIndex + 1) % _playerEntityIds.Count;
 
-            // Перевіряємо, чи всі гравці готові
             if (AreAllPlayersReady())
             {
-                // ✅ ЗУПИНЯЄМО ТАЙМЕР коли всі готові
                 if (!string.IsNullOrEmpty(_lobbyTimerId))
                 {
                     _timerSystem.StopTimer(_lobbyTimerId);
                 }
 
-                // Публікуємо подію запиту на початок гри
                 Publish(new GameStartRequestEvent
                 {
                     Timestamp = DateTime.UtcNow

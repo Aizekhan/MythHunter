@@ -216,6 +216,14 @@ namespace MythHunter.UI.Presenters
 
         public void OnSelectionConfirmed()
         {
+            int remainingMana = _lobbySystem.GetRemainingManaForCurrentPlayer();
+
+            if (remainingMana > 0)
+            {
+                _view?.ShowError("Використайте всю ману перед підтвердженням");
+                return;
+            }
+
             _lobbySystem.ConfirmSelection();
         }
 
