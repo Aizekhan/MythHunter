@@ -3,6 +3,12 @@ using MythHunter.Core.DI;
 
 namespace MythHunter.Services.GameSettings
 {
+    public enum GameMode
+    {
+        OnlinePvP,      // Гра онлайн
+        LocalPvP,       // 2 гравці за 1 ПК  
+        PvAI            // Гра з AI
+    }
     public interface IGameSettingsService
     {
         int PlayerCount
@@ -13,8 +19,6 @@ namespace MythHunter.Services.GameSettings
         {
             get;
         }
-
-        // ✅ ДОДАТИ ці два властивості:
         float SelectionTimeLimit
         {
             get;
@@ -23,15 +27,38 @@ namespace MythHunter.Services.GameSettings
         {
             get;
         }
+
+        // ✅ НОВІ властивості
+        GameMode CurrentGameMode
+        {
+            get; set;
+        }
+        bool IsAIEnabled
+        {
+            get;
+        }
+        bool IsLocalMultiplayer
+        {
+            get;
+        }
+        bool IsOnlineMode
+        {
+            get;
+        }
     }
 
     public class GameSettingsService : IGameSettingsService
     {
-        public int PlayerCount => 2; // 🔧 тимчасово хардкод, потім можна зробити меню налаштувань
-        public int ManaPerPlayer => 4; // ← реалізація значення
+        public GameMode CurrentGameMode { get; set; } = GameMode.PvAI; // За замовчуванням AI
 
-        // ✅ ДОДАТИ ці дві реалізації:
-        public float SelectionTimeLimit => 300f; // 5 хвилин на вибір героїв
-        public string LobbyTimerId => "LobbySelectionTimer"; // ID таймера лобі
+        public int PlayerCount => CurrentGameMode == GameMode.PvAI ? 1 : 2;
+        public int ManaPerPlayer => 4;
+        public float SelectionTimeLimit => 300f;
+        public string LobbyTimerId => "LobbySelectionTimer";
+
+        // ✅ НОВІ властивості
+        public bool IsAIEnabled => CurrentGameMode == GameMode.PvAI;
+        public bool IsLocalMultiplayer => CurrentGameMode == GameMode.LocalPvP;
+        public bool IsOnlineMode => CurrentGameMode == GameMode.OnlinePvP;
     }
 }

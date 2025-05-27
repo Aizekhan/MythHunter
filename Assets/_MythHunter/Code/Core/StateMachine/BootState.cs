@@ -34,8 +34,8 @@ namespace MythHunter.Core.Game
         {
             try
             {
-                // Використовуємо GameFlowManager замість прямих викликів
-                await _gameFlowManager.EnterLobbyAsync();
+                // ✅ ЗМІНЕНО: переходимо до MainMenu замість Lobby
+                await _gameFlowManager.EnterMainMenuAsync();
             }
             catch (Exception ex)
             {

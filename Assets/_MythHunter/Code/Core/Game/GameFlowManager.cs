@@ -8,6 +8,7 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Resources;
+using MythHunter.Services.GameSettings;
 using MythHunter.States;
 using MythHunter.Systems.Core;
 using MythHunter.UI.Core;
@@ -34,7 +35,7 @@ namespace MythHunter.Core.Game
         private readonly AutoPreloadConfigurator _autoPreloadConfigurator;
         private string _currentSceneName = string.Empty;
         private bool _isSubscribed;
-
+        private readonly IGameSettingsService _gameSettings;
         [Inject]
         public GameFlowManager(
      IGameStateMachine gameStateMachine,
@@ -44,7 +45,8 @@ namespace MythHunter.Core.Game
      ISystemRegistry systemRegistry,
      INavigationService navigationService,
       IPreloadManager preloadManager,
-      AutoPreloadConfigurator autoPreloadConfigurator
+      AutoPreloadConfigurator autoPreloadConfigurator,
+        IGameSettingsService gameSettings
      )
         {
 
@@ -56,8 +58,8 @@ namespace MythHunter.Core.Game
             _navigationService = navigationService;
             _preloadManager = preloadManager;
             _autoPreloadConfigurator = autoPreloadConfigurator;
+            _gameSettings = gameSettings;
 
-         
             SubscribeToEvents();
             InitializePreloadConfigsAsync().Forget();
         }
@@ -146,29 +148,44 @@ namespace MythHunter.Core.Game
             // Публікуємо подію входу в лобі
             _eventBus.Publish(new LobbyStateEnteredEvent { Timestamp = DateTime.UtcNow });
         }
+
+        /// <summary>
+        /// ✅ ОНОВЛЕНИЙ метод з урахуванням режиму гри
+        /// </summary>
         public async UniTask EnterLobbyAsync()
         {
-            _logger.LogInfo("🚀 GameFlowManager: Перехід до лобі через PreloadManager", "GameFlow");
+           
+            string modeText = _gameSettings.CurrentGameMode switch
+            {
+                GameMode.OnlinePvP => "онлайн PvP",
+                GameMode.LocalPvP => "локальний PvP",
+                GameMode.PvAI => "гру з AI",
+                _ => "невідомий режим"
+            };
+
+            _logger.LogInfo($"🚀 GameFlowManager: Перехід до лобі ({modeText})", "GameFlow");
 
             try
             {
-                // 1. Показуємо LoadingScene
+                // 1. Показуємо LoadingScene з повідомленням про режим
                 await _sceneDispatcher.LoadSceneAsync("LoadingScene");
                 _currentSceneName = "LoadingScene";
-                await ShowLoadingUIAsync("Підготовка лобі...");
+                await ShowLoadingUIAsync($"Підготовка лобі для {modeText}...");
 
-
-                // 3. Невелика затримка для показу Loading UI
+                // 2. Невелика затримка для показу Loading UI
                 await UniTask.Delay(800);
 
-                // 4. Переходимо до LobbyScene (PreloadManager автоматично завантажить ресурси)
+                // 3. Переходимо до LobbyScene
                 await _sceneDispatcher.LoadSceneAsync("LobbyScene");
                 _currentSceneName = "LobbyScene";
 
-                // 5. Зміна стану (LobbyState сам ініціалізує системи)
+                // 4. Передаємо інформацію про режим
+                _sceneDispatcher.SetSceneData("GameMode", _gameSettings.CurrentGameMode);
+
+                // 5. Зміна стану
                 _gameStateMachine.ChangeState(GameStateType.Lobby);
 
-                _logger.LogInfo("✅ GameFlowManager: Лобі готове з preload ресурсами", "GameFlow");
+                _logger.LogInfo($"✅ GameFlowManager: Лобі готове для режиму {modeText}", "GameFlow");
             }
             catch (Exception ex)
             {
@@ -177,7 +194,8 @@ namespace MythHunter.Core.Game
             }
         }
 
-    
+
+
         /// <summary>
         /// ✅ НОВИЙ підхід: Конфігурація preload + швидкий перехід до гри
         /// </summary>
@@ -234,15 +252,16 @@ namespace MythHunter.Core.Game
 
 
 
+        /// <summary>
+        /// ✅ НОВИЙ метод для повернення до головного меню
+        /// </summary>
         public async UniTask ReturnToMainMenuAsync()
         {
             _logger.LogInfo("Повернення до головного меню", "GameFlow");
 
             try
             {
-                await _sceneDispatcher.LoadSceneAsync("MainMenuScene");
-                _currentSceneName = "MainMenuScene";
-                _gameStateMachine.ChangeState(GameStateType.MainMenu);
+                await EnterMainMenuAsync();
             }
             catch (Exception ex)
             {
@@ -324,6 +343,77 @@ namespace MythHunter.Core.Game
                 NewState = newState,
                 Timestamp = DateTime.UtcNow
             });
+        }
+
+
+        /// <summary>
+        /// Перехід до головного меню з врахуванням режиму
+        /// </summary>
+        public async UniTask EnterMainMenuAsync()
+        {
+            _logger.LogInfo("🏠 GameFlowManager: Перехід до головного меню", "GameFlow");
+
+            try
+            {
+                // 1. Скидаємо режим гри до дефолтного
+           
+                _gameSettings.CurrentGameMode = GameMode.PvAI; // За замовчуванням
+
+                // 2. Завантажуємо MainMenuScene
+                await _sceneDispatcher.LoadSceneAsync("MainMenuScene");
+                _currentSceneName = "MainMenuScene";
+
+                // 3. Налаштовуємо навігацію
+                var parameters = new NavigationParameters();
+                parameters.Add("ShowWelcome", true);
+                await _navigationService.SetupForSceneAsync("MainMenuScene", parameters);
+
+                // 4. Зміна стану
+                _gameStateMachine.ChangeState(GameStateType.MainMenu);
+
+                _logger.LogInfo("✅ GameFlowManager: Головне меню готове", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка переходу до головного меню: {ex.Message}", "GameFlow", ex);
+            }
+        }
+
+        /// <summary>
+        /// Перехід до профілю гравця
+        /// </summary>
+        public async UniTask EnterProfileAsync()
+        {
+            _logger.LogInfo("👤 GameFlowManager: Перехід до профілю", "GameFlow");
+
+            try
+            {
+                // 1. Показуємо LoadingScene
+                await _sceneDispatcher.LoadSceneAsync("LoadingScene");
+                _currentSceneName = "LoadingScene";
+                await ShowLoadingUIAsync("Завантаження профілю...");
+
+                // 2. Невелика затримка
+                await UniTask.Delay(600);
+
+                // 3. Переходимо до ProfileScene
+                await _sceneDispatcher.LoadSceneAsync("ProfileScene");
+                _currentSceneName = "ProfileScene";
+
+                // 4. Передаємо дані профілю
+                _sceneDispatcher.SetSceneData("PlayerId", "LocalPlayer");
+                _sceneDispatcher.SetSceneData("ReturnTo", "MainMenu");
+
+                // 5. Зміна стану
+                _gameStateMachine.ChangeState(GameStateType.Profile);
+
+                _logger.LogInfo("✅ GameFlowManager: Профіль готовий", "GameFlow");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Помилка переходу до профілю: {ex.Message}", "GameFlow", ex);
+                await ReturnToMainMenuAsync();
+            }
         }
 
         /// <summary>

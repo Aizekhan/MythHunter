@@ -5,8 +5,14 @@ namespace MythHunter.UI.Presenters
 {
     public interface IMainMenuPresenter : IPresenter
     {
-        void OnPlayClicked();
         void OnSettingsClicked();
         void OnExitClicked();
+
+        // ✅ НОВІ методи для режимів гри
+        void OnOnlinePvPClicked();
+        void OnLocalPvPClicked();
+        void OnPvAIClicked();
+
+        void OnProfileClicked();
     }
 }

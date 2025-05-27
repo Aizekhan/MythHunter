@@ -1,35 +1,26 @@
 using Cysharp.Threading.Tasks;
+using System;
 
 namespace MythHunter.Core.Game
 {
     /// <summary>
     /// Інтерфейс централізованого сервісу управління ігровими переходами
     /// </summary>
-    public interface IGameFlowManager
+    public interface IGameFlowManager : IDisposable
     {
-        /// <summary>
-        /// Запускає перехід від Boot до Lobby
-        /// </summary>
+        // ✅ ІСНУЮЧІ методи
         UniTask EnterLobbyAsync();
+        UniTask EnterGameplayAsync(string[] selectedHeroArchetypes, string mapId = "default");
+        UniTask ReturnToLobbyAsync();
+        UniTask ReloadCurrentSceneAsync();
+        UniTask RestartGameAsync();
 
-        /// <summary>
-        /// Запускає перехід від Lobby до Gameplay
-        /// </summary>
-        UniTask EnterGameplayAsync(string[] selectedHeroArchetypes = null, string mapId = "default");
+        // ✅ НОВИЙ метод
+        UniTask EnterMainMenuAsync();
 
-        /// <summary>
-        /// Повертається з будь-якого стану до головного меню
-        /// </summary>
+        // ✅ ПЕРЕЙМЕНОВАНИЙ метод (якщо потрібно)
         UniTask ReturnToMainMenuAsync();
 
-        /// <summary>
-        /// Перезавантажує поточну сцену
-        /// </summary>
-        UniTask ReloadCurrentSceneAsync();
-
-        /// <summary>
-        /// Запускає гру з самого початку (Boot)
-        /// </summary>
-        UniTask RestartGameAsync();
+        UniTask EnterProfileAsync();
     }
 }

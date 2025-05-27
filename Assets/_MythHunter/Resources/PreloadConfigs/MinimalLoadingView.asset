@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6625162ed8f610140afebb8b504579cc, type: 3}
   m_Name: MinimalLoadingView
   m_EditorClassIdentifier: 
-  sceneName: MainMenu
+  sceneName: LoadingScene
   resources:
   - relatedViewId: 4
     resourceKey: UI/Loading/MinimalLoadingView

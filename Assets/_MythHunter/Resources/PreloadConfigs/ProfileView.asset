@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6625162ed8f610140afebb8b504579cc, type: 3}
-  m_Name: MainMenuPreloadConfig
+  m_Name: ProfileView
   m_EditorClassIdentifier: 
-  sceneName: MainMenuScene
+  sceneName: ProfileScene
   resources:
-  - relatedViewId: 3
-    resourceKey: UI/MainMenu/MainMenuView
+  - relatedViewId: 6
+    resourceKey: UI/Profile/ProfileViewUI
     resourceType: 0
     loadingMode: 0
     priority: 100
@@ -23,6 +23,7 @@ MonoBehaviour:
     poolSize: 0
     onlyInEditor: 0
     onlyInBuild: 0
-    description: '"Main Menu UI Prefab"'
+    description: "\u0415\u043A\u0440\u0430\u043D \u0430\u043A\u0430\u0443\u043D\u0442\u0443
+      \u0433\u0440\u0430\u0432\u0446\u044F"
   autoRegisterOnAwake: 1
-  enableDebugLogging: 1
+  enableDebugLogging: 0

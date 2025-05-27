@@ -26,6 +26,7 @@ namespace MythHunter.Core
                 new ResourceInstaller(),
                 new SerializationInstaller(),
                 new UIInstaller(),
+               
                 new PoolInstaller(),
                 new EntitiesInstaller(),
                 new DebugToolsInstaller(),
@@ -33,7 +34,7 @@ namespace MythHunter.Core
 
             
                 // Інсталятори систем (за категоріями)
-              
+                new ProfileInstaller(),
                 new NetworkingSystemsInstaller(),
                 new LobbySystemsInstaller(),
                 new GameplaySystemsInstaller(),

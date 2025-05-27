@@ -19,6 +19,8 @@ using MythHunter.UI.Services;
 using MythHunter.UI.Navigation;
 using MythHunter.Systems.Core;
 using UnityEngine;
+using MythHunter.Systems.AI;
+using MythHunter.Core.SceneManagement;
 
 namespace MythHunter.UI.Presenters
 {
@@ -48,7 +50,8 @@ namespace MythHunter.UI.Presenters
 
         private readonly List<HeroCardUI> _createdHeroCards = new();
         private readonly List<HeroCardUI> _selectedHeroCards = new();
-
+        [Inject]
+        private readonly ISimpleLobbyAI _aiSystem;
         [Inject]
         public LobbyPresenter(
             IEventBus eventBus,
@@ -97,40 +100,31 @@ namespace MythHunter.UI.Presenters
 
         public void Initialize(ILobbyView view)
         {
-            if (_isInitialized)
-            {
-                _logger.LogWarning("LobbyPresenter вже ініціалізовано", "UI");
-                return;
-            }
-
             _view = view;
+
+            // ✅ ОТРИМУЄМО РЕЖИМ ГРИ З SceneDispatcher
+            var sceneDispatcher = _container.Resolve<ISceneDispatcher>();
+            var gameMode = sceneDispatcher.GetSceneData<GameMode>("GameMode", GameMode.PvAI);
+
+            // ✅ Налаштовуємо UI для режиму
+            _view.ConfigureForGameMode(gameMode);
 
             UniTask.Create(async () => {
                 try
                 {
-                    // ✅ Перевіряємо view
                     if (_view?.HeroCardsContainer == null)
                     {
-                        _logger.LogError("❌ HeroCardsContainer is null!", "UI");
-
-                        // Чекаємо до 3 секунд
+                        // Чекаємо ініціалізацію
                         for (int i = 0; i < 30; i++)
                         {
                             await UniTask.Delay(100);
                             if (_view?.HeroCardsContainer != null)
                                 break;
                         }
-
-                        if (_view?.HeroCardsContainer == null)
-                        {
-                            _logger.LogError("❌ HeroCardsContainer так і не ініціалізувався!", "UI");
-                            return;
-                        }
                     }
 
                     await InitializeAsync();
                     await PopulateHeroCardsAsync();
-
                 }
                 catch (Exception ex)
                 {
@@ -138,6 +132,60 @@ namespace MythHunter.UI.Presenters
                 }
             });
         }
+
+
+
+
+        private void ConfigureUIForGameMode()
+        {
+            if (_view == null)
+                return;
+
+            switch (_gameSettings.CurrentGameMode)
+            {
+                case GameMode.PvAI:
+                    // Показуємо тільки 1 плеєра, AI невидимий
+                    _view.ShowPlayerStatus(0, false); // Людина
+                                                      // Ховаємо UI другого гравця
+                    break;
+
+                case GameMode.LocalPvP:
+                    // Показуємо обох гравців
+                    _view.ShowPlayerStatus(0, false);
+                    _view.ShowPlayerStatus(1, false);
+                    break;
+
+                case GameMode.OnlinePvP:
+                    // Поки що як LocalPvP, пізніше додамо мережевий функціонал
+                    _view.ShowPlayerStatus(0, false);
+                    _view.ShowPlayerStatus(1, false);
+                    break;
+            }
+        }
+        // ✅ НОВИЙ метод для AI подій
+        private void OnAIHeroSelected(HeroSelectedEvent evt)
+        {
+            if (evt.PlayerIndex == 1 && _gameSettings.IsAIEnabled) // AI гравець
+            {
+                _view?.ShowAIStatus($"AI обрав: {evt.ArchetypeId}", false);
+
+                // Якщо AI закінчив з маною, показуємо готовність до старту
+                if (evt.RemainingMana == 0)
+                {
+                    _view?.ShowAIStatus("AI готовий до гри!", false);
+
+                    // Автоматично показуємо кнопку старту
+                    UniTask.Create(async () => {
+                        await UniTask.Delay(1000);
+                        if (_lobbySystem.AreAllPlayersReady())
+                        {
+                            _view?.ShowGameStartingMessage();
+                        }
+                    });
+                }
+            }
+        }
+
 
         public async UniTask InitializeLobbyAsync(int playerCount)
         {
@@ -227,48 +275,81 @@ namespace MythHunter.UI.Presenters
             _lobbySystem.ConfirmSelection();
         }
 
+        // ✅ ОНОВЛЕНИЙ StartGameAsync з урахуванням режиму
         public async UniTask StartGameAsync()
         {
-            if (!_lobbySystem.AreAllPlayersReady())
+            switch (_gameSettings.CurrentGameMode)
             {
-                _view?.ShowError("Не всі гравці готові");
-                return;
+                case GameMode.PvAI:
+                    // В AI режимі достатньо готовності одного гравця
+                    if (_lobbySystem.GetRemainingManaForCurrentPlayer() > 0)
+                    {
+                        _view?.ShowError("Спочатку оберіть всіх героїв");
+                        return;
+                    }
+                    break;
+
+                case GameMode.LocalPvP:
+                case GameMode.OnlinePvP:
+                    // В PvP режимах потрібна готовність всіх
+                    if (!_lobbySystem.AreAllPlayersReady())
+                    {
+                        _view?.ShowError("Не всі гравці готові");
+                        return;
+                    }
+                    break;
             }
 
             _view?.ShowGameStartingMessage();
 
-            // ✅ АРХІТЕКТУРНО ПРАВИЛЬНО: тільки подія-сигнал
+            // Публікуємо подію початку гри
             _eventBus.Publish(new GameStartRequestEvent
             {
                 Timestamp = DateTime.UtcNow
             });
-
-            // ✅ ВИДАЛЕНО: var selectedHeroes = _lobbySystem.GetSelectedHeroes();
-            // ✅ ВИДАЛЕНО: await _gameFlowManager.EnterGameplayAsync(selectedHeroes.ToArray());
+            await UniTask.CompletedTask;
         }
 
         #region Event Handlers
 
+        // ✅ ОНОВЛЕНИЙ обробник вибору героя з автоматичним confirm для AI
         private void OnHeroSelectedEvent(HeroSelectedEvent evt)
         {
             if (_view == null)
-            {
-                _logger.LogWarning("⚠️ OnHeroSelectedEvent: _view is null", "UI");
                 return;
-            }
 
             UniTask.Create(async () => {
                 try
                 {
                     await UpdateSelectedHeroesAsync();
 
-                    // ✅ ПЕРЕВІРЯЄМО _view ПЕРЕД КОЖНИМ ВИКЛИКОМ
                     if (_view != null)
                     {
-                        _view.UpdateMana(evt.RemainingMana, 4);
+                        _view.UpdateMana(evt.RemainingMana, _gameSettings.ManaPerPlayer);
                     }
 
                     await UpdateHeroCardsStateAsync();
+
+                    // ✅ АВТОМАТИЧНИЙ CONFIRM В AI РЕЖИМІ
+                    if (_gameSettings.IsAIEnabled && evt.PlayerIndex == 0) // Гравець-людина
+                    {
+                        // Перевіряємо, чи закінчилась мана
+                        if (evt.RemainingMana == 0)
+                        {
+                            _logger.LogInfo("🤖 Мана гравця закінчилась, автоматично підтверджуємо", "UI");
+
+                            // Затримка для плавності
+                            await UniTask.Delay(500);
+
+                            // Автоматично підтверджуємо вибір гравця
+                            OnSelectionConfirmed();
+
+                            // Показуємо статус AI
+                            _view.ShowAIStatus("AI обирає героїв...", true);
+
+                            // AI почне діяти автоматично через події
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -276,7 +357,6 @@ namespace MythHunter.UI.Presenters
                 }
             });
         }
-
         private void OnSelectionConfirmedEvent(SelectionConfirmedEvent evt)
         {
             _view?.ShowPlayerStatus(evt.PlayerIndex, true);

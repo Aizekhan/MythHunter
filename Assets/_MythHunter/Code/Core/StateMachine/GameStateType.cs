@@ -22,6 +22,9 @@ namespace MythHunter.Core.Game
         [NavigationBehavior(NavigationClearType.Never)]
         Lobby = 5,
 
+        [NavigationBehavior(NavigationClearType.Never)]
+        Profile, // ✅ НОВИЙ стан для профілю
+
         [NavigationBehavior(NavigationClearType.OnExit)]
         Gameplay,
 

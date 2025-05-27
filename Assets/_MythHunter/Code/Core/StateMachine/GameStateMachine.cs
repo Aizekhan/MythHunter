@@ -32,6 +32,7 @@ namespace MythHunter.Core.Game
             // Реєстрація станів
             RegisterState(GameStateType.Boot, new BootState(_container));
             RegisterState(GameStateType.MainMenu, new MainMenuState(_container));
+            RegisterState(GameStateType.Profile, new ProfileState(_container));
             RegisterState(GameStateType.Loading, new LoadingState(_container));
             RegisterState(GameStateType.Gameplay, new GameplayState(_container));
             RegisterState(GameStateType.Lobby, new LobbyState(_container));

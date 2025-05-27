@@ -7,6 +7,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using MythHunter.UI.Presenters;
 using Cysharp.Threading.Tasks;
+using MythHunter.Services.GameSettings;
 namespace MythHunter.UI.Views
 {
     public class LobbyView : UIViewBase, ILobbyView
@@ -29,6 +30,21 @@ namespace MythHunter.UI.Views
 
         [SerializeField] private GameObject[] _playerReadyIndicators;
         [SerializeField] private GameObject _gameStartingPanel;
+
+
+        [Header("Mode-Specific UI")]
+        [SerializeField] private GameObject _aiModePanel;      // Панель для AI режиму
+        [SerializeField] private GameObject _localPvPPanel;    // Панель для локального PvP
+        [SerializeField] private GameObject _onlinePvPPanel;   // Панель для онлайн PvP
+        [SerializeField] private TMP_Text _gameModeText;       // Показує поточний режим
+
+        [Header("AI Mode UI")]
+        [SerializeField] private TMP_Text _aiStatusText;       // "AI обирає героїв..."
+        [SerializeField] private GameObject _aiThinkingIndicator; // Індикатор "AI думає"
+
+        [Header("PvP Mode UI")]
+        [SerializeField] private TMP_Text _currentPlayerText;  // "Хід гравця 1" / "Хід гравця 2"
+        [SerializeField] private GameObject _waitingPanel;     // "Очікування іншого гравця"
 
         private ILobbyPresenter _presenter; // ✅ ПОСИЛАННЯ НА PRESENTER
 
@@ -221,7 +237,102 @@ namespace MythHunter.UI.Views
                 _logger?.LogError("❌ _gameStartingPanel is null!", "UI");
             }
         }
+        //
+        /// <summary>
+        /// Налаштовує UI для конкретного режиму гри
+        /// </summary>
+        public void ConfigureForGameMode(GameMode mode)
+        {
+            _logger?.LogInfo($"🎮 Налаштування LobbyView для режиму: {mode}", "UI");
 
+            // Ховаємо всі панелі спочатку
+            _aiModePanel?.SetActive(false);
+            _localPvPPanel?.SetActive(false);
+            _onlinePvPPanel?.SetActive(false);
+
+            switch (mode)
+            {
+                case GameMode.PvAI:
+                    _aiModePanel?.SetActive(true);
+                    if (_gameModeText)
+                        _gameModeText.text = "Гра з AI";
+                    SetupAIMode();
+                    break;
+
+                case GameMode.LocalPvP:
+                    _localPvPPanel?.SetActive(true);
+                    if (_gameModeText)
+                        _gameModeText.text = "Локальний PvP";
+                    SetupLocalPvPMode();
+                    break;
+
+                case GameMode.OnlinePvP:
+                    _onlinePvPPanel?.SetActive(true);
+                    if (_gameModeText)
+                        _gameModeText.text = "Онлайн PvP";
+                    SetupOnlinePvPMode();
+                    break;
+            }
+        }
+
+        private void SetupAIMode()
+        {
+            // В AI режимі ховаємо деякі UI елементи
+            if (_confirmButton)
+                _confirmButton.gameObject.SetActive(false); // AI не потребує confirm
+            if (_aiStatusText)
+                _aiStatusText.text = "Оберіть своїх героїв";
+            if (_aiThinkingIndicator)
+                _aiThinkingIndicator.SetActive(false);
+        }
+
+        private void SetupLocalPvPMode()
+        {
+            // В локальному PvP показуємо всі елементи
+            if (_confirmButton)
+                _confirmButton.gameObject.SetActive(true);
+            if (_currentPlayerText)
+                _currentPlayerText.text = "Хід: Гравець 1";
+        }
+
+        private void SetupOnlinePvPMode()
+        {
+            // В онлайн PvP поки що як локальний
+            SetupLocalPvPMode();
+            // Пізніше додамо специфічний функціонал
+        }
+
+        /// <summary>
+        /// Показує статус AI
+        /// </summary>
+        public void ShowAIStatus(string status, bool isThinking = false)
+        {
+            if (_aiStatusText)
+                _aiStatusText.text = status;
+            if (_aiThinkingIndicator)
+                _aiThinkingIndicator.SetActive(isThinking);
+        }
+
+        /// <summary>
+        /// Показує поточного гравця в PvP режимах
+        /// </summary>
+        public void ShowCurrentPlayer(int playerIndex)
+        {
+            if (_currentPlayerText)
+            {
+                _currentPlayerText.text = $"Хід: Гравець {playerIndex + 1}";
+            }
+        }
+
+        /// <summary>
+        /// Показує панель очікування
+        /// </summary>
+        public void ShowWaitingForPlayer(bool show, string message = "Очікування іншого гравця...")
+        {
+            if (_waitingPanel)
+                _waitingPanel.SetActive(show);
+            // Можна додати текст повідомлення
+        }
         protected override void OnDestroy()
         {
             _logger?.LogInfo("🗑️ LobbyView.OnDestroy() викликано", "UI");

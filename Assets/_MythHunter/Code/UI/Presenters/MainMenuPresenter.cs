@@ -1,94 +1,102 @@
+// Assets/_MythHunter/Code/UI/Presenters/MainMenuPresenter.cs
+using MythHunter.Core.DI;
+using MythHunter.Core.Game;
+using MythHunter.Events;
+using MythHunter.Events.Domain.Menu;
+using MythHunter.Services.GameSettings;
 using MythHunter.UI.Core;
 using MythHunter.UI.Models;
+using MythHunter.UI.Presenters;
 using MythHunter.UI.Views;
-using MythHunter.Events;
-using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using System;
+using UnityEngine;
 using Cysharp.Threading.Tasks;
-
-namespace MythHunter.UI.Presenters
+using MythHunter.Events.Domain.Profile;
+public class MainMenuPresenter : BasePresenter, IMainMenuPresenter
 {
-    /// <summary>
-    /// Презентер головного меню з підтримкою ViewId-архітектури
-    /// </summary>
-    public class MainMenuPresenter : BasePresenter, IMainMenuPresenter
+    private readonly IMainMenuModel _model;
+    private readonly IGameSettingsService _gameSettings;
+    private readonly IGameFlowManager _gameFlowManager;
+
+    private IMainMenuView _typedView => _view as IMainMenuView;
+
+    [Inject]
+    public MainMenuPresenter(
+        IMainMenuModel model,
+        IEventBus eventBus,
+        IMythLogger logger,
+        IGameSettingsService gameSettings,
+        IGameFlowManager gameFlowManager)
+        : base(eventBus, logger)
     {
-        private readonly IMainMenuModel _model;
+        _model = model;
+        _gameSettings = gameSettings;
+        _gameFlowManager = gameFlowManager;
+        _viewId = ViewId.MainMenu;
+    }
 
-        // Властивість для типізованого доступу до представлення
-        private IMainMenuView _typedView => _view as IMainMenuView;
+    // ✅ НОВІ методи для кнопок
+    public void OnOnlinePvPClicked()
+    {
+        _logger.LogInfo("Online PvP режим вибрано", "MainMenu");
+        SelectGameMode(GameMode.OnlinePvP);
+    }
 
-        [Inject]
-        public MainMenuPresenter(IMainMenuModel model, IEventBus eventBus, IMythLogger logger)
-            : base(eventBus, logger)
+    public void OnLocalPvPClicked()
+    {
+        _logger.LogInfo("Local PvP режим вибрано", "MainMenu");
+        SelectGameMode(GameMode.LocalPvP);
+    }
+
+    public void OnPvAIClicked()
+    {
+        _logger.LogInfo("PvAI режим вибрано", "MainMenu");
+        SelectGameMode(GameMode.PvAI);
+    }
+    // ✅ ДОДАЙТЕ ЦЕЙ МЕТОД:
+    public void OnProfileClicked()
+    {
+        _logger.LogInfo("👤 Profile button clicked!", "MainMenu");
+
+        // Публікуємо подію
+        _eventBus.Publish(new ProfileOpenedEvent
         {
-            _model = model;
+            PlayerId = "LocalPlayer", // Поки що хардкод, пізніше отримуватимемо з UserService
+            Timestamp = DateTime.UtcNow
+        });
 
-            // Встановлюємо ViewId (перевірте, що ViewId.MainMenu існує в енумерації)
-            _viewId = ViewId.MainMenu;
-        }
+        // Переходимо до профілю
+        _gameFlowManager.EnterProfileAsync().Forget();
+    }
+    private void SelectGameMode(GameMode mode)
+    {
+        // Зберігаємо режим
+        _gameSettings.CurrentGameMode = mode;
 
-        public override async UniTask InitializeAsync()
+        // Публікуємо подію
+        _eventBus.Publish(new GameModeSelectedEvent
         {
-            await base.InitializeAsync();
-            _logger.LogInfo("MainMenuPresenter initialized", "UI");
-        }
+            SelectedMode = mode,
+            Timestamp = DateTime.UtcNow
+        });
 
-        // Метод для зворотної сумісності
-        public void SetView(IMainMenuView view)
-        {
-            Initialize(view, _viewId);
-        }
+        // Переходимо до лобі
+        _gameFlowManager.EnterLobbyAsync().Forget();
+    }
 
-        // Перевизначення методу з BasePresenter
-        public override void Initialize(IView view, ViewId viewId = ViewId.None)
-        {
-            base.Initialize(view, viewId);
-            UpdateView();
-        }
+   
+   
 
-        public void OnPlayClicked()
-        {
-            _logger.LogInfo("Play button clicked", "UI");
-            // TODO: Publish event to start the game
-        }
+    public void OnSettingsClicked()
+    {
+        _logger.LogInfo("Settings button clicked", "MainMenu");
+        // TODO: Show settings
+    }
 
-        public void OnSettingsClicked()
-        {
-            _logger.LogInfo("Settings button clicked", "UI");
-            // TODO: Show settings
-        }
-
-        public void OnExitClicked()
-        {
-            _logger.LogInfo("Exit button clicked", "UI");
-            // TODO: Exit game logic
-        }
-
-        // Перевизначення замість імплементації
-        protected override void OnSubscribeToEvents()
-        {
-            // Підписка на необхідні події
-            // Наприклад:
-            // _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
-        }
-
-        protected override void OnUnsubscribeFromEvents()
-        {
-            // Відписка від подій
-            // Наприклад:
-            // _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
-        }
-
-        private void UpdateView()
-        {
-            if (_typedView != null)
-            {
-                _typedView.SetTitle(_model.Title);
-                _typedView.SetPlayButtonEnabled(_model.IsPlayButtonEnabled);
-                _typedView.SetSettingsButtonEnabled(_model.IsSettingsButtonEnabled);
-                _typedView.SetExitButtonEnabled(_model.IsExitButtonEnabled);
-            }
-        }
+    public void OnExitClicked()
+    {
+        _logger.LogInfo("Exit button clicked", "MainMenu");
+        Application.Quit();
     }
 }
