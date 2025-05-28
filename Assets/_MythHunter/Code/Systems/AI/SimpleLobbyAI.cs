@@ -76,10 +76,16 @@ namespace MythHunter.Systems.AI
 
         private void OnLobbyInitialized(LobbyInitializedEvent evt)
         {
+            _logger.LogInfo($"🤖 AI отримав LobbyInitialized, IsEnabled: {_isEnabled}", "AI");
+
             if (_isEnabled && !_isRunning)
             {
                 _logger.LogInfo("🤖 AI активовано для лобі", "AI");
                 StartAIBehavior();
+            }
+            else
+            {
+                _logger.LogInfo($"🤖 AI НЕ активовано: IsEnabled={_isEnabled}, IsRunning={_isRunning}", "AI");
             }
         }
 

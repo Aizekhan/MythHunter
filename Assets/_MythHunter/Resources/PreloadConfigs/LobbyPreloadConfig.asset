@@ -24,7 +24,7 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: " \u0410\u0440\u0445\u0435\u0442\u0438\u043F\u0438 \u0433\u0435\u0440\u043E\u0457\u0432"
-  - relatedViewId: 8
+  - relatedViewId: 9
     resourceKey: UI/Lobby/HeroCardUI
     resourceType: 0
     loadingMode: 0
@@ -44,7 +44,7 @@ MonoBehaviour:
     onlyInEditor: 0
     onlyInBuild: 0
     description: 
-  - relatedViewId: 9
+  - relatedViewId: 10
     resourceKey: UI/Lobby/SelectedHeroCard
     resourceType: 0
     loadingMode: 0

@@ -277,13 +277,24 @@ namespace MythHunter.UI.Views
 
         private void SetupAIMode()
         {
-            // В AI режимі ховаємо деякі UI елементи
+            _logger?.LogInfo("🤖 Налаштування AI режиму", "UI");
+
+            // В AI режимі ПОКАЗУЄМО confirm для гравця
             if (_confirmButton)
-                _confirmButton.gameObject.SetActive(false); // AI не потребує confirm
+                _confirmButton.gameObject.SetActive(true); // ✅ ВИПРАВЛЕНО
+
             if (_aiStatusText)
                 _aiStatusText.text = "Оберіть своїх героїв";
+
             if (_aiThinkingIndicator)
                 _aiThinkingIndicator.SetActive(false);
+
+            // Ховаємо елементи PvP
+            if (_currentPlayerText)
+                _currentPlayerText.gameObject.SetActive(false);
+
+            if (_waitingPanel)
+                _waitingPanel.SetActive(false);
         }
 
         private void SetupLocalPvPMode()
