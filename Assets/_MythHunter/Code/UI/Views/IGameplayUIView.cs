@@ -14,7 +14,7 @@ namespace MythHunter.UI.Views
         void ShowRuneValue(int value);
         void HideRuneValue();
 
-        // НОВІ методи для геймплею
+        // Нові методи для геймплею
         void UpdateActionPoints(int current, int maximum);
         void ShowAvailableActions(List<ActionInfo> actions);
         void UpdateTurnIndicator(int currentPlayer, string playerName);

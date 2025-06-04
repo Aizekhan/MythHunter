@@ -11,41 +11,44 @@ using System;
 namespace MythHunter.UI.Views
 {
     /// <summary>
-    /// Розширене представлення ігрового інтерфейсу з новими геймплей елементами
+    /// Оптимізоване представлення ігрового інтерфейсу для 2 гравців без скролінгу
     /// </summary>
     public class GameplayUIView : NavigableViewBase, IGameplayUIView
     {
-        [Header("Існуючі UI елементи")]
-        [SerializeField] private TextMeshProUGUI _phaseInfoText;
-        [SerializeField] private TextMeshProUGUI _timerText;
-        [SerializeField] private GameObject _runeValueContainer;
-        [SerializeField] private TextMeshProUGUI _runeValueText;
+        [Header("🔴 Top Panel - Фаза та Хід")]
+        [SerializeField] private TextMeshProUGUI _phaseInfoText;         // "Фаза: Планування"
+        [SerializeField] private TextMeshProUGUI _timerText;             // "Час: 25с"
+        [SerializeField] private TextMeshProUGUI _turnIndicatorText;     // "Хід: Олександр"
+        [SerializeField] private Image _currentPlayerIndicator;          // Кольоровий кружок гравця
 
-        [Header("Панелі")]
-        [SerializeField] private GameObject _inventoryPanel;
-        [SerializeField] private GameObject _heroStatsPanel;
-        [SerializeField] private GameObject _objectivesPanel;
+        [Header("🎲 Center Area - Руна")]
+        [SerializeField] private GameObject _runeValueContainer;         // Контейнер руни
+        [SerializeField] private TextMeshProUGUI _runeValueText;         // "Руна: 4"
 
-        [Header("🎮 НОВІ ГЕЙМПЛЕЙ ЕЛЕМЕНТИ")]
-        [SerializeField] private Transform _actionPointsContainer;
-        [SerializeField] private TextMeshProUGUI _actionPointsText;
-        [SerializeField] private Slider _actionPointsSlider;
+        [Header("⚡ Bottom Panel - Очки Дій")]
+        [SerializeField] private TextMeshProUGUI _actionPointsText;      // "Очки дій: 2/3"
+        [SerializeField] private Button _endTurnButton;                  // Кнопка завершення ходу
 
-        [Header("Дії гравця")]
-        [SerializeField] private Transform _availableActionsContainer;
-        [SerializeField] private GameObject _actionButtonPrefab;
-        [SerializeField] private ScrollRect _actionsScrollRect;
+        [Header("🎮 Right Panel - Дії")]
+        [SerializeField] private TextMeshProUGUI _actionsTitle;          // "Доступні дії:"
+        [SerializeField] private Transform _availableActionsContainer;   // Контейнер кнопок дій
+        [SerializeField] private GameObject _actionButtonPrefab;         // Префаб кнопки дії
 
-        [Header("Інформація про хід")]
-        [SerializeField] private TextMeshProUGUI _turnIndicatorText;
-        [SerializeField] private Image _currentPlayerIndicator;
-        [SerializeField] private Color[] _playerColors = new Color[4];
+        [Header("📊 Right Panel - Додаткові панелі")]
+        [SerializeField] private GameObject _inventoryPanel;             // Панель інвентаря
+        [SerializeField] private GameObject _heroStatsPanel;            // Панель статистик героя
+        [SerializeField] private GameObject _objectivesPanel;           // Панель цілей
 
-        [Header("Статус гри")]
-        [SerializeField] private GameObject _waitingForPlayerPanel;
-        [SerializeField] private TextMeshProUGUI _waitingText;
-        [SerializeField] private GameObject _gameOverPanel;
-        [SerializeField] private TextMeshProUGUI _gameOverText;
+        [Header("⏳ Overlay - Статус")]
+        [SerializeField] private CanvasGroup _statusOverlay;             // Загальний оверлей
+        [SerializeField] private GameObject _waitingPanel;               // Панель очікування
+        [SerializeField] private TextMeshProUGUI _waitingText;           // "Очікування іншого гравця..."
+        [SerializeField] private GameObject _gameOverPanel;              // Панель завершення гри
+        [SerializeField] private TextMeshProUGUI _gameOverText;          // "ПЕРЕМОГА!" / "ПОРАЗКА!"
+
+        [Header("🎨 Налаштування")]
+        [SerializeField] private Color _player1Color = Color.blue;       // Колір 1-го гравця
+        [SerializeField] private Color _player2Color = Color.red;        // Колір 2-го гравця
 
         // Кешування створених кнопок дій
         private readonly List<GameObject> _activeActionButtons = new List<GameObject>();
@@ -54,7 +57,18 @@ namespace MythHunter.UI.Views
         public event Action<string> OnActionButtonClicked;
         public event Action OnEndTurnClicked;
 
-        // Існуючі методи IGameplayUIView
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            SetupUIEvents();
+            InitializeUIState();
+        }
+
+        // ===== ІСНУЮЧІ МЕТОДИ IGameplayUIView =====
+
+        /// <summary>
+        /// Оновлює відображення фази та таймера
+        /// </summary>
         public void UpdatePhaseInfo(int phase, float timeRemaining)
         {
             if (_phaseInfoText != null)
@@ -69,6 +83,9 @@ namespace MythHunter.UI.Views
             }
         }
 
+        /// <summary>
+        /// Показує значення руни
+        /// </summary>
         public void ShowRuneValue(int value)
         {
             if (_runeValueContainer != null)
@@ -78,13 +95,16 @@ namespace MythHunter.UI.Views
                 _runeValueText.text = $"Руна: {value}";
         }
 
+        /// <summary>
+        /// Ховає руну
+        /// </summary>
         public void HideRuneValue()
         {
             if (_runeValueContainer != null)
                 _runeValueContainer.SetActive(false);
         }
 
-        // НОВІ МЕТОДИ для геймплею
+        // ===== НОВІ МЕТОДИ ДЛЯ ГЕЙМПЛЕЮ =====
 
         /// <summary>
         /// Оновлює відображення очків дій
@@ -92,23 +112,16 @@ namespace MythHunter.UI.Views
         public void UpdateActionPoints(int current, int maximum)
         {
             if (_actionPointsText != null)
+            {
                 _actionPointsText.text = $"Очки дій: {current}/{maximum}";
 
-            if (_actionPointsSlider != null)
-            {
-                _actionPointsSlider.maxValue = maximum;
-                _actionPointsSlider.value = current;
-            }
-
-            // Підсвічування при малій кількості очків
-            if (_actionPointsText != null)
-            {
+                // Підсвічування при малій кількості очків
                 _actionPointsText.color = current <= 1 ? Color.red : Color.white;
             }
         }
 
         /// <summary>
-        /// Показує доступні дії для поточного гравця
+        /// Показує доступні дії для поточного гравця (БЕЗ СКРОЛІНГУ)
         /// </summary>
         public void ShowAvailableActions(List<ActionInfo> actions)
         {
@@ -118,37 +131,16 @@ namespace MythHunter.UI.Views
             if (_availableActionsContainer == null || _actionButtonPrefab == null)
                 return;
 
-            // Створюємо кнопки для доступних дій
-            foreach (var action in actions)
+            // Оновлюємо заголовок
+            if (_actionsTitle != null)
             {
-                var buttonObj = Instantiate(_actionButtonPrefab, _availableActionsContainer);
-                var button = buttonObj.GetComponent<Button>();
-                var buttonText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
-
-                if (button != null && buttonText != null)
-                {
-                    buttonText.text = action.DisplayName;
-                    button.interactable = action.IsEnabled;
-
-                    // Додаємо tooltip якщо є
-                    if (!string.IsNullOrEmpty(action.Description))
-                    {
-                        // TODO: Додати tooltip компонент
-                    }
-
-                    // Підписуємся на клік
-                    string actionId = action.ActionId; // Зберігаємо в локальній змінній для замикання
-                    button.onClick.AddListener(() => OnActionButtonClicked?.Invoke(actionId));
-
-                    _activeActionButtons.Add(buttonObj);
-                }
+                _actionsTitle.text = actions.Count > 0 ? "Доступні дії:" : "Немає дій";
             }
 
-            // Оновлюємо скролл
-            if (_actionsScrollRect != null)
+            // Створюємо кнопки для доступних дій (максимум 6-8 дій для зручності)
+            foreach (var action in actions)
             {
-                Canvas.ForceUpdateCanvases();
-                _actionsScrollRect.verticalNormalizedPosition = 1f;
+                CreateActionButton(action);
             }
         }
 
@@ -159,12 +151,13 @@ namespace MythHunter.UI.Views
         {
             if (_turnIndicatorText != null)
             {
-                _turnIndicatorText.text = $"Хід гравця: {playerName}";
+                _turnIndicatorText.text = $"Хід: {playerName}";
             }
 
-            if (_currentPlayerIndicator != null && currentPlayer >= 0 && currentPlayer < _playerColors.Length)
+            if (_currentPlayerIndicator != null)
             {
-                _currentPlayerIndicator.color = _playerColors[currentPlayer];
+                // Для 2 гравців: 0 = гравець 1 (синій), 1 = гравець 2 (червоний)
+                _currentPlayerIndicator.color = currentPlayer == 0 ? _player1Color : _player2Color;
             }
         }
 
@@ -173,11 +166,20 @@ namespace MythHunter.UI.Views
         /// </summary>
         public void ShowWaitingForPlayer(string message)
         {
-            if (_waitingForPlayerPanel != null)
-                _waitingForPlayerPanel.SetActive(true);
+            if (_statusOverlay != null)
+                _statusOverlay.gameObject.SetActive(true);
+
+            if (_waitingPanel != null)
+                _waitingPanel.SetActive(true);
+
+            if (_gameOverPanel != null)
+                _gameOverPanel.SetActive(false);
 
             if (_waitingText != null)
                 _waitingText.text = message;
+
+            // Плавна поява оверлею
+            FadeInOverlay();
         }
 
         /// <summary>
@@ -185,8 +187,14 @@ namespace MythHunter.UI.Views
         /// </summary>
         public void HideWaitingForPlayer()
         {
-            if (_waitingForPlayerPanel != null)
-                _waitingForPlayerPanel.SetActive(false);
+            if (_waitingPanel != null)
+                _waitingPanel.SetActive(false);
+
+            // Ховаємо весь оверлей якщо нічого не показується
+            if (_gameOverPanel == null || !_gameOverPanel.activeInHierarchy)
+            {
+                FadeOutOverlay();
+            }
         }
 
         /// <summary>
@@ -194,6 +202,12 @@ namespace MythHunter.UI.Views
         /// </summary>
         public void ShowGameOver(string message, bool isVictory)
         {
+            if (_statusOverlay != null)
+                _statusOverlay.gameObject.SetActive(true);
+
+            if (_waitingPanel != null)
+                _waitingPanel.SetActive(false);
+
             if (_gameOverPanel != null)
                 _gameOverPanel.SetActive(true);
 
@@ -202,6 +216,9 @@ namespace MythHunter.UI.Views
                 _gameOverText.text = message;
                 _gameOverText.color = isVictory ? Color.green : Color.red;
             }
+
+            // Плавна поява оверлею
+            FadeInOverlay();
         }
 
         /// <summary>
@@ -216,10 +233,93 @@ namespace MythHunter.UI.Views
                 if (button != null)
                     button.interactable = interactable;
             }
+
+            // Вимикаємо кнопку завершення ходу
+            if (_endTurnButton != null)
+                _endTurnButton.interactable = interactable;
         }
 
-        // ПРИВАТНІ МЕТОДИ
+        // ===== ПРИВАТНІ МЕТОДИ =====
 
+        /// <summary>
+        /// Налаштовує події UI
+        /// </summary>
+        private void SetupUIEvents()
+        {
+            if (_endTurnButton != null)
+            {
+                _endTurnButton.onClick.AddListener(() => OnEndTurnClicked?.Invoke());
+            }
+        }
+
+        /// <summary>
+        /// Ініціалізує початковий стан UI
+        /// </summary>
+        private void InitializeUIState()
+        {
+            // Ховаємо руну
+            HideRuneValue();
+
+            // Ховаємо оверлей
+            if (_statusOverlay != null)
+            {
+                _statusOverlay.alpha = 0f;
+                _statusOverlay.gameObject.SetActive(false);
+            }
+
+            // Встановлюємо початковий стан панелей
+            if (_waitingPanel != null)
+                _waitingPanel.SetActive(false);
+
+            if (_gameOverPanel != null)
+                _gameOverPanel.SetActive(false);
+
+            // Початкові значення
+            UpdateActionPoints(3, 3);
+            UpdateTurnIndicator(0, "Гравець 1");
+
+            if (_actionsTitle != null)
+                _actionsTitle.text = "Доступні дії:";
+        }
+
+        /// <summary>
+        /// Створює кнопку дії
+        /// </summary>
+        private void CreateActionButton(ActionInfo action)
+        {
+            var buttonObj = Instantiate(_actionButtonPrefab, _availableActionsContainer);
+            var button = buttonObj.GetComponent<Button>();
+
+            // Налаштовуємо текст кнопки
+            var buttonText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                buttonText.text = $"{action.DisplayName} ({action.Cost} ОД)";
+            }
+
+            // Налаштовуємо іконку (якщо є)
+            var buttonIcon = buttonObj.transform.Find("Icon")?.GetComponent<Image>();
+            if (buttonIcon != null && action.Icon != null)
+            {
+                buttonIcon.sprite = action.Icon;
+            }
+
+            // Налаштовуємо інтерактивність
+            if (button != null)
+            {
+                button.interactable = action.IsEnabled;
+
+                // Підписуємося на клік
+                string actionId = action.ActionId; // Зберігаємо в локальній змінній
+                button.onClick.AddListener(() => OnActionButtonClicked?.Invoke(actionId));
+            }
+
+            _activeActionButtons.Add(buttonObj);
+        }
+
+        /// <summary>
+        /// Очищає всі кнопки дій
+        /// </summary>
         private void ClearActionButtons()
         {
             foreach (var buttonObj in _activeActionButtons)
@@ -234,6 +334,45 @@ namespace MythHunter.UI.Views
             _activeActionButtons.Clear();
         }
 
+        /// <summary>
+        /// Плавна поява оверлею
+        /// </summary>
+        private void FadeInOverlay()
+        {
+            if (_statusOverlay == null)
+                return;
+
+            _statusOverlay.gameObject.SetActive(true);
+
+            // Простий fade через LeanTween або DOTween (якщо є)
+            // Поки що просто встановлюємо альфу
+            _statusOverlay.alpha = 0.8f;
+
+            // TODO: Додати плавну анімацію
+            // LeanTween.alphaCanvas(_statusOverlay, 0.8f, 0.3f);
+        }
+
+        /// <summary>
+        /// Плавне зникнення оверлею
+        /// </summary>
+        private void FadeOutOverlay()
+        {
+            if (_statusOverlay == null)
+                return;
+
+            // TODO: Додати плавну анімацію з callback
+            // LeanTween.alphaCanvas(_statusOverlay, 0f, 0.3f).setOnComplete(() => {
+            //     _statusOverlay.gameObject.SetActive(false);
+            // });
+
+            // Поки що просто ховаємо
+            _statusOverlay.alpha = 0f;
+            _statusOverlay.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Отримує назву фази за ID
+        /// </summary>
         private string GetPhaseNameById(int phaseId)
         {
             return phaseId switch
@@ -247,7 +386,7 @@ namespace MythHunter.UI.Views
             };
         }
 
-        // НАВІГАЦІЙНІ МЕТОДИ
+        // ===== НАВІГАЦІЙНІ МЕТОДИ =====
 
         public override async UniTask OnViewCreatedAsync(NavigationParameters parameters)
         {
@@ -265,20 +404,22 @@ namespace MythHunter.UI.Views
         {
             await base.OnViewNavigatedToAsync(parameters);
 
-            // Ініціалізуємо базовий стан UI
-            HideRuneValue();
-            HideWaitingForPlayer();
-            if (_gameOverPanel != null)
-                _gameOverPanel.SetActive(false);
+            // Ініціалізуємо базовий стан UI при навігації
+            InitializeUIState();
         }
 
         protected override void OnDestroy()
         {
+            // Очищуємо всі слухачі
+            if (_endTurnButton != null)
+                _endTurnButton.onClick.RemoveAllListeners();
+
             ClearActionButtons();
             base.OnDestroy();
         }
     }
 
 
+   
    
 }
