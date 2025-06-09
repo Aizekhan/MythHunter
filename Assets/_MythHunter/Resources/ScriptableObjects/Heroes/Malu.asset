@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1611ddbec0ef974388fa029689e643d, type: 3}
+  m_Name: Malu
+  m_EditorClassIdentifier: 
+  IconPath: UI/Icons/Heroes/hero_Atakhan
+  ManaCost: 1
+  ArchetypeId: Malu
+  HeroName: Malu
+  Description: "\u041B\u0443\u0447\u043D\u0438\u043A \u043D\u0430 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0456\u0457"
+  Race: 2
+  Class: 2
+  Religion: 
+  Ideology: 
+  _professions:
+  - 
+  - 
+  - 
+  _stats:
+  - Type: 0
+    Value: 1
+  - Type: 1
+    Value: 100
+  - Type: 3
+    Value: 100
+  - Type: 9
+    Value: 10
+  - Type: 19
+    Value: 50
+  - Type: 27
+    Value: 50
+  - Type: 28
+    Value: 50
+  - Type: 22
+    Value: 10
+  - Type: 11
+    Value: 1
+  - Type: 5
+    Value: 5
+  - Type: 6
+    Value: 10
+  - Type: 17
+    Value: 10
+  - Type: 26
+    Value: 50
+  - Type: 12
+    Value: 0.1
+  - Type: 14
+    Value: 1
+  - Type: 53
+    Value: 1
+  - Type: 54
+    Value: 1
+  - Type: 55
+    Value: 1
+  - Type: 47
+    Value: 0
+  - Type: 2
+    Value: 1
+  - Type: 4
+    Value: 1
+  - Type: 7
+    Value: 10
+  - Type: 18
+    Value: 50
+  - Type: 10
+    Value: 1
+  - Type: 13
+    Value: 0.1
+  - Type: 15
+    Value: 1
+  - Type: 29
+    Value: 1
+  - Type: 56
+    Value: 1
+  - Type: 8
+    Value: 30
+  - Type: 16
+    Value: 1
+  - Type: 30
+    Value: 1
+  - Type: 57
+    Value: 1
+  AggressiveAttackMod: 1.5
+  AggressiveDefenseMod: 0.7
+  AggressiveDodgeMod: 0.7
+  AggressiveBlockMod: 0.5
+  DefensiveAttackMod: 0.7
+  DefensiveDefenseMod: 1.5
+  DefensiveDodgeMod: 1.3
+  DefensiveBlockMod: 1.5
+  Skins: []
+  _passiveSkills:
+  - Id: nature_affinity
+    Level: 1
+  _activeSkills:
+  - Id: aimed_shot
+    Level: 1
+  TeamId: 0
