@@ -16,10 +16,7 @@ namespace MythHunter.UI.Views
         {
             get;
         }
-        Transform SelectedHeroesContainer
-        {
-            get;
-        }
+       
 
         // UI update methods (dumb container)
         void UpdateMana(int remainingMana, int totalMana);

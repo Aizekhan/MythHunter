@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df04bd6159f86941b20303af29d0658, type: 3}
   m_Name: HeroCardViewConfig
   m_EditorClassIdentifier: 
-  viewId: 9
+  viewId: 10
   prefabPath: UI/Lobby/HeroCardUI
   isPopup: 0
   isCached: 1

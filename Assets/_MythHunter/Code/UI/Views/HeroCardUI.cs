@@ -1,182 +1,232 @@
-// Assets/_MythHunter/Code/UI/Views/HeroCardUI.cs
-
-using System;
+using Cysharp.Threading.Tasks;
+using MythHunter.Core.DI;
+using MythHunter.Core.MonoBehaviours;
+using MythHunter.UI.Core;
 using MythHunter.UI.Models;
+using MythHunter.UI.Services;
+using MythHunter.UI.Views;
 using MythHunter.Utils.Logging;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using MythHunter.Core.DI;
-using MythHunter.UI.Services;
-using Cysharp.Threading.Tasks;
-using MythHunter.Core.MonoBehaviours;
-using MythHunter.UI.Core; // ✅ ДОДАЙ using для IView
 
-namespace MythHunter.UI.Views
+public class HeroCardUI : LazyMonoBehaviour, IHeroCardUI, IView
 {
-    // ✅ ГОЛОВНЕ ВИПРАВЛЕННЯ: додай IView
-    public class HeroCardUI : LazyMonoBehaviour, IHeroCardUI, IView
+    [Header("Main Hero Info")]
+    [SerializeField] private Image _heroIconImage;
+    [SerializeField] private TextMeshProUGUI _nameText;
+    [SerializeField] private TextMeshProUGUI _raceText;
+
+    [Header("Level and Mana")]
+    [SerializeField] private TextMeshProUGUI _levelText; // В кружечку
+    [SerializeField] private TextMeshProUGUI _manaCostText; // Вартість в мані
+    [SerializeField] private GameObject _levelCircle; // Фон для рівня
+
+    [Header("Class Indicators")]
+    [SerializeField] private GameObject _archerIcon; // Значок лука для лучників
+    [SerializeField] private GameObject _mageIcon; // Значок для магів
+    [SerializeField] private GameObject _warriorIcon; // Значок для воїнів
+
+    [Header("Selection State")]
+    [SerializeField] private Button _selectButton;
+    [SerializeField] private GameObject _selectedIndicator;
+    [SerializeField] private Image _cardBackground;
+
+    [Header("Visual States")]
+    [SerializeField] private Color _normalColor = Color.white;
+    [SerializeField] private Color _selectedColor = Color.yellow;
+    [SerializeField] private Color _disabledColor = Color.gray;
+
+    [Header("Fallbacks")]
+    [SerializeField] private Sprite _defaultIcon;
+
+    private string _archetypeId;
+
+    [Inject] private IMythLogger _logger;
+    [Inject] private ISpriteService _spriteService;
+
+    public string ArchetypeId => _archetypeId;
+    public event Action<string> OnHeroSelected;
+
+    // ✅ Реалізація IView
+    public void Show() => gameObject.SetActive(true);
+    public void Hide() => gameObject.SetActive(false);
+
+    protected override void OnInitialized()
     {
-        [SerializeField] private TextMeshProUGUI _nameText;
-        [SerializeField] private TextMeshProUGUI _descriptionText;
-        [SerializeField] private TextMeshProUGUI _raceClassText;
-        [SerializeField] private TextMeshProUGUI _manaCostText;
-        [SerializeField] private Image _iconImage;
-        [SerializeField] private Button _selectButton;
-        [SerializeField] private GameObject _selectedIndicator;
-        [SerializeField] private Sprite _defaultIcon;
+        base.OnInitialized();
+        SetupButton();
+    }
 
-        private string _archetypeId;
-
-        [Inject] private IMythLogger _logger;
-        [Inject] private ISpriteService _spriteService;
-
-        public string ArchetypeId => _archetypeId;
-        public event Action<string> OnHeroSelected;
-
-        // ✅ РЕАЛІЗАЦІЯ IView:
-        public void Show() => gameObject.SetActive(true);
-        public void Hide() => gameObject.SetActive(false);
-
-        protected override void OnInitialized()
+    private void SetupButton()
+    {
+        if (_selectButton)
         {
-            base.OnInitialized();
+            _selectButton.onClick.AddListener(OnSelectButtonClicked);
+        }
+    }
 
-            if (_logger == null)
-            {
-                _logger?.LogError("Logger не ін'єктовано в HeroCardUI!");
-            }
-
-            if (_spriteService == null)
-            {
-                _logger?.LogError("SpriteService не ін'єктовано в HeroCardUI!");
-            }
-
-            if (_selectButton)
-            {
-                _selectButton.onClick.AddListener(OnSelectButtonClicked);
-            }
+    /// <summary>
+    /// Налаштовує картку героя з новими даними
+    /// </summary>
+    public void Setup(HeroCardModel model)
+    {
+        if (model == null)
+        {
+            _logger?.LogError("Setup викликано з null моделлю", "HeroCardUI");
+            return;
         }
 
-        public void Setup(HeroCardModel model)
+        _archetypeId = model.ArchetypeId;
+
+        // Основна інформація
+        SetHeroName(model.Name);
+        SetHeroRace(model.Race);
+        SetHeroLevel(model.Level);
+        SetManaCost(model.ManaCost);
+
+        // Класові індикатори
+        SetClassIndicators(model.Class);
+
+        // Стан картки
+        SetSelectionState(model.IsSelected, model.IsSelectable);
+
+        // Завантаження іконки
+        LoadHeroIcon(model.IconPath);
+
+        _logger?.LogDebug($"Hero card setup: {model.Name} (Level {model.Level}, Cost {model.ManaCost})", "HeroCardUI");
+    }
+
+    private void SetHeroName(string heroName)
+    {
+        if (_nameText)
+            _nameText.text = string.IsNullOrEmpty(heroName) ? _archetypeId : heroName;
+    }
+
+    private void SetHeroRace(string race)
+    {
+        if (_raceText)
+            _raceText.text = race;
+    }
+
+    private void SetHeroLevel(int level)
+    {
+        if (_levelText)
+            _levelText.text = level.ToString();
+    }
+
+    private void SetManaCost(int manaCost)
+    {
+        if (_manaCostText)
+            _manaCostText.text = manaCost.ToString();
+    }
+
+    private void SetClassIndicators(string heroClass)
+    {
+        // Ховаємо всі індикатори
+        _archerIcon?.SetActive(false);
+        _mageIcon?.SetActive(false);
+        _warriorIcon?.SetActive(false);
+
+        // Показуємо потрібний
+        switch (heroClass.ToLower())
         {
-            _logger?.LogInfo($"🎴 Setup card: {model.Name}, IconPath: {model.IconPath}", "HeroCardUI");
+            case "archer":
+            case "ranger":
+                _archerIcon?.SetActive(true);
+                break;
+            case "mage":
+            case "wizard":
+                _mageIcon?.SetActive(true);
+                break;
+            case "warrior":
+            case "tank":
+                _warriorIcon?.SetActive(true);
+                break;
+        }
+    }
 
-            if (model == null)
-            {
-                if (_logger != null)
-                    _logger.LogError("Setup викликано з null моделлю", "HeroCardUI");
-                return;
-            }
+    private void SetSelectionState(bool isSelected, bool isSelectable)
+    {
+        // Індикатор вибраності
+        if (_selectedIndicator)
+            _selectedIndicator.SetActive(isSelected);
 
-            _archetypeId = model.ArchetypeId;
+        // Інтерактивність кнопки
+        if (_selectButton)
+            _selectButton.interactable = isSelectable && !isSelected;
 
-            // Встановлюємо текстові поля
-            if (_nameText)
-                _nameText.text = string.IsNullOrEmpty(model.Name) ? model.ArchetypeId : model.Name;
-            if (_descriptionText)
-                _descriptionText.text = model.Description;
-            if (_raceClassText)
-                _raceClassText.text = $"{model.Race} - {model.Class}";
-            if (_manaCostText)
-                _manaCostText.text = $"Вартість: {model.ManaCost}";
-
-            // Асинхронне завантаження іконки
-            if (!string.IsNullOrEmpty(model.IconPath) && _spriteService != null)
-            {
-                LoadIconAsync(model.IconPath).Forget();
-            }
+        // Колір фону
+        if (_cardBackground)
+        {
+            if (isSelected)
+                _cardBackground.color = _selectedColor;
+            else if (!isSelectable)
+                _cardBackground.color = _disabledColor;
             else
-            {
-                if (_iconImage)
-                    _iconImage.sprite = _defaultIcon;
-            }
+                _cardBackground.color = _normalColor;
+        }
+    }
 
-            if (_selectedIndicator)
-                _selectedIndicator.SetActive(model.IsSelected);
-            SetInteractable(model.IsSelectable);
+    public void SetInteractable(bool interactable)
+    {
+        if (_selectButton)
+            _selectButton.interactable = interactable;
+    }
 
-            // Налаштування кнопки
-            if (_selectButton)
-            {
-                _selectButton.onClick.RemoveAllListeners();
-                _selectButton.onClick.AddListener(OnSelectButtonClicked);
-            }
+    private async UniTaskVoid LoadHeroIcon(string iconPath)
+    {
+        if (string.IsNullOrEmpty(iconPath) || _spriteService == null)
+        {
+            SetDefaultIcon();
+            return;
         }
 
-        public void SetInteractable(bool interactable)
+        try
         {
-            if (_selectButton != null)
-                _selectButton.interactable = interactable;
-        }
-
-        public void Reset()
-        {
-            // ✅ ПРАВИЛЬНА відписка від події
-            OnHeroSelected = null;
-
-            // Скидаємо всі поля до початкових значень
-            _archetypeId = string.Empty;
-
-            // Скидаємо UI-елементи
-            if (_nameText)
-                _nameText.text = string.Empty;
-            if (_descriptionText)
-                _descriptionText.text = string.Empty;
-            if (_raceClassText)
-                _raceClassText.text = string.Empty;
-            if (_manaCostText)
-                _manaCostText.text = string.Empty;
-            if (_iconImage && _defaultIcon)
-                _iconImage.sprite = _defaultIcon;
-            if (_selectedIndicator)
-                _selectedIndicator.SetActive(false);
-
-            // Скидаємо слухачі кнопки
-            if (_selectButton)
-            {
-                _selectButton.onClick.RemoveAllListeners();
-                _selectButton.onClick.AddListener(OnSelectButtonClicked);
-            }
-
-            if (_logger != null)
-                _logger.LogInfo("HeroCardUI скинуто", "HeroCardUI");
-        }
-
-        private async UniTaskVoid LoadIconAsync(string iconPath)
-        {
-            _logger?.LogInfo($"🖼️ LoadIconAsync викликано для: {iconPath}", "HeroCardUI");
-
-            if (_spriteService == null)
-            {
-                _logger?.LogError($"❌ SpriteService is null в LoadIconAsync!", "HeroCardUI");
-                return;
-            }
-
             var sprite = await _spriteService.GetSpriteAsync(iconPath, _defaultIcon);
-            if (this != null && _iconImage != null)
+            if (this != null && _heroIconImage != null)
             {
-                _iconImage.sprite = sprite;
-                _logger?.LogInfo($"✅ Іконка встановлена для: {iconPath}", "HeroCardUI");
-            }
-            else
-            {
-                _logger?.LogWarning($"⚠️ Об'єкт або _iconImage знищено під час завантаження: {iconPath}", "HeroCardUI");
+                _heroIconImage.sprite = sprite;
             }
         }
-
-        private void OnSelectButtonClicked()
+        catch (Exception ex)
         {
-            OnHeroSelected?.Invoke(_archetypeId);
+            _logger?.LogWarning($"Помилка завантаження іконки {iconPath}: {ex.Message}", "HeroCardUI");
+            SetDefaultIcon();
         }
+    }
 
-        private void OnDestroy()
-        {
-            if (_selectButton)
-                _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
+    private void SetDefaultIcon()
+    {
+        if (_heroIconImage && _defaultIcon)
+            _heroIconImage.sprite = _defaultIcon;
+    }
 
-            if (_logger != null)
-                _logger.LogInfo("HeroCardUI знищено", "HeroCardUI");
-        }
+    public void Reset()
+    {
+        OnHeroSelected = null;
+        _archetypeId = string.Empty;
+
+        // Скидаємо UI елементи
+        SetHeroName("");
+        SetHeroRace("");
+        SetHeroLevel(1);
+        SetManaCost(1);
+        SetClassIndicators("");
+        SetSelectionState(false, true);
+        SetDefaultIcon();
+    }
+
+    private void OnSelectButtonClicked()
+    {
+        OnHeroSelected?.Invoke(_archetypeId);
+    }
+
+    private void OnDestroy()
+    {
+        if (_selectButton)
+            _selectButton.onClick.RemoveListener(OnSelectButtonClicked);
     }
 }

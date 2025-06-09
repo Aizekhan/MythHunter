@@ -2,12 +2,13 @@
 
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using MythHunter.UI.Core;
 using MythHunter.UI.Models;
 using MythHunter.UI.Views;
 
 namespace MythHunter.UI.Presenters
 {
-    public interface ILobbyPresenter
+    public interface ILobbyPresenter : IPresenter
     {
         bool IsInitialized
         {
@@ -17,15 +18,11 @@ namespace MythHunter.UI.Presenters
         UniTask InitializeAsync();
         void Dispose();
 
-        // Методи обробки подій
         void OnHeroSelected(string archetypeId);
         void OnSelectionConfirmed();
         UniTask StartGameAsync();
-        // Додатковий метод для явного запуску ініціалізації лоббі
-        UniTask InitializeLobbyAsync(int playerCount);
-        // Методи отримання даних
+
         List<HeroCardModel> GetAvailableHeroes();
-        List<HeroCardModel> GetSelectedHeroes();
         int GetRemainingMana();
         float GetRemainingTime();
     }
