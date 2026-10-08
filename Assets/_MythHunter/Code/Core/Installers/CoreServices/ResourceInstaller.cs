@@ -1,0 +1,54 @@
+// Шлях: Assets/_MythHunter/Code/Core/Installers/ResourceInstaller.cs
+using MythHunter.Core.DI;
+using MythHunter.Resources;
+using MythHunter.Resources.Core;
+using MythHunter.Resources.Pool;
+using MythHunter.Resources.Providers;
+using MythHunter.Resources.SceneManagement;
+using MythHunter.Utils.Logging;
+
+namespace MythHunter.Core.Installers
+{
+    /// <summary>
+    /// Інсталятор для ресурсної системи
+    /// </summary>
+    public class ResourceInstaller : DIInstaller
+    {
+        public override void InstallBindings(IDIContainer container)
+        {
+            var logger = container.Resolve<IMythLogger>();
+            logger.LogInfo("Встановлення залежностей ResourceSystem...", "Installer");
+
+            // DI автоматично створить з IMythLogger
+            BindSingleton<IResourceProvider, DefaultResourceProvider>(container);
+            // Asset Bundle Provider
+            BindSingleton<IAssetBundleProvider, AssetBundleProvider>(container);
+            // Pool Manager
+            BindSingleton<IPoolManager, PoolManager>(container);
+            // Preload Manager
+            BindSingleton<IPreloadManager, PreloadManager>(container);
+            // Addressables — тепер без int в конструкторі
+            if (IsAddressablesAvailable())
+            {
+                BindSingleton<IAddressablesProvider, AddressablesProvider>(container);
+                logger.LogInfo("Addressables Provider зареєстровано", "Installer");
+            }
+
+            // Основні сервіси
+            BindSingleton<IResourceManager, ResourceManager>(container);
+
+            logger.LogInfo("Встановлення залежностей ResourceSystem завершено", "Installer");
+        }
+
+        private bool IsAddressablesAvailable()
+        {
+            var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblies)
+            {
+                if (assembly.GetName().Name == "Unity.Addressables")
+                    return true;
+            }
+            return false;
+        }
+    }
+}
