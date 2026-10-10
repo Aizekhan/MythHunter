@@ -1,21 +1,16 @@
-# Framework.ECS.Contracts
+# Framework.ECS.Contracts — staged boundary
 
-This assembly is the first extraction boundary. It may contain only neutral ECS contracts.
+The assembly is intended to own only low-level ECS contracts.
 
-## Current contract scope
-- `IComponent`: marker for ECS component data.
-- `IEntityManager`: existing integer-ID-based contract preserved for compatibility.
+Current types:
+- `IComponent`
+- `IEntityManager`
 
-## Allowed dependencies
-- .NET standard library APIs only.
+The namespace remains `MythHunter.Core.ECS` to avoid a simultaneous namespace migration.
 
-## Forbidden dependencies
-- MythHunter runtime implementation assemblies
-- UnityEngine and UnityEditor
-- game phases, domain events, DI container, loggers, resource providers, system registry
+Dependencies are intentionally empty, with Unity engine references disabled.
 
-## Not part of this assembly
-- `EntityManager`, `EcsWorld`, `Entity`, ComponentCache, archetypes, serializers, factories, game components and systems.
+## Integration status
+This contract assembly has been staged in draft PR #18. It is not a completed migration until the existing consumers are explicitly connected to it, focused tests are added, and a Unity compile succeeds. Existing consumers are currently in Unity's predefined assemblies unless moved into named assemblies; Unity does not let predefined assemblies directly reference user asmdef assemblies, so integration needs a deliberate layout decision.
 
-## Status
-Staged on a feature branch and not yet Unity-compiled. Do not merge until the Unity import/compile is successful and focused tests are added and run.
+Do not move the implementation/storage layer into this assembly. Keep `EntityManager`, `EcsWorld`, caches, archetypes, serializers, factories, concrete components and game systems out of the contracts layer.
