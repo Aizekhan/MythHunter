@@ -1,5 +1,4 @@
 using System;
-using MythHunter.Core.ECS;
 using RPGFramework.ECS;
 
 namespace MythHunter.Entities
