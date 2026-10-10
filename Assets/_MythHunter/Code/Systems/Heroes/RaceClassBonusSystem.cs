@@ -7,6 +7,7 @@ using MythHunter.Entities.Heroes;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Gameplay;
+using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Heroes
 {

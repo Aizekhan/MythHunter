@@ -1,4 +1,5 @@
 name: RPGFramework ECS Runtime
+# Keep the lightweight Framework boundary/test gate available for the stacked ECS migration branch.
 
 on:
   pull_request:
@@ -9,7 +10,7 @@ on:
       - "Build/validate_framework_ecs_boundary.py"
       - ".github/workflows/rpg-framework-ecs.yml"
   push:
-    branches: [dev]
+    branches: [dev, "feature/epic-03-6-ecs-consumer-migration"]
     paths:
       - "Assets/_Framework/ECS/**"
       - "Build/RPGFramework.ECS.Tests/**"

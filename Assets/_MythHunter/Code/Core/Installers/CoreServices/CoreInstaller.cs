@@ -13,6 +13,7 @@ using MythHunter.Services.GameSettings;
 using MythHunter.Entities;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Resources;
+using RPGFramework.ECS;
 
 namespace MythHunter.Core.Installers
 {

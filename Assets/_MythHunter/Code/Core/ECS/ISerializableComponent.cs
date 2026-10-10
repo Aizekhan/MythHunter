@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Core/ECS/ISerializableComponent.cs (створюємо новий)
+using RPGFramework.ECS;
 namespace MythHunter.Core.ECS
 {
     /// <summary>

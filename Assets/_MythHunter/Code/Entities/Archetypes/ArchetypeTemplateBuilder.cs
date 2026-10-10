@@ -1,6 +1,7 @@
 // Файл: Assets/_MythHunter/Code/Entities/Archetypes/ArchetypeTemplateBuilder.cs
 using System;
 using MythHunter.Core.ECS;
+using RPGFramework.ECS;
 
 namespace MythHunter.Entities.Archetypes
 {

@@ -11,6 +11,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using MythHunter.Entities;
 using System.Collections.Generic;
+using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Heroes
 {

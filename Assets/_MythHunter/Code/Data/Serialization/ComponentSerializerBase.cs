@@ -1,6 +1,7 @@
 // Assets/_MythHunter/Code/Data/Serialization/ComponentSerializerBase.cs
 using System.IO;
 using MythHunter.Core.ECS;
+using RPGFramework.ECS;
 
 namespace MythHunter.Data.Serialization
 {

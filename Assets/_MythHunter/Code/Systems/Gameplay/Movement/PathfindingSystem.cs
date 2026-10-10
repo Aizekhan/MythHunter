@@ -5,6 +5,7 @@ using MythHunter.Utils.Logging;
 using System.Collections.Generic;
 using UnityEngine;
 // Assets/_MythHunter/Code/Systems/Movement/PathfindingSystem.cs
+using RPGFramework.ECS;
 namespace MythHunter.Systems.Movement
 {
     /// <summary>

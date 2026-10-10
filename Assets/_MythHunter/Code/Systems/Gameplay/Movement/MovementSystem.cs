@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
+using RPGFramework.ECS;
 namespace MythHunter.Systems.Movement
 {
     /// <summary>
