@@ -39,11 +39,15 @@ namespace RPGFramework.ECS
         
         public void AddComponent<TComponent>(int entityId, TComponent component) where TComponent : IComponent
         {
-            if (!_components.ContainsKey(entityId))
-                _components[entityId] = new Dictionary<Type, IComponent>();
-                
+            if (!_components.TryGetValue(entityId, out var entityComponents))
+            {
+                throw new ArgumentException(
+                    $"Entity ID {entityId} has not been created or has already been destroyed.",
+                    nameof(entityId));
+            }
+
             Type componentType = typeof(TComponent);
-            _components[entityId][componentType] = component;
+            entityComponents[componentType] = component;
             
             // Оновлення кешу для швидкого пошуку
             if (!_entitiesByComponent.ContainsKey(componentType))
