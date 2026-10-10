@@ -1,4 +1,5 @@
 using System;
+#nullable enable
 
 namespace RPGFramework.Logging
 {
@@ -11,6 +12,6 @@ namespace RPGFramework.Logging
         /// <summary>
         /// Writes one log message with optional category and exception context.
         /// </summary>
-        void Log(LogSeverity severity, string message, string category = null, Exception exception = null);
+        void Log(LogSeverity severity, string message, string? category = null, Exception? exception = null);
     }
 }
