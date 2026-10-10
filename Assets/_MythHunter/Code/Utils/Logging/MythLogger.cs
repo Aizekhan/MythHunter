@@ -156,10 +156,10 @@ namespace MythHunter.Utils.Logging
 
             if (exception != null)
             {
-                message += $"\\nException: {exception.Message}";
+                message += $"\nException: {exception.Message}";
                 if (exception.StackTrace != null)
                 {
-                    message += $"\\nStackTrace: {exception.StackTrace}";
+                    message += $"\nStackTrace: {exception.StackTrace}";
                 }
             }
 
