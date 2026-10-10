@@ -1,4 +1,5 @@
 name: RPGFramework ECS Runtime
+# Keep the lightweight Framework boundary/test gate available for the stacked ECS migration branch.
 
 on:
   pull_request:
