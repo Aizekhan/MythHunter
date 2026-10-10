@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/CoreInstaller.cs
 using MythHunter.Core.DI;
+using MythHunter.Core.ECS;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
 using MythHunter.Events;
