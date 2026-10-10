@@ -44,6 +44,15 @@ namespace RPGFramework.ECS.Tests
         }
 
         [Test]
+        public void AddComponent_RejectsUnknownEntityWithoutCreatingPhantomEntity()
+        {
+            Assert.Throws<System.ArgumentException>(() =>
+                _entityManager.AddComponent(100, new PositionComponent { X = 1, Y = 2 }));
+
+            CollectionAssert.IsEmpty(_entityManager.GetAllEntities());
+        }
+
+        [Test]
         public void TryGetComponent_ReturnsFalseWhenComponentIsMissing()
         {
             int entityId = _entityManager.CreateEntity();
