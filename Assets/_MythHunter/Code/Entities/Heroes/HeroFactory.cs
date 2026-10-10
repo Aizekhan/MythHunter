@@ -4,7 +4,6 @@ using RPGFramework.ECS;
 using System;
 using System.Collections.Generic;
 using MythHunter.Core.DI;
-using MythHunter.Core.ECS;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Components.Character;
 using MythHunter.Utils.Logging;
