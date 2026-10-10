@@ -78,14 +78,25 @@ for path in new_meta_paths:
         fail(f"duplicate new asset GUID {guid}: {new_guids[guid].relative_to(ROOT)} and {path.relative_to(ROOT)}")
     new_guids[guid] = path
 
-legacy_meta_paths = [
-    ROOT / "Assets" / "_MythHunter" / "Code" / "Core" / "ECS" / "IComponent.cs.meta",
-    ROOT / "Assets" / "_MythHunter" / "Code" / "Core" / "ECS" / "IEntityManager.cs.meta",
+legacy_ecs_paths = [
+    ROOT / "Assets" / "_MythHunter" / "Code" / "Core" / "ECS" / "IComponent.cs",
+    ROOT / "Assets" / "_MythHunter" / "Code" / "Core" / "ECS" / "IEntityManager.cs",
+    ROOT / "Assets" / "_MythHunter" / "Code" / "Core" / "ECS" / "EntityManager.cs",
 ]
-for path in legacy_meta_paths:
-    guid = get_guid(path)
-    if guid in new_guids:
-        fail(f"Framework assets reuse legacy MythHunter GUID {guid}")
+for path in legacy_ecs_paths:
+    if path.exists():
+        fail(f"legacy duplicate ECS type/implementation remains: {path.relative_to(ROOT)}")
+    meta_path = path.with_name(path.name + ".meta")
+    if meta_path.exists():
+        fail(f"orphaned legacy ECS metadata remains: {meta_path.relative_to(ROOT)}")
+
+mythhunter_root = ROOT / "Assets" / "_MythHunter"
+for path in sorted(mythhunter_root.rglob("*.cs")):
+    source = path.read_text(encoding="utf-8")
+    if "MythHunter.Core.ECS.IComponent" in source or "MythHunter.Core.ECS.IEntityManager" in source:
+        fail(f"{path.relative_to(ROOT)} still explicitly references a legacy ECS contract")
+    if re.search(r"\\b(?:interface|class|struct)\\s+(?:IComponent|IEntityManager)\\b", source):
+        fail(f"{path.relative_to(ROOT)} redeclares an ECS contract outside the Framework assembly")
 
 test_sources = sorted(TESTS.rglob("*.cs"))
 if not test_sources:
@@ -98,4 +109,5 @@ print("Framework ECS static boundary: OK")
 print(f"Runtime C# files: {len(runtime_sources)}")
 print(f"Test C# files: {len(test_sources)}")
 print(f"Framework/Test asset GUIDs checked: {len(new_guids)}")
-print("No UnityEngine, UnityEditor, or MythHunter references found in runtime sources.")
+print("No UnityEngine, UnityEditor, or MythHunter references found in Framework runtime.")
+print("No duplicate legacy ECS contracts or EntityManager remain in MythHunter.")
