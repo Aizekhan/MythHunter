@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using RPGFramework.Logging;
+#nullable enable
 
 namespace RPGFramework.Logging.Tests
 {
@@ -23,11 +24,11 @@ namespace RPGFramework.Logging.Tests
         private sealed class RecordingLogger : ILogger
         {
             public LogSeverity LastSeverity { get; private set; }
-            public string LastMessage { get; private set; }
-            public string LastCategory { get; private set; }
-            public Exception LastException { get; private set; }
+            public string LastMessage { get; private set; } = string.Empty;
+            public string? LastCategory { get; private set; }
+            public Exception? LastException { get; private set; }
 
-            public void Log(LogSeverity severity, string message, string category = null, Exception exception = null)
+            public void Log(LogSeverity severity, string message, string? category = null, Exception? exception = null)
             {
                 LastSeverity = severity;
                 LastMessage = message;
