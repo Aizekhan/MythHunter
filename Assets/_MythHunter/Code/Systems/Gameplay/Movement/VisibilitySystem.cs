@@ -9,6 +9,7 @@ using UnityEngine;
 using MythHunter.Core.DI;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
+using RPGFramework.ECS;
 namespace MythHunter.Systems.Movement
 {
     /// <summary>

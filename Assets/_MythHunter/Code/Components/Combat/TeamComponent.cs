@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Components/Combat/TeamComponent.cs
 using MythHunter.Core.ECS;
+using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
 {

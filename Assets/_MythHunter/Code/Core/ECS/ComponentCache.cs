@@ -1,4 +1,5 @@
 // Файл: Assets/_MythHunter/Code/Core/ECS/ComponentCache.cs
+using RPGFramework.ECS;
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

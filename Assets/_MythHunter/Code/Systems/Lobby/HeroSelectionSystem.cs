@@ -12,6 +12,7 @@ using MythHunter.Entities.Archetypes;
 using MythHunter.Resources.Core;
 using Cysharp.Threading.Tasks;
 using MythHunter.Systems.Core;
+using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Lobby
 {

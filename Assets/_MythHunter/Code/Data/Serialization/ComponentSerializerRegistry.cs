@@ -1,9 +1,9 @@
 // Assets/_MythHunter/Code/Data/Serialization/ComponentSerializerRegistry.cs
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
+using RPGFramework.ECS;
 
 namespace MythHunter.Data.Serialization
 {

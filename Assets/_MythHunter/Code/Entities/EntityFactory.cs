@@ -1,9 +1,9 @@
 // Шлях: Assets/_MythHunter/Code/Entities/EntityFactory.cs
+using RPGFramework.ECS;
 
 using System;
 using System.Collections.Generic;
 using MythHunter.Core.DI;
-using MythHunter.Core.ECS;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Utils.Logging;
 

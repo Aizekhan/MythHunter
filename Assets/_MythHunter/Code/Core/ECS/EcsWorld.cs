@@ -1,4 +1,5 @@
 using MythHunter.Systems.Core;
+using RPGFramework.ECS;
 
 namespace MythHunter.Core.ECS
 {

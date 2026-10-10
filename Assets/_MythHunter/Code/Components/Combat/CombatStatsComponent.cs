@@ -1,6 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Components/Combat/CombatStatsComponent.cs
 using MythHunter.Core.ECS;
 using UnityEngine;
+using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
 {

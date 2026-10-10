@@ -13,6 +13,7 @@ using MythHunter.Services.GameSettings;
 using MythHunter.Entities;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Resources;
+using RPGFramework.ECS;
 
 namespace MythHunter.Core.Installers
 {
@@ -26,37 +27,20 @@ namespace MythHunter.Core.Installers
             // Логер з GameBotstrapper.cs
             var logger = container.Resolve<IMythLogger>();
 
-            
             BindSingleton<IEntityManager, EntityManager>(container);
             BindSingleton<IEventPool, EventPool>(container);
-
-            // Реєструємо тимчасовий EventBus, який буде перезаписаний
-            // ВАЖЛИВО: Використовуємо просту версію, яка не має залежностей
             BindSingleton<IEventBus, SimpleEventBus>(container);
-
             BindSingleton<IGameStateMachine, GameStateMachine>(container);
-
-            // Реєстрація SystemRegistry
             BindSingleton<ISystemRegistry, SystemRegistry>(container);
             BindSingleton<IEcsWorld, EcsWorld>(container);
-
-            // Реєстрація менеджера життєвого циклу DI
             BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
-
-            // 🟢 Реєстрація фазового провайдера та фазової системи
-            BindSingleton<IPhaseProvider, GamePhaseProvider>(container);     // або EmergencyPhaseProvider
-
-            BindSingleton<SceneLoader, SceneLoader>(container); // цей другорядний, використовується тільки в СценДиспечер (тому нема інтерфейса)
-            BindSingleton<ISceneDispatcher, SceneDispatcher>(container);// 
+            BindSingleton<IPhaseProvider, GamePhaseProvider>(container);
+            BindSingleton<SceneLoader, SceneLoader>(container);
+            BindSingleton<ISceneDispatcher, SceneDispatcher>(container);
             BindSingleton<IGameFlowManager, GameFlowManager>(container);
-
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
             BindSingleton<AutoPreloadConfigurator, AutoPreloadConfigurator>(container);
 
-
-          
-
-            // Реєструємо розширення DI
             var diExtensionsInstaller = new DIExtensionsInstaller();
             diExtensionsInstaller.InstallBindings(container);
         }

@@ -291,7 +291,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Component.cs");
-            sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
             sb.AppendLine("{");
@@ -322,6 +322,7 @@ namespace MythHunter.Editor
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Component.cs");
             sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
             sb.AppendLine("{");
@@ -356,6 +357,7 @@ namespace MythHunter.Editor
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/I{_name}System.cs");
             sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
 
             if (_useUniTask)
             {
@@ -387,6 +389,7 @@ namespace MythHunter.Editor
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}System.cs");
             sb.AppendLine("using MythHunter.Core.DI;");
             sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine("using MythHunter.Events;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
 
@@ -559,6 +562,7 @@ namespace MythHunter.Editor
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}.cs");
             sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
             sb.AppendLine("{");
@@ -586,6 +590,7 @@ namespace MythHunter.Editor
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Archetype.cs");
             sb.AppendLine("using MythHunter.Core.ECS;");
+            sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine("using MythHunter.Entities;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");

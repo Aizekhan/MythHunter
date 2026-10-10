@@ -1,5 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Components/Combat/HealthComponent.cs
 using MythHunter.Core.ECS;
+using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
 {

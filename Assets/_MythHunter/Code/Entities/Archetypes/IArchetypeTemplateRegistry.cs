@@ -1,7 +1,7 @@
 // Файл: Assets/_MythHunter/Code/Entities/Archetypes/IArchetypeTemplateRegistry.cs
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.ECS; // Додайте цей рядок
+using RPGFramework.ECS;
 
 namespace MythHunter.Entities.Archetypes
 {

@@ -10,6 +10,7 @@ using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using UnityEngine;
+using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Combat
 {

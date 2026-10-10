@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using RPGFramework.ECS;
 
 namespace MythHunter.Core.ECS
 {

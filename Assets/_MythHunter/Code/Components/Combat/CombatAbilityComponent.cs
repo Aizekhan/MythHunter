@@ -1,6 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Components/Combat/CombatAbilityComponent.cs
 using System;
 using MythHunter.Core.ECS;
+using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
 {
