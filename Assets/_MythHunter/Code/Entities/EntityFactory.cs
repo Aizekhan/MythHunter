@@ -1,4 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Entities/EntityFactory.cs
+using RPGFramework.ECS;
 
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,5 @@
 // Файл: Assets/_MythHunter/Code/Entities/Archetypes/ArchetypeTemplateRegistry.cs
+using RPGFramework.ECS;
 
 using System;
 using System.Collections.Generic;

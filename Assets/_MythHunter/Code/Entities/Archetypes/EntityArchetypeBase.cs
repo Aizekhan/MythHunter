@@ -1,4 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Entities/Archetypes/EntityArchetypeBase.cs
+using RPGFramework.ECS;
 
 using MythHunter.Core.ECS;
 using System;
