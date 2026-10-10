@@ -95,7 +95,7 @@ for path in sorted(mythhunter_root.rglob("*.cs")):
     source = path.read_text(encoding="utf-8")
     if "MythHunter.Core.ECS.IComponent" in source or "MythHunter.Core.ECS.IEntityManager" in source:
         fail(f"{path.relative_to(ROOT)} still explicitly references a legacy ECS contract")
-    if re.search(r"\\b(?:interface|class|struct)\\s+(?:IComponent|IEntityManager)\\b", source):
+    if re.search(r"\b(?:interface|class|struct)\s+(?:IComponent|IEntityManager)\b", source):
         fail(f"{path.relative_to(ROOT)} redeclares an ECS contract outside the Framework assembly")
 
 test_sources = sorted(TESTS.rglob("*.cs"))
