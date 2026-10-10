@@ -172,6 +172,7 @@ namespace MythHunter.Debug.Tools
             public string[] ScenesWithConfigs;
         }
 
+        #if UNITY_EDITOR
         public void RenderGUI(Rect area)
         {
             GUILayout.BeginArea(area);
@@ -199,6 +200,7 @@ namespace MythHunter.Debug.Tools
 
             GUILayout.EndArea();
         }
+        #endif
 
 
 
