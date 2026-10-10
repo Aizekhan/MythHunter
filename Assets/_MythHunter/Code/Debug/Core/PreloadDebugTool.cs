@@ -5,8 +5,10 @@ using MythHunter.Core.DI;
 using MythHunter.Debug.Core;
 using MythHunter.Resources;
 using MythHunter.Utils.Logging;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MythHunter.Debug.Tools
 {
