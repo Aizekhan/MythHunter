@@ -1,0 +1,38 @@
+name: RPGFramework ECS Runtime
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/ECS/**"
+      - "Build/RPGFramework.ECS.Tests/**"
+      - "Build/validate_framework_ecs_boundary.py"
+      - ".github/workflows/rpg-framework-ecs.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/ECS/**"
+      - "Build/RPGFramework.ECS.Tests/**"
+      - ".github/workflows/rpg-framework-ecs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and ECS tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate assembly boundary and GUIDs
+        run: python Build/validate_framework_ecs_boundary.py
+
+      - name: Run ECS tests
+        run: dotnet test Build/RPGFramework.ECS.Tests/RPGFramework.ECS.Tests.csproj --configuration Release
