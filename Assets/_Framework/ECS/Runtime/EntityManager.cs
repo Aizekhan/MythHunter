@@ -60,7 +60,7 @@ namespace RPGFramework.ECS
         public TComponent GetComponent<TComponent>(int entityId) where TComponent : IComponent
         {
             if (!HasComponent<TComponent>(entityId))
-                return default;
+                return default!;
                 
             return (TComponent)_components[entityId][typeof(TComponent)];
         }
