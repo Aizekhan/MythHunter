@@ -6,6 +6,7 @@ on:
     branches: [dev, "feature/epic-03-6-ecs-consumer-migration"]
     paths:
       - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Logging/**"
       - "Assets/_MythHunter/**"
       - "Build/RPGFramework.ECS.Tests/**"
       - "Build/validate_framework_ecs_boundary.py"
