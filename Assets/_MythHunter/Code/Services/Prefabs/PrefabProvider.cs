@@ -4,6 +4,9 @@ using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using System;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class PrefabProvider : IPrefabProvider
 {
