@@ -1,4 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/ECS/ComponentFactory.cs
+using RPGFramework.ECS;
 
 using System;
 using System.Collections.Generic;
