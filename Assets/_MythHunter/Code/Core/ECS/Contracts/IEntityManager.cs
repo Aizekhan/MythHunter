@@ -1,10 +1,7 @@
-using System;
-
 namespace MythHunter.Core.ECS
 {
     /// <summary>
-    /// Identifies an entity in an ECS world through its integer handle.
-    /// This compatibility API intentionally keeps integer IDs until callers can be migrated coherently.
+    /// Current ECS entity-manager contract. Entity IDs remain integers during the first extraction step.
     /// </summary>
     public interface IEntityManager
     {
