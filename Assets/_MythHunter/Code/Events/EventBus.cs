@@ -9,7 +9,6 @@ using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using MythHunter.Utils.Extensions;
 using MythHunter.Events.Domain.Lobby;
-using UnityEditor;
 
 namespace MythHunter.Events
 {
