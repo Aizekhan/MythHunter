@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Entities/Heroes/HeroFactory.cs
+using RPGFramework.ECS;
 
 using System;
 using System.Collections.Generic;

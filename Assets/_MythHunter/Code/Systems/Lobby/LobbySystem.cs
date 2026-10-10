@@ -15,6 +15,7 @@ using MythHunter.Entities;
 using MythHunter.Systems.Core;
 using MythHunter.Services.GameSettings;
 using MythHunter.UI.Core;
+using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Lobby
 {
