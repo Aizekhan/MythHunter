@@ -172,9 +172,9 @@ namespace MythHunter.Debug.Tools
             public string[] ScenesWithConfigs;
         }
 
-        #if UNITY_EDITOR
         public void RenderGUI(Rect area)
         {
+#if UNITY_EDITOR
             GUILayout.BeginArea(area);
             GUILayout.Label("=== Preload Monitor ===", EditorStyles.boldLabel);
 
@@ -199,8 +199,8 @@ namespace MythHunter.Debug.Tools
             }
 
             GUILayout.EndArea();
+#endif
         }
-        #endif
 
 
 
