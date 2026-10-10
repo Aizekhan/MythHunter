@@ -19,7 +19,7 @@ The integer entity ID representation is retained for the first migration step. A
 ## Behavior retained for compatibility in this slice
 - IDs start at 1 and increase for the manager lifetime.
 - Destroying an unknown ID is a no-op.
-- Adding a component for an unknown ID currently creates storage for that ID. This should be hardened in a separately tested API change.
+- Adding a component for an unknown or destroyed ID throws `ArgumentException`; it does not create a phantom entity. This is covered by a focused test.
 - `GetComponent` returns `default` when a component is absent; use `HasComponent` / `TryGetComponent` when absence matters.
 
 ## Validation status
