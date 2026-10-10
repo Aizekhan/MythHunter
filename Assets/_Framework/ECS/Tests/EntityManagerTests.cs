@@ -44,10 +44,15 @@ namespace RPGFramework.ECS.Tests
         }
 
         [Test]
-        public void AddComponent_RejectsUnknownEntityWithoutCreatingPhantomEntity()
+        public void AddComponent_RejectsUnknownOrDestroyedEntityWithoutCreatingPhantoms()
         {
+            int destroyedEntityId = _entityManager.CreateEntity();
+            _entityManager.DestroyEntity(destroyedEntityId);
+
             Assert.Throws<System.ArgumentException>(() =>
-                _entityManager.AddComponent(100, new PositionComponent { X = 1, Y = 2 }));
+                _entityManager.AddComponent(destroyedEntityId, new PositionComponent { X = 1, Y = 2 }));
+            Assert.Throws<System.ArgumentException>(() =>
+                _entityManager.AddComponent(100, new PositionComponent { X = 3, Y = 4 }));
 
             CollectionAssert.IsEmpty(_entityManager.GetAllEntities());
         }
