@@ -1,10 +1,5 @@
+// Canonical contract moved to Contracts/IComponent.cs as part of the staged extraction.
 namespace MythHunter.Core.ECS
 {
-    /// <summary>
-    /// Базовий інтерфейс для компонентів ECS
-    /// </summary>
-    public interface IComponent
-    {
-        // Маркерний інтерфейс
-    }
+    // Intentionally no duplicate IComponent type here.
 }
