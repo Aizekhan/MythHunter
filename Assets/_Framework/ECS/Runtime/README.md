@@ -23,4 +23,7 @@ The integer entity ID representation is retained for the first migration step. A
 - `GetComponent` returns `default` when a component is absent; use `HasComponent` / `TryGetComponent` when absence matters.
 
 ## Validation status
-Focused NUnit test source is included in `Assets/_Framework/ECS/Tests`. It has not yet been executed in Unity against this branch. Do not merge until Unity compilation and the focused tests have actually run.
+- Headless .NET test project: 8 passed, 0 failed, 0 skipped in GitHub Actions.
+- Unity Test Runner and Unity project compilation: not yet validated against this branch.
+
+Do not merge until Unity imports the assembly definitions, the full project compiles, and the focused Unity tests run.
