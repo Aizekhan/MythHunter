@@ -1,4 +1,5 @@
 using System;
+using RPGFramework.Logging;
 
 namespace MythHunter.Utils.Logging
 {
@@ -20,7 +21,7 @@ namespace MythHunter.Utils.Logging
     /// Інтерфейс для системи логування проекту MythHunter.
     /// Забезпечує методи для логування повідомлень різних рівнів важливості.
     /// </summary>
-    public interface IMythLogger
+    public interface IMythLogger : ILogger
     {
         void LogInfo(string message, string category = null);
         void LogWarning(string message, string category = null);

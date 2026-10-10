@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "Assets" / "_Framework" / "ECS" / "Runtime"
 TESTS = ROOT / "Assets" / "_Framework" / "ECS" / "Tests"
+LOGGING_RUNTIME = ROOT / "Assets" / "_Framework" / "Logging" / "Runtime"
+LOGGING_TESTS = ROOT / "Assets" / "_Framework" / "Logging" / "Tests"
 
 
 def fail(message: str) -> None:
@@ -36,8 +38,12 @@ def get_guid(meta_path: Path) -> str:
 
 runtime_asmdef_path = RUNTIME / "RPGFramework.ECS.Runtime.asmdef"
 test_asmdef_path = TESTS / "RPGFramework.ECS.Runtime.Tests.asmdef"
+logging_asmdef_path = LOGGING_RUNTIME / "RPGFramework.Logging.Runtime.asmdef"
+logging_test_asmdef_path = LOGGING_TESTS / "RPGFramework.Logging.Runtime.Tests.asmdef"
 runtime_asmdef = read_json(runtime_asmdef_path)
 test_asmdef = read_json(test_asmdef_path)
+logging_asmdef = read_json(logging_asmdef_path)
+logging_test_asmdef = read_json(logging_test_asmdef_path)
 
 if runtime_asmdef.get("name") != "RPGFramework.ECS.Runtime":
     fail("runtime assembly name must be RPGFramework.ECS.Runtime")
@@ -51,9 +57,22 @@ if runtime_asmdef.get("autoReferenced") is not True:
 if "RPGFramework.ECS.Runtime" not in test_asmdef.get("references", []):
     fail("test assembly must reference RPGFramework.ECS.Runtime")
 if "TestAssemblies" not in test_asmdef.get("optionalUnityReferences", []):
-    fail("test assembly must enable Unity Test Framework references")
+    fail("ECS test assembly must enable Unity Test Framework references")
 
-runtime_sources = sorted(RUNTIME.rglob("*.cs"))
+if logging_asmdef.get("name") != "RPGFramework.Logging.Runtime":
+    fail("logging assembly name must be RPGFramework.Logging.Runtime")
+if logging_asmdef.get("references") != []:
+    fail("Framework Logging runtime must not reference other assemblies")
+if logging_asmdef.get("noEngineReferences") is not True:
+    fail("Framework Logging runtime must disable Unity engine references")
+if logging_asmdef.get("autoReferenced") is not True:
+    fail("Framework Logging runtime must be auto-referenced during this migration stage")
+if "RPGFramework.Logging.Runtime" not in logging_test_asmdef.get("references", []):
+    fail("logging test assembly must reference RPGFramework.Logging.Runtime")
+if "TestAssemblies" not in logging_test_asmdef.get("optionalUnityReferences", []):
+    fail("logging test assembly must enable Unity Test Framework references")
+
+runtime_sources = sorted(RUNTIME.rglob("*.cs")) + sorted(LOGGING_RUNTIME.rglob("*.cs"))
 if not runtime_sources:
     fail("no Framework ECS runtime C# files found")
 
@@ -63,14 +82,19 @@ for path in runtime_sources:
         if forbidden in source:
             fail(f"{path.relative_to(ROOT)} contains forbidden dependency marker {forbidden!r}")
 
-for asset_root in (RUNTIME, TESTS):
+for asset_root in (RUNTIME, TESTS, LOGGING_RUNTIME, LOGGING_TESTS):
     for path in sorted(asset_root.rglob("*")):
         if not path.is_file() or path.name.endswith(".meta"):
             continue
         if path.suffix in (".cs", ".asmdef", ".md") and not path.with_name(path.name + ".meta").exists():
             fail(f"missing Unity .meta file for {path.relative_to(ROOT)}")
 
-new_meta_paths = sorted(RUNTIME.rglob("*.meta")) + sorted(TESTS.rglob("*.meta"))
+new_meta_paths = (
+    sorted(RUNTIME.rglob("*.meta"))
+    + sorted(TESTS.rglob("*.meta"))
+    + sorted(LOGGING_RUNTIME.rglob("*.meta"))
+    + sorted(LOGGING_TESTS.rglob("*.meta"))
+)
 new_guids: dict[str, Path] = {}
 for path in new_meta_paths:
     guid = get_guid(path)
@@ -103,16 +127,16 @@ for path in sorted(mythhunter_root.rglob("*.cs")):
     if uses_contract and not (has_framework_import or has_framework_qualification):
         fail(f"{path.relative_to(ROOT)} uses an ECS contract without importing RPGFramework.ECS")
 
-test_sources = sorted(TESTS.rglob("*.cs"))
+test_sources = sorted(TESTS.rglob("*.cs")) + sorted(LOGGING_TESTS.rglob("*.cs"))
 if not test_sources:
     fail("no Framework ECS test source files found")
 for path in test_sources:
     if not path.with_suffix(path.suffix + ".meta").exists():
         fail(f"missing Unity .meta file for {path.relative_to(ROOT)}")
 
-print("Framework ECS static boundary: OK")
+print("Framework ECS/Logging static boundary: OK")
 print(f"Runtime C# files: {len(runtime_sources)}")
 print(f"Test C# files: {len(test_sources)}")
 print(f"Framework/Test asset GUIDs checked: {len(new_guids)}")
-print("No UnityEngine, UnityEditor, or MythHunter references found in Framework runtime.")
+print("No UnityEngine, UnityEditor, or MythHunter references found in Framework runtime modules.")
 print("No duplicate legacy ECS contracts or EntityManager remain in MythHunter.")

@@ -20,5 +20,9 @@
              Link="Framework/ECS/Runtime/%(Filename)%(Extension)" />
     <Compile Include="../../Assets/_Framework/ECS/Tests/EntityManagerTests.cs"
              Link="Tests/EntityManagerTests.cs" />
+    <Compile Include="../../Assets/_Framework/Logging/Runtime/*.cs"
+             Link="Framework/Logging/Runtime/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Logging/Tests/LoggerContractTests.cs"
+             Link="Tests/LoggerContractTests.cs" />
   </ItemGroup>
 </Project>

@@ -125,6 +125,49 @@ namespace MythHunter.Utils.Logging
         #region Public Methods
 
         /// <summary>
+        /// Implements the platform-neutral Framework logging contract while preserving MythHunter formatting and sinks.
+        /// </summary>
+        public void Log(RPGFramework.Logging.LogSeverity severity, string message, string category = null, Exception exception = null)
+        {
+            LogLevel mythHunterLevel;
+            switch (severity)
+            {
+                case RPGFramework.Logging.LogSeverity.Trace:
+                    mythHunterLevel = LogLevel.Trace;
+                    break;
+                case RPGFramework.Logging.LogSeverity.Debug:
+                    mythHunterLevel = LogLevel.Debug;
+                    break;
+                case RPGFramework.Logging.LogSeverity.Information:
+                    mythHunterLevel = LogLevel.Info;
+                    break;
+                case RPGFramework.Logging.LogSeverity.Warning:
+                    mythHunterLevel = LogLevel.Warning;
+                    break;
+                case RPGFramework.Logging.LogSeverity.Error:
+                    mythHunterLevel = LogLevel.Error;
+                    break;
+                case RPGFramework.Logging.LogSeverity.Critical:
+                    mythHunterLevel = LogLevel.Fatal;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(severity), severity, "Unknown logging severity.");
+            }
+
+            if (exception != null)
+            {
+                message += $"\nException: {exception.Message}";
+                if (exception.StackTrace != null)
+                {
+                    message += $"\nStackTrace: {exception.StackTrace}";
+                }
+            }
+
+            Log(mythHunterLevel, message, category ?? _defaultCategory);
+        }
+
+
+        /// <summary>
         /// Логує інформаційне повідомлення
         /// </summary>
         public void LogInfo(string message, string category = null)
