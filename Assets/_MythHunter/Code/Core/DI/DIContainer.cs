@@ -233,16 +233,15 @@ namespace MythHunter.Core.DI
                     return singleton;
 
                 case DILifetime.Scoped:
-                    // Отримуємо поточний скоуп
+                    // Use the requested service type as the scope cache key.
+                    // Create and inject the instance only once for this scope.
                     var currentScope = GetCurrentScope();
-
-                    // Отримуємо екземпляр зі скоупу або створюємо новий
-                    var scopedInstance = currentScope.GetOrCreateInstance<object>(); // Тип об'єкта буде замінено генеричною реалізацією
-
-                    // Ін'єктуємо залежності
-                    InjectDependencies(scopedInstance);
-
-                    return scopedInstance;
+                    return currentScope.GetOrCreateInstance(serviceType, () =>
+                    {
+                        var scopedInstance = registration.Factory();
+                        InjectDependencies(scopedInstance);
+                        return scopedInstance;
+                    });
 
                 case DILifetime.Transient:
                 default:
@@ -269,16 +268,22 @@ namespace MythHunter.Core.DI
 
         public bool IsRegistered(Type type)
         {
-            // Перевірка на наявність реєстрації для вказаного типу
-            return _registrations.ContainsKey(type);
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+
+            return _singletons.ContainsKey(type) ||
+                   _lazyDependencies.ContainsKey(type) ||
+                   _registrations.ContainsKey(type);
         }
 
         public object Resolve(Type type)
         {
-            if (!IsRegistered(type))
-                throw new InvalidOperationException($"Type {type.Name} is not registered");
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
 
-            return _registrations[type];
+            // Keep generic Resolve<T>() and Resolve(Type) behavior aligned:
+            // callers receive the resolved instance, not internal registration metadata.
+            return ResolveByType(type);
         }
 
         #endregion
