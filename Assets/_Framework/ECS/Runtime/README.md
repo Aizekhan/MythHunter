@@ -23,7 +23,8 @@ The integer entity ID representation is retained for the first migration step. A
 - `GetComponent` returns `default` when a component is absent; use `HasComponent` / `TryGetComponent` when absence matters.
 
 ## Validation status
+- Static assembly-boundary/GUID validation: passed in GitHub Actions.
 - Headless .NET test project: 8 passed, 0 failed, 0 skipped in GitHub Actions.
-- Unity Test Runner and Unity project compilation: not yet validated against this branch.
+- Unity Test Runner and full Unity project compilation: not yet validated against this branch.
 
 Do not merge until Unity imports the assembly definitions, the full project compiles, and the focused Unity tests run.
