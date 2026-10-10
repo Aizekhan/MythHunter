@@ -4,7 +4,7 @@ namespace RPGFramework.ECS.Tests
 {
     public sealed class EntityManagerTests
     {
-        private EntityManager _entityManager;
+        private EntityManager _entityManager = null!;
 
         private struct PositionComponent : IComponent
         {
