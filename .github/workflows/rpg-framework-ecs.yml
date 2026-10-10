@@ -6,6 +6,7 @@ on:
     paths:
       - "Assets/_Framework/ECS/**"
       - "Build/RPGFramework.ECS.Tests/**"
+      - "Build/validate_framework_ecs_boundary.py"
       - ".github/workflows/rpg-framework-ecs.yml"
   push:
     branches: [dev]
@@ -29,6 +30,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+
+      - name: Validate assembly boundary and GUIDs
+        run: python Build/validate_framework_ecs_boundary.py
 
       - name: Run ECS tests
         run: dotnet test Build/RPGFramework.ECS.Tests/RPGFramework.ECS.Tests.csproj --configuration Release
