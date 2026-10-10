@@ -62,8 +62,13 @@ for path in runtime_sources:
     for forbidden in ("using UnityEngine", "using UnityEditor", "using MythHunter.", "namespace MythHunter"):
         if forbidden in source:
             fail(f"{path.relative_to(ROOT)} contains forbidden dependency marker {forbidden!r}")
-    if not path.with_suffix(path.suffix + ".meta").exists():
-        fail(f"missing Unity .meta file for {path.relative_to(ROOT)}")
+
+for asset_root in (RUNTIME, TESTS):
+    for path in sorted(asset_root.rglob("*")):
+        if not path.is_file() or path.name.endswith(".meta"):
+            continue
+        if path.suffix in (".cs", ".asmdef", ".md") and not path.with_name(path.name + ".meta").exists():
+            fail(f"missing Unity .meta file for {path.relative_to(ROOT)}")
 
 new_meta_paths = sorted(RUNTIME.rglob("*.meta")) + sorted(TESTS.rglob("*.meta"))
 new_guids: dict[str, Path] = {}
