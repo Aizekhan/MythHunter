@@ -97,6 +97,11 @@ for path in sorted(mythhunter_root.rglob("*.cs")):
         fail(f"{path.relative_to(ROOT)} still explicitly references a legacy ECS contract")
     if re.search(r"\b(?:interface|class|struct)\s+(?:IComponent|IEntityManager)\b", source):
         fail(f"{path.relative_to(ROOT)} redeclares an ECS contract outside the Framework assembly")
+    uses_contract = re.search(r"\b(?:IComponent|IEntityManager)\b", source) is not None
+    has_framework_import = "using RPGFramework.ECS;" in source
+    has_framework_qualification = "RPGFramework.ECS.IComponent" in source or "RPGFramework.ECS.IEntityManager" in source
+    if uses_contract and not (has_framework_import or has_framework_qualification):
+        fail(f"{path.relative_to(ROOT)} uses an ECS contract without importing RPGFramework.ECS")
 
 test_sources = sorted(TESTS.rglob("*.cs"))
 if not test_sources:
