@@ -1,0 +1,14 @@
+{
+    "name": "Framework.ECS.Contracts",
+    "rootNamespace": "MythHunter.Core.ECS",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
