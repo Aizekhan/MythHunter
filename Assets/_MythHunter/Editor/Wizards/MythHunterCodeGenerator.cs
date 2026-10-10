@@ -291,7 +291,6 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Component.cs");
-            sb.AppendLine("using MythHunter.Core.ECS;");
             sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
