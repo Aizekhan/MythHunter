@@ -452,7 +452,7 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
-        public void SystemGroup_IsolatesChildFailuresAndUpdatesOnlySuccessfullyInitializedChildren()
+        public void SystemGroup_IsolatesInitializeUpdateAndDisposeFailures()
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
@@ -464,31 +464,40 @@ namespace MythHunter.DI.CharacterizationTests
             var groupType = assembly.GetType("MythHunter.Systems.Groups.SystemGroup", true);
             var group = Activator.CreateInstance(groupType, new object[] { "LifecycleProbe", logger });
 
-            var failing = CreateSystemSpy(systemInterface);
-            var failingState = (SystemSpyProxy)failing;
-            failingState.ThrowOnInitialize = true;
-            failingState.ThrowOnUpdate = true;
-            failingState.ThrowOnDispose = true;
+            var updateFailure = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            updateFailure.ThrowOnUpdate = true;
+            var healthy = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            var initializeFailure = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            initializeFailure.ThrowOnInitialize = true;
+            var disposeFailure = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            disposeFailure.ThrowOnDispose = true;
 
-            var healthy = CreateSystemSpy(systemInterface);
-            var healthyState = (SystemSpyProxy)healthy;
-
-            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(group, new[] { failing });
-            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(group, new[] { healthy });
+            var addSystem = groupType.GetMethod("AddSystem", new[] { systemInterface });
+            addSystem.Invoke(group, new object[] { updateFailure });
+            addSystem.Invoke(group, new object[] { healthy });
+            addSystem.Invoke(group, new object[] { initializeFailure });
+            addSystem.Invoke(group, new object[] { disposeFailure });
 
             Assert.DoesNotThrow(() => groupType.GetMethod("Initialize").Invoke(group, null));
             Assert.DoesNotThrow(() => groupType.GetMethod("Update", new[] { typeof(float) })
                 .Invoke(group, new object[] { 0.016f }));
             Assert.DoesNotThrow(() => groupType.GetMethod("Dispose").Invoke(group, null));
 
-            Assert.That(failingState.InitializeCount, Is.EqualTo(1));
-            Assert.That(failingState.UpdateCount, Is.EqualTo(0),
+            Assert.That(updateFailure.InitializeCount, Is.EqualTo(1));
+            Assert.That(updateFailure.UpdateCount, Is.EqualTo(1));
+            Assert.That(healthy.InitializeCount, Is.EqualTo(1));
+            Assert.That(healthy.UpdateCount, Is.EqualTo(1),
+                "A child update exception must not prevent sibling updates.");
+            Assert.That(initializeFailure.InitializeCount, Is.EqualTo(1));
+            Assert.That(initializeFailure.UpdateCount, Is.EqualTo(0),
                 "A child whose initialization failed must not be updated.");
-            Assert.That(healthyState.InitializeCount, Is.EqualTo(1));
-            Assert.That(healthyState.UpdateCount, Is.EqualTo(1));
-            Assert.That(failingState.DisposeCount, Is.EqualTo(1));
-            Assert.That(healthyState.DisposeCount, Is.EqualTo(1),
-                "A child dispose exception must not prevent sibling cleanup.");
+            Assert.That(disposeFailure.InitializeCount, Is.EqualTo(1));
+            Assert.That(disposeFailure.UpdateCount, Is.EqualTo(1));
+            Assert.That(updateFailure.DisposeCount, Is.EqualTo(1));
+            Assert.That(healthy.DisposeCount, Is.EqualTo(1));
+            Assert.That(initializeFailure.DisposeCount, Is.EqualTo(1));
+            Assert.That(disposeFailure.DisposeCount, Is.EqualTo(1),
+                "A child dispose exception must not prevent remaining sibling cleanup.");
         }
 
         private static object CreateSystemSpy(Type systemInterface)
