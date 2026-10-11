@@ -149,13 +149,14 @@ namespace MythHunter.Debug.Tools
         public Dictionary<string, object> GetStatistics()
         {
             return new Dictionary<string, object>
-    {
-        { "TotalScenes", _sceneConfigs.Count },
-        { "TotalResources", _sceneConfigs.Values.Sum(configs => configs.Count) },
-        { "TotalPools", _sceneConfigs.Values.SelectMany(configs => configs).Count(c => c.CreatePool) },
-        { "ScenesWithConfigs", _sceneConfigs.Keys.ToArray() }
-    };
+            {
+                { "TotalScenes", _sceneConfigs.Count },
+                { "TotalResources", _sceneConfigs.Values.Sum(configs => configs.Count) },
+                { "TotalPools", _sceneConfigs.Values.SelectMany(configs => configs).Count(c => c.CreatePool) },
+                { "ScenesWithConfigs", _sceneConfigs.Keys.ToArray() }
+            };
         }
+
         public string[] GetLogEntries(int maxCount = 100)
         {
             return new[] { "PreloadDebugTool активний", $"Загальна кількість сцен: {_sceneConfigs.Count}" };
@@ -171,8 +172,9 @@ namespace MythHunter.Debug.Tools
 
         public void RenderGUI(Rect area)
         {
+#if UNITY_EDITOR
             GUILayout.BeginArea(area);
-            GUILayout.Label("=== Preload Monitor ===", EditorStyles.boldLabel);
+            GUILayout.Label("=== Preload Monitor ===", UnityEditor.EditorStyles.boldLabel);
 
             var stats = GetStatistics();
 
@@ -195,9 +197,8 @@ namespace MythHunter.Debug.Tools
             }
 
             GUILayout.EndArea();
+#endif
         }
-
-
 
         public void Initialize()
         {
@@ -211,7 +212,6 @@ namespace MythHunter.Debug.Tools
 
         public void Dispose()
         {
-            // Очистити словники, якщо потрібно
             _sceneConfigs.Clear();
             _phaseConfigs.Clear();
         }
