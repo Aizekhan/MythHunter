@@ -1,6 +1,8 @@
 // Шлях: Assets/_MythHunter/Code/Systems/Groups/SystemGroup.cs
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using MythHunter.Core.ECS;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;
@@ -14,6 +16,7 @@ namespace MythHunter.Systems.Groups
     {
         protected readonly List<ISystem> _systems = new List<ISystem>();
         protected readonly IMythLogger _logger;
+        private readonly HashSet<ISystem> _initializedSystems = new HashSet<ISystem>();
 
         public string GroupName
         {
@@ -30,8 +33,23 @@ namespace MythHunter.Systems.Groups
         {
             foreach (var system in _systems)
             {
-                system.Initialize();
+                if (_initializedSystems.Contains(system))
+                    continue;
+
+                try
+                {
+                    system.Initialize();
+                    _initializedSystems.Add(system);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Error initializing system {system.GetType().Name} in group '{GroupName}': {ex.Message}",
+                        "System",
+                        ex);
+                }
             }
+
             _logger.LogDebug($"Initialized system group '{GroupName}'", "System");
         }
 
@@ -39,16 +57,43 @@ namespace MythHunter.Systems.Groups
         {
             foreach (var system in _systems)
             {
-                system.Update(deltaTime);
+                if (!_initializedSystems.Contains(system))
+                    continue;
+
+                try
+                {
+                    system.Update(deltaTime);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Error updating system {system.GetType().Name} in group '{GroupName}': {ex.Message}",
+                        "System",
+                        ex);
+                }
             }
         }
 
         public virtual void Dispose()
         {
-            foreach (var system in _systems)
+            // Dispose in reverse order and continue even when a child fails to clean up.
+            for (var i = _systems.Count - 1; i >= 0; i--)
             {
-                system.Dispose();
+                var system = _systems[i];
+                try
+                {
+                    system.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Error disposing system {system.GetType().Name} in group '{GroupName}': {ex.Message}",
+                        "System",
+                        ex);
+                }
             }
+
+            _initializedSystems.Clear();
             _logger.LogDebug($"Disposed system group '{GroupName}'", "System");
         }
 
