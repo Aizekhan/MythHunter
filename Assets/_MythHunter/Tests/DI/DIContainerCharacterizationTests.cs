@@ -406,6 +406,52 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        public void SystemRegistry_DisposesSystemsInReverseInitializationOrder()
+        {
+            SystemSpyProxy.DisposeOrder.Clear();
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
+            var eventPoolType = assembly.GetType("MythHunter.Events.EventPool", true);
+            var eventBusType = assembly.GetType("MythHunter.Events.SimpleEventBus", true);
+            var eventBus = Activator.CreateInstance(eventBusType, new[]
+            {
+                Activator.CreateInstance(eventPoolType, new[] { logger }),
+                logger
+            });
+            var registryType = assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true);
+            var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus, container });
+            var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
+
+            var highPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            highPriority.ProbeName = "high";
+            var lowPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            lowPriority.ProbeName = "low";
+
+            try
+            {
+                var register = registryType.GetMethod("RegisterSystemWithPriority", new[] { systemInterface, typeof(int) });
+                register.Invoke(registry, new object[] { highPriority, 100 });
+                register.Invoke(registry, new object[] { lowPriority, 0 });
+                var onDemand = Enum.Parse(
+                    assembly.GetType("MythHunter.Systems.Core.SystemInitializationCategory", true),
+                    "OnDemand");
+                registryType.GetMethod("InitializeSystemsByCategory").Invoke(registry, new[] { onDemand });
+                registryType.GetMethod("DisposeAll").Invoke(registry, null);
+
+                CollectionAssert.AreEqual(new[] { "low", "high" }, SystemSpyProxy.DisposeOrder);
+            }
+            finally
+            {
+                eventBusType.GetMethod("Clear").Invoke(eventBus, null);
+            }
+        }
+
+        [Test]
         public void SystemGroup_IsolatesChildFailuresAndUpdatesOnlySuccessfullyInitializedChildren()
         {
             var container = CreateContainer();
@@ -470,6 +516,8 @@ namespace MythHunter.DI.CharacterizationTests
             public int InitializeCount { get; private set; }
             public int UpdateCount { get; private set; }
             public int DisposeCount { get; private set; }
+            public string ProbeName { get; set; }
+            public static readonly List<string> DisposeOrder = new List<string>();
             public bool ThrowOnInitialize { get; set; }
             public bool ThrowOnUpdate { get; set; }
             public bool ThrowOnDispose { get; set; }
@@ -490,6 +538,8 @@ namespace MythHunter.DI.CharacterizationTests
                         break;
                     case "Dispose":
                         DisposeCount++;
+                        if (!string.IsNullOrEmpty(ProbeName))
+                            DisposeOrder.Add(ProbeName);
                         if (ThrowOnDispose)
                             throw new InvalidOperationException("Expected dispose failure.");
                         break;
