@@ -224,6 +224,57 @@ namespace MythHunter.DI.CharacterizationTests
             Assert.That(SharedDualService.DisposeCount, Is.EqualTo(1));
         }
 
+        [Test]
+        public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+
+            var loggerType = assembly.GetType("MythHunter.Utils.Logging.MythLogger", true);
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logLevelType = assembly.GetType("MythHunter.Utils.Logging.LogLevel", true);
+            var logger = Activator.CreateInstance(loggerType, new[]
+            {
+                Enum.Parse(logLevelType, "Error"),
+                (object)false,
+                "EventBusRegistrationRegression"
+            });
+            RegisterInstance(container, loggerInterface, logger);
+
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Events.IEventPool", true),
+                assembly.GetType("MythHunter.Events.EventPool", true));
+            // Mirror CoreInstaller's earlier fallback binding. EventsInstaller must
+            // replace it before SystemRegistry's constructor resolves/caches the bus.
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Events.IEventBus", true),
+                assembly.GetType("MythHunter.Events.SimpleEventBus", true));
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true),
+                assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true));
+
+            var installerType = assembly.GetType("MythHunter.Core.Installers.EventsInstaller", true);
+            var installer = Activator.CreateInstance(installerType);
+            installerType.GetMethod("InstallBindings").Invoke(installer, new[] { container });
+
+            var selectedBus = Resolve(container, assembly.GetType("MythHunter.Events.IEventBus", true));
+            var registry = Resolve(container, assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true));
+            var registryBusField = registry.GetType().GetField("_eventBus", BindingFlags.Instance | BindingFlags.NonPublic);
+            var registryBus = registryBusField.GetValue(registry);
+
+            try
+            {
+                Assert.That(selectedBus.GetType().FullName, Is.EqualTo("MythHunter.Events.EventBus"));
+                Assert.That(registryBus, Is.SameAs(selectedBus));
+            }
+            finally
+            {
+                selectedBus.GetType().GetMethod("Dispose", Type.EmptyTypes)?.Invoke(selectedBus, null);
+            }
+        }
+
         private static object CreateContainer()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
