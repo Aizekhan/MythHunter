@@ -33,7 +33,7 @@ namespace MythHunter.Core.ECS
         }
 
         private CacheStrategy _strategy = CacheStrategy.Full;
-        private readonly HashSet<int> _pendingEntities = new HashSet<int>();
+        private int _incrementalCursor = 0;
 
         public ComponentCache(IEntityManager entityManager)
         {
@@ -101,43 +101,44 @@ namespace MythHunter.Core.ECS
         private void UpdateIncrementalCache()
         {
             const int batchSize = 100;
-            int processed = 0;
+            int[] entities = _entityManager.GetEntitiesWith<T>();
+            var currentEntityIds = new HashSet<int>(entities);
 
-            // Якщо список очікуваних сутностей порожній, оновлюємо його
-            if (_pendingEntities.Count == 0)
+            // Membership is reconciled every update so removals and destroyed entities
+            // cannot remain in the snapshot while value refresh stays batched.
+            var cachedIds = new List<int>(_components.Keys);
+            foreach (int entityId in cachedIds)
             {
-                int[] entities = _entityManager.GetEntitiesWith<T>();
-                foreach (int entityId in entities)
+                if (!currentEntityIds.Contains(entityId))
                 {
-                    if (!_components.ContainsKey(entityId))
-                    {
-                        _pendingEntities.Add(entityId);
-                    }
+                    _components.Remove(entityId);
+                    _entityIds.Remove(entityId);
                 }
             }
 
-            // Обробляємо до batchSize сутностей за один виклик
-            var batch = new List<int>();
-            foreach (int entityId in _pendingEntities)
+            if (entities.Length == 0)
             {
-                batch.Add(entityId);
-                processed++;
-
-                if (processed >= batchSize)
-                    break;
+                _incrementalCursor = 0;
+                _isDirty = true;
+                return;
             }
 
-            // Видаляємо оброблені сутності з очікуваних
-            foreach (int entityId in batch)
-            {
-                _pendingEntities.Remove(entityId);
+            // Refresh at most 100 components per update. A rotating cursor ensures
+            // cached values and newly-added components eventually converge without starvation.
+            _incrementalCursor %= entities.Length;
+            int processed = System.Math.Min(batchSize, entities.Length);
 
+            for (int i = 0; i < processed; i++)
+            {
+                int index = (_incrementalCursor + i) % entities.Length;
+                int entityId = entities[index];
                 T component = _entityManager.GetComponent<T>(entityId);
+
                 _components[entityId] = component;
                 _entityIds.Add(entityId);
             }
 
-            // Позначаємо, що кеш потребує оновлення масиву ID
+            _incrementalCursor = (_incrementalCursor + processed) % entities.Length;
             _isDirty = true;
         }
 
@@ -167,24 +168,28 @@ namespace MythHunter.Core.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(int entityId)
         {
+            if (_strategy == CacheStrategy.OnDemand)
+            {
+                // OnDemand is a live read: validate membership and value against the source of truth.
+                if (_entityManager.HasComponent<T>(entityId))
+                {
+                    T current = _entityManager.GetComponent<T>(entityId);
+                    _components[entityId] = current;
+                    _entityIds.Add(entityId);
+                    _isDirty = true;
+                    HitCount++;
+                    return current;
+                }
+
+                Remove(entityId);
+                MissCount++;
+                return default;
+            }
+
             if (_components.TryGetValue(entityId, out T component))
             {
                 HitCount++;
                 return component;
-            }
-
-            if (_strategy == CacheStrategy.OnDemand)
-            {
-                // Для стратегії OnDemand, кешуємо при запиті
-                if (_entityManager.HasComponent<T>(entityId))
-                {
-                    component = _entityManager.GetComponent<T>(entityId);
-                    _components[entityId] = component;
-                    _entityIds.Add(entityId);
-                    _isDirty = true;
-                    HitCount++;
-                    return component;
-                }
             }
 
             MissCount++;
@@ -197,6 +202,12 @@ namespace MythHunter.Core.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityId)
         {
+            if (_strategy == CacheStrategy.OnDemand && _components.ContainsKey(entityId) &&
+                !_entityManager.HasComponent<T>(entityId))
+            {
+                Remove(entityId);
+            }
+
             bool result = _components.ContainsKey(entityId);
             if (result)
                 HitCount++;
@@ -210,6 +221,16 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public IReadOnlyCollection<int> GetAllEntityIds()
         {
+            if (_strategy == CacheStrategy.OnDemand)
+            {
+                var cachedIds = new List<int>(_entityIds);
+                foreach (int entityId in cachedIds)
+                {
+                    if (!_entityManager.HasComponent<T>(entityId))
+                        Remove(entityId);
+                }
+            }
+
             return _entityIds;
         }
 
@@ -218,6 +239,12 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public int[] GetEntityIdsArray()
         {
+            // Ensure OnDemand enumeration does not expose cached IDs whose component was removed.
+            if (_strategy == CacheStrategy.OnDemand)
+            {
+                GetAllEntityIds();
+            }
+
             if (_isDirty)
             {
                 // Оновлюємо кешований масив

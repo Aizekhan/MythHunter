@@ -446,6 +446,172 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        public void ComponentCache_FullRefreshesChangedValuesAndRemovesMissingMembership()
+        {
+            var fixture = CreateComponentCacheFixture("Full");
+            var entityId = fixture.CreateEntity();
+            fixture.AddPosition(entityId, 1f);
+            fixture.Update();
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(1f));
+
+            fixture.AddPosition(entityId, 2f);
+            fixture.Update();
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(2f));
+
+            fixture.RemovePosition(entityId);
+            fixture.Update();
+            Assert.That(fixture.Contains(entityId), Is.False);
+            Assert.That(fixture.Count, Is.EqualTo(0));
+
+            fixture.AddPosition(entityId, 5f);
+            fixture.Update();
+            fixture.DestroyEntity(entityId);
+            fixture.Update();
+            Assert.That(fixture.Contains(entityId), Is.False,
+                "Destroyed entities must be absent after a full refresh.");
+        }
+
+        [Test]
+        public void ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager()
+        {
+            var fixture = CreateComponentCacheFixture("OnDemand");
+            var entityId = fixture.CreateEntity();
+            fixture.AddPosition(entityId, 3f);
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(3f));
+
+            fixture.AddPosition(entityId, 4f);
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(4f),
+                "OnDemand Get must return the authoritative latest struct value.");
+
+            fixture.RemovePosition(entityId);
+            Assert.That(fixture.Contains(entityId), Is.False);
+            Assert.That(fixture.Count, Is.EqualTo(0));
+
+            fixture.AddPosition(entityId, 6f);
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(6f));
+            fixture.DestroyEntity(entityId);
+            Assert.That(fixture.Contains(entityId), Is.False);
+            Assert.That(fixture.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ComponentCache_IncrementalRefreshesValuesAndPrunesRemovedComponentsInBatches()
+        {
+            var fixture = CreateComponentCacheFixture("Incremental");
+            var entityIds = new List<int>();
+            for (int i = 0; i < 205; i++)
+            {
+                int id = fixture.CreateEntity();
+                entityIds.Add(id);
+                fixture.AddPosition(id, i);
+            }
+
+            int guard = 0;
+            while (fixture.Count < entityIds.Count && guard++ < 10)
+                fixture.Update();
+
+            Assert.That(fixture.Count, Is.EqualTo(205),
+                "All IDs must be populated after at most three 100-item batches.");
+
+            fixture.AddPosition(entityIds[150], 999f);
+            fixture.RemovePosition(entityIds[5]);
+            int previousCount = fixture.Count;
+            fixture.Update();
+
+            Assert.That(fixture.Contains(entityIds[5]), Is.False,
+                "Membership removals must be applied on the next Incremental update.");
+            Assert.That(fixture.Count, Is.EqualTo(previousCount - 1));
+
+            guard = 0;
+            while (fixture.GetPositionX(entityIds[150]) != 999f && guard++ < 10)
+                fixture.Update();
+            Assert.That(fixture.GetPositionX(entityIds[150]), Is.EqualTo(999f),
+                "Existing cached values must refresh as the incremental cursor advances.");
+
+            fixture.AddPosition(entityIds[5], 555f);
+            guard = 0;
+            while (!fixture.Contains(entityIds[5]) && guard++ < 10)
+                fixture.Update();
+            Assert.That(fixture.Contains(entityIds[5]), Is.True);
+
+            fixture.DestroyEntity(entityIds[10]);
+            fixture.Update();
+            Assert.That(fixture.Contains(entityIds[10]), Is.False,
+                "Destroyed entities must be pruned during the next incremental update.");
+        }
+
+        private sealed class ComponentCacheFixture
+        {
+            private readonly object _entityManager;
+            private readonly object _cache;
+            private readonly Type _componentType;
+            private readonly Type _cacheType;
+            private readonly MethodInfo _update;
+            private readonly MethodInfo _contains;
+            private readonly PropertyInfo _count;
+
+            public ComponentCacheFixture(string strategyName)
+            {
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                var frameworkAssembly = assemblies.FirstOrDefault(a => a.GetType("RPGFramework.ECS.EntityManager", false) != null)
+                    ?? Assembly.Load("RPGFramework.ECS.Runtime");
+                var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp")
+                    ?? Assembly.Load("Assembly-CSharp");
+                var entityManagerType = frameworkAssembly.GetType("RPGFramework.ECS.EntityManager", true);
+                _entityManager = Activator.CreateInstance(entityManagerType);
+                _componentType = gameAssembly.GetType("MythHunter.Components.Movement.PositionComponent", true);
+                var cacheDefinition = gameAssembly.GetType("MythHunter.Core.ECS.ComponentCache`1", true);
+                _cacheType = cacheDefinition.MakeGenericType(_componentType);
+                _cache = Activator.CreateInstance(_cacheType, new[] { _entityManager });
+                var setStrategyMethod = _cacheType.GetMethod("SetCacheStrategy");
+                // Resolve the parameter type from the closed generic method to avoid
+                // passing the open nested enum type ComponentCache<T>.CacheStrategy.
+                var strategyType = setStrategyMethod.GetParameters()[0].ParameterType;
+                var strategy = Enum.Parse(strategyType, strategyName);
+                setStrategyMethod.Invoke(_cache, new[] { strategy });
+                _update = _cacheType.GetMethod("Update");
+                _contains = _cacheType.GetMethod("Contains");
+                _count = _cacheType.GetProperty("Count");
+            }
+
+            public int Count => (int)_count.GetValue(_cache);
+            public int CreateEntity() => (int)_entityManager.GetType().GetMethod("CreateEntity").Invoke(_entityManager, null);
+            public void Update() => _update.Invoke(_cache, null);
+            public bool Contains(int id) => (bool)_contains.Invoke(_cache, new object[] { id });
+
+            public void AddPosition(int id, float x)
+            {
+                var component = Activator.CreateInstance(_componentType);
+                var positionField = _componentType.GetField("Position");
+                var vector = Activator.CreateInstance(positionField.FieldType, new object[] { x, 0f, 0f });
+                positionField.SetValue(component, vector);
+                InvokeGeneric(_entityManager, "AddComponent", new[] { _componentType }, new object[] { id, component });
+            }
+
+            public void RemovePosition(int id)
+            {
+                InvokeGeneric(_entityManager, "RemoveComponent", new[] { _componentType }, new object[] { id });
+            }
+
+            public void DestroyEntity(int id)
+            {
+                _entityManager.GetType().GetMethod("DestroyEntity").Invoke(_entityManager, new object[] { id });
+            }
+
+            public float GetPositionX(int id)
+            {
+                var component = _cacheType.GetMethod("Get").Invoke(_cache, new object[] { id });
+                var positionField = _componentType.GetField("Position");
+                var vector = positionField.GetValue(component);
+                return (float)positionField.FieldType.GetField("x").GetValue(vector);
+            }
+        }
+
+        private static ComponentCacheFixture CreateComponentCacheFixture(string strategyName)
+        {
+            return new ComponentCacheFixture(strategyName);
+        }
+        [Test]
         public void SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization()
         {
             var container = CreateContainer();
