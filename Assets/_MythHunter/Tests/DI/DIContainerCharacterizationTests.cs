@@ -205,6 +205,25 @@ namespace MythHunter.DI.CharacterizationTests
             CollectionAssert.AreEqual(new[] { "throwing", "first" }, ScopeDisposalProbe.Order);
         }
 
+        [Test]
+        public void ScopeDisposal_DoesNotDisposeSameSharedInstanceTwice()
+        {
+            SharedDualService.DisposeCount = 0;
+            var container = CreateContainer();
+            var shared = new SharedDualService();
+            RegisterInstance(container, typeof(IFirstDisposable), shared);
+            RegisterInstance(container, typeof(IThrowingDisposable), shared);
+
+            var scope = CreateScope(container, "shared");
+            var first = InvokeGeneric(scope, "GetOrCreateInstance", new[] { typeof(IFirstDisposable) });
+            var second = InvokeGeneric(scope, "GetOrCreateInstance", new[] { typeof(IThrowingDisposable) });
+            Assert.That(second, Is.SameAs(first));
+
+            scope.GetType().GetMethod("Dispose", Type.EmptyTypes).Invoke(scope, null);
+
+            Assert.That(SharedDualService.DisposeCount, Is.EqualTo(1));
+        }
+
         private static object CreateContainer()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
@@ -309,5 +328,15 @@ namespace MythHunter.DI.CharacterizationTests
     public static class ScopeDisposalProbe
     {
         public static readonly List<string> Order = new List<string>();
+    }
+
+    public sealed class SharedDualService : IFirstDisposable, IThrowingDisposable, IDisposable
+    {
+        public static int DisposeCount { get; set; }
+
+        public void Dispose()
+        {
+            DisposeCount++;
+        }
     }
 }
