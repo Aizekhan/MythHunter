@@ -39,8 +39,11 @@ namespace MythHunter.Core.Installers
             else
             {
                 logger.LogInfo($"Event network synchronization enabled ({networkMode}); using NetworkEventBus", "Installer");
-                BindSingleton<IEventBus, NetworkEventBus>(container);
+                // Register and resolve exactly one network bus, then alias the same
+                // singleton through IEventBus so SystemRegistry and network consumers
+                // cannot receive separate bus instances.
                 BindSingleton<INetworkEventBus, NetworkEventBus>(container);
+                BindInstance<IEventBus>(container, container.Resolve<INetworkEventBus>());
             }
 
             // Only now resolve the registry, so it captures the selected implementation.
