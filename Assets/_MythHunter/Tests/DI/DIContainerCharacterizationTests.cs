@@ -462,6 +462,13 @@ namespace MythHunter.DI.CharacterizationTests
             fixture.Update();
             Assert.That(fixture.Contains(entityId), Is.False);
             Assert.That(fixture.Count, Is.EqualTo(0));
+
+            fixture.AddPosition(entityId, 5f);
+            fixture.Update();
+            fixture.DestroyEntity(entityId);
+            fixture.Update();
+            Assert.That(fixture.Contains(entityId), Is.False,
+                "Destroyed entities must be absent after a full refresh.");
         }
 
         [Test]
@@ -477,6 +484,12 @@ namespace MythHunter.DI.CharacterizationTests
                 "OnDemand Get must return the authoritative latest struct value.");
 
             fixture.RemovePosition(entityId);
+            Assert.That(fixture.Contains(entityId), Is.False);
+            Assert.That(fixture.Count, Is.EqualTo(0));
+
+            fixture.AddPosition(entityId, 6f);
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(6f));
+            fixture.DestroyEntity(entityId);
             Assert.That(fixture.Contains(entityId), Is.False);
             Assert.That(fixture.Count, Is.EqualTo(0));
         }
@@ -509,11 +522,22 @@ namespace MythHunter.DI.CharacterizationTests
                 "Membership removals must be applied on the next Incremental update.");
             Assert.That(fixture.Count, Is.EqualTo(previousCount - 1));
 
+            guard = 0;
+            while (fixture.GetPositionX(entityIds[150]) != 999f && guard++ < 10)
+                fixture.Update();
+            Assert.That(fixture.GetPositionX(entityIds[150]), Is.EqualTo(999f),
+                "Existing cached values must refresh as the incremental cursor advances.");
+
             fixture.AddPosition(entityIds[5], 555f);
             guard = 0;
             while (!fixture.Contains(entityIds[5]) && guard++ < 10)
                 fixture.Update();
             Assert.That(fixture.Contains(entityIds[5]), Is.True);
+
+            fixture.DestroyEntity(entityIds[10]);
+            fixture.Update();
+            Assert.That(fixture.Contains(entityIds[10]), Is.False,
+                "Destroyed entities must be pruned during the next incremental update.");
         }
 
         private sealed class ComponentCacheFixture
@@ -563,6 +587,11 @@ namespace MythHunter.DI.CharacterizationTests
             public void RemovePosition(int id)
             {
                 InvokeGeneric(_entityManager, "RemoveComponent", new[] { _componentType }, new object[] { id });
+            }
+
+            public void DestroyEntity(int id)
+            {
+                _entityManager.GetType().GetMethod("DestroyEntity").Invoke(_entityManager, new object[] { id });
             }
 
             public float GetPositionX(int id)
