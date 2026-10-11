@@ -40,13 +40,14 @@ This is the intended target, not a claim the current implementation already foll
 
 ## Initial risk register
 1. **ECS storage ownership:** `EntityManager` and `ComponentCache` overlap in storage/cache behavior per existing architecture notes. Verify consumers before assigning ownership.
-2. **System-layer boundary:** system lifecycle/category contracts were recently stabilized, but sit in the MythHunter tree rather than isolated `Assets/_Framework/ECS`. Map dependencies before deciding what can be moved.
-3. **Domain events mixed with infrastructure:** separate bus/dispatch abstractions from `Events/Domain/Gameplay/*` event vocabulary.
-4. **Game-specific components:** Character/Combat/Lobby/Movement components must be judged individually; ECS-shaped data is not automatically universal.
-5. **Archetypes ambiguity:** `Entities/Archetypes` appears to model game archetypes/templates; compare with storage archetypes in `Assets/_Framework/ECS` and avoid conflating these concepts.
-6. **Unity leakage:** `UnityApiUtils`, resource/prefab/UI/scene services should stay outside a headless simulation runtime.
-7. **Cloud optionality:** auth/data/analytics adapters must not be mandatory dependencies of core simulation.
-8. **Networking maturity:** inspect transport and integration before treating interfaces/stubs as production-ready.
+2. **Cache ownership/update policy:** `ComponentCache<T>` is a secondary cache, used by HeroSystem, MovementSystem and VisibilitySystem; some consumers construct it directly while others use `ComponentCacheRegistry`. Audit snapshot freshness, invalidation and update cadence before changing/removing it.
+3. **System-layer boundary:** system lifecycle/category contracts were recently stabilized, but sit in the MythHunter tree rather than isolated `Assets/_Framework/ECS`. Map dependencies before deciding what can be moved.
+4. **Domain events mixed with infrastructure:** separate bus/dispatch abstractions from `Events/Domain/Gameplay/*` event vocabulary.
+5. **Game-specific components:** Character/Combat/Lobby/Movement components must be judged individually; ECS-shaped data is not automatically universal.
+6. **Archetypes ambiguity:** `Entities/Archetypes` appears to model game archetypes/templates; compare with storage archetypes in `Assets/_Framework/ECS` and avoid conflating these concepts.
+7. **Unity leakage:** `UnityApiUtils`, resource/prefab/UI/scene services should stay outside a headless simulation runtime.
+8. **Cloud optionality:** auth/data/analytics adapters must not be mandatory dependencies of core simulation.
+9. **Networking maturity:** inspect transport and integration before treating interfaces/stubs as production-ready.
 
 ## Five filters
 For every module and file:
@@ -126,3 +127,7 @@ These findings are initial and source-backed. They do not complete the dependenc
 ## Audit correction
 - The hypothesis that Framework ECS and a legacy EntityManager are simultaneously authoritative is not supported by the current runtime README. It states that the old `MythHunter.Core.ECS.IComponent`, `IEntityManager`, and duplicate `EntityManager` were removed.
 - Do not start another EntityManager migration or add wrappers based on old inventory notes. Inspect `ComponentCache<T>` consumers and benchmark before deciding whether to keep, simplify, or remove it.
+## Reference findings update
+- Cache consumers found via repository code search: `HeroSystem` caches stats/health, `MovementSystem` caches position/movement/path and refreshes every update, `VisibilitySystem` caches position/visibility and refreshes every update. Some cache snapshots are constructed directly, outside `ComponentCacheRegistry`.
+- `CoreInstaller` initially binds `IEventBus` to `SimpleEventBus`; `EventsInstaller` replaces that binding with `EventBus` in offline mode or aliases the `NetworkEventBus` instance through `IEventBus` for client/server modes. `NetworkEventBus` inherits `EventBus`.
+- `EventBus.cs` has an unconditional `using UnityEditor;` and no other matching editor API or `#if/#endif` in the inspected file. Treat this as a probable player-build defect requiring a targeted fix/build check, not as a proven player-build failure until validated.
