@@ -28,21 +28,19 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEventStore, EventStore>(container);
 
 
-            // Choose the final bus before resolving anything that depends on IEventBus.
-            // SystemRegistry subscribes in its constructor, so resolving it first would
-            // instantiate and cache the earlier SimpleEventBus registration.
-            bool hasNetworkSystem = container.IsRegistered<INetworkSystem>();
-
-            if (hasNetworkSystem)
+            // Select the event bus from an explicit composition policy rather than
+            // inferring the gameplay role from exact DI registration keys.
+            var networkMode = container.Resolve<EventNetworkMode>();
+            if (networkMode == EventNetworkMode.Offline)
             {
-                logger.LogInfo("Network system detected, using NetworkEventBus", "Installer");
-                BindSingleton<IEventBus, NetworkEventBus>(container);
-                BindSingleton<INetworkEventBus, NetworkEventBus>(container);
+                logger.LogInfo("Event network synchronization disabled; using EventBus", "Installer");
+                BindSingleton<IEventBus, EventBus>(container);
             }
             else
             {
-                logger.LogInfo("No network system detected, using standard EventBus", "Installer");
-                BindSingleton<IEventBus, EventBus>(container);
+                logger.LogInfo($"Event network synchronization enabled ({networkMode}); using NetworkEventBus", "Installer");
+                BindSingleton<IEventBus, NetworkEventBus>(container);
+                BindSingleton<INetworkEventBus, NetworkEventBus>(container);
             }
 
             // Only now resolve the registry, so it captures the selected implementation.
