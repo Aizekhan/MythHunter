@@ -1,6 +1,6 @@
 # Architecture card: Networking
 
-Status: **Inventory created; semantic review pending.** Do not mark this card complete based on paths/file counts; verify call sites and direct dependencies first.
+Status: **First-pass semantic review recorded; broader reference audit pending.**
 
 ## Five-filter checklist
 1. Is this needed by any RPG?
@@ -32,9 +32,12 @@ Total: 17
 ## Boundary hypothesis — verify, do not assume
 Separate transport-neutral contracts from client/server transports, game payloads, and Unity/network implementation. Validate authority, serialization, trust boundaries, and testability.
 
-## Review outcome
-- Purpose: pending source inspection.
-- Dependencies: pending direct-reference audit.
-- Consumers: pending reference search.
-- Framework relevance: pending five-filter assessment.
-- Findings/actions: record after inspecting implementation and references.
+## First-pass review (based on inspected implementations and imports)
+NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IMythLogger, and uses MythHunter DI and message contracts. The transport contracts are a potential reusable boundary, but connection authority, disposal/unsubscription, validation of untrusted messages, serializer limits and actual transport implementations must be inspected before marking this production-ready. Client/server orchestration is not part of every RPG's simulation core.
+
+## Five-filter result (provisional)
+- **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
+- **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
+- **Reusable unchanged?** Not yet; the identified MythHunter/Unity/DI couplings prevent that conclusion.
+- **Framework vs game data/presentation?** Split mixed folders by responsibility, not by naming alone.
+- **Action:** continue dependency/reference audit, then decide move/adapt/keep/delete per file. No runtime refactor in the audit step.
