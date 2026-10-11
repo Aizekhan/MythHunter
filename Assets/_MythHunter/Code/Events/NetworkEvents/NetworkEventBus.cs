@@ -127,13 +127,12 @@ namespace MythHunter.Events.Network
             bool canSendOverNetwork = metadata.Authority switch
             {
                 NetworkEventAuthority.Server =>
-                    _networkMode == EventNetworkMode.Server || _networkMode == EventNetworkMode.Host,
+                    _networkMode == EventNetworkMode.Server,
                 NetworkEventAuthority.Client =>
-                    _networkMode == EventNetworkMode.Client || _networkMode == EventNetworkMode.Host,
+                    _networkMode == EventNetworkMode.Client,
                 NetworkEventAuthority.Both =>
                     _networkMode == EventNetworkMode.Client ||
-                    _networkMode == EventNetworkMode.Server ||
-                    _networkMode == EventNetworkMode.Host,
+                    _networkMode == EventNetworkMode.Server,
                 _ => false
             };
 
