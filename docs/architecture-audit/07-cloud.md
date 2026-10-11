@@ -21,7 +21,7 @@ Total: 5
 External services should be optional adapters behind contracts; core simulation must work without cloud services.
 
 ## First-pass review (based on inspected implementations and imports)
-Current Cloud C# inventory contains analytics and interfaces for auth/cloud/data services; no concrete cloud adapter showed in the inspected folder. These are optional platform integrations. Core simulation must start without them; async abstractions should not require a particular provider.
+Current Cloud folder contains analytics/auth/cloud/data interfaces and event data but no concrete provider implementation in the inspected subtree. Treat as optional platform integration; simulation core must function without it.
 
 ## First-pass review (based on inspected implementations and imports)
 Current cloud folder shows analytics/auth/cloud/data interfaces and event data, but no concrete cloud adapter in the inspected folder. Treat as optional platform integration. Core simulation must work without it and should not require a particular cloud provider.
