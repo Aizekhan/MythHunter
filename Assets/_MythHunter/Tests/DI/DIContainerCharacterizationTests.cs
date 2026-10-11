@@ -351,6 +351,155 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        public void SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logger = Resolve(container, loggerInterface);
+            var eventPoolType = assembly.GetType("MythHunter.Events.EventPool", true);
+            var eventBusType = assembly.GetType("MythHunter.Events.SimpleEventBus", true);
+            var eventBus = Activator.CreateInstance(eventBusType, new[]
+            {
+                Activator.CreateInstance(eventPoolType, new[] { logger }),
+                logger
+            });
+            var registryType = assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true);
+            var registry = Activator.CreateInstance(registryType, new[]
+            {
+                logger,
+                eventBus,
+                container
+            });
+            var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
+            var probe = CreateSystemSpy(systemInterface);
+            var probeState = (SystemSpyProxy)probe;
+
+            try
+            {
+                registryType.GetMethod("RegisterSystem", new[] { systemInterface })
+                    .Invoke(registry, new[] { probe });
+                registryType.GetMethod("UpdateAll").Invoke(registry, new object[] { 0.016f });
+
+                Assert.That(probeState.UpdateCount, Is.EqualTo(0),
+                    "A registered system must not update before its Initialize callback succeeds.");
+
+                var onDemand = Enum.Parse(
+                    assembly.GetType("MythHunter.Systems.Core.SystemInitializationCategory", true),
+                    "OnDemand");
+                registryType.GetMethod("InitializeSystemsByCategory")
+                    .Invoke(registry, new[] { onDemand });
+                registryType.GetMethod("UpdateAll").Invoke(registry, new object[] { 0.016f });
+
+                Assert.That(probeState.InitializeCount, Is.EqualTo(1));
+                Assert.That(probeState.UpdateCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                registryType.GetMethod("DisposeAll").Invoke(registry, null);
+                eventBusType.GetMethod("Clear").Invoke(eventBus, null);
+            }
+        }
+
+        [Test]
+        public void SystemGroup_IsolatesChildFailuresAndUpdatesOnlySuccessfullyInitializedChildren()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+            var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
+            var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
+            var groupType = assembly.GetType("MythHunter.Systems.Groups.SystemGroup", true);
+            var group = Activator.CreateInstance(groupType, new object[] { "LifecycleProbe", logger });
+
+            var failing = CreateSystemSpy(systemInterface);
+            var failingState = (SystemSpyProxy)failing;
+            failingState.ThrowOnInitialize = true;
+            failingState.ThrowOnUpdate = true;
+            failingState.ThrowOnDispose = true;
+
+            var healthy = CreateSystemSpy(systemInterface);
+            var healthyState = (SystemSpyProxy)healthy;
+
+            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(group, new[] { failing });
+            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(group, new[] { healthy });
+
+            Assert.DoesNotThrow(() => groupType.GetMethod("Initialize").Invoke(group, null));
+            Assert.DoesNotThrow(() => groupType.GetMethod("Update", new[] { typeof(float) })
+                .Invoke(group, new object[] { 0.016f }));
+            Assert.DoesNotThrow(() => groupType.GetMethod("Dispose").Invoke(group, null));
+
+            Assert.That(failingState.InitializeCount, Is.EqualTo(1));
+            Assert.That(failingState.UpdateCount, Is.EqualTo(0),
+                "A child whose initialization failed must not be updated.");
+            Assert.That(healthyState.InitializeCount, Is.EqualTo(1));
+            Assert.That(healthyState.UpdateCount, Is.EqualTo(1));
+            Assert.That(failingState.DisposeCount, Is.EqualTo(1));
+            Assert.That(healthyState.DisposeCount, Is.EqualTo(1),
+                "A child dispose exception must not prevent sibling cleanup.");
+        }
+
+        private static object CreateSystemSpy(Type systemInterface)
+        {
+            var create = typeof(DispatchProxy).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(method =>
+                    method.Name == "Create" &&
+                    !method.IsGenericMethodDefinition &&
+                    method.GetParameters().Length == 2);
+            if (create != null)
+                return create.Invoke(null, new object[] { systemInterface, typeof(SystemSpyProxy) });
+
+            var genericCreate = typeof(DispatchProxy).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(method =>
+                    method.Name == "Create" &&
+                    method.IsGenericMethodDefinition &&
+                    method.GetGenericArguments().Length == 2 &&
+                    method.GetParameters().Length == 0);
+            return genericCreate.MakeGenericMethod(systemInterface, typeof(SystemSpyProxy))
+                .Invoke(null, null);
+        }
+
+        public class SystemSpyProxy : DispatchProxy
+        {
+            public int InitializeCount { get; private set; }
+            public int UpdateCount { get; private set; }
+            public int DisposeCount { get; private set; }
+            public bool ThrowOnInitialize { get; set; }
+            public bool ThrowOnUpdate { get; set; }
+            public bool ThrowOnDispose { get; set; }
+
+            protected override object Invoke(MethodInfo targetMethod, object[] args)
+            {
+                switch (targetMethod.Name)
+                {
+                    case "Initialize":
+                        InitializeCount++;
+                        if (ThrowOnInitialize)
+                            throw new InvalidOperationException("Expected initialize failure.");
+                        break;
+                    case "Update":
+                        UpdateCount++;
+                        if (ThrowOnUpdate)
+                            throw new InvalidOperationException("Expected update failure.");
+                        break;
+                    case "Dispose":
+                        DisposeCount++;
+                        if (ThrowOnDispose)
+                            throw new InvalidOperationException("Expected dispose failure.");
+                        break;
+                }
+
+                return null;
+            }
+        }
+
+        [Test]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
         {
             var container = CreateContainer();
