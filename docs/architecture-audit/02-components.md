@@ -1,6 +1,6 @@
 # Architecture card: Components
 
-Status: **Inventory created; semantic review pending.** Do not mark this card complete based on paths/file counts; verify call sites and direct dependencies first.
+Status: **First-pass semantic review recorded; broader reference audit pending.**
 
 ## Five-filter checklist
 1. Is this needed by any RPG?
@@ -37,9 +37,12 @@ Total: 22
 ## Boundary hypothesis — verify, do not assume
 Classify each component as generic runtime state or game-specific Character/Combat/Lobby/Movement/Tags domain data. Data-only ownership is the desired default.
 
-## Review outcome
-- Purpose: pending source inspection.
-- Dependencies: pending direct-reference audit.
-- Consumers: pending reference search.
-- Framework relevance: pending five-filter assessment.
-- Findings/actions: record after inspecting implementation and references.
+## First-pass review (based on inspected implementations and imports)
+Components are grouped by Character, Combat, Core, Lobby and Movement, which signals a mixture of potentially reusable primitive state and MythHunter domain concepts. Classify every type before treating the folder as a universal framework module; check whether components are plain data or own behavior/platform dependencies.
+
+## Five-filter result (provisional)
+- **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
+- **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
+- **Reusable unchanged?** Not yet; the identified MythHunter/Unity/DI couplings prevent that conclusion.
+- **Framework vs game data/presentation?** Split mixed folders by responsibility, not by naming alone.
+- **Action:** continue dependency/reference audit, then decide move/adapt/keep/delete per file. No runtime refactor in the audit step.
