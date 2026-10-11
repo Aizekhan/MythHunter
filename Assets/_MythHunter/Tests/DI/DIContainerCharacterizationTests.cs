@@ -571,8 +571,8 @@ namespace MythHunter.DI.CharacterizationTests
             }
         }
 
-        public sealed class HighPrioritySystemSpyProxy : SystemSpyProxy { }
-        public sealed class LowPrioritySystemSpyProxy : SystemSpyProxy { }
+        public class HighPrioritySystemSpyProxy : SystemSpyProxy { }
+        public class LowPrioritySystemSpyProxy : SystemSpyProxy { }
 
         [Test]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
