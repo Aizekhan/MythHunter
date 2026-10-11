@@ -29,3 +29,6 @@ Split deterministic platform-independent helpers from UnityApiUtils, Unity frame
 - Consumers: pending reference search.
 - Framework relevance: pending five-filter assessment.
 - Findings/actions: record after inspecting implementation and references.
+
+## First-pass review (based on inspected implementations and imports)
+UnityApiUtils directly wraps UnityEngine object discovery/component access/destruction and belongs in a Unity adapter, not headless runtime. IMythLogger may be a portable contract, but implementation and consumer dependencies still need review. Don't move utility code solely because it looks generic.

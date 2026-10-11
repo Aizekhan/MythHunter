@@ -1,6 +1,6 @@
 # Architecture card: Systems
 
-Status: **Inventory created; semantic review pending.** Do not mark this card complete based on paths/file counts; verify call sites and direct dependencies first.
+Status: **First-pass semantic review recorded; broader reference audit pending.**
 
 ## Five-filter checklist
 1. Is this needed by any RPG?
@@ -59,9 +59,18 @@ Total: 44
 ## Boundary hypothesis — verify, do not assume
 Separate system lifecycle/registry abstractions from game-specific movement, combat, phase, lobby and AI behavior. Verify ordering, category lifecycle, dependencies, and initialization ownership.
 
-## Review outcome
-- Purpose: pending source inspection.
-- Dependencies: pending direct-reference audit.
-- Consumers: pending reference search.
-- Framework relevance: pending five-filter assessment.
-- Findings/actions: record after inspecting implementation and references.
+## First-pass review (based on inspected implementations and imports)
+SystemRegistry and ParallelSystemRegistry own lifecycle, initialization categories, ordering and execution. But GameplaySystemsInstaller imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase, confirming that composition is game-specific. Separate system lifecycle runtime from feature and game installers. Also inspect ParallelSystemRegistry override paths for initialized/active filtering parity before moving anything.
+
+## First-pass review (based on inspected implementations and imports)
+SystemRegistry/ParallelSystemRegistry own system lifecycle, categories, ordering and execution. GameplaySystemsInstaller imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase, confirming game-specific composition. Separate reusable lifecycle/runtime from game feature systems and installers. Inspect parity of ParallelSystemRegistry execution with initialized/active lifecycle.
+
+## First-pass review (based on inspected implementations and imports)
+SystemRegistry/ParallelSystemRegistry own system lifecycle, categories, ordering and execution. GameplaySystemsInstaller imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase, confirming game-specific composition. Separate reusable lifecycle/runtime from game feature systems and installers. Inspect parity of ParallelSystemRegistry execution with initialized/active lifecycle.
+
+## Five-filter result (provisional)
+- **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
+- **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
+- **Reusable unchanged?** Not yet; the identified MythHunter/Unity/DI couplings prevent that conclusion.
+- **Framework vs game data/presentation?** Split mixed folders by responsibility, not by naming alone.
+- **Action:** continue dependency/reference audit, then decide move/adapt/keep/delete per file. No runtime refactor in the audit step.

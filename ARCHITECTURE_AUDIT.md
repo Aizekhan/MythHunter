@@ -75,3 +75,15 @@ For every module and file:
 - Folder and interface names are not proof of universality.
 - No runtime refactor during the inventory checkpoint.
 - Do not mark tasks complete from counts alone.
+
+## First-pass semantic findings (reviewed implementation examples)
+- **Core/ECS:** `EcsWorld` depends on `MythHunter.Systems.Core.ISystemRegistry` as well as `RPGFramework.ECS`, so world/runtime composition is not yet wholly isolated from MythHunter system infrastructure.
+- **Entities vs storage archetypes:** `Entity` is an integer-ID wrapper; `Entities/Archetypes` defines game templates/required-component checkers and string-ID lookup. `EntityFactory` hard-codes Character/Enemy/Item and MythHunter component types. This is distinct from ECS storage archetypes and is game-specific.
+- **Systems:** `GameplaySystemsInstaller` imports Combat, Movement, Phase and `MythHunter.Game.Systems.Phase`; separate generic system runtime/lifecycle from game composition.
+- **Events:** `EventBus.cs` imports `UnityEditor` in a runtime code path and has dependencies on MythHunter domain event namespaces, DI and logging. This is a concrete Unity/game coupling risk; inspect conditional compilation/platform build behavior before changing it.
+- **Networking:** `NetworkSystem` composes client/server/serializer/logger implementations through interfaces, but authority validation, message validation, unsubscribe/disposal behavior and production transports need audit before claiming it is a general-purpose runtime.
+- **UI:** `UIService.HideScreen` is a placeholder and `IsScreenActive` always returns false in the inspected implementation; record as incomplete UI contract rather than framework-core functionality.
+- **Services:** `LocalHeroDataService` uses `Application.persistentDataPath`, `JsonUtility`, and `HeroDataModel`, making it a Unity/game-specific persistence adapter.
+- **Utils:** `UnityApiUtils` directly wraps UnityEngine object discovery, component lookup and destruction; it belongs in a Unity-facing adapter, not headless simulation core.
+
+These findings are initial and source-backed. They do not complete the dependency map: call-site/reference validation is still required before Phase 1 can be closed.
