@@ -21,7 +21,7 @@ Total: 5
 Classify settings/prefab/hero-data services; keep Unity prefab loading and MythHunter hero persistence outside universal simulation core.
 
 ## First-pass review (based on inspected implementations and imports)
-LocalHeroDataService depends directly on UnityEngine.Application.persistentDataPath and JsonUtility, and persists HeroDataModel from MythHunter.Entities.Heroes. It is a game-specific persistence adapter, not a reusable core service. Extract a generic persistence contract only if multiple consumers require it; put Unity filesystem/JSON implementation in an adapter.
+LocalHeroDataService uses Application.persistentDataPath, JsonUtility, HeroDataModel and disk I/O. It is a Unity/MythHunter persistence adapter, not universal runtime. Consider a generic persistence abstraction only if multiple consumers justify one.
 
 ## First-pass review (based on inspected implementations and imports)
 LocalHeroDataService directly depends on UnityEngine.Application.persistentDataPath and JsonUtility and persists MythHunter HeroDataModel. It is a game-specific persistence adapter, not universal core. Extract a generic persistence contract only if multiple consumers justify it.
