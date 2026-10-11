@@ -28,30 +28,27 @@ namespace MythHunter.Core.Installers
             BindSingleton<IEventStore, EventStore>(container);
 
 
-            var systemRegistry = container.Resolve<ISystemRegistry>();
-            BindSingleton<ITimerSystem, TimerSystem>(container);
-            systemRegistry.RegisterSystem(container.Resolve<ITimerSystem>());
-
-            // Перевіряємо наявність мережевої системи
+            // Choose the final bus before resolving anything that depends on IEventBus.
+            // SystemRegistry subscribes in its constructor, so resolving it first would
+            // instantiate and cache the earlier SimpleEventBus registration.
             bool hasNetworkSystem = container.IsRegistered<INetworkSystem>();
 
             if (hasNetworkSystem)
             {
-                // Замінюємо простий EventBus на мережевий
                 logger.LogInfo("Network system detected, using NetworkEventBus", "Installer");
-
-                // Реєструємо нову шину подій
                 BindSingleton<IEventBus, NetworkEventBus>(container);
                 BindSingleton<INetworkEventBus, NetworkEventBus>(container);
             }
             else
             {
-                // Замінюємо простий EventBus на повний
                 logger.LogInfo("No network system detected, using standard EventBus", "Installer");
-
-                // Реєструємо стандартну шину подій
                 BindSingleton<IEventBus, EventBus>(container);
             }
+
+            // Only now resolve the registry, so it captures the selected implementation.
+            var systemRegistry = container.Resolve<ISystemRegistry>();
+            BindSingleton<ITimerSystem, TimerSystem>(container);
+            systemRegistry.RegisterSystem(container.Resolve<ITimerSystem>());
 
             Bind<EventLogger, EventLogger>(container);
 
