@@ -98,7 +98,7 @@ Total: 82
 Likely mixed infrastructure: DI, ECS, installation/bootstrap, state machines, validation and Unity-facing services. Separate portable contracts/runtime from Unity/game composition.
 
 ## First-pass review (based on inspected implementations and imports)
-EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and the framework namespace RPGFramework.ECS. Core is not yet an isolated runtime boundary. Core/DI, GameBootstrapper, install scripts, SceneManagement, MonoBehaviours are mixed under this top-level folder. Immediate concern: identify and separate portable ECS runtime contracts from game composition and Unity integration.
+EcsWorld imports both RPGFramework.ECS and MythHunter.Systems.Core; it requires the legacy registry in its constructor. Core also contains DI, GameBootstrapper, installers, SceneManagement, MonoBehaviours and ECS utilities. The folder is a mixed composition/runtime boundary.
 
 ## First-pass review (based on inspected implementations and imports)
 EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and RPGFramework.ECS. The Core tree mixes ECS, DI, game bootstrap/installation, SceneManagement and MonoBehaviours. It is not yet an isolated runtime boundary. Action: map portable ECS runtime contracts separately from game composition and Unity integration.
