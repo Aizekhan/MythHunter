@@ -170,3 +170,7 @@ These findings are initial and source-backed. They do not complete the dependenc
 4. Only after Phase 1 is approved, begin Phase 2 file-by-file review and framework extraction proposals.
 
 This backlog prioritizes findings; it does not mark EPIC 01 complete.
+
+## Cache consistency test design
+- Added `docs/architecture-audit/16-component-cache-test-plan.md` describing expected coverage for Full/Incremental/OnDemand strategies, registry lifecycle, and Movement/Visibility/Hero system regression cases.
+- This is test design only, not a claim that cache behavior has been fixed or tests now pass. Choose the intended freshness/invalidation semantics before adding runtime changes.
