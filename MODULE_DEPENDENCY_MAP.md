@@ -45,3 +45,8 @@ The arrows above mean consumers depend on layers below them. The actual graph re
 
 ## Rule
 Do not move files or refactor runtime modules while these gates are open. Every proposal must pass the five filters: required by any RPG; specific-game coupling; reusable unchanged; framework vs game data; evidenced architectural issue/action.
+## Additional verified cache semantics
+- Default `ComponentCache<T>` strategy is Full; consumers refresh the snapshot every Update(). Registry auto-cadence therefore does not control all instances.
+- Incremental mode discovers missing IDs in batches but, in the inspected method, doesn't refresh cached values or prune IDs that lost the component. OnDemand only reaches IEntityManager on a miss and can retain stale values for existing entries.
+- Cache instances in MovementSystem and VisibilitySystem aren't managed by ComponentCacheRegistry's EntityDestroyed event; they rely on their own full refreshes in each Update().
+- This is a consistency/performance contract issue to test, not yet a decision to remove the cache.
