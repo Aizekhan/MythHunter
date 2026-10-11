@@ -239,6 +239,12 @@ namespace MythHunter.Core.ECS
         /// </summary>
         public int[] GetEntityIdsArray()
         {
+            // Ensure OnDemand enumeration does not expose cached IDs whose component was removed.
+            if (_strategy == CacheStrategy.OnDemand)
+            {
+                GetAllEntityIds();
+            }
+
             if (_isDirty)
             {
                 // Оновлюємо кешований масив
