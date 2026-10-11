@@ -1,6 +1,6 @@
 # Architecture card: Core
 
-Status: **Inventory created; semantic review pending.** Do not mark this card complete based on paths/file counts; verify call sites and direct dependencies first.
+Status: **First-pass semantic review recorded; broader reference audit pending.**
 
 ## Five-filter checklist
 1. Is this needed by any RPG?
@@ -97,9 +97,12 @@ Total: 82
 ## Boundary hypothesis — verify, do not assume
 Likely mixed infrastructure: DI, ECS, installation/bootstrap, state machines, validation and Unity-facing services. Separate portable contracts/runtime from Unity/game composition.
 
-## Review outcome
-- Purpose: pending source inspection.
-- Dependencies: pending direct-reference audit.
-- Consumers: pending reference search.
-- Framework relevance: pending five-filter assessment.
-- Findings/actions: record after inspecting implementation and references.
+## First-pass review (based on inspected implementations and imports)
+EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and the framework namespace RPGFramework.ECS. Core is not yet an isolated runtime boundary. Core/DI, GameBootstrapper, install scripts, SceneManagement, MonoBehaviours are mixed under this top-level folder. Immediate concern: identify and separate portable ECS runtime contracts from game composition and Unity integration.
+
+## Five-filter result (provisional)
+- **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
+- **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
+- **Reusable unchanged?** Not yet; the identified MythHunter/Unity/DI couplings prevent that conclusion.
+- **Framework vs game data/presentation?** Split mixed folders by responsibility, not by naming alone.
+- **Action:** continue dependency/reference audit, then decide move/adapt/keep/delete per file. No runtime refactor in the audit step.
