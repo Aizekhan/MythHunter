@@ -79,10 +79,16 @@ namespace MythHunter.Systems.Movement
                 if (!movement.IsMoving || path.IsPathComplete)
                     continue;
 
-                // Обробляємо рух
+                // Обробляємо рух. EntityManager — авторитетне сховище компонентів;
+                // cache є лише похідним snapshot і не може бути єдиним місцем запису.
                 ProcessEntityMovement(entityId, deltaTime, ref path, ref movement, ref position);
 
-                // Оновлюємо компоненти
+                // Зберігаємо змінені struct-компоненти в авторитетному сховищі.
+                _entityManager.AddComponent(entityId, path);
+                _entityManager.AddComponent(entityId, movement);
+                _entityManager.AddComponent(entityId, position);
+
+                // Після write-through оновлюємо також локальні snapshots.
                 _pathCache.Add(entityId, path);
                 _movementCache.Add(entityId, movement);
                 _positionCache.Add(entityId, position);
@@ -136,6 +142,12 @@ namespace MythHunter.Systems.Movement
             if (movement.MovementPoints <= 0)
             {
                 StopMovement(entityId, true);
+
+                // StopMovement writes the stopped state directly to EntityManager.
+                // Refresh these local copies so the caller's write-through cannot
+                // overwrite that authoritative stopped state with stale structs.
+                movement = _entityManager.GetComponent<MovementComponent>(entityId);
+                path = _entityManager.GetComponent<PathComponent>(entityId);
                 return;
             }
 
