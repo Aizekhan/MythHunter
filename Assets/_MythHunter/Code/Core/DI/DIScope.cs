@@ -90,7 +90,7 @@ namespace MythHunter.Core.DI
 
                 var newInstance = factory();
 
-                if (newInstance is IDisposable disposable)
+                if (newInstance is IDisposable disposable && !_disposables.Contains(disposable))
                     _disposables.Add(disposable);
 
                 _scopedInstances[serviceType] = newInstance;
