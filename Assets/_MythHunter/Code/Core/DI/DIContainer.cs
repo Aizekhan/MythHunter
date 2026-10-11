@@ -30,7 +30,8 @@ namespace MythHunter.Core.DI
 
         // Поточний скоуп
         private DIScope _currentScope;
-        private readonly ThreadLocal<DIScope> _asyncLocalScope = new ThreadLocal<DIScope>();
+        private readonly ThreadLocal<DIScope> _threadLocalScope = new ThreadLocal<DIScope>();
+        private readonly int _mainThreadId;
 
         /// <summary>
         /// Клас для зберігання даних про реєстрацію типу
@@ -68,6 +69,7 @@ namespace MythHunter.Core.DI
         public DIContainer(IMythLogger logger = null)
         {
             _logger = logger;
+            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
 
             // Реєструємо сам контейнер як сінглтон
             RegisterInstance<IDIContainer>(this);
@@ -463,7 +465,7 @@ namespace MythHunter.Core.DI
         public DIScope GetCurrentScope()
         {
             // Спершу перевіряємо потокозалежний скоуп
-            var threadScope = _asyncLocalScope?.Value;
+            var threadScope = _threadLocalScope?.Value;
             if (threadScope != null)
                 return threadScope;
 
@@ -488,15 +490,15 @@ namespace MythHunter.Core.DI
                 return;
             }
 
-            if (Thread.CurrentThread.ManagedThreadId == Thread.CurrentThread.ManagedThreadId)
+            if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
             {
-                // Головний потік
+                // Keep Unity/main-thread scope changes in the container's main scope.
                 _currentScope = scope;
             }
             else
             {
-                // Інший потік - використовуємо ThreadLocal
-                _asyncLocalScope.Value = scope;
+                // Other threads get an isolated scope; do not overwrite the main scope.
+                _threadLocalScope.Value = scope;
             }
 
             _logger?.LogDebug($"Set current DI scope to {scope.ScopeId}", "DI");
