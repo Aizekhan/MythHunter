@@ -278,6 +278,9 @@ namespace MythHunter.DI.CharacterizationTests
             var networkType = assembly.GetType("MythHunter.Networking.Core.INetworkSystem", true);
             Assert.That(IsRegisteredByType(container, networkType), Is.EqualTo(expectedRegistration));
 
+            var authorityType = assembly.GetType("MythHunter.Networking.Core.NetworkAuthority", true);
+            Assert.That(IsRegisteredByType(container, authorityType), Is.EqualTo(expectedRegistration));
+
             if (!expectedRegistration)
                 return;
 
