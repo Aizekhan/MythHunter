@@ -223,8 +223,10 @@ namespace MythHunter.Systems.Core
 
         public void DisposeAll()
         {
-            foreach (var reg in _allSystems)
+            // Dispose systems in reverse registration/initialization priority order.
+            for (var i = _allSystems.Count - 1; i >= 0; i--)
             {
+                var reg = _allSystems[i];
                 try
                 {
                     reg.System.Dispose();
