@@ -67,3 +67,11 @@ The cache subsystem has at least three direct gameplay system consumers and two 
 - `CoreInstaller` initially binds `IEventBus -> SimpleEventBus` as a fallback.
 - `EventsInstaller` resolves `EventNetworkMode`; Offline mode registers `IEventBus -> EventBus`, while client/server modes register `INetworkEventBus -> NetworkEventBus` then alias the same instance to `IEventBus`.
 - `NetworkEventBus` inherits `EventBus`, so the unconditional `using UnityEditor;` in EventBus also affects the network bus compilation path. No other UnityEditor API usage or preprocessor guard was found in the inspected file. The unused editor-only namespace import should be removed in a dedicated source fix and validated by a player build before describing it as a confirmed build failure.
+## Additional consumer search results
+- `Assets/_MythHunter/Code/Systems/Gameplay/Movement/MovementSystem.cs` has three concrete cache fields and manually updates them.
+- `Assets/_MythHunter/Code/Systems/Gameplay/Movement/VisibilitySystem.cs` has two concrete cache fields and manually updates them.
+- `Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs` obtains Stats/Health caches from registry and manually updates them.
+- The current repository search result for `ComponentCache<` also surfaces an unnamed component-cache enumeration helper inside `ComponentCache.cs`; inspect that nested helper for whether it duplicates iteration APIs.
+
+## Search coverage caveat
+These are positive matches from GitHub's indexed code search, not proof that every usage is returned. The exact reverse-reference count is still unverified.
