@@ -237,6 +237,7 @@ namespace MythHunter.Systems.Core
             }
 
             _allSystems.Clear();
+            _initializedSystems.Clear();
             UnsubscribeFromEvents();
             _logger.LogInfo("Disposed all systems", "Systems");
         }
