@@ -131,3 +131,7 @@ These findings are initial and source-backed. They do not complete the dependenc
 - Cache consumers found via repository code search: `HeroSystem` caches stats/health, `MovementSystem` caches position/movement/path and refreshes every update, `VisibilitySystem` caches position/visibility and refreshes every update. Some cache snapshots are constructed directly, outside `ComponentCacheRegistry`.
 - `CoreInstaller` initially binds `IEventBus` to `SimpleEventBus`; `EventsInstaller` replaces that binding with `EventBus` in offline mode or aliases the `NetworkEventBus` instance through `IEventBus` for client/server modes. `NetworkEventBus` inherits `EventBus`.
 - `EventBus.cs` has an unconditional `using UnityEditor;` and no other matching editor API or `#if/#endif` in the inspected file. Treat this as a probable player-build defect requiring a targeted fix/build check, not as a proven player-build failure until validated.
+## EventBus portability fix follow-up
+- PR #34 merged as `0313e8afd0e621fa310e31373ebe014cf5fe9889`: removed unused `using UnityEditor;` from `EventBus.cs`.
+- `Minimal CI` and `RPGFramework ECS Runtime` passed on the PR head.
+- Local Unity EditMode/full-project compile and a non-Editor player build remain to be run to fully close the portability check.
