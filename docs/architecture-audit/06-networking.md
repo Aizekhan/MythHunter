@@ -35,6 +35,9 @@ Separate transport-neutral contracts from client/server transports, game payload
 ## First-pass review (based on inspected implementations and imports)
 NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IMythLogger, and uses MythHunter DI and message contracts. The transport contracts are a potential reusable boundary, but connection authority, disposal/unsubscription, validation of untrusted messages, serializer limits and actual transport implementations must be inspected before marking this production-ready. Client/server orchestration is not part of every RPG's simulation core.
 
+## First-pass review (based on inspected implementations and imports)
+NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IMythLogger, and references MythHunter DI and message contracts. Transport contracts may be reusable, but authority, disposal/unsubscription, untrusted-message validation, serializer limits and actual transports need review before claims of production readiness. Client/server orchestration is optional to simulation core.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
