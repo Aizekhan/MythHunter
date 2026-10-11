@@ -16,6 +16,7 @@ namespace MythHunter.Events.Network
     public class NetworkEventBus : EventBus, INetworkEventBus
     {
         private readonly INetworkSystem _networkSystem;
+        private readonly EventNetworkMode _networkMode;
         private readonly Dictionary<Type, NetworkEventMetadata> _networkEventTypes = new Dictionary<Type, NetworkEventMetadata>();
 
         // Метадані мережевої події
@@ -38,9 +39,14 @@ namespace MythHunter.Events.Network
         [Inject]
         public NetworkEventBus(IEventPool eventPool,
                               IMythLogger logger,
-                              INetworkSystem networkSystem) : base(eventPool, logger)
+                              INetworkSystem networkSystem,
+                              EventNetworkMode networkMode) : base(eventPool, logger)
         {
-            _networkSystem = networkSystem;
+            _networkSystem = networkSystem ?? throw new ArgumentNullException(nameof(networkSystem));
+            _networkMode = networkMode;
+
+            if (_networkMode == EventNetworkMode.Offline)
+                throw new ArgumentException("NetworkEventBus cannot be used with Offline mode.", nameof(networkMode));
 
             // Ініціалізація: сканування всіх типів подій з атрибутом NetworkEvent
             ScanAndRegisterNetworkEvents();
@@ -115,21 +121,21 @@ namespace MythHunter.Events.Network
             // Отримуємо тип всередині методу
             Type eventType = typeof(TEvent);
 
-            // Перевіряємо авторитетність
-            bool canSendOverNetwork = false;
-
-            switch (metadata.Authority)
+            // Authority is controlled by explicit composition-root policy, not by
+            // the concrete transport object's interface list. Host mode may originate
+            // events with either role; client/server modes may originate only their role.
+            bool canSendOverNetwork = metadata.Authority switch
             {
-                case NetworkEventAuthority.Server:
-                    canSendOverNetwork = _networkSystem is IServerNetworkSystem;
-                    break;
-                case NetworkEventAuthority.Client:
-                    canSendOverNetwork = _networkSystem is IClientNetworkSystem;
-                    break;
-                case NetworkEventAuthority.Both:
-                    canSendOverNetwork = true;
-                    break;
-            }
+                NetworkEventAuthority.Server =>
+                    _networkMode == EventNetworkMode.Server || _networkMode == EventNetworkMode.Host,
+                NetworkEventAuthority.Client =>
+                    _networkMode == EventNetworkMode.Client || _networkMode == EventNetworkMode.Host,
+                NetworkEventAuthority.Both =>
+                    _networkMode == EventNetworkMode.Client ||
+                    _networkMode == EventNetworkMode.Server ||
+                    _networkMode == EventNetworkMode.Host,
+                _ => false
+            };
 
             if (!canSendOverNetwork)
                 return;
@@ -202,6 +208,13 @@ namespace MythHunter.Events.Network
         /// <summary>
         /// Реєструє тип події як мережеву подію
         /// </summary>
+        public void Dispose()
+        {
+            if (_networkSystem != null)
+                _networkSystem.OnMessageReceived -= HandleNetworkMessage;
+            base.Dispose();
+        }
+
         public void RegisterNetworkEvent<TEvent>(NetworkEventAuthority authority, NetworkEventPriority priority)
             where TEvent : struct, IEvent
         {
