@@ -175,18 +175,6 @@ namespace MythHunter.Systems.Core
                 typeof(TGroup),
                 new object[] { groupName, logger });
 
-            Type groupType = typeof(TGroup);
-            if (groupType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
-                .FirstOrDefault() is SystemCategoryAttribute existingAttr)
-            {
-                if (existingAttr.Category != category)
-                {
-                    logger.LogWarning(
-                        $"Group type {groupType.Name} already has category {existingAttr.Category}; registration requested {category}.",
-                        "SystemRegistry");
-                }
-            }
-
             registry.RegisterSystemWithPriority(group, priority, category);
 
             if (systems != null && systems.Length > 0)
