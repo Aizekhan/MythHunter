@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace MythHunter.DI.CharacterizationTests
@@ -481,14 +480,14 @@ namespace MythHunter.DI.CharacterizationTests
             addSystem.Invoke(group, new object[] { initializeFailure });
             addSystem.Invoke(group, new object[] { disposeFailure });
 
-            LogAssert.Expect(LogType.Error, new Regex("Error initializing system .*Expected initialize failure\\."));
+            LogAssert.Expect(UnityEngine.LogType.Error, new Regex("Error initializing system .*Expected initialize failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Initialize").Invoke(group, null));
 
-            LogAssert.Expect(LogType.Error, new Regex("Error updating system .*Expected update failure\\."));
+            LogAssert.Expect(UnityEngine.LogType.Error, new Regex("Error updating system .*Expected update failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Update", new[] { typeof(float) })
                 .Invoke(group, new object[] { 0.016f }));
 
-            LogAssert.Expect(LogType.Error, new Regex("Error disposing system .*Expected dispose failure\\."));
+            LogAssert.Expect(UnityEngine.LogType.Error, new Regex("Error disposing system .*Expected dispose failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Dispose").Invoke(group, null));
 
             Assert.That(updateFailure.InitializeCount, Is.EqualTo(1));
