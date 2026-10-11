@@ -365,6 +365,8 @@ namespace MythHunter.DI.CharacterizationTests
                 "EventBusRegistrationRegression"
             });
             RegisterInstance(container, loggerInterface, logger);
+            var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
+            RegisterInstance(container, modeType, Enum.Parse(modeType, "Offline"));
 
             Register(container, "RegisterSingleton",
                 assembly.GetType("MythHunter.Events.IEventPool", true),
