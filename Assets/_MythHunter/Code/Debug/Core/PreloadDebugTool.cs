@@ -171,8 +171,9 @@ namespace MythHunter.Debug.Tools
 
         public void RenderGUI(Rect area)
         {
+#if UNITY_EDITOR
             GUILayout.BeginArea(area);
-            GUILayout.Label("=== Preload Monitor ===", EditorStyles.boldLabel);
+            GUILayout.Label("=== Preload Monitor ===", UnityEditor.EditorStyles.boldLabel);
 
             var stats = GetStatistics();
 
@@ -195,8 +196,8 @@ namespace MythHunter.Debug.Tools
             }
 
             GUILayout.EndArea();
+#endif
         }
-
 
 
         public void Initialize()
