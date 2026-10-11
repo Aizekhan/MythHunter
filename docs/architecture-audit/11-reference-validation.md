@@ -58,3 +58,12 @@ IEventBus contract
 
 ### Updated cache conclusion
 The cache subsystem has at least three direct gameplay system consumers and two separate construction paths (registry-managed versus directly constructed). Removing it would require migration and behavior/performance comparison. A more targeted candidate is normalizing cache ownership and update policy, but only after profiling and checking whether direct cache consumers expect a fresh snapshot each frame.
+## Additional direct consumers and lifecycle evidence
+- `HeroSystem` updates its `StatsComponent` and `HealthComponent` caches on every `Update` call. `MovementSystem` calls `Update()` on Position/Movement/Path caches in both `Initialize` and every `Update`; `VisibilitySystem` similarly updates Position/Visibility caches during initialization and each update. These consumers are not relying solely on the registry's configured five-frame cadence.
+- The same cache component type may be represented by a registry-managed cache and one or more directly constructed caches (e.g. PositionComponent appears in both MovementSystem and VisibilitySystem). This duplicates cached snapshots and refresh work, though not authoritative entity storage.
+- `ComponentCacheRegistry`'s constructor also subscribes to `IPhaseProvider` callbacks and entity created/destroyed events, and hardcodes the Name/Description/Value components as auto-create types. This makes its policy MythHunter-specific rather than a generic cache catalog.
+
+## Event bus binding chain verified
+- `CoreInstaller` initially binds `IEventBus -> SimpleEventBus` as a fallback.
+- `EventsInstaller` resolves `EventNetworkMode`; Offline mode registers `IEventBus -> EventBus`, while client/server modes register `INetworkEventBus -> NetworkEventBus` then alias the same instance to `IEventBus`.
+- `NetworkEventBus` inherits `EventBus`, so the unconditional `using UnityEditor;` in EventBus also affects the network bus compilation path. No other UnityEditor API usage or preprocessor guard was found in the inspected file. The unused editor-only namespace import should be removed in a dedicated source fix and validated by a player build before describing it as a confirmed build failure.
