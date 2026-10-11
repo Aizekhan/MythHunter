@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MythHunter.Core.ECS;
-using MythHunter.Events;
+using MythHunter.Core.DI;
 
 using MythHunter.Systems.Groups;
 using MythHunter.Systems.Phase;
@@ -41,21 +41,6 @@ namespace MythHunter.Systems.Core
         }
 
         /// <summary>
-        /// Реєструє систему з пріоритетом оновлення
-        /// </summary>
-        public static void RegisterSystemWithPriority(this ISystemRegistry registry, ISystem system, int priority)
-        {
-            if (registry is SystemRegistry systemRegistry)
-            {
-                systemRegistry.RegisterSystemWithPriority(system, priority);
-            }
-            else
-            {
-                registry.RegisterSystem(system);
-            }
-        }
-
-        /// <summary>
         /// Реєструє групу систем для певних фаз, використовуючи строкові ідентифікатори
         /// </summary>
         public static SystemGroup RegisterPhaseSystemGroup(
@@ -66,29 +51,21 @@ namespace MythHunter.Systems.Core
             IPhaseProvider phaseProvider,
             params string[] activePhaseIds)
         {
-            // Перевіряємо, чи реєстр підтримує перевірку на існуючі групи
-            if (registry is SystemRegistry systemRegistry)
-            {
-                // Перевіряємо, чи група з такою назвою вже існує
-                var existingGroup = systemRegistry.GetAllSystems()
-                    .FirstOrDefault(s => s is SystemGroup group && group.GroupName == groupName) as SystemGroup;
+            var existingGroup = registry.GetAllSystems()
+                .OfType<SystemGroup>()
+                .FirstOrDefault(group => group.GroupName == groupName);
 
-                if (existingGroup != null)
-                {
-                    systemRegistry.LogInfo($"System group '{groupName}' is already registered, skipping");
-                    return existingGroup;
-                }
+            if (existingGroup != null)
+            {
+                registry.LogInfo($"System group '{groupName}' is already registered, skipping");
+                return existingGroup;
             }
 
             // Створення групи систем з підтримкою фаз
             var phaseGroup = new PhaseSystemGroup(groupName, groupPriority, logger, activePhaseIds, phaseProvider);
 
-            // Логування
-            if (registry is SystemRegistry sr)
-            {
-                string phasesString = string.Join(", ", activePhaseIds);
-                sr.LogInfo($"Created phase system group '{groupName}' for phases: {phasesString}");
-            }
+            string phasesString = string.Join(", ", activePhaseIds);
+            registry.LogInfo($"Created phase system group '{groupName}' for phases: {phasesString}");
 
             // Реєстрація групи з пріоритетом
             registry.RegisterSystemWithPriority(phaseGroup, groupPriority);
@@ -113,8 +90,10 @@ namespace MythHunter.Systems.Core
         }
 
         /// <summary>
-        /// Метод для сумісності зі старим кодом - знайде IPhaseProvider в реєстрі
+        /// Compatibility overload for callers that already registered an IPhaseProvider as a system.
+        /// Prefer the overload that receives the provider explicitly.
         /// </summary>
+        [Obsolete("Pass an IPhaseProvider explicitly when registering a phase system group.")]
         public static SystemGroup RegisterPhaseSystemGroup(
             this ISystemRegistry registry,
             string groupName,
@@ -122,118 +101,100 @@ namespace MythHunter.Systems.Core
             IMythLogger logger,
             params Events.Domain.GamePhase[] activePhases)
         {
-            // Спроба знайти IPhaseProvider через реєстр систем
-            IPhaseProvider phaseProvider = FindPhaseProvider(registry, logger, groupName);
-
-            // Конвертуємо GamePhase в string IDs
-            string[] phaseIds = activePhases.Select(p => p.ToString()).ToArray();
-            return RegisterPhaseSystemGroup(registry, groupName, groupPriority, logger, phaseProvider, phaseIds);
-        }
-
-        /// <summary>
-        /// Знаходить IPhaseProvider в реєстрі систем або створює новий
-        /// </summary>
-        private static IPhaseProvider FindPhaseProvider(ISystemRegistry registry, IMythLogger logger, string groupName)
-        {
-            IPhaseProvider phaseProvider = null;
-
-            // Спроба знайти IPhaseProvider через реєстр систем
-            if (registry is SystemRegistry systemRegistry)
-            {
-                var systems = systemRegistry.GetAllSystems();
-                foreach (var system in systems)
-                {
-                    if (system is IPhaseProvider provider)
-                    {
-                        phaseProvider = provider;
-                        break;
-                    }
-                }
-            }
-
-            // Якщо не знайдено, створюємо новий GamePhaseProvider
+            var phaseProvider = registry.GetAllSystems().OfType<IPhaseProvider>().FirstOrDefault();
             if (phaseProvider == null)
             {
-                logger.LogWarning($"IPhaseProvider not found when registering group '{groupName}'. Creating new one.", "System");
-
-                // Спроба отримати EventBus
-                IEventBus eventBus = null;
-                if (registry is SystemRegistry sr)
-                {
-                    foreach (var system in sr.GetAllSystems())
-                    {
-                        if (system is IEventSystem eventSystem)
-                        {
-                            // У даному випадку нам треба отримати EventBus через рефлексію
-                            var field = eventSystem.GetType().GetField("_eventBus", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (field != null)
-                            {
-                                eventBus = field.GetValue(eventSystem) as IEventBus;
-                                if (eventBus != null)
-                                    break;
-                            }
-                        }
-                    }
-                }
-
-                // Створюємо новий провайдер
-                phaseProvider = eventBus != null
-                    ? new GamePhaseProvider(eventBus, logger)
-                    : new EmergencyPhaseProvider(logger);
+                const string message =
+                    "No IPhaseProvider is registered. Pass an IPhaseProvider explicitly when registering a phase system group.";
+                logger.LogError(message, "System");
+                throw new InvalidOperationException(message);
             }
 
-            return phaseProvider;
+            return RegisterPhaseSystemGroup(
+                registry,
+                groupName,
+                groupPriority,
+                logger,
+                phaseProvider,
+                activePhases);
         }
 
         /// <summary>
-        /// Реєструє групу систем з вказаною категорією ініціалізації
+        /// Registers a system group with the specified lifecycle category.
+        /// Use the overload that accepts IDIContainer when child system types must be resolved.
         /// </summary>
-        /// <typeparam name="TGroup">Тип групи систем</typeparam>
-        /// <param name="registry">Реєстр систем</param>
-        /// <param name="groupName">Назва групи</param>
-        /// <param name="priority">Пріоритет виконання</param>
-        /// <param name="category">Категорія ініціалізації</param>
-        /// <param name="logger">Логер</param>
-        /// <param name="systems">Типи систем для додавання в групу</param>
-        /// <returns>Створена група систем</returns>
+        /// <typeparam name="TGroup">System group type.</typeparam>
+        /// <param name="registry">System registry.</param>
+        /// <param name="groupName">Group name.</param>
+        /// <param name="priority">System update/disposal priority.</param>
+        /// <param name="category">Requested initialization category.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>The registered system group.</returns>
+        public static TGroup RegisterGroupWithCategory<TGroup>(
+            this ISystemRegistry registry,
+            string groupName,
+            int priority,
+            SystemInitializationCategory category,
+            IMythLogger logger)
+            where TGroup : SystemGroup
+        {
+            return RegisterGroupWithCategory<TGroup>(
+                registry,
+                groupName,
+                priority,
+                category,
+                logger,
+                null,
+                null);
+        }
+
+        /// <summary>
+        /// Registers a system group and optionally resolves children from an explicitly supplied container.
+        /// </summary>
+        /// <param name="container">The container used to resolve child systems.</param>
+        /// <param name="systems">Child system types to resolve and add.</param>
         public static TGroup RegisterGroupWithCategory<TGroup>(
             this ISystemRegistry registry,
             string groupName,
             int priority,
             SystemInitializationCategory category,
             IMythLogger logger,
-            Type[] systems = null)
+            IDIContainer container,
+            params Type[] systems)
             where TGroup : SystemGroup
         {
-            // Створюємо екземпляр групи через активатор
+            if (registry == null)
+                throw new ArgumentNullException(nameof(registry));
+            if (logger == null)
+                throw new ArgumentNullException(nameof(logger));
+            if (systems != null && systems.Length > 0 && container == null)
+                throw new ArgumentNullException(nameof(container),
+                    "Pass the DI container explicitly when resolving child systems.");
+
             var group = (TGroup)Activator.CreateInstance(
                 typeof(TGroup),
                 new object[] { groupName, logger });
 
-            // Застосовуємо категорію через атрибут
             Type groupType = typeof(TGroup);
             if (groupType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
                 .FirstOrDefault() is SystemCategoryAttribute existingAttr)
             {
-                // Якщо атрибут вже існує, перевіряємо чи потрібно його замінити
                 if (existingAttr.Category != category)
                 {
-                    logger.LogWarning($"Group type {groupType.Name} already has category {existingAttr.Category}, overriding with {category}", "SystemRegistry");
+                    logger.LogWarning(
+                        $"Group type {groupType.Name} already has category {existingAttr.Category}; registration requested {category}.",
+                        "SystemRegistry");
                 }
             }
 
-            // Реєструємо групу з пріоритетом та категорією
             registry.RegisterSystemWithPriority(group, priority);
 
-            // Додаємо системи, якщо вони вказані
             if (systems != null && systems.Length > 0)
             {
-                var container = registry.GetContainer();
                 foreach (var systemType in systems)
                 {
                     try
                     {
-                        // Отримуємо екземпляр через DI контейнер
                         if (container.IsRegistered(systemType))
                         {
                             var system = container.Resolve(systemType) as ISystem;
@@ -271,7 +232,8 @@ namespace MythHunter.Systems.Core
             string groupName,
             int priority,
             SystemInitializationCategory category,
-            IMythLogger logger)
+            IMythLogger logger,
+            IDIContainer container)
             where TGroup : SystemGroup
             where TSystem1 : ISystem
         {
@@ -280,6 +242,7 @@ namespace MythHunter.Systems.Core
                 priority,
                 category,
                 logger,
+                container,
                 new Type[] { typeof(TSystem1) });
         }
 
@@ -291,7 +254,8 @@ namespace MythHunter.Systems.Core
             string groupName,
             int priority,
             SystemInitializationCategory category,
-            IMythLogger logger)
+            IMythLogger logger,
+            IDIContainer container)
             where TGroup : SystemGroup
             where TSystem1 : ISystem
             where TSystem2 : ISystem
@@ -301,6 +265,7 @@ namespace MythHunter.Systems.Core
                 priority,
                 category,
                 logger,
+                container,
                 new Type[] { typeof(TSystem1), typeof(TSystem2) });
         }
 
@@ -312,7 +277,8 @@ namespace MythHunter.Systems.Core
             string groupName,
             int priority,
             SystemInitializationCategory category,
-            IMythLogger logger)
+            IMythLogger logger,
+            IDIContainer container)
             where TGroup : SystemGroup
             where TSystem1 : ISystem
             where TSystem2 : ISystem
@@ -323,6 +289,7 @@ namespace MythHunter.Systems.Core
                 priority,
                 category,
                 logger,
+                container,
                 new Type[] { typeof(TSystem1), typeof(TSystem2), typeof(TSystem3) });
         }
     }

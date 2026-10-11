@@ -371,12 +371,7 @@ namespace MythHunter.DI.CharacterizationTests
                 logger
             });
             var registryType = assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true);
-            var registry = Activator.CreateInstance(registryType, new[]
-            {
-                logger,
-                eventBus,
-                container
-            });
+            var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus });
             var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
             var probe = CreateSystemSpy(systemInterface);
             var probeState = (SystemSpyProxy)probe;
@@ -426,7 +421,7 @@ namespace MythHunter.DI.CharacterizationTests
                 logger
             });
             var registryType = assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true);
-            var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus, container });
+            var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus });
             var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
 
             var highPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface, typeof(HighPrioritySystemSpyProxy));
@@ -516,6 +511,116 @@ namespace MythHunter.DI.CharacterizationTests
                 "A child dispose exception must not prevent remaining sibling cleanup.");
         }
 
+        [Test]
+        public void SystemRegistryContract_DoesNotExposeTheDependencyContainer()
+        {
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            var registryInterface = assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true);
+
+            Assert.That(registryInterface.GetMethod("GetContainer"), Is.Null,
+                "The system registry contract must not expose the DI container as a service locator.");
+        }
+
+        [Test]
+        public void RegistryExtensions_RegisterPhaseGroupThroughTheInterfaceContract()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logger = Resolve(container, loggerInterface);
+            var registryInterface = assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true);
+            var providerInterface = assembly.GetType("MythHunter.Core.ECS.IPhaseProvider", true);
+            var registry = (RegistryContractSpyProxy)CreateSystemSpy(
+                registryInterface,
+                typeof(RegistryContractSpyProxy));
+            var phaseProvider = CreateSystemSpy(providerInterface, typeof(PhaseProviderSpyProxy));
+            var extensionType = assembly.GetType("MythHunter.Systems.Core.SystemRegistryExtensions", true);
+            var method = extensionType.GetMethod(
+                "RegisterPhaseSystemGroup",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[]
+                {
+                    registryInterface,
+                    typeof(string),
+                    typeof(int),
+                    loggerInterface,
+                    providerInterface,
+                    typeof(string[])
+                },
+                null);
+
+            Assert.That(method, Is.Not.Null);
+            var group = method.Invoke(null, new object[]
+            {
+                registry,
+                "ContractPhaseGroup",
+                42,
+                logger,
+                phaseProvider,
+                new[] { "Planning" }
+            });
+
+            Assert.That(group, Is.Not.Null);
+            Assert.That(registry.GetAllSystemsCallCount, Is.EqualTo(1),
+                "Group discovery must use ISystemRegistry.GetAllSystems, not a concrete registry cast.");
+            Assert.That(registry.RegisteredSystem, Is.SameAs(group));
+            Assert.That(registry.RegisteredPriority, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void LegacyPhaseGroupRegistration_FailsFastWhenNoProviderIsRegistered()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logger = Resolve(container, loggerInterface);
+            var registryInterface = assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true);
+            var registry = (RegistryContractSpyProxy)CreateSystemSpy(
+                registryInterface,
+                typeof(RegistryContractSpyProxy));
+            var gamePhaseType = assembly.GetType("MythHunter.Events.Domain.GamePhase", true);
+            var phaseValues = Array.CreateInstance(gamePhaseType, 1);
+            phaseValues.SetValue(Enum.Parse(gamePhaseType, "Planning"), 0);
+            var extensionType = assembly.GetType("MythHunter.Systems.Core.SystemRegistryExtensions", true);
+            var method = extensionType.GetMethod(
+                "RegisterPhaseSystemGroup",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[]
+                {
+                    registryInterface,
+                    typeof(string),
+                    typeof(int),
+                    loggerInterface,
+                    gamePhaseType.MakeArrayType()
+                },
+                null);
+
+            Assert.That(method, Is.Not.Null);
+            LogAssert.Expect(new Regex("(?s).*No IPhaseProvider is registered.*Pass an IPhaseProvider explicitly.*"));
+            var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new[]
+            {
+                (object)registry,
+                "MissingProviderGroup",
+                5,
+                logger,
+                phaseValues
+            }));
+            Assert.That(invocation.InnerException, Is.TypeOf<InvalidOperationException>());
+            Assert.That(invocation.InnerException.Message, Does.Contain("Pass an IPhaseProvider explicitly"));
+        }
+
         private static object CreateSystemSpy(Type systemInterface)
         {
             return CreateSystemSpy(systemInterface, typeof(SystemSpyProxy));
@@ -581,6 +686,46 @@ namespace MythHunter.DI.CharacterizationTests
 
         public class HighPrioritySystemSpyProxy : SystemSpyProxy { }
         public class LowPrioritySystemSpyProxy : SystemSpyProxy { }
+
+        public class RegistryContractSpyProxy : DispatchProxy
+        {
+            public object RegisteredSystem { get; private set; }
+            public int RegisteredPriority { get; private set; }
+            public int GetAllSystemsCallCount { get; private set; }
+
+            protected override object Invoke(MethodInfo targetMethod, object[] args)
+            {
+                switch (targetMethod.Name)
+                {
+                    case "GetAllSystems":
+                        GetAllSystemsCallCount++;
+                        var systemType = targetMethod.ReturnType.GetGenericArguments()[0];
+                        return Array.CreateInstance(systemType, 0);
+                    case "RegisterSystemWithPriority":
+                        RegisteredSystem = args[0];
+                        RegisteredPriority = (int)args[1];
+                        return null;
+                    case "LogInfo":
+                        return null;
+                }
+
+                var returnType = targetMethod.ReturnType;
+                if (returnType == typeof(void))
+                    return null;
+                return returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
+            }
+        }
+
+        public class PhaseProviderSpyProxy : DispatchProxy
+        {
+            protected override object Invoke(MethodInfo targetMethod, object[] args)
+            {
+                var returnType = targetMethod.ReturnType;
+                if (returnType == typeof(void))
+                    return null;
+                return returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
+            }
+        }
 
         [Test]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()

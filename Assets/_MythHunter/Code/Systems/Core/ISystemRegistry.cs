@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 
 namespace MythHunter.Systems.Core
@@ -17,7 +16,5 @@ namespace MythHunter.Systems.Core
         void InitializeSystemsByCategory(SystemInitializationCategory category);
         void LogInfo(string message);
         T GetSystem<T>() where T : ISystem;
-        // Додамо метод для отримання DI контейнера
-        IDIContainer GetContainer();
     }
 }
