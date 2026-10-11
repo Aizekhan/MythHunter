@@ -135,3 +135,9 @@ These findings are initial and source-backed. They do not complete the dependenc
 - PR #34 merged as `0313e8afd0e621fa310e31373ebe014cf5fe9889`: removed unused `using UnityEditor;` from `EventBus.cs`.
 - `Minimal CI` and `RPGFramework ECS Runtime` passed on the PR head.
 - Local Unity EditMode/full-project compile and a non-Editor player build remain to be run to fully close the portability check.
+## Additional modules required by EPIC 01
+- Added first-pass cards for Resources, Data & Serialization, Debug, and Replay at `docs/architecture-audit/12-resources.md` through `15-replay.md`. These were missing from the original ten mandatory cards but are present in the source tree and matter to the dependency boundary.
+- **Resources:** inspected manager/provider contracts use `UnityEngine.Object`; concrete managers/providers depend on Unity Resources/Addressables/AssetBundles and MythHunter DI/logging/pooling. Treat as Unity adapters, not portable simulation core.
+- **Data & Serialization:** generic `IComponentSerializer<T>`/`ComponentSerializerBase<T>` depend on `RPGFramework.ECS.IComponent` and standard binary streams; registry/installer remain coupled to MythHunter DI/logger. Serialization wire format/versioning is still an open concern.
+- **Debug:** `IDebugTool` is a fairly general diagnostics contract, but `DebugDashboard` is a Unity MonoBehaviour and `DebugToolFactory` hardcodes MythHunter tools. `PreloadDebugTool` also imports `UnityEditor` from a runtime-tree path; its build safety must be inspected separately.
+- **Replay:** only `IReplaySystem` was found in its folder; it depends on `UniTask` and MythHunter `IEventBus`, and no concrete implementation was found there. No claim of complete replay support until recording semantics, concrete implementations, event/state/input coverage and versioned persistence are verified.
