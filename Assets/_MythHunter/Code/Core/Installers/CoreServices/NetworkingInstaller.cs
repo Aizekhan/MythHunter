@@ -4,6 +4,7 @@ using MythHunter.Networking.Core;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;
 using MythHunter.Networking.Serialization;
+using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
@@ -30,8 +31,10 @@ namespace MythHunter.Core.Installers
             BindSingleton<INetworkServer, NetworkServer>(container);
             BindSingleton<IServerNetworkSystem, ServerNetworkSystem>(container);
 
-            // Реєстрація авторитету мережевої системи
-            BindSingleton<NetworkAuthority, NetworkAuthority>(container);
+            // Current shipped application has no explicit scene/menu mode selector yet.
+            // Keep synchronization disabled by default; Game Composition Root may replace
+            // these exact registrations with an explicit mode and the selected role service.
+            BindInstance(container, EventNetworkMode.Offline);
 
             logger.LogInfo("Встановлення залежностей NetworkingSystem завершено", "Installer");
         }
