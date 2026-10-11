@@ -40,6 +40,9 @@ Classify each component as generic runtime state or game-specific Character/Comb
 ## First-pass review (based on inspected implementations and imports)
 Components are grouped by Character, Combat, Core, Lobby and Movement, which signals a mixture of potentially reusable primitive state and MythHunter domain concepts. Classify every type before treating the folder as a universal framework module; check whether components are plain data or own behavior/platform dependencies.
 
+## First-pass review (based on inspected implementations and imports)
+Components are grouped by Character, Combat, Core, Lobby and Movement, signalling a mixture of potentially reusable primitive state and MythHunter domain concepts. Classify each type and verify data-only behavior and platform dependencies before calling the folder universal.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
