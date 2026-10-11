@@ -116,3 +116,13 @@ These findings are initial and source-backed. They do not complete the dependenc
 ### Cross-reference evidence still missing
 - The GitHub code-search connector did not return usable occurrence results for targeted call-site queries, so this checkpoint uses only files actually inspected and does **not** claim exhaustive reverse-reference counts.
 - Next audit step: perform a local repository-wide reference scan/assembly dependency audit and populate the call-site column on each card. Phase 1 is not complete until that evidence is recorded.
+
+## Framework boundary verified against ECS runtime source
+- `Assets/_Framework/ECS/Runtime/README.md` describes this as the canonical, dependency-light ECS slice and states that MythHunter-facing systems, caches, factories, archetypes, serializers and DI consume `RPGFramework.ECS`; `EcsWorld`, system lifecycle, caches and gameplay policies remain in the Game Layer.
+- `RPGFramework.ECS.Runtime.asmdef` isolates the runtime assembly. Its inspected code uses .NET standard library collections and contains no Unity, MythHunter or DI references.
+- `EntityManager` uses `Dictionary<int, Dictionary<Type,IComponent>>` as per-entity component storage and `Dictionary<Type,HashSet<int>>` as a reverse index. The current implementation is dictionary-backed, not archetype storage.
+- `MythHunter.Core.ECS.ComponentCache<T>` keeps a secondary per-type component dictionary and entity ID sets over `IEntityManager`. This is not a second authoritative entity store, but does introduce cache-coherency and mutation-invalidation questions that need consumer/call-site review.
+
+## Audit correction
+- The hypothesis that Framework ECS and a legacy EntityManager are simultaneously authoritative is not supported by the current runtime README. It states that the old `MythHunter.Core.ECS.IComponent`, `IEntityManager`, and duplicate `EntityManager` were removed.
+- Do not start another EntityManager migration or add wrappers based on old inventory notes. Inspect `ComponentCache<T>` consumers and benchmark before deciding whether to keep, simplify, or remove it.
