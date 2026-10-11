@@ -50,3 +50,10 @@ Do not move files or refactor runtime modules while these gates are open. Every 
 - Incremental mode discovers missing IDs in batches but, in the inspected method, doesn't refresh cached values or prune IDs that lost the component. OnDemand only reaches IEntityManager on a miss and can retain stale values for existing entries.
 - Cache instances in MovementSystem and VisibilitySystem aren't managed by ComponentCacheRegistry's EntityDestroyed event; they rely on their own full refreshes in each Update().
 - This is a consistency/performance contract issue to test, not yet a decision to remove the cache.
+## Additional source-backed module edges
+- `IPreloadManager` consumers: `GameFlowManager`, `AutoPreloadConfigurator`, `PreloadDebugTool`; binding: `ResourceInstaller` → `PreloadManager`.
+- Resource management graph: `ResourceInstaller` wires `DefaultResourceProvider`, `AssetBundleProvider`, conditionally `AddressablesProvider`, `PoolManager`, `PreloadManager`, and `ResourceManager`. The `IResourceProvider`/`IResourceManager` APIs are Unity-specific because their methods return `UnityEngine.Object` types.
+- Serialization graph: `SerializationInstaller` binds `IComponentSerializerRegistry` to `ComponentSerializerRegistry`; default serializers are concrete MythHunter component serializers, based on the portable `RPGFramework.ECS.IComponent` contract.
+- `VersionedSerializer` exists and emits a version number; its migration and future-version behavior require compatibility tests, rather than assuming versioning is absent.
+- Replay: `IReplaySystem` defines API and `ReplayEventRecord`, but no implementation was found under `Assets/_MythHunter/Code/Replay` and no concrete usage/binding has yet been established.
+- Debug: `IDebugTool` is generic-looking, but `DebugToolFactory` hardcodes known tools; `DebugDashboard` depends on Unity `MonoBehaviour` and `KeyCode`.
