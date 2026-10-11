@@ -50,12 +50,15 @@ No dependency from ECS Core upward into concrete RPG/Game modules.
 
 ## Important current findings
 EntityManager currently stores EntityId -> Dictionary<Type,IComponent> plus Type -> HashSet<EntityId>.
-ComponentCache duplicates component storage/cache behavior.
-This is functional but should remain behind an abstraction so storage can later become archetype-based without changing gameplay APIs.
-
+ComponentCache duplicates component storage/cache behavior. This is functional but should remain behind an abstraction so storage can later become archetype-based without changing gameplay APIs.
 GameplaySystemsInstaller currently wires PhaseSystem, movement/pathfinding/visibility and combat systems into phase-specific groups. This is game-specific and should eventually live outside universal Core.
-
 CombatSystem currently owns several responsibilities: active combat tracking, combat lifecycle, resources/rage/concentration, phase handling, async combat loop and events. It should be decomposed later.
 
+## EPIC 05 progress checkpoint (2026-10-11)
+- EPIC 05.4 merged: SystemRegistry/SystemGroup lifecycle correctness (33/33 Unity EditMode tests on validated head).
+- EPIC 05.5 merged: removed DI-container service-locator exposure, concrete registry checks, and reflection/emergency-provider bypasses. Validation: 36/36 Unity EditMode tests; Minimal CI and RPGFramework ECS Runtime passed; developer confirmed full-project compile, clean Console, and bootstrap/game smoke.
+- EPIC 05.6 merged: explicit initialization categories are now carried through the registry contract into SystemRegistry; existing overload retains attribute-based selection and OnDemand fallback. Validation: 41/41 Unity EditMode tests; both CI workflows passed; developer confirmed integration checks.
+- Issue #26 closed.
+
 ## Working rule
-Complete Epic 01 and understand/document the architecture before changing implementation. Then proceed sequentially through the remaining epics.
+Complete Epic 01 and understand/document the architecture before broad implementation refactors. The EPIC 05 changes above are completed stability/contract fixes made during active ECS work; resume sequential architecture audit and update this document from evidence.
