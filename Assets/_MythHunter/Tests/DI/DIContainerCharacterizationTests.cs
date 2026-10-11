@@ -608,6 +608,7 @@ namespace MythHunter.DI.CharacterizationTests
                 null);
 
             Assert.That(method, Is.Not.Null);
+            LogAssert.Expect(new Regex("(?s).*No IPhaseProvider is registered.*Pass an IPhaseProvider explicitly.*"));
             var invocation = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new[]
             {
                 (object)registry,
