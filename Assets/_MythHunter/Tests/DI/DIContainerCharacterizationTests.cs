@@ -246,6 +246,11 @@ namespace MythHunter.DI.CharacterizationTests
             Register(container, "RegisterSingleton",
                 assembly.GetType("MythHunter.Events.IEventPool", true),
                 assembly.GetType("MythHunter.Events.EventPool", true));
+            // Mirror CoreInstaller's earlier fallback binding. EventsInstaller must
+            // replace it before SystemRegistry's constructor resolves/caches the bus.
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Events.IEventBus", true),
+                assembly.GetType("MythHunter.Events.SimpleEventBus", true));
             Register(container, "RegisterSingleton",
                 assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true),
                 assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true));
