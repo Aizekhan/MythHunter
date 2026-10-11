@@ -57,16 +57,16 @@ For every module and file:
 5. Architectural issue/action supported by evidence?
 
 ## Phase 1 status
-- [ ] Core card reviewed and validated
-- [ ] Components card reviewed and validated
-- [ ] Entities card reviewed and validated
-- [ ] Systems card reviewed and validated
-- [ ] Events card reviewed and validated
-- [ ] Networking card reviewed and validated
-- [ ] Cloud card reviewed and validated
-- [ ] UI card reviewed and validated
-- [ ] Services card reviewed and validated
-- [ ] Utils card reviewed and validated
+- [x] Inventory card created for Core; semantic review pending
+- [x] Inventory card created for Components; semantic review pending
+- [x] Inventory card created for Entities; semantic review pending
+- [x] Inventory card created for Systems; semantic review pending
+- [x] Inventory card created for Events; semantic review pending
+- [x] Inventory card created for Networking; semantic review pending
+- [x] Inventory card created for Cloud; semantic review pending
+- [x] Inventory card created for UI; semantic review pending
+- [x] Inventory card created for Services; semantic review pending
+- [x] Inventory card created for Utils; semantic review pending
 - [ ] Dependency map validated against real references
 - [ ] All evidenced actions/issues recorded
 - [ ] Phase 2 remains blocked until this checklist is complete
