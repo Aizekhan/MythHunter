@@ -87,3 +87,32 @@ For every module and file:
 - **Utils:** `UnityApiUtils` directly wraps UnityEngine object discovery, component lookup and destruction; it belongs in a Unity-facing adapter, not headless simulation core.
 
 These findings are initial and source-backed. They do not complete the dependency map: call-site/reference validation is still required before Phase 1 can be closed.
+## Reference validation checkpoint (2026-10-11)
+
+### Confirmed by direct source inspection
+- `Assets/_MythHunter/Code/Core/ECS/EcsWorld.cs` imports `MythHunter.Systems.Core` and `RPGFramework.ECS`; its constructor requires both `IEntityManager` and the MythHunter `ISystemRegistry`. This is a real code-level dependency from the legacy ECS world wrapper into game-tree system infrastructure.
+- `Assets/_MythHunter/Code/Core/ECS/ComponentCache.cs` stores its own per-entity component dictionary and ID sets while delegating authoritative component operations to `IEntityManager`. It is explicitly a second-level cache, not necessarily duplicate authoritative ownership; its invalidation/coherency and consumers need mapping before removal.
+- `Assets/_MythHunter/Code/Entities/EntityFactory.cs` directly knows Character/Enemy/Item archetype identifiers and concrete MythHunter `NameComponent`/`DescriptionComponent`/`ValueComponent`; it is a game factory, not generic Entity API.
+- `Assets/_MythHunter/Code/Systems/Core/SystemRegistry.cs` stores category/priority/active/initialized metadata and drives lifecycle; `GameplaySystemsInstaller` imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase. Composition and runtime registry responsibilities are therefore mixed at the larger tree level.
+- `Assets/_MythHunter/Code/Events/EventBus.cs` imports `UnityEditor` along with game-domain event namespaces. This must be checked for conditional compilation/build-target safety; the file's mere import is a portability boundary concern, not yet proof of a player-build failure.
+- `Assets/_MythHunter/Code/UI/Core/UIService.cs` `HideScreen` is a stub and `IsScreenActive` always returns false.
+- `Assets/_MythHunter/Code/Services/Heroes/LocalHeroDataService.cs` uses `UnityEngine.Application.persistentDataPath`, `UnityEngine.JsonUtility`, `HeroDataModel`, and disk I/O, so it is a Unity/game-specific adapter.
+- `Assets/_MythHunter/Code/Utils/UnityApiUtils.cs` wraps UnityEngine object/component APIs and belongs outside headless simulation runtime.
+- `Assets/_Framework/ECS/Runtime` has its own runtime asmdef and separate `IComponent`, `IEntityManager`, `EntityManager`, README and isolated tests. This is the strongest current seam for the reusable ECS foundation.
+
+### Reference map — current hypothesis, not yet a complete compiler dependency graph
+| Source area | Directly observed dependency/relationship | Boundary assessment |
+|---|---|---|
+| Framework ECS runtime | `RPGFramework.ECS.Runtime.asmdef`, `IComponent`, `IEntityManager`, `EntityManager` | Current reusable ECS seed; verify public API sufficiency and avoid reverse dependencies |
+| Legacy Core/ECS | `MythHunter.Core.ECS` types bridge to `RPGFramework.ECS`; `EcsWorld` also depends on `MythHunter.Systems.Core` | Transitional adapter layer; avoid moving it wholesale |
+| Entities | Entity archetypes/factory reference MythHunter components and named game templates | Game/RPG module, not low-level entity identity |
+| Systems | Registry lifecycle can be reusable; concrete installers wire MythHunter gameplay domains | Split reusable scheduler/registry contracts from game installers/features |
+| Events | EventBus implementation + MythHunter domain event names + UnityEditor using | Separate dispatch core, domain events, editor diagnostics; verify player compile |
+| Networking | NetworkSystem composes client/server/serializer and MythHunter logging/DI | Adapters/infrastructure; isolate simulation state and validate message trust boundary |
+| UI | factory/service/views/presenters and concrete game screens | Presentation adapter, strictly downstream of simulation |
+| Local hero service | Unity file APIs and HeroDataModel | Game persistence adapter; reusable persistence interface only if consumer evidence warrants it |
+| Utils | UnityEngine wrappers mixed with generic-looking helpers/logging | Split platform-specific and portable utilities based on references |
+
+### Cross-reference evidence still missing
+- The GitHub code-search connector did not return usable occurrence results for targeted call-site queries, so this checkpoint uses only files actually inspected and does **not** claim exhaustive reverse-reference counts.
+- Next audit step: perform a local repository-wide reference scan/assembly dependency audit and populate the call-site column on each card. Phase 1 is not complete until that evidence is recorded.
