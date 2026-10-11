@@ -434,11 +434,20 @@ namespace MythHunter.DI.CharacterizationTests
             var lowPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface, typeof(LowPrioritySystemSpyProxy));
             lowPriority.ProbeName = "low";
 
+            // DispatchProxy implementations may share the same generated runtime type.
+            // Distinct SystemGroup names avoid the duplicate-system-type guard while
+            // still exercising reverse-priority disposal through the registry.
+            var groupType = assembly.GetType("MythHunter.Systems.Groups.SystemGroup", true);
+            var highGroup = Activator.CreateInstance(groupType, new object[] { "HighPriorityGroup", logger });
+            var lowGroup = Activator.CreateInstance(groupType, new object[] { "LowPriorityGroup", logger });
+            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(highGroup, new[] { highPriority });
+            groupType.GetMethod("AddSystem", new[] { systemInterface }).Invoke(lowGroup, new[] { lowPriority });
+
             try
             {
                 var register = registryType.GetMethod("RegisterSystemWithPriority", new[] { systemInterface, typeof(int) });
-                register.Invoke(registry, new object[] { highPriority, 100 });
-                register.Invoke(registry, new object[] { lowPriority, 0 });
+                register.Invoke(registry, new object[] { highGroup, 100 });
+                register.Invoke(registry, new object[] { lowGroup, 0 });
                 var onDemand = Enum.Parse(
                     assembly.GetType("MythHunter.Systems.Core.SystemInitializationCategory", true),
                     "OnDemand");
