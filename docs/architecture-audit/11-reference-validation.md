@@ -49,3 +49,12 @@ IEventBus contract
 - Search all code and scenes/assets for `IComponentCacheRegistry`, `GetCache<T>`, `FindEntities<T>`, `ForEach<T>`, and the cache extension methods; GitHub code search has not provided reliable occurrence results, and the current inspected sources are insufficient for an exhaustive consumer list.
 - Confirm whether `EventsInstaller` replaces the `SimpleEventBus` binding in each supported bootstrap path.
 - Run a non-Editor Unity player build to validate `UnityEditor` import behavior before calling it a reproducible build failure.
+
+## Consumer references found in repository code search
+- `Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs`: receives `IComponentCacheRegistry`; caches `StatsComponent` and `HealthComponent`; calls both caches' `Update()` on every `HeroSystem.Update`. This creates per-frame refreshes independent of the registry's every-five-updates cadence.
+- `Assets/_MythHunter/Code/Systems/Gameplay/Movement/MovementSystem.cs`: holds `ComponentCache<PositionComponent>`, `ComponentCache<MovementComponent>`, and `ComponentCache<PathComponent>` created directly from `IEntityManager` rather than via `IComponentCacheRegistry`.
+- `Assets/_MythHunter/Code/Systems/Gameplay/Movement/VisibilitySystem.cs`: holds `ComponentCache<PositionComponent>` and `ComponentCache<VisibilityComponent>`, likewise constructed directly.
+- `ComponentCacheExtensions` exposes FindEntities/FindEntity/ForEach/WithComponent/WithoutComponent helpers. Current GitHub code search returned definitions, but did not establish consumer call sites for these helpers.
+
+### Updated cache conclusion
+The cache subsystem has at least three direct gameplay system consumers and two separate construction paths (registry-managed versus directly constructed). Removing it would require migration and behavior/performance comparison. A more targeted candidate is normalizing cache ownership and update policy, but only after profiling and checking whether direct cache consumers expect a fresh snapshot each frame.
