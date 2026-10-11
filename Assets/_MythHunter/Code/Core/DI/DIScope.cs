@@ -32,7 +32,7 @@ namespace MythHunter.Core.DI
     {
         private readonly IDIContainer _container;
         private readonly Dictionary<Type, object> _scopedInstances = new Dictionary<Type, object>();
-        private readonly HashSet<IDisposable> _disposables = new HashSet<IDisposable>();
+        private readonly List<IDisposable> _disposables = new List<IDisposable>();
         private readonly DIScope _parentScope;
         private readonly object _syncLock = new object();
         private bool _isDisposed;
@@ -122,16 +122,16 @@ namespace MythHunter.Core.DI
                 if (_isDisposed)
                     return;
 
-                // Звільняємо ресурси всіх IDisposable екземплярів
-                foreach (var disposable in _disposables)
+                // Dispose in reverse creation order (stack semantics). Continue even if
+                // one resource throws, so all other scope-owned resources are released.
+                for (var i = _disposables.Count - 1; i >= 0; i--)
                 {
                     try
                     {
-                        disposable.Dispose();
+                        _disposables[i].Dispose();
                     }
                     catch (Exception ex)
                     {
-                        // Логуємо помилку, але продовжуємо звільнення ресурсів
                         System.Diagnostics.Debug.WriteLine($"Error disposing instance: {ex.Message}");
                     }
                 }
