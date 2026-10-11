@@ -54,11 +54,11 @@ ComponentCache duplicates component storage/cache behavior. This is functional b
 GameplaySystemsInstaller currently wires PhaseSystem, movement/pathfinding/visibility and combat systems into phase-specific groups. This is game-specific and should eventually live outside universal Core.
 CombatSystem currently owns several responsibilities: active combat tracking, combat lifecycle, resources/rage/concentration, phase handling, async combat loop and events. It should be decomposed later.
 
-## EPIC 05 progress checkpoint (2026-10-11)
-- EPIC 05.4 merged: SystemRegistry/SystemGroup lifecycle correctness (33/33 Unity EditMode tests on validated head).
-- EPIC 05.5 merged: removed DI-container service-locator exposure, concrete registry checks, and reflection/emergency-provider bypasses. Validation: 36/36 Unity EditMode tests; Minimal CI and RPGFramework ECS Runtime passed; developer confirmed full-project compile, clean Console, and bootstrap/game smoke.
-- EPIC 05.6 merged: explicit initialization categories are now carried through the registry contract into SystemRegistry; existing overload retains attribute-based selection and OnDemand fallback. Validation: 41/41 Unity EditMode tests; both CI workflows passed; developer confirmed integration checks.
-- Issue #26 closed.
+## Project tracking
 
-## Working rule
-Complete Epic 01 and understand/document the architecture before broad implementation refactors. The EPIC 05 changes above are completed stability/contract fixes made during active ECS work; resume sequential architecture audit and update this document from evidence.
+This file defines architecture principles and source-backed architecture findings; it is not a project-progress register. To prevent conflicting duplicate state:
+- Current active task, exact PR/head SHA and unmet validation gates: [RPG Framework STATUS.md](https://github.com/Aizekhan/RPG-Framework-Roadmap/blob/main/STATUS.md).
+- Milestone order, durable completion evidence and acceptance criteria: [RPG Framework Master Plan](https://github.com/Aizekhan/RPG-Framework-Roadmap/blob/main/RPG_FRAMEWORK_MASTER_PLAN.md).
+- EPIC 01 source findings and Phase 1 exit gates remain in this repository's `ARCHITECTURE_AUDIT.md` and module cards.
+
+Do not copy EPIC completion checkpoints into this architecture document. If these documents disagree, stop and reconcile them before implementation.
