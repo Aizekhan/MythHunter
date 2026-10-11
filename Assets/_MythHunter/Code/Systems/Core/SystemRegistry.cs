@@ -157,7 +157,7 @@ namespace MythHunter.Systems.Core
         }
         public virtual void UpdateAll(float deltaTime)
         {
-            foreach (var reg in _allSystems.Where(r => r.IsActive))
+            foreach (var reg in _allSystems.Where(r => r.IsActive && _initializedSystems.Contains(r.System)))
             {
                 // Перевіряємо, чи система активна у поточній фазі
                 if (reg.System is IPhaseFilteredSystem phaseSystem && !phaseSystem.IsActiveInPhase(_currentPhase))
@@ -177,7 +177,7 @@ namespace MythHunter.Systems.Core
 
         public void FixedUpdateAll(float fixedDeltaTime)
         {
-            foreach (var reg in _allSystems.Where(r => r.IsActive))
+            foreach (var reg in _allSystems.Where(r => r.IsActive && _initializedSystems.Contains(r.System)))
             {
                 // Перевіряємо, чи система активна у поточній фазі
                 if (reg.System is IPhaseFilteredSystem phaseSystem && !phaseSystem.IsActiveInPhase(_currentPhase))
@@ -200,7 +200,7 @@ namespace MythHunter.Systems.Core
 
         public void LateUpdateAll(float deltaTime)
         {
-            foreach (var reg in _allSystems.Where(r => r.IsActive))
+            foreach (var reg in _allSystems.Where(r => r.IsActive && _initializedSystems.Contains(r.System)))
             {
                 // Перевіряємо, чи система активна у поточній фазі
                 if (reg.System is IPhaseFilteredSystem phaseSystem && !phaseSystem.IsActiveInPhase(_currentPhase))
