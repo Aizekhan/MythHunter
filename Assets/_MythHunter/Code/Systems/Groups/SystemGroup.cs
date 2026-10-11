@@ -117,6 +117,7 @@ namespace MythHunter.Systems.Groups
             if (system != null && _systems.Contains(system))
             {
                 _systems.Remove(system);
+                _initializedSystems.Remove(system);
                 _logger.LogDebug($"Removed system {system.GetType().Name} from group '{GroupName}'", "System");
             }
         }
