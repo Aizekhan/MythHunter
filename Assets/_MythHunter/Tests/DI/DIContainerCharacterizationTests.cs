@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Threading;
 using NUnit.Framework;
 
 namespace MythHunter.DI.CharacterizationTests
@@ -116,6 +118,93 @@ namespace MythHunter.DI.CharacterizationTests
             Assert.That(Resolve(container, typeof(ITestService)), Is.SameAs(first));
         }
 
+        [Test]
+        public void SetCurrentScope_OnWorkerThread_DoesNotReplaceMainThreadScope()
+        {
+            var container = CreateContainer();
+            Register(container, "RegisterScoped", typeof(ITestService), typeof(TestService));
+
+            var mainScope = CreateScope(container, "main");
+            SetCurrentScope(container, mainScope);
+            var mainInstance = Resolve(container, typeof(ITestService));
+
+            object workerInstance = null;
+            object workerSecond = null;
+            Exception workerError = null;
+
+            var worker = new Thread(() =>
+            {
+                try
+                {
+                    var workerScope = CreateScope(container, "worker");
+                    SetCurrentScope(container, workerScope);
+                    workerInstance = Resolve(container, typeof(ITestService));
+                    workerSecond = Resolve(container, typeof(ITestService));
+                }
+                catch (Exception exception)
+                {
+                    workerError = exception;
+                }
+            });
+
+            worker.Start();
+            worker.Join();
+
+            Assert.That(workerError, Is.Null);
+            Assert.That(workerInstance, Is.Not.Null);
+            Assert.That(workerSecond, Is.SameAs(workerInstance));
+            Assert.That(workerInstance, Is.Not.SameAs(mainInstance));
+            Assert.That(Resolve(container, typeof(ITestService)), Is.SameAs(mainInstance));
+        }
+
+        [Test]
+        public void ChildScope_HasIndependentScopedInstance_AndDoesNotDisposeParentInstance()
+        {
+            ScopedDisposableService.DisposeCount = 0;
+            var container = CreateContainer();
+            Register(container, "RegisterScoped", typeof(IScopedDisposableService), typeof(ScopedDisposableService));
+
+            var parentScope = CreateScope(container, "parent");
+            SetCurrentScope(container, parentScope);
+            var parentInstance = (ScopedDisposableService)Resolve(container, typeof(IScopedDisposableService));
+
+            var childScope = parentScope.GetType()
+                .GetMethod("CreateChildScope", new[] { typeof(string) })
+                .Invoke(parentScope, new object[] { "child" });
+            SetCurrentScope(container, childScope);
+            var childInstance = (ScopedDisposableService)Resolve(container, typeof(IScopedDisposableService));
+
+            Assert.That(childInstance, Is.Not.SameAs(parentInstance));
+
+            childScope.GetType().GetMethod("Dispose", Type.EmptyTypes).Invoke(childScope, null);
+            Assert.That(childInstance.IsDisposed, Is.True);
+            Assert.That(parentInstance.IsDisposed, Is.False);
+            Assert.That(ScopedDisposableService.DisposeCount, Is.EqualTo(1));
+
+            SetCurrentScope(container, parentScope);
+            Assert.That(Resolve(container, typeof(IScopedDisposableService)), Is.SameAs(parentInstance));
+            parentScope.GetType().GetMethod("Dispose", Type.EmptyTypes).Invoke(parentScope, null);
+            Assert.That(ScopedDisposableService.DisposeCount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ScopeDisposal_UsesReverseCreationOrder_AndContinuesAfterDisposeThrows()
+        {
+            ScopeDisposalProbe.Order.Clear();
+            var container = CreateContainer();
+            Register(container, "RegisterScoped", typeof(IFirstDisposable), typeof(FirstDisposable));
+            Register(container, "RegisterScoped", typeof(IThrowingDisposable), typeof(ThrowingDisposable));
+
+            var scope = CreateScope(container, "order");
+            SetCurrentScope(container, scope);
+            Resolve(container, typeof(IFirstDisposable));
+            Resolve(container, typeof(IThrowingDisposable));
+
+            scope.GetType().GetMethod("Dispose", Type.EmptyTypes).Invoke(scope, null);
+
+            CollectionAssert.AreEqual(new[] { "throwing", "first" }, ScopeDisposalProbe.Order);
+        }
+
         private static object CreateContainer()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
@@ -185,10 +274,40 @@ namespace MythHunter.DI.CharacterizationTests
     public sealed class ScopedDisposableService : IScopedDisposableService, IDisposable
     {
         public static int DisposeCount { get; set; }
+        public bool IsDisposed { get; private set; }
 
         public void Dispose()
         {
+            if (IsDisposed)
+                return;
+            IsDisposed = true;
             DisposeCount++;
         }
+    }
+
+    public interface IFirstDisposable { }
+
+    public sealed class FirstDisposable : IFirstDisposable, IDisposable
+    {
+        public void Dispose()
+        {
+            ScopeDisposalProbe.Order.Add("first");
+        }
+    }
+
+    public interface IThrowingDisposable { }
+
+    public sealed class ThrowingDisposable : IThrowingDisposable, IDisposable
+    {
+        public void Dispose()
+        {
+            ScopeDisposalProbe.Order.Add("throwing");
+            throw new InvalidOperationException("Expected test disposal failure.");
+        }
+    }
+
+    public static class ScopeDisposalProbe
+    {
+        public static readonly List<string> Order = new List<string>();
     }
 }
