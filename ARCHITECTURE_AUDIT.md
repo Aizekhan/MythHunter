@@ -40,13 +40,14 @@ This is the intended target, not a claim the current implementation already foll
 
 ## Initial risk register
 1. **ECS storage ownership:** `EntityManager` and `ComponentCache` overlap in storage/cache behavior per existing architecture notes. Verify consumers before assigning ownership.
-2. **System-layer boundary:** system lifecycle/category contracts were recently stabilized, but sit in the MythHunter tree rather than isolated `Assets/_Framework/ECS`. Map dependencies before deciding what can be moved.
-3. **Domain events mixed with infrastructure:** separate bus/dispatch abstractions from `Events/Domain/Gameplay/*` event vocabulary.
-4. **Game-specific components:** Character/Combat/Lobby/Movement components must be judged individually; ECS-shaped data is not automatically universal.
-5. **Archetypes ambiguity:** `Entities/Archetypes` appears to model game archetypes/templates; compare with storage archetypes in `Assets/_Framework/ECS` and avoid conflating these concepts.
-6. **Unity leakage:** `UnityApiUtils`, resource/prefab/UI/scene services should stay outside a headless simulation runtime.
-7. **Cloud optionality:** auth/data/analytics adapters must not be mandatory dependencies of core simulation.
-8. **Networking maturity:** inspect transport and integration before treating interfaces/stubs as production-ready.
+2. **Cache ownership/update policy:** `ComponentCache<T>` is a secondary cache, used by HeroSystem, MovementSystem and VisibilitySystem; some consumers construct it directly while others use `ComponentCacheRegistry`. Audit snapshot freshness, invalidation and update cadence before changing/removing it.
+3. **System-layer boundary:** system lifecycle/category contracts were recently stabilized, but sit in the MythHunter tree rather than isolated `Assets/_Framework/ECS`. Map dependencies before deciding what can be moved.
+4. **Domain events mixed with infrastructure:** separate bus/dispatch abstractions from `Events/Domain/Gameplay/*` event vocabulary.
+5. **Game-specific components:** Character/Combat/Lobby/Movement components must be judged individually; ECS-shaped data is not automatically universal.
+6. **Archetypes ambiguity:** `Entities/Archetypes` appears to model game archetypes/templates; compare with storage archetypes in `Assets/_Framework/ECS` and avoid conflating these concepts.
+7. **Unity leakage:** `UnityApiUtils`, resource/prefab/UI/scene services should stay outside a headless simulation runtime.
+8. **Cloud optionality:** auth/data/analytics adapters must not be mandatory dependencies of core simulation.
+9. **Networking maturity:** inspect transport and integration before treating interfaces/stubs as production-ready.
 
 ## Five filters
 For every module and file:
