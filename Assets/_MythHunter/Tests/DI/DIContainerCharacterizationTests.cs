@@ -3,7 +3,10 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Threading;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace MythHunter.DI.CharacterizationTests
 {
@@ -427,9 +430,9 @@ namespace MythHunter.DI.CharacterizationTests
             var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus, container });
             var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
 
-            var highPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            var highPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface, typeof(HighPrioritySystemSpyProxy));
             highPriority.ProbeName = "high";
-            var lowPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            var lowPriority = (SystemSpyProxy)CreateSystemSpy(systemInterface, typeof(LowPrioritySystemSpyProxy));
             lowPriority.ProbeName = "low";
 
             try
@@ -478,9 +481,14 @@ namespace MythHunter.DI.CharacterizationTests
             addSystem.Invoke(group, new object[] { initializeFailure });
             addSystem.Invoke(group, new object[] { disposeFailure });
 
+            LogAssert.Expect(LogType.Error, new Regex("Error initializing system .*Expected initialize failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Initialize").Invoke(group, null));
+
+            LogAssert.Expect(LogType.Error, new Regex("Error updating system .*Expected update failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Update", new[] { typeof(float) })
                 .Invoke(group, new object[] { 0.016f }));
+
+            LogAssert.Expect(LogType.Error, new Regex("Error disposing system .*Expected dispose failure\\."));
             Assert.DoesNotThrow(() => groupType.GetMethod("Dispose").Invoke(group, null));
 
             Assert.That(updateFailure.InitializeCount, Is.EqualTo(1));
@@ -502,13 +510,18 @@ namespace MythHunter.DI.CharacterizationTests
 
         private static object CreateSystemSpy(Type systemInterface)
         {
+            return CreateSystemSpy(systemInterface, typeof(SystemSpyProxy));
+        }
+
+        private static object CreateSystemSpy(Type systemInterface, Type proxyType)
+        {
             var create = typeof(DispatchProxy).GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .FirstOrDefault(method =>
                     method.Name == "Create" &&
                     !method.IsGenericMethodDefinition &&
                     method.GetParameters().Length == 2);
             if (create != null)
-                return create.Invoke(null, new object[] { systemInterface, typeof(SystemSpyProxy) });
+                return create.Invoke(null, new object[] { systemInterface, proxyType });
 
             var genericCreate = typeof(DispatchProxy).GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Single(method =>
@@ -516,7 +529,7 @@ namespace MythHunter.DI.CharacterizationTests
                     method.IsGenericMethodDefinition &&
                     method.GetGenericArguments().Length == 2 &&
                     method.GetParameters().Length == 0);
-            return genericCreate.MakeGenericMethod(systemInterface, typeof(SystemSpyProxy))
+            return genericCreate.MakeGenericMethod(systemInterface, proxyType)
                 .Invoke(null, null);
         }
 
@@ -557,6 +570,9 @@ namespace MythHunter.DI.CharacterizationTests
                 return null;
             }
         }
+
+        public sealed class HighPrioritySystemSpyProxy : SystemSpyProxy { }
+        public sealed class LowPrioritySystemSpyProxy : SystemSpyProxy { }
 
         [Test]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
