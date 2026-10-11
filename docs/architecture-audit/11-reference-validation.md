@@ -75,3 +75,7 @@ The cache subsystem has at least three direct gameplay system consumers and two 
 
 ## Search coverage caveat
 These are positive matches from GitHub's indexed code search, not proof that every usage is returned. The exact reverse-reference count is still unverified.
+## Follow-up after PR #34
+- PR #34 removed the unused `using UnityEditor;` directive from `EventBus.cs`; merged as `0313e8afd0e621fa310e31373ebe014cf5fe9889`.
+- Both `Minimal CI` and `RPGFramework ECS Runtime` passed on the PR head. These workflows do not replace the still-pending local Unity EditMode/full-project compile and non-Editor player-build verification.
+- The source-level portability concern is addressed; the final player-build test is now confirmation rather than a reason to block the trivial unused-import cleanup.
