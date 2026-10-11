@@ -5,7 +5,6 @@ using MythHunter.Core.DI;
 using MythHunter.Debug.Core;
 using MythHunter.Resources;
 using MythHunter.Utils.Logging;
-using UnityEditor;
 using UnityEngine;
 
 namespace MythHunter.Debug.Tools
