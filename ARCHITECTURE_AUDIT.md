@@ -40,7 +40,7 @@ This is the intended target, not a claim the current implementation already foll
 
 ## Initial risk register
 1. **ECS storage ownership:** `EntityManager` and `ComponentCache` overlap in storage/cache behavior per existing architecture notes. Verify consumers before assigning ownership.
-2. **Cache ownership/update policy:** `ComponentCache<T>` is a secondary cache, used by HeroSystem, MovementSystem and VisibilitySystem; some consumers construct it directly while others use `ComponentCacheRegistry`. Audit snapshot freshness, invalidation and update cadence before changing/removing it.
+2. **Cache ownership/update policy:** `ComponentCache<T>` is a secondary cache used by HeroSystem, MovementSystem and VisibilitySystem; some consumers construct it directly while others use `ComponentCacheRegistry`. PR #48 (merged at `0d97060d45d978cafbe376cd43f00eb8fdf9f175`) implements the targeted Incremental/OnDemand consistency changes and adds characterization tests. Exact merged-head Unity validation remains open; do not remove/centralize caches before consumer smoke tests, full reverse-reference review, and measured performance evidence.
 3. **System-layer boundary:** system lifecycle/category contracts were recently stabilized, but sit in the MythHunter tree rather than isolated `Assets/_Framework/ECS`. Map dependencies before deciding what can be moved.
 4. **Domain events mixed with infrastructure:** separate bus/dispatch abstractions from `Events/Domain/Gameplay/*` event vocabulary.
 5. **Game-specific components:** Character/Combat/Lobby/Movement components must be judged individually; ECS-shaped data is not automatically universal.
@@ -155,22 +155,22 @@ These findings are initial and source-backed. They do not complete the dependenc
 
 | Priority | Finding | Why it matters | Acceptance evidence |
 |---|---|---|---|
-| P0 — validation | PR #40 removes unused `UnityEditor` from runtime-tree `PreloadDebugTool`; CI is green but local Unity/player validation is still unconfirmed | Prevent treating static CI as proof of full Unity/player build safety | Unity EditMode + full compile/Console + non-Editor player build on exact tested commit |
-| P1 — data correctness | `ComponentCache<T>.Incremental` can keep stale values and IDs for entities that lose a component; `OnDemand` keeps cached hits without revalidation | Gameplay reads can diverge from authoritative `IEntityManager` state | Tests for component add/update/remove, entity destroy, lost component, all cache strategies |
+| P0 — validation | PR #50 merged the `PreloadDebugTool.RenderGUI` editor-only guard/qualified `UnityEditor.EditorStyles`; PR #48 merged the ComponentCache consistency change. CI is green on the PR heads, but exact merged-head Unity validation remains unconfirmed | Prevent treating static CI or an older local test report as proof of full Unity/player build safety | Unity EditMode + full compile/clean Console + non-Editor Player Build + Movement/Visibility/Hero smoke on exact `dev` SHA `0d97060d45d978cafbe376cd43f00eb8fdf9f175` |
+| P1 — data correctness | PR #48 implements Incremental membership pruning/value refresh and OnDemand live Get. Residual semantics: OnDemand `Contains`/ID enumeration do not discover newly-added components unless first cached; cache-local `Add` must be distinguished from authoritative writes | Gameplay reads can diverge from authoritative `IEntityManager` state if consumers rely on unverified freshness semantics | Run merged-head tests; clarify positive-membership and write-through behavior; Movement/Visibility/Hero smoke checks |
 | P1 — deterministic resource loading | `ResourceManager.RegisterProvider(provider, priority)` logs the supplied priority but sorts by `IPrioritizable.Priority` | API contract permits caller's requested ordering to be ignored | Issue #44: explicit ordering API documented and precedence tested |
 | P1 — serialization robustness | `VersionedSerializer` warns and continues for newer version/type mismatch; trusts declared length and doesn't validate exact bytes read | Unsupported/malformed payloads may be passed to arbitrary deserializers | Tests for bad type/version/length/truncated payload and explicit reject/migration policy |
 | P2 — composition purity | `PreloadManager` resolves `IPoolManager` from its DI container despite having constructor injection and redundantly assigns the field | Service-locator usage hides declared dependency and complicates tests | Replace with injected field under a focused PR; constructor/disposal tests pass |
 | P2 — framework boundary | Resource APIs return `UnityEngine.Object`; UI/debug/services and gameplay installers are coupled to Unity/MythHunter | These should remain adapters/game layer, not enter `RPGFramework.ECS.Runtime` | Assembly reference review shows no Unity/game references from framework runtime |
 | P2 — feature completeness | Replay directory contains interface/record type only; no concrete implementation or binding found there | Interface presence doesn't prove replay works end-to-end | Find/implement registered recorder/playback path and record determinism/versioning tests, or mark unsupported |
 
-## Recommended execution order
-1. Finish local Unity/player validation for PR #34 and PR #40.
-2. Complete phase 1 reverse-reference/asmdef/scene reference checks.
-3. Open separate runtime fix PRs with tests for cache consistency, provider ordering, and serializer validation; don't bundle them together.
-4. Only after Phase 1 is approved, begin Phase 2 file-by-file review and framework extraction proposals.
+## Recommended execution order (refreshed after PR #48/#50 merges)
+1. Validate exact current `dev` head `0d97060d45d978cafbe376cd43f00eb8fdf9f175`: Unity EditMode, full compile/clean Console, Player Build and Movement/Visibility/Hero smoke.
+2. Complete Phase 1 reverse-reference/asmdef/Unity scene-prefab checks using local `rg`/IDE Find All References; GitHub code search alone is not exhaustive.
+3. Keep provider ordering (issue #44) and serializer input/version handling as separate bounded audit/runtime candidates; don't bundle them with ComponentCache.
+4. Only after Phase 1 is approved, begin EPIC 05.9/Phase 2 file-by-file ownership design and framework extraction proposals.
 
 This backlog prioritizes findings; it does not mark EPIC 01 complete.
 
 ## Cache consistency test design
 - Added `docs/architecture-audit/16-component-cache-test-plan.md` describing expected coverage for Full/Incremental/OnDemand strategies, registry lifecycle, and Movement/Visibility/Hero system regression cases.
-- This is test design only, not a claim that cache behavior has been fixed or tests now pass. Choose the intended freshness/invalidation semantics before adding runtime changes.
+- PR #48 has now implemented the targeted runtime changes and added the planned strategy-level characterization tests. This document records test coverage and contract choices, not proof that the tests pass on the current merged `dev` SHA; local Unity validation must be recorded against that exact SHA.
