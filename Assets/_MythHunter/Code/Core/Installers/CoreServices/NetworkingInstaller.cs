@@ -63,8 +63,10 @@ namespace MythHunter.Core.Installers
                     break;
             }
 
-            // Retain the existing message-authority service; it consumes both role-specific APIs.
-            BindSingleton<NetworkAuthority, NetworkAuthority>(container);
+            // Keep NetworkAuthority available only in modes with a network role.
+            // It directly consumes both role-specific interfaces and isn't needed offline.
+            if (networkMode != EventNetworkMode.Offline)
+                BindSingleton<NetworkAuthority, NetworkAuthority>(container);
 
             logger.LogInfo("Встановлення залежностей NetworkingSystem завершено", "Installer");
         }
