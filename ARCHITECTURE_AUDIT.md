@@ -151,3 +151,22 @@ These findings are initial and source-backed. They do not complete the dependenc
 ## Reverse-reference coverage status
 - Code-search results identify the consumers and bindings listed above, but indexed search is not an exhaustive dependency graph. Scene/prefab serialized references and all concrete type usages remain unverified.
 - Before moving code, complete reverse edges using local `rg`/IDE Find All References and review Unity asmdef references. The portable Framework ECS assembly currently has no assembly references and `noEngineReferences=true`.
+## Prioritized architecture backlog (audit findings, no runtime changes)
+
+| Priority | Finding | Why it matters | Acceptance evidence |
+|---|---|---|---|
+| P0 — validation | PR #40 removes unused `UnityEditor` from runtime-tree `PreloadDebugTool`; CI is green but local Unity/player validation is still unconfirmed | Prevent treating static CI as proof of full Unity/player build safety | Unity EditMode + full compile/Console + non-Editor player build on exact tested commit |
+| P1 — data correctness | `ComponentCache<T>.Incremental` can keep stale values and IDs for entities that lose a component; `OnDemand` keeps cached hits without revalidation | Gameplay reads can diverge from authoritative `IEntityManager` state | Tests for component add/update/remove, entity destroy, lost component, all cache strategies |
+| P1 — deterministic resource loading | `ResourceManager.RegisterProvider(provider, priority)` logs the supplied priority but sorts by `IPrioritizable.Priority` | API contract permits caller's requested ordering to be ignored | Issue #44: explicit ordering API documented and precedence tested |
+| P1 — serialization robustness | `VersionedSerializer` warns and continues for newer version/type mismatch; trusts declared length and doesn't validate exact bytes read | Unsupported/malformed payloads may be passed to arbitrary deserializers | Tests for bad type/version/length/truncated payload and explicit reject/migration policy |
+| P2 — composition purity | `PreloadManager` resolves `IPoolManager` from its DI container despite having constructor injection and redundantly assigns the field | Service-locator usage hides declared dependency and complicates tests | Replace with injected field under a focused PR; constructor/disposal tests pass |
+| P2 — framework boundary | Resource APIs return `UnityEngine.Object`; UI/debug/services and gameplay installers are coupled to Unity/MythHunter | These should remain adapters/game layer, not enter `RPGFramework.ECS.Runtime` | Assembly reference review shows no Unity/game references from framework runtime |
+| P2 — feature completeness | Replay directory contains interface/record type only; no concrete implementation or binding found there | Interface presence doesn't prove replay works end-to-end | Find/implement registered recorder/playback path and record determinism/versioning tests, or mark unsupported |
+
+## Recommended execution order
+1. Finish local Unity/player validation for PR #34 and PR #40.
+2. Complete phase 1 reverse-reference/asmdef/scene reference checks.
+3. Open separate runtime fix PRs with tests for cache consistency, provider ordering, and serializer validation; don't bundle them together.
+4. Only after Phase 1 is approved, begin Phase 2 file-by-file review and framework extraction proposals.
+
+This backlog prioritizes findings; it does not mark EPIC 01 complete.
