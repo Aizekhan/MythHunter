@@ -39,6 +39,9 @@ Compare game archetype templates and factories to ECS storage/archetype concepts
 ## First-pass review (based on inspected implementations and imports)
 Entity in MythHunter.Core.ECS is currently only an integer ID wrapper. Separately, Entities/Archetypes implements IEntityArchetype-based templates/required-component checks and ArchetypeRegistry maintains entity-to-archetype string maps. EntityFactory directly creates Character/Enemy/Item by string archetype IDs and concrete MythHunter components. This game factory/template layer is distinct from ECS storage archetypes and is not universal unchanged.
 
+## First-pass review (based on inspected implementations and imports)
+Entity is currently an integer ID wrapper. Separately, Entities/Archetypes defines IEntityArchetype templates/required-component checks and ArchetypeRegistry maps entity IDs to string archetype IDs. EntityFactory creates Character/Enemy/Item by hard-coded archetype IDs and MythHunter component types. This game template layer is distinct from ECS storage archetypes and is not universally reusable unchanged.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
