@@ -225,6 +225,132 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        public void EventNetworkAuthorityPolicy_OnlyAllowsConfiguredAuthority()
+        {
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
+            var authorityType = assembly.GetType("MythHunter.Events.Network.NetworkEventAuthority", true);
+            var policyType = assembly.GetType("MythHunter.Events.Network.EventNetworkAuthorityPolicy", true);
+            var method = policyType.GetMethod("CanTransmit", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            bool CanTransmit(string mode, string authority)
+            {
+                return (bool)method.Invoke(null, new[]
+                {
+                    Enum.Parse(modeType, mode),
+                    Enum.Parse(authorityType, authority)
+                });
+            }
+
+            Assert.That(CanTransmit("Offline", "Server"), Is.False);
+            Assert.That(CanTransmit("Offline", "Client"), Is.False);
+            Assert.That(CanTransmit("Offline", "Both"), Is.False);
+            Assert.That(CanTransmit("Client", "Client"), Is.True);
+            Assert.That(CanTransmit("Client", "Server"), Is.False);
+            Assert.That(CanTransmit("Client", "Both"), Is.True);
+            Assert.That(CanTransmit("Server", "Server"), Is.True);
+            Assert.That(CanTransmit("Server", "Client"), Is.False);
+            Assert.That(CanTransmit("Server", "Both"), Is.True);
+        }
+
+        [TestCase("Offline", false, null)]
+        [TestCase("Client", true, "MythHunter.Networking.Core.ClientNetworkSystem")]
+        [TestCase("Server", true, "MythHunter.Networking.Core.ServerNetworkSystem")]
+        public void NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(
+            string modeName, bool expectedRegistration, string expectedImplementation)
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
+            RegisterInstance(container, modeType, Enum.Parse(modeType, modeName));
+
+            var installerType = assembly.GetType("MythHunter.Core.Installers.NetworkingInstaller", true);
+            var installer = Activator.CreateInstance(installerType);
+            installerType.GetMethod("InstallBindings").Invoke(installer, new[] { container });
+
+            var networkType = assembly.GetType("MythHunter.Networking.Core.INetworkSystem", true);
+            Assert.That(IsRegisteredByType(container, networkType), Is.EqualTo(expectedRegistration));
+
+            var authorityType = assembly.GetType("MythHunter.Networking.Core.NetworkAuthority", true);
+            Assert.That(IsRegisteredByType(container, authorityType), Is.EqualTo(expectedRegistration));
+
+            if (!expectedRegistration)
+                return;
+
+            var selected = Resolve(container, networkType);
+            var expectedRole = Resolve(container, assembly.GetType(
+                modeName == "Client"
+                    ? "MythHunter.Networking.Core.IClientNetworkSystem"
+                    : "MythHunter.Networking.Core.IServerNetworkSystem", true));
+
+            Assert.That(selected.GetType().FullName, Is.EqualTo(expectedImplementation));
+            Assert.That(selected, Is.SameAs(expectedRole));
+        }
+
+        [TestCase("Offline", "MythHunter.Events.EventBus")]
+        [TestCase("Client", "MythHunter.Events.Network.NetworkEventBus")]
+        [TestCase("Server", "MythHunter.Events.Network.NetworkEventBus")]
+        public void EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(
+            string modeName, string expectedBusType)
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
+            RegisterInstance(container, modeType, Enum.Parse(modeType, modeName));
+
+            var networkingInstallerType = assembly.GetType("MythHunter.Core.Installers.NetworkingInstaller", true);
+            var networkingInstaller = Activator.CreateInstance(networkingInstallerType);
+            networkingInstallerType.GetMethod("InstallBindings").Invoke(networkingInstaller, new[] { container });
+
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Events.IEventPool", true),
+                assembly.GetType("MythHunter.Events.EventPool", true));
+            // Match CoreInstaller's fallback; EventsInstaller must register its final choice
+            // before constructing SystemRegistry.
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Events.IEventBus", true),
+                assembly.GetType("MythHunter.Events.SimpleEventBus", true));
+            Register(container, "RegisterSingleton",
+                assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true),
+                assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true));
+
+            var eventsInstallerType = assembly.GetType("MythHunter.Core.Installers.EventsInstaller", true);
+            var eventsInstaller = Activator.CreateInstance(eventsInstallerType);
+            eventsInstallerType.GetMethod("InstallBindings").Invoke(eventsInstaller, new[] { container });
+
+            var selectedBus = Resolve(container, assembly.GetType("MythHunter.Events.IEventBus", true));
+            var registry = Resolve(container, assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true));
+            var registryBusField = registry.GetType().GetField("_eventBus", BindingFlags.Instance | BindingFlags.NonPublic);
+            var registryBus = registryBusField.GetValue(registry);
+
+            try
+            {
+                Assert.That(selectedBus.GetType().FullName, Is.EqualTo(expectedBusType));
+                Assert.That(registryBus, Is.SameAs(selectedBus));
+                if (modeName != "Offline")
+                {
+                    var networkBusInterface = assembly.GetType("MythHunter.Events.Network.INetworkEventBus", true);
+                    Assert.That(Resolve(container, networkBusInterface), Is.SameAs(selectedBus));
+                }
+            }
+            finally
+            {
+                selectedBus.GetType().GetMethod("Dispose", Type.EmptyTypes)?.Invoke(selectedBus, null);
+            }
+        }
+
+        [Test]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
         {
             var container = CreateContainer();
@@ -242,6 +368,8 @@ namespace MythHunter.DI.CharacterizationTests
                 "EventBusRegistrationRegression"
             });
             RegisterInstance(container, loggerInterface, logger);
+            var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
+            RegisterInstance(container, modeType, Enum.Parse(modeType, "Offline"));
 
             Register(container, "RegisterSingleton",
                 assembly.GetType("MythHunter.Events.IEventPool", true),
@@ -273,6 +401,20 @@ namespace MythHunter.DI.CharacterizationTests
             {
                 selectedBus.GetType().GetMethod("Dispose", Type.EmptyTypes)?.Invoke(selectedBus, null);
             }
+        }
+
+        private static void RegisterErrorOnlyLogger(object container, Assembly assembly)
+        {
+            var loggerType = assembly.GetType("MythHunter.Utils.Logging.MythLogger", true);
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logLevelType = assembly.GetType("MythHunter.Utils.Logging.LogLevel", true);
+            var logger = Activator.CreateInstance(loggerType, new[]
+            {
+                Enum.Parse(logLevelType, "Error"),
+                (object)false,
+                "NetworkEventBusSelectionTests"
+            });
+            RegisterInstance(container, loggerInterface, logger);
         }
 
         private static object CreateContainer()

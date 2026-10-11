@@ -3,6 +3,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events;
+using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.ECS;
 using MythHunter.Systems.Core;
@@ -18,6 +19,9 @@ namespace MythHunter.Core.Game
     public class GameBootstrapper : MonoBehaviour
     {
         [SerializeField] private bool _injectOnAwake = true;
+
+        [Header("Networking")]
+        [SerializeField] private EventNetworkMode _eventNetworkMode = EventNetworkMode.Offline;
 
         private IDIContainer _container;
         private IMythLogger _logger;
@@ -67,6 +71,8 @@ namespace MythHunter.Core.Game
 
             _container.BindSingleton<IMythLogger>(logger);
             _container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
+            // Authoritative composition-root setting; Offline preserves current behavior.
+            _container.RegisterInstance(_eventNetworkMode);
          
 
             InstallerRegistry.RegisterInstallers(_container);
