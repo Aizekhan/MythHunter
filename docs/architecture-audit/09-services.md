@@ -26,6 +26,9 @@ LocalHeroDataService depends directly on UnityEngine.Application.persistentDataP
 ## First-pass review (based on inspected implementations and imports)
 LocalHeroDataService directly depends on UnityEngine.Application.persistentDataPath and JsonUtility and persists MythHunter HeroDataModel. It is a game-specific persistence adapter, not universal core. Extract a generic persistence contract only if multiple consumers justify it.
 
+## First-pass review (based on inspected implementations and imports)
+LocalHeroDataService directly depends on UnityEngine.Application.persistentDataPath and JsonUtility and persists MythHunter HeroDataModel. It is a game-specific persistence adapter, not universal core. Extract a generic persistence contract only if multiple consumers justify it.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
