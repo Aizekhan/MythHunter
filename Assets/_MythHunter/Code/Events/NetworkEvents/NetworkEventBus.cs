@@ -121,20 +121,9 @@ namespace MythHunter.Events.Network
             // Отримуємо тип всередині методу
             Type eventType = typeof(TEvent);
 
-            // Authority is controlled by explicit composition-root policy, not by
-            // the concrete transport object's interface list. Host mode may originate
-            // events with either role; client/server modes may originate only their role.
-            bool canSendOverNetwork = metadata.Authority switch
-            {
-                NetworkEventAuthority.Server =>
-                    _networkMode == EventNetworkMode.Server,
-                NetworkEventAuthority.Client =>
-                    _networkMode == EventNetworkMode.Client,
-                NetworkEventAuthority.Both =>
-                    _networkMode == EventNetworkMode.Client ||
-                    _networkMode == EventNetworkMode.Server,
-                _ => false
-            };
+            // Authority is controlled by explicit composition-root policy rather than
+            // the concrete transport object's interface list.
+            bool canSendOverNetwork = EventNetworkAuthorityPolicy.CanTransmit(_networkMode, metadata.Authority);
 
             if (!canSendOverNetwork)
                 return;
