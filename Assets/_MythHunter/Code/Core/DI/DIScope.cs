@@ -68,26 +68,32 @@ namespace MythHunter.Core.DI
         /// </summary>
         public TService GetOrCreateInstance<TService>() where TService : class
         {
-            Type serviceType = typeof(TService);
+            return (TService)GetOrCreateInstance(typeof(TService), () => _container.Resolve<TService>());
+        }
+
+        // The container supplies the factory so scoped resolution can be cached under
+        // the actual requested service type without recursively resolving object.
+        internal object GetOrCreateInstance(Type serviceType, Func<object> factory)
+        {
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
+            if (factory == null)
+                throw new ArgumentNullException(nameof(factory));
+
             lock (_syncLock)
             {
                 if (_isDisposed)
                     throw new ObjectDisposedException(ScopeId);
 
-                // Якщо екземпляр вже існує в цьому скоупі, повертаємо його
                 if (_scopedInstances.TryGetValue(serviceType, out var instance))
-                    return (TService)instance;
+                    return instance;
 
-                // Інакше створюємо новий екземпляр
-                var newInstance = _container.Resolve<TService>();
+                var newInstance = factory();
 
-                // Запам'ятовуємо екземпляр, якщо він потребує звільнення ресурсів
                 if (newInstance is IDisposable disposable)
                     _disposables.Add(disposable);
 
-                // Зберігаємо екземпляр у скоупі
                 _scopedInstances[serviceType] = newInstance;
-
                 return newInstance;
             }
         }
