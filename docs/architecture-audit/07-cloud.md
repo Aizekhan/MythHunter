@@ -26,6 +26,9 @@ Current Cloud C# inventory contains analytics and interfaces for auth/cloud/data
 ## First-pass review (based on inspected implementations and imports)
 Current cloud folder shows analytics/auth/cloud/data interfaces and event data, but no concrete cloud adapter in the inspected folder. Treat as optional platform integration. Core simulation must work without it and should not require a particular cloud provider.
 
+## First-pass review (based on inspected implementations and imports)
+Current cloud folder shows analytics/auth/cloud/data interfaces and event data, but no concrete cloud adapter in the inspected folder. Treat as optional platform integration. Core simulation must work without it and should not require a particular cloud provider.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
