@@ -65,6 +65,9 @@ SystemRegistry and ParallelSystemRegistry own lifecycle, initialization categori
 ## First-pass review (based on inspected implementations and imports)
 SystemRegistry/ParallelSystemRegistry own system lifecycle, categories, ordering and execution. GameplaySystemsInstaller imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase, confirming game-specific composition. Separate reusable lifecycle/runtime from game feature systems and installers. Inspect parity of ParallelSystemRegistry execution with initialized/active lifecycle.
 
+## First-pass review (based on inspected implementations and imports)
+SystemRegistry/ParallelSystemRegistry own system lifecycle, categories, ordering and execution. GameplaySystemsInstaller imports Combat, Movement, Phase and MythHunter.Game.Systems.Phase, confirming game-specific composition. Separate reusable lifecycle/runtime from game feature systems and installers. Inspect parity of ParallelSystemRegistry execution with initialized/active lifecycle.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
