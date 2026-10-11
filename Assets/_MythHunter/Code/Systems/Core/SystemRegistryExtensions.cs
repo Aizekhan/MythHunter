@@ -187,7 +187,7 @@ namespace MythHunter.Systems.Core
                 }
             }
 
-            registry.RegisterSystemWithPriority(group, priority);
+            registry.RegisterSystemWithPriority(group, priority, category);
 
             if (systems != null && systems.Length > 0)
             {
