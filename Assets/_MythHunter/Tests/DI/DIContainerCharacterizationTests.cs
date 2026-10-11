@@ -563,8 +563,11 @@ namespace MythHunter.DI.CharacterizationTests
                 var cacheDefinition = gameAssembly.GetType("MythHunter.Core.ECS.ComponentCache`1", true);
                 _cacheType = cacheDefinition.MakeGenericType(_componentType);
                 _cache = Activator.CreateInstance(_cacheType, new[] { _entityManager });
+                // Resolve the nested enum from the closed generic cache type.
+                // The enum on ComponentCache<T> is a distinct runtime type for each T.
                 var strategyType = _cacheType.GetNestedType("CacheStrategy", BindingFlags.Public);
-                _cacheType.GetMethod("SetCacheStrategy").Invoke(_cache, new[] { Enum.Parse(strategyType, strategyName) });
+                var strategy = Enum.Parse(strategyType, strategyName);
+                _cacheType.GetMethod("SetCacheStrategy").Invoke(_cache, new[] { strategy });
                 _update = _cacheType.GetMethod("Update");
                 _contains = _cacheType.GetMethod("Contains");
                 _count = _cacheType.GetProperty("Count");
