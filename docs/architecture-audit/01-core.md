@@ -103,6 +103,9 @@ EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and the framework na
 ## First-pass review (based on inspected implementations and imports)
 EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and RPGFramework.ECS. The Core tree mixes ECS, DI, game bootstrap/installation, SceneManagement and MonoBehaviours. It is not yet an isolated runtime boundary. Action: map portable ECS runtime contracts separately from game composition and Unity integration.
 
+## First-pass review (based on inspected implementations and imports)
+EcsWorld depends on MythHunter.Systems.Core.ISystemRegistry and RPGFramework.ECS. The Core tree mixes ECS, DI, game bootstrap/installation, SceneManagement and MonoBehaviours. It is not yet an isolated runtime boundary. Action: map portable ECS runtime contracts separately from game composition and Unity integration.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
