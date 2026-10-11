@@ -90,9 +90,6 @@ namespace MythHunter.Systems.Core
         }
 
         /// <summary>
-        /// Метод для сумісності зі старим кодом - знайде IPhaseProvider в реєстрі
-        /// </summary>
-        /// <summary>
         /// Compatibility overload for callers that already registered an IPhaseProvider as a system.
         /// Prefer the overload that receives the provider explicitly.
         /// </summary>
@@ -123,16 +120,16 @@ namespace MythHunter.Systems.Core
         }
 
         /// <summary>
-        /// Реєструє групу систем з вказаною категорією ініціалізації
+        /// Registers a system group with the specified lifecycle category.
+        /// Use the overload that accepts IDIContainer when child system types must be resolved.
         /// </summary>
-        /// <typeparam name="TGroup">Тип групи систем</typeparam>
-        /// <param name="registry">Реєстр систем</param>
-        /// <param name="groupName">Назва групи</param>
-        /// <param name="priority">Пріоритет виконання</param>
-        /// <param name="category">Категорія ініціалізації</param>
-        /// <param name="logger">Логер</param>
-        /// <param name="systems">Типи систем для додавання в групу</param>
-        /// <returns>Створена група систем</returns>
+        /// <typeparam name="TGroup">System group type.</typeparam>
+        /// <param name="registry">System registry.</param>
+        /// <param name="groupName">Group name.</param>
+        /// <param name="priority">System update/disposal priority.</param>
+        /// <param name="category">Requested initialization category.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>The registered system group.</returns>
         public static TGroup RegisterGroupWithCategory<TGroup>(
             this ISystemRegistry registry,
             string groupName,
@@ -154,6 +151,8 @@ namespace MythHunter.Systems.Core
         /// <summary>
         /// Registers a system group and optionally resolves children from an explicitly supplied container.
         /// </summary>
+        /// <param name="container">The container used to resolve child systems.</param>
+        /// <param name="systems">Child system types to resolve and add.</param>
         public static TGroup RegisterGroupWithCategory<TGroup>(
             this ISystemRegistry registry,
             string groupName,
