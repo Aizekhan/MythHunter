@@ -56,8 +56,7 @@ namespace MythHunter.Core.Installers
                     // No INetworkSystem key is registered in offline mode.
                     break;
                 default:
-                    // The current transport has no tested dual-role host adapter.
-                    // Fail closed to avoid applying client/server authority incorrectly.
+                    // Fail closed if serialized configuration contains an invalid enum value.
                     logger.LogError($"Unsupported event network mode: {networkMode}. Falling back to Offline.", "Installer");
                     networkMode = EventNetworkMode.Offline;
                     BindInstance(container, networkMode);
