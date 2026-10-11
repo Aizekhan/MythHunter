@@ -57,3 +57,7 @@ Do not move files or refactor runtime modules while these gates are open. Every 
 - `VersionedSerializer` exists and emits a version number; its migration and future-version behavior require compatibility tests, rather than assuming versioning is absent.
 - Replay: `IReplaySystem` defines API and `ReplayEventRecord`, but no implementation was found under `Assets/_MythHunter/Code/Replay` and no concrete usage/binding has yet been established.
 - Debug: `IDebugTool` is generic-looking, but `DebugToolFactory` hardcodes known tools; `DebugDashboard` depends on Unity `MonoBehaviour` and `KeyCode`.
+## Additional implementation risks
+- `ResourceManager.RegisterProvider(provider, priority)` sorts by `IPrioritizable.Priority`, while the supplied `priority` parameter is only logged. Explicit argument and effective ordering can diverge.
+- `PreloadManager` subscribes to phase and scene-load callbacks and unsubscribes in Dispose, but assigns `_poolManager` twice and resolves `IPoolManager` from `_container` again inside pool creation even though the dependency is already injected.
+- `VersionedSerializer` stores a version but only warns on future versions and continues; likewise type mismatch warns but deserialization continues. Declared data length is trusted, and the actual byte count returned by `ReadBytes` is not validated. Add tests before changing compatibility behavior.
