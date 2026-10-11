@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
@@ -540,6 +541,87 @@ namespace MythHunter.DI.CharacterizationTests
                 "Destroyed entities must be pruned during the next incremental update.");
         }
 
+        [Test]
+        public void MovementSystemUpdate_PersistsMutatedComponentsToAuthoritativeEntityManager()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var frameworkAssembly = assemblies.FirstOrDefault(a => a.GetType("RPGFramework.ECS.EntityManager", false) != null)
+                ?? Assembly.Load("RPGFramework.ECS.Runtime");
+            var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+
+            var entityManagerType = frameworkAssembly.GetType("RPGFramework.ECS.EntityManager", true);
+            var entityManager = Activator.CreateInstance(entityManagerType);
+            var entityId = (int)entityManagerType.GetMethod("CreateEntity").Invoke(entityManager, null);
+
+            var positionType = gameAssembly.GetType("MythHunter.Components.Movement.PositionComponent", true);
+            var movementType = gameAssembly.GetType("MythHunter.Components.Movement.MovementComponent", true);
+            var pathType = gameAssembly.GetType("MythHunter.Components.Movement.PathComponent", true);
+
+            var position = Activator.CreateInstance(positionType);
+            var positionField = positionType.GetField("Position");
+            var vectorType = positionField.FieldType;
+            positionField.SetValue(position, Activator.CreateInstance(vectorType, new object[] { 0f, 0f, 0f }));
+            InvokeGeneric(entityManager, "AddComponent", new[] { positionType }, new[] { entityId, position });
+
+            var movement = Activator.CreateInstance(movementType);
+            movementType.GetField("MoveSpeed").SetValue(movement, 1f);
+            movementType.GetField("RotationSpeed").SetValue(movement, 0f);
+            movementType.GetField("IsMoving").SetValue(movement, true);
+            movementType.GetField("MovementPoints").SetValue(movement, 10f);
+            movementType.GetField("MaxMovementPoints").SetValue(movement, 10f);
+            InvokeGeneric(entityManager, "AddComponent", new[] { movementType }, new[] { entityId, movement });
+
+            var path = Activator.CreateInstance(pathType);
+            var waypointsField = pathType.GetField("Waypoints");
+            var waypoints = (System.Collections.IList)Activator.CreateInstance(waypointsField.FieldType);
+            waypoints.Add(Activator.CreateInstance(vectorType, new object[] { 10f, 0f, 0f }));
+            waypointsField.SetValue(path, waypoints);
+            pathType.GetField("CurrentWaypointIndex").SetValue(path, 0);
+            pathType.GetField("IsPathComplete").SetValue(path, false);
+            pathType.GetField("TimeOnPath").SetValue(path, 0f);
+            InvokeGeneric(entityManager, "AddComponent", new[] { pathType }, new[] { entityId, path });
+
+            var eventBusType = gameAssembly.GetType("MythHunter.Events.IEventBus", true);
+            var loggerType = gameAssembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var phaseType = gameAssembly.GetType("MythHunter.Systems.Phase.IPhaseSystem", true);
+            var pathfindingType = gameAssembly.GetType("MythHunter.Systems.Movement.IPathfindingSystem", true);
+
+            var eventBus = CreateSystemSpy(eventBusType);
+            var logger = CreateSystemSpy(loggerType);
+            var pathfinding = CreateSystemSpy(pathfindingType);
+            var phase = CreateSystemSpy(phaseType, typeof(ActivePhaseSpyProxy));
+
+            var movementSystemType = gameAssembly.GetType("MythHunter.Systems.Movement.MovementSystem", true);
+            var ctor = movementSystemType.GetConstructors()
+                .Single(candidate => candidate.GetParameters().Length == 5);
+            var system = ctor.Invoke(new[] { entityManager, eventBus, logger, phase, pathfinding });
+
+            movementSystemType.GetMethod("Update", new[] { typeof(float) })
+                .Invoke(system, new object[] { 1f });
+
+            var storedPosition = entityManagerType.GetMethod("GetComponent").MakeGenericMethod(positionType)
+                .Invoke(entityManager, new object[] { entityId });
+            var storedMovement = entityManagerType.GetMethod("GetComponent").MakeGenericMethod(movementType)
+                .Invoke(entityManager, new object[] { entityId });
+            var storedPath = entityManagerType.GetMethod("GetComponent").MakeGenericMethod(pathType)
+                .Invoke(entityManager, new object[] { entityId });
+
+            var storedPositionVector = positionType.GetField("Position").GetValue(storedPosition);
+            var storedX = (float)vectorType.GetField("x").GetValue(storedPositionVector);
+            var storedMovementPoints = (float)movementType.GetField("MovementPoints").GetValue(storedMovement);
+            var storedPathTime = (float)pathType.GetField("TimeOnPath").GetValue(storedPath);
+
+            Assert.That(storedX, Is.EqualTo(1f).Within(0.001f),
+                "A movement tick must persist PositionComponent to the authoritative EntityManager.");
+            Assert.That(storedMovementPoints, Is.EqualTo(9f).Within(0.001f),
+                "A movement tick must persist spent movement points to the authoritative EntityManager.");
+            Assert.That(storedPathTime, Is.EqualTo(1f).Within(0.001f),
+                "A movement tick must persist PathComponent progress to the authoritative EntityManager.");
+
+            movementSystemType.GetMethod("Dispose", Type.EmptyTypes).Invoke(system, null);
+        }
+
         private sealed class ComponentCacheFixture
         {
             private readonly object _entityManager;
@@ -945,6 +1027,20 @@ namespace MythHunter.DI.CharacterizationTests
 
         public class HighPrioritySystemSpyProxy : SystemSpyProxy { }
         public class LowPrioritySystemSpyProxy : SystemSpyProxy { }
+
+        public class ActivePhaseSpyProxy : DispatchProxy
+        {
+            protected override object Invoke(MethodInfo targetMethod, object[] args)
+            {
+                if (targetMethod.Name == "get_CurrentPhase")
+                    return Enum.Parse(targetMethod.ReturnType, "Active");
+
+                var returnType = targetMethod.ReturnType;
+                if (returnType == typeof(void))
+                    return null;
+                return returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
+            }
+        }
 
         public class RegistryContractSpyProxy : DispatchProxy
         {
