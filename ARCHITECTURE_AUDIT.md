@@ -127,3 +127,7 @@ These findings are initial and source-backed. They do not complete the dependenc
 ## Audit correction
 - The hypothesis that Framework ECS and a legacy EntityManager are simultaneously authoritative is not supported by the current runtime README. It states that the old `MythHunter.Core.ECS.IComponent`, `IEntityManager`, and duplicate `EntityManager` were removed.
 - Do not start another EntityManager migration or add wrappers based on old inventory notes. Inspect `ComponentCache<T>` consumers and benchmark before deciding whether to keep, simplify, or remove it.
+## Reference findings update
+- Cache consumers found via repository code search: `HeroSystem` caches stats/health, `MovementSystem` caches position/movement/path and refreshes every update, `VisibilitySystem` caches position/visibility and refreshes every update. Some cache snapshots are constructed directly, outside `ComponentCacheRegistry`.
+- `CoreInstaller` initially binds `IEventBus` to `SimpleEventBus`; `EventsInstaller` replaces that binding with `EventBus` in offline mode or aliases the `NetworkEventBus` instance through `IEventBus` for client/server modes. `NetworkEventBus` inherits `EventBus`.
+- `EventBus.cs` has an unconditional `using UnityEditor;` and no other matching editor API or `#if/#endif` in the inspected file. Treat this as a probable player-build defect requiring a targeted fix/build check, not as a proven player-build failure until validated.
