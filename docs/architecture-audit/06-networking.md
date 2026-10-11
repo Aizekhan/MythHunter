@@ -38,6 +38,9 @@ NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IM
 ## First-pass review (based on inspected implementations and imports)
 NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IMythLogger, and references MythHunter DI and message contracts. Transport contracts may be reusable, but authority, disposal/unsubscription, untrusted-message validation, serializer limits and actual transports need review before claims of production readiness. Client/server orchestration is optional to simulation core.
 
+## First-pass review (based on inspected implementations and imports)
+NetworkSystem composes INetworkClient, INetworkServer, INetworkSerializer and IMythLogger, and references MythHunter DI and message contracts. Transport contracts may be reusable, but authority, disposal/unsubscription, untrusted-message validation, serializer limits and actual transports need review before claims of production readiness. Client/server orchestration is optional to simulation core.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
