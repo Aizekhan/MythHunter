@@ -59,6 +59,9 @@ IEventBus is a broadly reusable contract, but EventBus currently imports UnityEd
 ## First-pass review (based on inspected implementations and imports)
 IEventBus is a potentially reusable contract, but EventBus imports UnityEditor in a runtime path and references MythHunter.Events.Domain, Lobby, MythHunter DI and logging. This is a concrete boundary concern: UnityEditor should not leak into runtime; generic dispatch should avoid game-domain event types and framework-specific DI. SimpleEventBus is marked temporary and needs capability/parity review.
 
+## First-pass review (based on inspected implementations and imports)
+IEventBus is a potentially reusable contract, but EventBus imports UnityEditor in a runtime path and references MythHunter.Events.Domain, Lobby, MythHunter DI and logging. This is a concrete boundary concern: UnityEditor should not leak into runtime; generic dispatch should avoid game-domain event types and framework-specific DI. SimpleEventBus is marked temporary and needs capability/parity review.
+
 ## Five-filter result (provisional)
 - **Required by any RPG?** Core contracts may be; concrete components, services and installers are not automatically required.
 - **Game-specific dependency?** Confirmed for types described above; not proven for every file in this module.
