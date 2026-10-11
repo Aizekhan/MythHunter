@@ -63,6 +63,25 @@ namespace MythHunter.Systems.Core
 
         public void RegisterSystemWithPriority(ISystem system, int priority)
         {
+            if (system == null)
+                throw new System.ArgumentNullException(nameof(system));
+
+            var systemType = system.GetType();
+            var categoryAttr = systemType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
+                .FirstOrDefault() as SystemCategoryAttribute;
+            var category = categoryAttr?.Category ?? SystemInitializationCategory.OnDemand;
+
+            RegisterSystemWithPriority(system, priority, category);
+        }
+
+        public void RegisterSystemWithPriority(
+            ISystem system,
+            int priority,
+            SystemInitializationCategory category)
+        {
+            if (system == null)
+                throw new System.ArgumentNullException(nameof(system));
+
             var systemType = system.GetType();
             var systemName = systemType.Name;
 
@@ -72,12 +91,6 @@ namespace MythHunter.Systems.Core
                 _logger.LogWarning($"System {systemName} is already registered, skipping", "Systems");
                 return;
             }
-
-            // Визначення категорії ініціалізації
-            var categoryAttr = systemType.GetCustomAttributes(typeof(SystemCategoryAttribute), true)
-                .FirstOrDefault() as SystemCategoryAttribute;
-
-            var category = categoryAttr?.Category ?? SystemInitializationCategory.OnDemand;
 
             // Додаткова перевірка на групи систем за їх назвою
             if (system is SystemGroup systemGroup)

@@ -8,6 +8,7 @@ namespace MythHunter.Systems.Core
     {
         void RegisterSystem(ISystem system);
         void RegisterSystemWithPriority(ISystem system, int priority);
+        void RegisterSystemWithPriority(ISystem system, int priority, SystemInitializationCategory category);
         void UpdateAll(float deltaTime);
         void DisposeAll();
         IReadOnlyList<ISystem> GetAllSystems();

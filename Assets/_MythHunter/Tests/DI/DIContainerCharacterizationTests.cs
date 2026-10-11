@@ -352,6 +352,99 @@ namespace MythHunter.DI.CharacterizationTests
             }
         }
 
+
+        [TestCase("OnBoot")]
+        [TestCase("Lobby")]
+        [TestCase("Gameplay")]
+        [TestCase("Manual")]
+        public void RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(string categoryName)
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
+            var logger = Resolve(container, loggerInterface);
+            var registryInterface = assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true);
+            var categoryType = assembly.GetType("MythHunter.Systems.Core.SystemInitializationCategory", true);
+            var registry = (RegistryContractSpyProxy)CreateSystemSpy(
+                registryInterface,
+                typeof(RegistryContractSpyProxy));
+            var extensionType = assembly.GetType("MythHunter.Systems.Core.SystemRegistryExtensions", true);
+            var method = extensionType.GetMethod(
+                "RegisterGroupWithCategory",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { registryInterface, typeof(string), typeof(int), categoryType, loggerInterface },
+                null);
+            Assert.That(method, Is.Not.Null);
+
+            var generic = method.MakeGenericMethod(assembly.GetType("MythHunter.Systems.Groups.SystemGroup", true));
+            generic.Invoke(null, new[]
+            {
+                (object)registry,
+                "ExplicitCategoryGroup",
+                10,
+                Enum.Parse(categoryType, categoryName),
+                logger
+            });
+
+            Assert.That(registry.RegisteredSystem, Is.Not.Null);
+            Assert.That(registry.RegisteredPriority, Is.EqualTo(10));
+            Assert.That(registry.RegisteredCategory, Is.Not.Null);
+            Assert.That(registry.RegisteredCategory.ToString(), Is.EqualTo(categoryName),
+                "The extension must pass the caller's explicit category through the ISystemRegistry contract.");
+        }
+
+        [Test]
+        public void SystemRegistry_RegisterSystemWithPriority_HonorsExplicitCategory()
+        {
+            var container = CreateContainer();
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
+                ?? Assembly.Load("Assembly-CSharp");
+            RegisterErrorOnlyLogger(container, assembly);
+
+            var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
+            var eventPoolType = assembly.GetType("MythHunter.Events.EventPool", true);
+            var eventBusType = assembly.GetType("MythHunter.Events.SimpleEventBus", true);
+            var eventBus = Activator.CreateInstance(eventBusType, new[]
+            {
+                Activator.CreateInstance(eventPoolType, new[] { logger }),
+                logger
+            });
+            var registryType = assembly.GetType("MythHunter.Systems.Core.SystemRegistry", true);
+            var registry = Activator.CreateInstance(registryType, new[] { logger, eventBus });
+            var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
+            var categoryType = assembly.GetType("MythHunter.Systems.Core.SystemInitializationCategory", true);
+            var probe = (SystemSpyProxy)CreateSystemSpy(systemInterface);
+            var requestedCategory = Enum.Parse(categoryType, "Gameplay");
+
+            try
+            {
+                registryType.GetMethod(
+                    "RegisterSystemWithPriority",
+                    new[] { systemInterface, typeof(int), categoryType })
+                    .Invoke(registry, new[] { (object)probe, 7, requestedCategory });
+
+                var wrongCategory = Enum.Parse(categoryType, "OnDemand");
+                registryType.GetMethod("InitializeSystemsByCategory").Invoke(registry, new[] { wrongCategory });
+                Assert.That(probe.InitializeCount, Is.EqualTo(0),
+                    "An explicit category must not initialize the system in a different category.");
+
+                registryType.GetMethod("InitializeSystemsByCategory").Invoke(registry, new[] { requestedCategory });
+                Assert.That(probe.InitializeCount, Is.EqualTo(1),
+                    "The system must initialize when its explicitly requested category is selected.");
+            }
+            finally
+            {
+                registryType.GetMethod("DisposeAll").Invoke(registry, null);
+                eventBusType.GetMethod("Clear").Invoke(eventBus, null);
+            }
+        }
+
         [Test]
         public void SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization()
         {
@@ -691,6 +784,7 @@ namespace MythHunter.DI.CharacterizationTests
         {
             public object RegisteredSystem { get; private set; }
             public int RegisteredPriority { get; private set; }
+            public object RegisteredCategory { get; private set; }
             public int GetAllSystemsCallCount { get; private set; }
 
             protected override object Invoke(MethodInfo targetMethod, object[] args)
@@ -704,6 +798,8 @@ namespace MythHunter.DI.CharacterizationTests
                     case "RegisterSystemWithPriority":
                         RegisteredSystem = args[0];
                         RegisteredPriority = (int)args[1];
+                        if (args.Length > 2)
+                            RegisteredCategory = args[2];
                         return null;
                     case "LogInfo":
                         return null;
