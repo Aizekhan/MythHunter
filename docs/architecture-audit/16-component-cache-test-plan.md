@@ -1,6 +1,6 @@
 # ComponentCache consistency test plan
 
-Status: **Audit/test design only. No runtime behavior changed.** Based on `ComponentCache<T>`, `ComponentCacheRegistry`, and MovementSystem/VisibilitySystem call sites.
+Status: **Implementation/tests added in PR #48 and merged to `dev` as `0d97060d45d978cafbe376cd43f00eb8fdf9f175`; exact-current-head Unity validation pending.** The historical 44/44 local report is for HEAD `40b6296`, not the merged head.
 
 ## Contract to establish
 - Authoritative state belongs to `RPGFramework.ECS.IEntityManager`; cache is a derived read model and never a second source of truth.
@@ -11,25 +11,20 @@ Status: **Audit/test design only. No runtime behavior changed.** Based on `Compo
 ## Required tests per strategy
 
 ### Full
-- [ ] Initial population includes all entities that have component T.
-- [ ] Existing component value updated in IEntityManager then cache Update refreshes the stored struct.
-- [ ] Adding T after initial population is reflected after Update.
-- [ ] Removing T is reflected after Update.
-- [ ] Destroying an entity is reflected after Update.
-- [ ] Empty world/cache are safe.
+- [x] Characterization test covers population, changed value refresh, removal, and destroyed entity behavior (`ComponentCache_FullRefreshesChangedValuesAndRemovesMissingMembership`).
+- [ ] Explicit empty-world/cache behavior test.
+- [ ] Re-run this coverage on exact merged `dev` head; current-head Unity execution has not been confirmed.
 
 ### Incremental
-- [ ] New component IDs are discovered across >100 IDs and batches terminate.
-- [ ] Existing value changes: explicitly decide whether Incremental refreshes IDs already in the cache or requires explicit invalidation.
-- [ ] Component removal and entity destruction prune IDs or mark them invalid.
-- [ ] Re-adding T to an entity is recovered without duplicate entries.
-- [ ] If Incremental intentionally only adds, document the limitation and test callers that need freshness.
+- [x] Characterization test covers >100 IDs, rotating batch convergence, changed values, component removal, re-add, and entity destruction (`ComponentCache_IncrementalRefreshesValuesAndPrunesRemovedComponentsInBatches`).
+- [x] Chosen contract in PR #48: refresh up to 100 values per `Update()` with a rotating cursor; reconcile component membership every update.
+- [ ] Re-run this coverage on exact merged `dev` head; current-head Unity execution has not been confirmed.
 
 ### OnDemand
-- [ ] First Get for a present component reads IEntityManager and caches it.
-- [ ] Get for absent T returns documented result and doesn't confuse default value with a cache hit.
-- [ ] After authoritative value mutation, define expected behavior: invalidate/refresh or explicit stale-hit contract.
-- [ ] After component removal/entity destroy, Get and GetAllEntityIds don't expose invalid membership beyond documented policy.
+- [x] Characterization test covers present Get, authoritative value change, removal, re-add and destruction (`ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager`).
+- [x] Chosen contract in PR #48: `Get` reads the current value from `IEntityManager` on every call and prunes membership on a missing component.
+- [ ] Decide/test positive-membership semantics: `Contains`/ID enumeration prune stale IDs but do not discover new IDs not yet cached.
+- [ ] Re-run this coverage on exact merged `dev` head; current-head Unity execution has not been confirmed.
 
 ## Registry/cache lifecycle
 - [ ] EntityCreated/EntityDestroyed events affect only registered cache instances; direct system caches are separately owned.
@@ -45,9 +40,10 @@ Status: **Audit/test design only. No runtime behavior changed.** Based on `Compo
 - [ ] Benchmark direct IEntityManager.GetEntitiesWith<T>() against snapshot iteration before deciding on cache consolidation/removal.
 
 ## Acceptance gate
-1. Tests fail against current implementation for each confirmed stale-value/membership defect.
-2. Runtime fix changes one contract at a time; no broad cache removal.
-3. Unity EditMode, full-project compile/clean Console, and relevant smoke checks pass.
-4. Benchmark representative entity counts before claiming performance improvement.
+1. The targeted cache-consistency implementation is merged, but current merged-head Unity results remain unconfirmed.
+2. Exact-current-head Unity EditMode, full-project compile/clean Console, Player Build, and Movement/Visibility/Hero smoke checks pass.
+3. Complete source reverse-reference, asmdef, and Unity scene/prefab serialized-reference review.
+4. Clarify OnDemand positive-membership and cache-local `Add`/authoritative-write semantics with consumers.
+5. Benchmark representative entity counts before claiming performance improvement or proposing cache consolidation/removal.
 
-Do not implement until fixture approach and expected Incremental/OnDemand semantics are selected.
+Do not start broad ECS extraction until EPIC 01 Phase 1 exits.

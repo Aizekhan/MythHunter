@@ -1,6 +1,6 @@
 # Reference validation — ECS cache and EventBus
 
-Status: **Partial validation.** This is a source-backed check of directly inspected code, not a complete reverse-reference graph.
+Status: **Partial validation, refreshed after PR #48/#50 merges (2026-10-11).** This is a source-backed check of directly inspected code, not a complete reverse-reference graph. Current source head at refresh: `0d97060d45d978cafbe376cd43f00eb8fdf9f175`.
 
 ## ComponentCache ownership
 
@@ -9,8 +9,8 @@ Status: **Partial validation.** This is a source-backed check of directly inspec
 - `MythHunter.Core.ECS.ComponentCache<T>` is a derived per-component-type cache. It holds a dictionary of component copies and entity IDs; it calls `IEntityManager` to initially populate or lazily fetch cache entries.
 - `ComponentCacheRegistry` creates caches, schedules refreshes, and exposes statistics. It is registered as a singleton by `EntitiesInstaller`.
 - `ComponentCacheRegistry` auto-creates caches for `NameComponent`, `DescriptionComponent`, and `ValueComponent`, explicitly coupling this generic-looking cache service to concrete MythHunter components.
-- `ComponentCacheRegistry` subscribes to entity-created and entity-destroyed events. On destroy it removes an entity from caches through reflection. On create the inspected handler logs archetype metadata but does not immediately add or refresh component data.
-- `UpdateAllCaches`, phase-specific updates and scheduled updates invoke `Update` by reflection. Cache refresh defaults to every five calls to `Update()` and depends on `_autoUpdate`.
+- `ComponentCacheRegistry` subscribes to entity-created and entity-destroyed events. On destroy it removes an entity from registry-owned caches through reflection. On create the inspected handler logs archetype metadata but does not immediately add or refresh component data.
+- `UpdateAllCaches`, phase-specific updates and scheduled updates invoke `Update` by reflection. Registry cache refresh defaults to every five calls to `Update()` and depends on `_autoUpdate`; direct system-owned caches bypass that cadence.
 
 ### Architectural conclusion
 This is **not duplicate authoritative storage**, but it adds a second copy of component values whose freshness is time/event-driven rather than structurally guaranteed. Do not delete it without call-site/performance evidence. Next inspect every consumer of `IComponentCacheRegistry.GetCache<T>()`, whether callers depend on stale-cache semantics, and benchmarks against using `IEntityManager.GetEntitiesWith<T>()` directly.
@@ -46,9 +46,9 @@ IEventBus contract
 ```
 
 ## Remaining evidence gaps
-- Search all code and scenes/assets for `IComponentCacheRegistry`, `GetCache<T>`, `FindEntities<T>`, `ForEach<T>`, and the cache extension methods; GitHub code search has not provided reliable occurrence results, and the current inspected sources are insufficient for an exhaustive consumer list.
+- GitHub code search confirms the core source consumers listed below, but it is not an exhaustive reverse-reference graph. Complete local `rg`/IDE Find All References for `IComponentCacheRegistry`, `GetCache<T>`, `FindEntities<T>`, `ForEach<T>` and cache extension methods; review asmdef references and Unity scenes/prefabs serialized references.
 - Confirm whether `EventsInstaller` replaces the `SimpleEventBus` binding in each supported bootstrap path.
-- Run a non-Editor Unity player build to validate `UnityEditor` import behavior before calling it a reproducible build failure.
+- PR #50 merged `PreloadDebugTool.RenderGUI` editor-only GUI guarding, but Unity compilation/Console and a non-Editor Player Build on the exact merged `dev` head remain unconfirmed.
 
 ## Consumer references found in repository code search
 - `Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs`: receives `IComponentCacheRegistry`; caches `StatsComponent` and `HealthComponent`; calls both caches' `Update()` on every `HeroSystem.Update`. This creates per-frame refreshes independent of the registry's every-five-updates cadence.
@@ -88,5 +88,5 @@ These are positive matches from GitHub's indexed code search, not proof that eve
 - `ComponentCacheRegistry.OnEntityDestroyed` removes entity IDs from registry-managed cache instances only; it cannot invalidate separately constructed MovementSystem/VisibilitySystem caches. Those direct caches rebuild via Full strategy each update, which corrects membership on each call but incurs repeated full scans.
 - `HeroSystem.Update` refreshes Stats and Health directly every update, even though the registry also has a configurable update cadence for registry-managed caches. The actual central interval does not govern all consumers.
 
-## Cache audit conclusion (no runtime change in this documentation step)
-Current policy is inconsistent: Full is the default and does a full snapshot refresh, Incremental is append-only unless paired with other invalidation, OnDemand caches values after first access, and multiple systems duplicate cache state/update work. Before proposing any removal or centralization, add tests for add/update/remove/destroy/component-removal semantics for all three strategies and benchmark direct `IEntityManager.GetEntitiesWith<T>()` scans against snapshots in MovementSystem/VisibilitySystem.
+## Cache audit conclusion (post-merge source review; runtime validation pending)
+PR #48 adds characterization coverage for Full/Incremental/OnDemand and implements the targeted consistency changes. Existing local EditMode evidence is 44/44 on local HEAD `40b6296`, not on the exact PR head; the current merged `dev` head has not yet been demonstrated to pass Unity EditMode, a full compile/clean Console, a Player Build, and Movement/Visibility/Hero smoke checks. Do not treat the implementation-level fix as complete validation. Do not remove or centralize caches yet: first finish the exact-head gates and clarify OnDemand positive-membership behavior, cache-local `Add` versus authoritative writes, registry cadence versus per-system updates, and measured performance.

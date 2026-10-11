@@ -45,11 +45,12 @@ The arrows above mean consumers depend on layers below them. The actual graph re
 
 ## Rule
 Do not move files or refactor runtime modules while these gates are open. Every proposal must pass the five filters: required by any RPG; specific-game coupling; reusable unchanged; framework vs game data; evidenced architectural issue/action.
-## Additional verified cache semantics
-- Default `ComponentCache<T>` strategy is Full; consumers refresh the snapshot every Update(). Registry auto-cadence therefore does not control all instances.
-- Incremental mode discovers missing IDs in batches but, in the inspected method, doesn't refresh cached values or prune IDs that lost the component. OnDemand only reaches IEntityManager on a miss and can retain stale values for existing entries.
-- Cache instances in MovementSystem and VisibilitySystem aren't managed by ComponentCacheRegistry's EntityDestroyed event; they rely on their own full refreshes in each Update().
-- This is a consistency/performance contract issue to test, not yet a decision to remove the cache.
+## Additional verified cache semantics (updated after PR #48 merge)
+- Default `ComponentCache<T>` strategy is Full; direct caches in MovementSystem and VisibilitySystem refresh on each `Update()`. Registry auto-cadence therefore does not control all instances.
+- PR #48 (merged at `0d97060d45d978cafbe376cd43f00eb8fdf9f175`) changes Incremental mode to reconcile current membership every update, prune removed/destroyed IDs, refresh up to 100 values with a rotating cursor, and changes OnDemand `Get` to read the authoritative manager on every call. Exact-current-head Unity validation remains open.
+- OnDemand `Contains` and ID enumeration prune stale entries but do not discover new component IDs that have not yet been cached. `Add` mutates only the cache; verify each consumer writes the authoritative component too.
+- Cache instances in MovementSystem and VisibilitySystem are not owned by ComponentCacheRegistry's EntityDestroyed event; the new Incremental/OnDemand behavior does not automatically change those consumers because their constructor-selected default remains Full.
+- This is still a consistency/performance contract issue to validate and measure, not a decision to remove the cache.
 ## Additional source-backed module edges
 - `IPreloadManager` consumers: `GameFlowManager`, `AutoPreloadConfigurator`, `PreloadDebugTool`; binding: `ResourceInstaller` → `PreloadManager`.
 - Resource management graph: `ResourceInstaller` wires `DefaultResourceProvider`, `AssetBundleProvider`, conditionally `AddressablesProvider`, `PoolManager`, `PreloadManager`, and `ResourceManager`. The `IResourceProvider`/`IResourceManager` APIs are Unity-specific because their methods return `UnityEngine.Object` types.
