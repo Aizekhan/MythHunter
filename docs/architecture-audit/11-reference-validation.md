@@ -1,0 +1,51 @@
+# Reference validation — ECS cache and EventBus
+
+Status: **Partial validation.** This is a source-backed check of directly inspected code, not a complete reverse-reference graph.
+
+## ComponentCache ownership
+
+### Directly confirmed
+- `RPGFramework.ECS.EntityManager` is the canonical storage implementation described by `Assets/_Framework/ECS/Runtime/README.md`.
+- `MythHunter.Core.ECS.ComponentCache<T>` is a derived per-component-type cache. It holds a dictionary of component copies and entity IDs; it calls `IEntityManager` to initially populate or lazily fetch cache entries.
+- `ComponentCacheRegistry` creates caches, schedules refreshes, and exposes statistics. It is registered as a singleton by `EntitiesInstaller`.
+- `ComponentCacheRegistry` auto-creates caches for `NameComponent`, `DescriptionComponent`, and `ValueComponent`, explicitly coupling this generic-looking cache service to concrete MythHunter components.
+- `ComponentCacheRegistry` subscribes to entity-created and entity-destroyed events. On destroy it removes an entity from caches through reflection. On create the inspected handler logs archetype metadata but does not immediately add or refresh component data.
+- `UpdateAllCaches`, phase-specific updates and scheduled updates invoke `Update` by reflection. Cache refresh defaults to every five calls to `Update()` and depends on `_autoUpdate`.
+
+### Architectural conclusion
+This is **not duplicate authoritative storage**, but it adds a second copy of component values whose freshness is time/event-driven rather than structurally guaranteed. Do not delete it without call-site/performance evidence. Next inspect every consumer of `IComponentCacheRegistry.GetCache<T>()`, whether callers depend on stale-cache semantics, and benchmarks against using `IEntityManager.GetEntitiesWith<T>()` directly.
+
+### Risks to verify
+- `ComponentCache<T>.UpdateIncrementalCache` schedules previously unseen entity IDs, but its inspected path should be checked for pruning destroyed entities or entities that lost component T.
+- `ComponentCache<T>.Get` returns `default` for misses, which can mask absence for value-type components unless callers check `Contains`.
+- Mutating a component directly through `IEntityManager` may leave a cached struct stale until the cache refreshes; determine whether any cache mutation APIs are used as authoritative writes.
+- Reflection-based `Update`/ `Remove` calls hide compile-time contracts and could be replaced by a small internal typed-cache interface, if profiling and consumers justify a refactor.
+
+## EventBus UnityEditor reference
+
+### Directly confirmed
+- `Assets/_MythHunter/Code/Events/EventBus.cs` has an unconditional `using UnityEditor;` at line 12.
+- In the complete inspected file, the only match among `UnityEditor`, `EditorApplication`, `AssetDatabase`, `EditorUtility`, and preprocessor `#if/#endif` was that using directive; no editor API use or conditional compilation was found in those matches.
+
+### Architectural conclusion
+The import appears unused and is a **probable player-build portability defect** because the runtime file references an editor-only namespace. This was not validated by a non-Editor player build, so do not mark it as a proven build failure. Recommended action is a focused source fix removing the unused import, followed by Unity Editor compile/tests and a player build check. Keep this out of the documentation-only audit branch unless there is an explicit scope decision.
+
+## Dependency boundary snapshot
+```text
+RPGFramework.ECS.EntityManager (authoritative storage)
+                 ↑
+ComponentCache<T> (derived cached copies)
+                 ↑
+ComponentCacheRegistry (update scheduling + statistics)
+                 ↑
+EntitiesInstaller (MythHunter DI composition)
+
+IEventBus contract
+   ├─ EventBus (priority/pipeline implementation; imports UnityEditor + domain namespaces)
+   └─ SimpleEventBus (simpler implementation selected initially by CoreInstaller)
+```
+
+## Remaining evidence gaps
+- Search all code and scenes/assets for `IComponentCacheRegistry`, `GetCache<T>`, `FindEntities<T>`, `ForEach<T>`, and the cache extension methods; GitHub code search has not provided reliable occurrence results, and the current inspected sources are insufficient for an exhaustive consumer list.
+- Confirm whether `EventsInstaller` replaces the `SimpleEventBus` binding in each supported bootstrap path.
+- Run a non-Editor Unity player build to validate `UnityEditor` import behavior before calling it a reproducible build failure.
