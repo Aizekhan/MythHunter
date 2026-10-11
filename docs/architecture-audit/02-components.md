@@ -38,7 +38,7 @@ Total: 22
 Classify each component as generic runtime state or game-specific Character/Combat/Lobby/Movement/Tags domain data. Data-only ownership is the desired default.
 
 ## First-pass review (based on inspected implementations and imports)
-Components are grouped by Character, Combat, Core, Lobby and Movement, which signals a mixture of potentially reusable primitive state and MythHunter domain concepts. Classify every type before treating the folder as a universal framework module; check whether components are plain data or own behavior/platform dependencies.
+Character, Combat, Lobby and Movement groupings signal game-domain component data. The `Core` namespace may hold reusable primitives, but each struct/class must be checked for domain terms, managed references, Unity types, or behavior before classification.
 
 ## First-pass review (based on inspected implementations and imports)
 Components are grouped by Character, Combat, Core, Lobby and Movement, signalling a mixture of potentially reusable primitive state and MythHunter domain concepts. Classify each type and verify data-only behavior and platform dependencies before calling the folder universal.
