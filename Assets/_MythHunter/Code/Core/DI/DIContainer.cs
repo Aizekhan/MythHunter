@@ -33,6 +33,21 @@ namespace MythHunter.Core.DI
         private readonly ThreadLocal<DIScope> _threadLocalScope = new ThreadLocal<DIScope>();
         private readonly int _mainThreadId;
 
+        // EPIC 08 Phase 4: Reflection optimization - cache injection metadata
+        private readonly Dictionary<Type, InjectionMetadata> _injectionCache = new Dictionary<Type, InjectionMetadata>();
+        private readonly object _injectionCacheLock = new object();
+
+        /// <summary>
+        /// EPIC 08 Phase 4: Cached injection metadata for performance
+        /// </summary>
+        private class InjectionMetadata
+        {
+            public FieldInfo[] InjectableFields { get; set; }
+            public PropertyInfo[] InjectableProperties { get; set; }
+            public MethodInfo[] InjectableMethods { get; set; }
+            public Action<object, IDIContainer> CompiledInjector { get; set; }
+        }
+
         /// <summary>
         /// Клас для зберігання даних про реєстрацію типу
         /// </summary>
@@ -352,6 +367,7 @@ namespace MythHunter.Core.DI
 
         /// <summary>
         /// Ін'єктує залежності в об'єкт
+        /// EPIC 08 Phase 4: Optimized with reflection caching
         /// </summary>
         public void InjectDependencies(object target)
         {
@@ -360,18 +376,93 @@ namespace MythHunter.Core.DI
 
             Type targetType = target.GetType();
 
-            // Ін'єкція в поля
-            InjectFields(target, targetType);
+            // Get or create cached injection metadata
+            var metadata = GetOrCreateInjectionMetadata(targetType);
 
-            // Ін'єкція в властивості
-            InjectProperties(target, targetType);
+            // Use compiled injector if available (fastest path)
+            if (metadata.CompiledInjector != null)
+            {
+                metadata.CompiledInjector(target, this);
+                return;
+            }
 
-            // Ін'єкція в методи
-            InjectMethods(target, targetType);
+            // Fallback to cached reflection (still faster than uncached)
+            InjectFieldsCached(target, metadata);
+            InjectPropertiesCached(target, metadata);
+            InjectMethodsCached(target, metadata);
         }
 
         /// <summary>
-        /// Ін'єктує залежності в поля об'єкта
+        /// EPIC 08 Phase 4: Get or create cached injection metadata
+        /// </summary>
+        private InjectionMetadata GetOrCreateInjectionMetadata(Type targetType)
+        {
+            // Try fast path without lock
+            if (_injectionCache.TryGetValue(targetType, out var metadata))
+                return metadata;
+
+            // Slow path with lock
+            lock (_injectionCacheLock)
+            {
+                // Double-check after acquiring lock
+                if (_injectionCache.TryGetValue(targetType, out metadata))
+                    return metadata;
+
+                // Create new metadata
+                metadata = CreateInjectionMetadata(targetType);
+                _injectionCache[targetType] = metadata;
+
+                return metadata;
+            }
+        }
+
+        /// <summary>
+        /// EPIC 08 Phase 4: Create injection metadata for a type
+        /// </summary>
+        private InjectionMetadata CreateInjectionMetadata(Type targetType)
+        {
+            var fields = targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(f => f.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0)
+                .ToArray();
+
+            var properties = targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(p => p.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0 && p.CanWrite)
+                .ToArray();
+
+            var methods = targetType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(m => m.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0)
+                .ToArray();
+
+            return new InjectionMetadata
+            {
+                InjectableFields = fields,
+                InjectableProperties = properties,
+                InjectableMethods = methods,
+                CompiledInjector = null // Can be compiled later if needed
+            };
+        }
+
+        /// <summary>
+        /// EPIC 08 Phase 4: Inject fields using cached metadata
+        /// </summary>
+        private void InjectFieldsCached(object target, InjectionMetadata metadata)
+        {
+            foreach (var field in metadata.InjectableFields)
+            {
+                try
+                {
+                    var dependency = ResolveByType(field.FieldType);
+                    field.SetValue(target, dependency);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError($"Error injecting field {field.Name} in {target.GetType().Name}: {ex.Message}", "DI", ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ін'єктує залежності в поля об'єкта (legacy - kept for compatibility)
         /// </summary>
         private void InjectFields(object target, Type targetType)
         {
@@ -394,7 +485,26 @@ namespace MythHunter.Core.DI
         }
 
         /// <summary>
-        /// Ін'єктує залежності в властивості об'єкта
+        /// EPIC 08 Phase 4: Inject properties using cached metadata
+        /// </summary>
+        private void InjectPropertiesCached(object target, InjectionMetadata metadata)
+        {
+            foreach (var property in metadata.InjectableProperties)
+            {
+                try
+                {
+                    var dependency = ResolveByType(property.PropertyType);
+                    property.SetValue(target, dependency);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError($"Error injecting property {property.Name} in {target.GetType().Name}: {ex.Message}", "DI", ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ін'єктує залежності в властивості об'єкта (legacy - kept for compatibility)
         /// </summary>
         private void InjectProperties(object target, Type targetType)
         {
@@ -417,7 +527,33 @@ namespace MythHunter.Core.DI
         }
 
         /// <summary>
-        /// Ін'єктує залежності в методи об'єкта
+        /// EPIC 08 Phase 4: Inject methods using cached metadata
+        /// </summary>
+        private void InjectMethodsCached(object target, InjectionMetadata metadata)
+        {
+            foreach (var method in metadata.InjectableMethods)
+            {
+                try
+                {
+                    var parameters = method.GetParameters();
+                    var args = new object[parameters.Length];
+
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        args[i] = ResolveByType(parameters[i].ParameterType);
+                    }
+
+                    method.Invoke(target, args);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError($"Error injecting method {method.Name} in {target.GetType().Name}: {ex.Message}", "DI", ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ін'єктує залежності в методи об'єкта (legacy - kept for compatibility)
         /// </summary>
         private void InjectMethods(object target, Type targetType)
         {
