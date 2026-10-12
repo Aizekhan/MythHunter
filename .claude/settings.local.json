@@ -17,7 +17,8 @@
       "Bash(git commit:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
