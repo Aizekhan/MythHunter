@@ -14,7 +14,9 @@
       "Bash(gh pr create:*)",
       "Bash(git add:*)",
       "Bash(gh pr list:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
