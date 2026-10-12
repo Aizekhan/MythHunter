@@ -29,10 +29,10 @@ namespace MythHunter.Core.Composition.Modules
             }
 
             // Install core gameplay systems
-            var gameplaySystemsInstaller = new Installers.SystemsGroups.GameplaySystemsInstaller();
+            var gameplaySystemsInstaller = new MythHunter.Core.Installers.GameplaySystemsInstaller();
             gameplaySystemsInstaller.InstallBindings(container);
 
-            var heroSystemsInstaller = new Installers.SystemsGroups.HeroSystemsInstaller();
+            var heroSystemsInstaller = new MythHunter.Core.Installers.HeroSystemsInstaller();
             heroSystemsInstaller.InstallBindings(container);
         }
     }

@@ -40,26 +40,9 @@ namespace MythHunter.Core.Composition.Modules
                     "GameLayerModule requires IDIContainer");
             }
 
-            // Game Flow & State Management
-            container.BindSingleton<IEventPool, EventPool>();
-            container.BindSingleton<IEventBus, SimpleEventBus>();
-            container.BindSingleton<IGameStateMachine, GameStateMachine>();
-            container.BindSingleton<IEcsWorld, EcsWorld>();
-            container.BindSingleton<IDILifecycleManager, DILifecycleManager>();
-            container.BindSingleton<IPhaseProvider, GamePhaseProvider>();
-
-            // Scene Management
-            container.BindSingleton<SceneLoader, SceneLoader>();
-            container.BindSingleton<ISceneDispatcher, SceneDispatcher>();
-            container.BindSingleton<IGameFlowManager, GameFlowManager>();
-
-            // Game Settings & Configuration
-            container.BindSingleton<IGameSettingsService, GameSettingsService>();
-            container.BindSingleton<AutoPreloadConfigurator, AutoPreloadConfigurator>();
-
-            // Install DI Extensions
-            var diExtensionsInstaller = new Installers.CoreServices.DIExtensionsInstaller();
-            diExtensionsInstaller.InstallBindings(container);
+            // Use existing CoreInstaller which registers game flow, state machine, ECS, and scene management
+            var coreInstaller = new MythHunter.Core.Installers.CoreInstaller();
+            coreInstaller.InstallBindings(container);
         }
     }
 }

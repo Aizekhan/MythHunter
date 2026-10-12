@@ -29,10 +29,10 @@ namespace MythHunter.Core.Composition.Modules
             }
 
             // Install debug tools
-            var debugToolsInstaller = new Installers.CoreServices.DebugToolsInstaller();
+            var debugToolsInstaller = new MythHunter.Core.Installers.DebugToolsInstaller();
             debugToolsInstaller.InstallBindings(container);
 
-            var debugSystemsInstaller = new Installers.SystemsGroups.DebugSystemsInstaller();
+            var debugSystemsInstaller = new MythHunter.Core.Installers.DebugSystemsInstaller();
             debugSystemsInstaller.InstallBindings(container);
         }
     }

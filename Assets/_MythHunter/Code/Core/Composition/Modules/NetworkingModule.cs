@@ -29,11 +29,11 @@ namespace MythHunter.Core.Composition.Modules
             }
 
             // Install networking infrastructure
-            var networkingInstaller = new Installers.CoreServices.NetworkingInstaller();
+            var networkingInstaller = new MythHunter.Core.Installers.NetworkingInstaller();
             networkingInstaller.InstallBindings(container);
 
             // Install networking systems
-            var networkingSystemsInstaller = new Installers.SystemsGroups.NetworkingSystemsInstaller();
+            var networkingSystemsInstaller = new MythHunter.Core.Installers.NetworkingSystemsInstaller();
             networkingSystemsInstaller.InstallBindings(container);
         }
     }

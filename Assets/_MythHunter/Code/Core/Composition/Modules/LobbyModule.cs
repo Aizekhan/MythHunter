@@ -29,7 +29,7 @@ namespace MythHunter.Core.Composition.Modules
             }
 
             // Install lobby systems
-            var lobbySystemsInstaller = new Installers.SystemsGroups.LobbySystemsInstaller();
+            var lobbySystemsInstaller = new MythHunter.Core.Installers.LobbySystemsInstaller();
             lobbySystemsInstaller.InstallBindings(container);
         }
     }

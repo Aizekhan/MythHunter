@@ -107,16 +107,16 @@ namespace MythHunter.Core.Game
             #endif
 
             // Additional installers not yet modularized
-            var lazyInjectorInstaller = new Installers.CoreServices.LazyDependencyInjectorInstaller();
+            var lazyInjectorInstaller = new MythHunter.Core.Installers.LazyDependencyInjectorInstaller();
             lazyInjectorInstaller.InstallBindings(_container);
 
-            var eventsInstaller = new Installers.CoreServices.EventsInstaller();
+            var eventsInstaller = new MythHunter.Core.Installers.EventsInstaller();
             eventsInstaller.InstallBindings(_container);
 
-            var profileInstaller = new Installers.SystemsGroups.ProfileInstaller();
+            var profileInstaller = new MythHunter.Core.Installers.ProfileInstaller();
             profileInstaller.InstallBindings(_container);
 
-            var parallelSystemsInstaller = new Installers.CoreServices.ParallelSystemsInstaller();
+            var parallelSystemsInstaller = new MythHunter.Core.Installers.ParallelSystemsInstaller();
             parallelSystemsInstaller.InstallBindings(_container);
 
             // Build composition (configure and initialize all modules)

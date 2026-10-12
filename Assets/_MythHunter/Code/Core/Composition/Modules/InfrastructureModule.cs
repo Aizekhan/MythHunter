@@ -29,19 +29,19 @@ namespace MythHunter.Core.Composition.Modules
             }
 
             // Install infrastructure services
-            var resourceInstaller = new Installers.CoreServices.ResourceInstaller();
+            var resourceInstaller = new MythHunter.Core.Installers.ResourceInstaller();
             resourceInstaller.InstallBindings(container);
 
-            var serializationInstaller = new Installers.CoreServices.SerializationInstaller();
+            var serializationInstaller = new MythHunter.Core.Installers.SerializationInstaller();
             serializationInstaller.InstallBindings(container);
 
-            var poolInstaller = new Installers.CoreServices.PoolInstaller();
+            var poolInstaller = new MythHunter.Core.Installers.PoolInstaller();
             poolInstaller.InstallBindings(container);
 
-            var entitiesInstaller = new Installers.CoreServices.EntitiesInstaller();
+            var entitiesInstaller = new MythHunter.Core.Installers.EntitiesInstaller();
             entitiesInstaller.InstallBindings(container);
 
-            var uiInstaller = new Installers.UIInstaller();
+            var uiInstaller = new MythHunter.Core.Installers.UIInstaller();
             uiInstaller.InstallBindings(container);
         }
     }

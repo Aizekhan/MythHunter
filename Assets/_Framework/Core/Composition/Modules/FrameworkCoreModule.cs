@@ -15,22 +15,10 @@ namespace RPGFramework.Core.Composition.Modules
 
         protected override void OnConfigure()
         {
-            var container = Container as IDIContainer;
-            if (container == null)
-            {
-                throw new System.InvalidOperationException(
-                    "FrameworkCoreModule requires IDIContainer");
-            }
-
-            // Framework ECS Runtime (universal)
-            container.BindSingleton<IEntityManager, EntityManager>();
-            container.BindSingleton<MythHunter.Systems.Core.ISystemRegistry, MythHunter.Systems.Core.SystemRegistry>();
-
-            // Framework Component Cache Registry
-            container.BindSingleton<MythHunter.Entities.IComponentCacheRegistry, MythHunter.Entities.ComponentCacheRegistry>();
-
-            // Note: Logger is already registered in GameBootstrapper before module system
-            // DI Container itself is the hosting container, doesn't need self-registration
+            // Framework core dependencies are registered by CoreInstaller (called from GameLayerModule)
+            // This module exists primarily for dependency tracking and organization
+            // The actual Framework types (IEntityManager, ISystemRegistry, IComponentCacheRegistry)
+            // are part of CoreInstaller which will be called by GameLayerModule
         }
 
         public override void Initialize()
