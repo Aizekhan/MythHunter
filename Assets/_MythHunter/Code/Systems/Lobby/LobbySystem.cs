@@ -14,21 +14,22 @@ using MythHunter.Entities.Archetypes;
 using MythHunter.Entities;
 using MythHunter.Systems.Core;
 using MythHunter.Services.GameSettings;
+using MythHunter.Services.Timer; // EPIC 08 Phase 2
 using MythHunter.UI.Core;
 using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Lobby
 {
     /// <summary>
-    /// Система лоббі з інтеграцією TimerSystem
+    /// EPIC 08 Phase 2: Система лоббі з інтеграцією TimerService (decoupled)
     /// </summary>
     public class LobbySystem : SystemBase, ILobbySystem
     {
         private readonly IEntityManager _entityManager;
-        private readonly IHeroSelectionSystem _heroSelectionSystem;
-        private readonly IArchetypeSystem _archetypeSystem;
+        private readonly IHeroSelectionSystem _heroSelectionSystem; // TODO: EPIC 08 Phase 2 - replace with events
+        private readonly IArchetypeSystem _archetypeSystem; // TODO: EPIC 08 Phase 2 - replace with events
         private readonly IArchetypeTemplateRegistry _archetypeTemplateRegistry;
-        private readonly ITimerSystem _timerSystem;
+        private readonly ITimerService _timerService; // EPIC 08 Phase 2: Changed from ITimerSystem
         private readonly IGameSettingsService _gameSettings;
         private int _currentPlayerIndex = 0;
         private bool _isInitialized = false;
@@ -46,8 +47,8 @@ namespace MythHunter.Systems.Lobby
             IHeroSelectionSystem heroSelectionSystem,
             IArchetypeSystem archetypeSystem,
             IArchetypeTemplateRegistry archetypeTemplateRegistry,
-            ITimerSystem timerSystem,
-              IGameSettingsService gameSettings,
+            ITimerService timerService, // EPIC 08 Phase 2: Changed from ITimerSystem
+            IGameSettingsService gameSettings,
             IEventBus eventBus,
             IMythLogger logger)
             : base(logger, eventBus)
@@ -56,7 +57,7 @@ namespace MythHunter.Systems.Lobby
             _heroSelectionSystem = heroSelectionSystem;
             _archetypeSystem = archetypeSystem;
             _archetypeTemplateRegistry = archetypeTemplateRegistry;
-            _timerSystem = timerSystem;
+            _timerService = timerService;
             _gameSettings = gameSettings;
         }
 

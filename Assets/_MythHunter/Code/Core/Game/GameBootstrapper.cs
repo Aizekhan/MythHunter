@@ -12,6 +12,7 @@ using MythHunter.Systems.Core;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Debug;
 using MythHunter.Core.MonoBehaviours;
+using MythHunter.Services.Timer; // EPIC 08 Phase 2
 using RPGFramework.Core.Composition;
 using RPGFramework.Core.Composition.Modules;
 using MythHunter.Core.Composition.Modules;
@@ -36,6 +37,7 @@ namespace MythHunter.Core.Game
         private IDependencyInjector _dependencyInjector;
         private ISceneDispatcher _sceneDispatcher;
         private IGameComposition _composition;
+        private ITimerService _timerService; // EPIC 08 Phase 2
 
         // EPIC 08: Cancellation token for async initialization
         private CancellationTokenSource _initCancellationTokenSource;
@@ -53,6 +55,9 @@ namespace MythHunter.Core.Game
       
         private void Update()
         {
+            // EPIC 08 Phase 2: Update TimerService
+            _timerService?.UpdateTimers(Time.deltaTime);
+
             _ecsWorld?.Update(Time.deltaTime);
             _stateMachine?.Update();
         }
@@ -183,6 +188,9 @@ namespace MythHunter.Core.Game
 
             // Явно ініціалізуємо GameFlowManager перед зміною стану
             var gameFlowManager = _container.Resolve<IGameFlowManager>();
+
+            // EPIC 08 Phase 2: Resolve TimerService for Update loop
+            _timerService = _container.Resolve<ITimerService>();
 
             _logger.LogInfo("Асинхронна ініціалізація сервісів завершена", "Bootstrapper");
         }
