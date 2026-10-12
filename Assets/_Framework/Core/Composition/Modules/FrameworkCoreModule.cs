@@ -7,6 +7,11 @@ namespace RPGFramework.Core.Composition.Modules
     /// <summary>
     /// Framework Core module: universal ECS runtime, DI, and logging.
     /// This module has zero game-specific dependencies and can be reused across any RPG game.
+    ///
+    /// NOTE: Framework Core services are registered by FrameworkCoreInstaller,
+    /// which is called from GameLayerModule due to assembly dependency constraints.
+    /// FrameworkCoreInstaller registers: IEntityManager, IEcsWorld, IEventPool,
+    /// IDILifecycleManager, ISystemJobScheduler, and ParallelSystemRegistry.
     /// </summary>
     public class FrameworkCoreModule : BaseFeatureModule
     {
@@ -14,10 +19,8 @@ namespace RPGFramework.Core.Composition.Modules
 
         protected override void OnConfigure()
         {
-            // Framework core dependencies are registered by CoreInstaller (called from GameLayerModule)
-            // This module exists primarily for dependency tracking and organization
-            // The actual Framework types (IEntityManager, ISystemRegistry, IComponentCacheRegistry)
-            // are part of CoreInstaller which will be called by GameLayerModule
+            // Framework Core services are registered by FrameworkCoreInstaller
+            // called from GameLayerModule (cannot call directly due to assembly constraints)
         }
 
         public override void Initialize()

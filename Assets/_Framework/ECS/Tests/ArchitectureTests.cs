@@ -149,7 +149,18 @@ namespace RPGFramework.ECS.Tests
         public void Framework_FollowsNamingConvention()
         {
             var frameworkAssemblies = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => a.Location.Contains("_Framework"))
+                .Where(a =>
+                {
+                    try
+                    {
+                        // Dynamic assemblies throw NotSupportedException on .Location access
+                        return !string.IsNullOrEmpty(a.Location) && a.Location.Contains("_Framework");
+                    }
+                    catch (NotSupportedException)
+                    {
+                        return false; // Skip dynamic assemblies
+                    }
+                })
                 .ToList();
 
             var violations = new List<string>();

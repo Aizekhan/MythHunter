@@ -18,7 +18,15 @@
       "Bash(cat:*)",
       "Bash(find:*)",
       "Bash(gh pr view:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(for pr in 7 8 9 10)",
+      "Bash(do echo \"=== Merging PR #$pr ===\")",
+      "Bash(done)",
+      "Bash(git pull:*)",
+      "Bash(gh pr close:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

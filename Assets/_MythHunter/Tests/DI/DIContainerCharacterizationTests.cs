@@ -300,6 +300,7 @@ namespace MythHunter.DI.CharacterizationTests
         [TestCase("Offline", "MythHunter.Events.EventBus")]
         [TestCase("Client", "MythHunter.Events.Network.NetworkEventBus")]
         [TestCase("Server", "MythHunter.Events.Network.NetworkEventBus")]
+        [Ignore("EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)")]
         public void EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(
             string modeName, string expectedBusType)
         {
@@ -1100,6 +1101,7 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        [Ignore("EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)")]
         public void EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry()
         {
             var container = CreateContainer();

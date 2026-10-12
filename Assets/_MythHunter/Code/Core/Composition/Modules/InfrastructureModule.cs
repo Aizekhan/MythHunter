@@ -43,6 +43,14 @@ namespace MythHunter.Core.Composition.Modules
 
             var uiInstaller = new MythHunter.Core.Installers.UIInstaller();
             uiInstaller.InstallBindings(container);
+
+            // MonoBehaviour DI support
+            var lazyDIInstaller = new MythHunter.Core.Installers.LazyDependencyInjectorInstaller();
+            lazyDIInstaller.InstallBindings(container);
+
+            // Profile UI presenter
+            var profileInstaller = new MythHunter.Core.Installers.ProfileInstaller();
+            profileInstaller.InstallBindings(container);
         }
     }
 }
