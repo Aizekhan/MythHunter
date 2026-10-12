@@ -1,5 +1,4 @@
 // Assets/_Framework/Core/Composition/Modules/FrameworkCoreModule.cs
-using MythHunter.Core.DI;
 using RPGFramework.ECS;
 using RPGFramework.Logging;
 
