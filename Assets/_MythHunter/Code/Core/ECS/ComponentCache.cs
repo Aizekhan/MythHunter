@@ -202,10 +202,24 @@ namespace MythHunter.Core.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityId)
         {
-            if (_strategy == CacheStrategy.OnDemand && _components.ContainsKey(entityId) &&
-                !_entityManager.HasComponent<T>(entityId))
+            if (_strategy == CacheStrategy.OnDemand)
             {
+                // Contains is a membership query, not a query for cache residency.
+                // Resolve against the authoritative store even when this ID has not
+                // previously been observed through Get or enumeration.
+                if (_entityManager.HasComponent<T>(entityId))
+                {
+                    T current = _entityManager.GetComponent<T>(entityId);
+                    _components[entityId] = current;
+                    _entityIds.Add(entityId);
+                    _isDirty = true;
+                    HitCount++;
+                    return true;
+                }
+
                 Remove(entityId);
+                MissCount++;
+                return false;
             }
 
             bool result = _components.ContainsKey(entityId);

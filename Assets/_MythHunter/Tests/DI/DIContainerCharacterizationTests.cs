@@ -473,6 +473,20 @@ namespace MythHunter.DI.CharacterizationTests
         }
 
         [Test]
+        public void ComponentCache_OnDemandContainsFindsUncachedAuthoritativeMembership()
+        {
+            var fixture = CreateComponentCacheFixture("OnDemand");
+            var entityId = fixture.CreateEntity();
+            fixture.AddPosition(entityId, 12f);
+
+            Assert.That(fixture.Contains(entityId), Is.True,
+                "OnDemand Contains must query authoritative membership even before Get caches the component.");
+            Assert.That(fixture.Count, Is.EqualTo(1),
+                "A successful OnDemand membership query should refresh its cached snapshot.");
+            Assert.That(fixture.GetPositionX(entityId), Is.EqualTo(12f));
+        }
+
+        [Test]
         public void ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager()
         {
             var fixture = CreateComponentCacheFixture("OnDemand");
