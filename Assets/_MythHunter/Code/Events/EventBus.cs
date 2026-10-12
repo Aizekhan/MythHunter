@@ -35,6 +35,9 @@ namespace MythHunter.Events
         private readonly Dictionary<Type, Action<object, IEvent>> _compiledSyncHandlers = new Dictionary<Type, Action<object, IEvent>>();
         private readonly Dictionary<Type, Func<object, IEvent, UniTask>> _compiledAsyncHandlers = new Dictionary<Type, Func<object, IEvent, UniTask>>();
 
+        // EPIC 08 Phase 3: Memory leak prevention - limit pending events
+        private const int MAX_PENDING_EVENTS = 10000;
+
         private readonly IEventPool _eventPool;
         private readonly IMythLogger _logger;
 
@@ -308,8 +311,15 @@ namespace MythHunter.Events
                     _pendingEvents[eventType] = events;
                 }
 
+                // EPIC 08 Phase 3: Prevent memory leak by limiting pending events
+                if (events.Count >= MAX_PENDING_EVENTS)
+                {
+                    _logger.LogWarning($"Pending events limit ({MAX_PENDING_EVENTS}) reached for {eventType.Name}. Dropping oldest event.", "EventBus");
+                    events.RemoveAt(0);
+                }
+
                 events.Add(eventData);
-                _logger.LogDebug($"Event {eventType.Name} with ID {eventData.GetEventId()} cached until handlers are registered", "EventBus");
+                _logger.LogDebug($"Event {eventType.Name} with ID {eventData.GetEventId()} cached until handlers are registered ({events.Count}/{MAX_PENDING_EVENTS})", "EventBus");
                 return;
             }
 
