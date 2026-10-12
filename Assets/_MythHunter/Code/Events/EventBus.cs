@@ -117,6 +117,7 @@ namespace MythHunter.Events
 
         /// <summary>
         /// Підписується на синхронну обробку події
+        /// EPIC 08 Phase 3: Added duplicate subscription detection
         /// </summary>
         public void Subscribe<TEvent>(Action<TEvent> handler, EventPriority priority = EventPriority.Normal)
      where TEvent : struct, IEvent
@@ -134,6 +135,14 @@ namespace MythHunter.Events
             {
                 handlers = new List<SyncEventHandler>();
                 _syncHandlers[eventType] = handlers;
+            }
+
+            // EPIC 08 Phase 3: Check for duplicate subscription
+            bool isDuplicate = handlers.Any(h => h.Handler.Equals(handler));
+            if (isDuplicate)
+            {
+                _logger.LogWarning($"Handler already subscribed to {eventType.Name}. Skipping duplicate subscription.", "EventBus");
+                return;
             }
 
             handlers.Add(new SyncEventHandler(handler, priority));
@@ -361,6 +370,7 @@ namespace MythHunter.Events
 
         /// <summary>
         /// Підписується на асинхронну обробку події
+        /// EPIC 08 Phase 3: Added duplicate subscription detection
         /// </summary>
         public void SubscribeAsync<TEvent>(Func<TEvent, UniTask> handler, EventPriority priority = EventPriority.Normal)
             where TEvent : struct, IEvent
@@ -371,6 +381,14 @@ namespace MythHunter.Events
             {
                 handlers = new List<AsyncEventHandler>();
                 _asyncHandlers[type] = handlers;
+            }
+
+            // EPIC 08 Phase 3: Check for duplicate subscription
+            bool isDuplicate = handlers.Any(h => h.Handler.Equals(handler));
+            if (isDuplicate)
+            {
+                _logger.LogWarning($"Async handler already subscribed to {type.Name}. Skipping duplicate subscription.", "EventBus");
+                return;
             }
 
             handlers.Add(new AsyncEventHandler(handler, priority));
