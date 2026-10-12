@@ -1,6 +1,7 @@
 // Assets/_MythHunter/Code/Core/Game/GameplayState.cs
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
@@ -24,6 +25,9 @@ namespace MythHunter.States
         private readonly IEventBus _eventBus;
         private readonly IGameFlowManager _gameFlowManager;
 
+        // EPIC 08: Track cancellation token for state entry
+        private CancellationTokenSource _entryCts;
+
         public GameplayState(IDIContainer container) : base(container)
         {
             _logger = container.Resolve<IMythLogger>();
@@ -38,15 +42,21 @@ namespace MythHunter.States
         {
             _logger.LogInfo("🎮 GameplayState: Завантаження GameScene та початок гри", "GameplayState");
 
-            EnterGameplayAsync(previousState).Forget();
+            // EPIC 08: Create cancellation token for this state entry
+            _entryCts?.Cancel();
+            _entryCts = new CancellationTokenSource();
+            EnterGameplayAsync(previousState, _entryCts.Token).Forget();
         }
-        private async UniTaskVoid EnterGameplayAsync(GameStateType previousState)
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTaskVoid EnterGameplayAsync(GameStateType previousState, CancellationToken cancellationToken = default)
         {
             try
             {
                 // 1. Завантажуємо GameScene
                 var sceneDispatcher = _container.Resolve<ISceneDispatcher>();
-                await sceneDispatcher.LoadSceneAsync("GameScene");
+                await sceneDispatcher.LoadSceneAsync("GameScene", cancellationToken);
 
                 // 2. Налаштовуємо навігацію для гри
                 var heroes = sceneDispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
@@ -54,7 +64,7 @@ namespace MythHunter.States
                 parameters.Add("SelectedHeroArchetypes", heroes);
 
                 var navigationService = _container.Resolve<INavigationService>();
-                await navigationService.SetupForSceneAsync("GameScene", parameters);
+                await navigationService.SetupForSceneAsync("GameScene", parameters, cancellationToken);
 
                 // 3. Ініціалізуємо ігрові системи
                 var systemRegistry = _container.Resolve<ISystemRegistry>();
@@ -73,6 +83,11 @@ namespace MythHunter.States
         public override void Exit()
         {
             _logger.LogInfo("Exiting gameplay state");
+
+            // EPIC 08: Cancel any ongoing async operations
+            _entryCts?.Cancel();
+            _entryCts?.Dispose();
+            _entryCts = null;
         }
     }
 }

@@ -9,26 +9,29 @@ using MythHunter.Components.Lobby;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Events.Domain;
+using MythHunter.Events.Domain.Archetype; // EPIC 08 Phase 2
 using MythHunter.Utils.Logging;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Entities;
 using MythHunter.Systems.Core;
 using MythHunter.Services.GameSettings;
+using MythHunter.Services.HeroSelection; // EPIC 08 Phase 2
+using MythHunter.Services.Timer; // EPIC 08 Phase 2
 using MythHunter.UI.Core;
 using RPGFramework.ECS;
 
 namespace MythHunter.Systems.Lobby
 {
     /// <summary>
-    /// Система лоббі з інтеграцією TimerSystem
+    /// EPIC 08 Phase 2: Система лоббі - fully decoupled from other systems
+    /// Uses services instead of direct system dependencies
     /// </summary>
     public class LobbySystem : SystemBase, ILobbySystem
     {
         private readonly IEntityManager _entityManager;
-        private readonly IHeroSelectionSystem _heroSelectionSystem;
-        private readonly IArchetypeSystem _archetypeSystem;
+        private readonly IHeroSelectionService _heroSelectionService; // EPIC 08 Phase 2: Service instead of system
         private readonly IArchetypeTemplateRegistry _archetypeTemplateRegistry;
-        private readonly ITimerSystem _timerSystem;
+        private readonly ITimerService _timerService; // EPIC 08 Phase 2: Service instead of system
         private readonly IGameSettingsService _gameSettings;
         private int _currentPlayerIndex = 0;
         private bool _isInitialized = false;
@@ -43,27 +46,25 @@ namespace MythHunter.Systems.Lobby
         [Inject]
         public LobbySystem(
             IEntityManager entityManager,
-            IHeroSelectionSystem heroSelectionSystem,
-            IArchetypeSystem archetypeSystem,
+            IHeroSelectionService heroSelectionService, // EPIC 08 Phase 2: Service instead of system
             IArchetypeTemplateRegistry archetypeTemplateRegistry,
-            ITimerSystem timerSystem,
-              IGameSettingsService gameSettings,
+            ITimerService timerService, // EPIC 08 Phase 2: Service instead of system
+            IGameSettingsService gameSettings,
             IEventBus eventBus,
             IMythLogger logger)
             : base(logger, eventBus)
         {
             _entityManager = entityManager;
-            _heroSelectionSystem = heroSelectionSystem;
-            _archetypeSystem = archetypeSystem;
+            _heroSelectionService = heroSelectionService;
             _archetypeTemplateRegistry = archetypeTemplateRegistry;
-            _timerSystem = timerSystem;
+            _timerService = timerService;
             _gameSettings = gameSettings;
         }
 
         public override void Initialize()
         {
             base.Initialize();
-            _heroSelectionSystem.LoadAvailableHeroes();
+            _heroSelectionService.LoadAvailableHeroes();
         }
 
         public void InitializeLobby(int playerCount)
@@ -169,12 +170,12 @@ namespace MythHunter.Systems.Lobby
             var playerState = _entityManager.GetComponent<LobbyStateComponent>(playerEntityId);
 
             // Перевіряємо, чи може гравець вибрати цього героя
-            if (!_heroSelectionSystem.CanSelectHero(archetypeId, _currentPlayerIndex, playerState.RemainingMana))
+            if (!_heroSelectionService.CanSelectHero(archetypeId, _currentPlayerIndex, playerState.RemainingMana))
             {
                 return false;
             }
 
-            var heroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
+            var heroInfo = _heroSelectionService.GetHeroInfo(archetypeId);
             if (heroInfo == null)
             {
                 _logger.LogWarning($"Cannot find hero info for archetype ID {archetypeId}", "Lobby");
@@ -348,6 +349,9 @@ namespace MythHunter.Systems.Lobby
             return true;
         }
 
+        /// <summary>
+        /// EPIC 08 Phase 2: Event-driven hero creation (no direct ArchetypeSystem dependency)
+        /// </summary>
         private void CreateSelectedHeroes(Dictionary<int, List<string>> selectedArchetypes)
         {
             // Для кожного гравця створюємо вибраних героїв
@@ -362,21 +366,23 @@ namespace MythHunter.Systems.Lobby
                 {
                     try
                     {
-                        // Створюємо героя з архетипу через ArchetypeSystem
-                        int entityId = _archetypeSystem.CreateEntityFromArchetype(archetypeId, null);
+                        // EPIC 08 Phase 2: Publish event instead of direct system call
+                        string requestId = Guid.NewGuid().ToString();
 
-                        if (entityId >= 0)
+                        Publish(new CreateEntityFromArchetypeRequestEvent
                         {
-                            _logger.LogInfo($"Created hero entity {entityId} with archetype {archetypeId} for player {playerIndex}", "Lobby");
-                        }
-                        else
-                        {
-                            _logger.LogError($"Failed to create hero entity with archetype {archetypeId} for player {playerIndex}", "Lobby");
-                        }
+                            ArchetypeId = archetypeId,
+                            PlayerIndex = playerIndex,
+                            RequestId = requestId,
+                            AdditionalData = null,
+                            Timestamp = DateTime.UtcNow
+                        });
+
+                        _logger.LogInfo($"Requested hero creation: {archetypeId} for player {playerIndex} (Request: {requestId})", "Lobby");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error creating hero with archetype {archetypeId}: {ex.Message}", "Lobby", ex);
+                        _logger.LogError($"Error requesting hero creation for archetype {archetypeId}: {ex.Message}", "Lobby", ex);
                     }
                 }
             }
@@ -393,13 +399,13 @@ namespace MythHunter.Systems.Lobby
             var playerState = _entityManager.GetComponent<LobbyStateComponent>(playerEntityId);
 
             var availableHeroes = new List<string>();
-            var heroesByCategory = _heroSelectionSystem.GetHeroesByCategory();
+            var heroesByCategory = _heroSelectionService.GetHeroesByCategory();
 
             foreach (var category in heroesByCategory.Values)
             {
                 foreach (var archetypeId in category)
                 {
-                    if (_heroSelectionSystem.CanSelectHero(archetypeId, _currentPlayerIndex, playerState.RemainingMana))
+                    if (_heroSelectionService.CanSelectHero(archetypeId, _currentPlayerIndex, playerState.RemainingMana))
                     {
                         availableHeroes.Add(archetypeId);
                     }

@@ -8,6 +8,7 @@ using MythHunter.UI.Navigation;
 using MythHunter.Systems.Core;
 using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 
 namespace MythHunter.Core.Game
 {
@@ -20,6 +21,9 @@ namespace MythHunter.Core.Game
         private readonly IEventBus _eventBus;
         private readonly INavigationService _navigationService;
         private readonly ISystemRegistry _systemRegistry;
+
+        // EPIC 08: Track cancellation token for state entry
+        private CancellationTokenSource _entryCts;
 
         public override GameStateType StateId => GameStateType.MainMenu;
 
@@ -35,11 +39,16 @@ namespace MythHunter.Core.Game
         {
             _logger.LogInfo("🏠 Entering MainMenu state", "GameState");
 
-            // Асинхронна ініціалізація з новою архітектурою
-            InitializeAsync(previousState).Forget();
+            // EPIC 08: Create cancellation token for this state entry
+            _entryCts?.Cancel();
+            _entryCts = new CancellationTokenSource();
+            InitializeAsync(previousState, _entryCts.Token).Forget();
         }
 
-        private async UniTaskVoid InitializeAsync(GameStateType previousState)
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTaskVoid InitializeAsync(GameStateType previousState, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -59,10 +68,11 @@ namespace MythHunter.Core.Game
                 parameters.Add("PreviousState", previousState.ToString());
                 parameters.Add("ShowWelcome", previousState == GameStateType.Boot);
 
-                await _navigationService.SetupForSceneAsync("MainMenuScene", parameters);
+                // EPIC 08: Pass cancellation token through async operations
+                await _navigationService.SetupForSceneAsync("MainMenuScene", parameters, cancellationToken);
 
                 // 4. Невелика затримка для завершення ініціалізації UI
-                await UniTask.DelayFrame(3);
+                await UniTask.DelayFrame(3, cancellationToken: cancellationToken);
 
                 _logger.LogInfo("✅ MainMenu state initialized successfully", "GameState");
             }
@@ -80,6 +90,11 @@ namespace MythHunter.Core.Game
         public override void Exit()
         {
             _logger.LogInfo("🚪 Exiting MainMenu state", "GameState");
+
+            // EPIC 08: Cancel any ongoing async operations
+            _entryCts?.Cancel();
+            _entryCts?.Dispose();
+            _entryCts = null;
 
             // Очищуємо навігацію при виході (якщо потрібно)
             try

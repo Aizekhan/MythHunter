@@ -1,5 +1,6 @@
 // Assets/_MythHunter/Code/Core/Game/States/LoadingState.cs
 
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Core.Game;
@@ -19,6 +20,9 @@ namespace MythHunter.States
         private readonly IMythLogger _logger;
         private readonly INavigationService _navigationService;
 
+        // EPIC 08: Track cancellation token for state entry
+        private CancellationTokenSource _entryCts;
+
         public LoadingState(IDIContainer container) : base(container)
         {
             _logger = container.Resolve<IMythLogger>();
@@ -31,19 +35,30 @@ namespace MythHunter.States
         {
             _logger.LogInfo("⏳ LoadingState: Показуємо Loading UI", "LoadingState");
 
-            // Тільки показуємо UI - вся логіка в GameFlowManager + PreloadManager
-            ShowLoadingUIAsync().Forget();
+            // EPIC 08: Create cancellation token for this state entry
+            _entryCts?.Cancel();
+            _entryCts = new CancellationTokenSource();
+            ShowLoadingUIAsync(_entryCts.Token).Forget();
         }
 
-        private async UniTaskVoid ShowLoadingUIAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTaskVoid ShowLoadingUIAsync(CancellationToken cancellationToken = default)
         {
             var parameters = new NavigationParameters();
-            await _navigationService.SetupForSceneAsync("LoadingScene", parameters);
+            await _navigationService.SetupForSceneAsync("LoadingScene", parameters, cancellationToken);
         }
 
         public override void Exit()
         {
             _logger.LogInfo("LoadingState: Приховуємо Loading UI", "LoadingState");
+
+            // EPIC 08: Cancel any ongoing async operations
+            _entryCts?.Cancel();
+            _entryCts?.Dispose();
+            _entryCts = null;
+
             // PreloadManager сам керує завантаженням
         }
     }

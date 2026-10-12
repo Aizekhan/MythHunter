@@ -1,5 +1,7 @@
 // Assets/_MythHunter/Code/Core/Game/GameBootstrapper.cs
 using UnityEngine;
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Events;
@@ -10,6 +12,7 @@ using MythHunter.Systems.Core;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Debug;
 using MythHunter.Core.MonoBehaviours;
+using MythHunter.Services.Timer; // EPIC 08 Phase 2
 using RPGFramework.Core.Composition;
 using RPGFramework.Core.Composition.Modules;
 using MythHunter.Core.Composition.Modules;
@@ -34,40 +37,77 @@ namespace MythHunter.Core.Game
         private IDependencyInjector _dependencyInjector;
         private ISceneDispatcher _sceneDispatcher;
         private IGameComposition _composition;
+        private ITimerService _timerService; // EPIC 08 Phase 2
+
+        // EPIC 08: Cancellation token for async initialization
+        private CancellationTokenSource _initCancellationTokenSource;
+        private const int INIT_TIMEOUT_MS = 30000; // 30 seconds
 
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
-            InitializeAsync().Forget();
+
+            // EPIC 08: Create cancellation token source for initialization
+            _initCancellationTokenSource = new CancellationTokenSource();
+            InitializeAsync(_initCancellationTokenSource.Token).Forget();
         }
 
       
         private void Update()
         {
+            // EPIC 08 Phase 2: Update TimerService
+            _timerService?.UpdateTimers(Time.deltaTime);
+
             _ecsWorld?.Update(Time.deltaTime);
             _stateMachine?.Update();
         }
 
         private void OnDestroy()
         {
+            // EPIC 08: Cancel initialization if still running
+            _initCancellationTokenSource?.Cancel();
+            _initCancellationTokenSource?.Dispose();
+
             _composition?.Shutdown();
             _ecsWorld?.Dispose();
+            _stateMachine?.Dispose(); // EPIC 08: Dispose state machine
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
         }
-        private async UniTaskVoid InitializeAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter and timeout
+        /// </summary>
+        private async UniTaskVoid InitializeAsync(CancellationToken cancellationToken = default)
         {
-            InitializeCore();
-            InitializeGameSystems();
+            try
+            {
+                // EPIC 08: Add timeout to prevent indefinite hang
+                using var timeoutCts = new CancellationTokenSource(INIT_TIMEOUT_MS);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-            _logger.LogInfo("GameBootstrapper ініціалізовано успішно");
+                InitializeCore();
+                InitializeGameSystems();
 
-            await InitializeServicesAsync();
+                _logger.LogInfo("GameBootstrapper ініціалізовано успішно");
 
-            // Додаємо затримку для завершення всіх ініціалізацій
-            await UniTask.DelayFrame(5);
+                await InitializeServicesAsync(linkedCts.Token);
 
-            // Змінюємо стан на Boot
-            _stateMachine?.ChangeState(GameStateType.Boot);
+                // Додаємо затримку для завершення всіх ініціалізацій
+                await UniTask.DelayFrame(5, cancellationToken: linkedCts.Token);
+
+                // Змінюємо стан на Boot
+                _stateMachine?.ChangeState(GameStateType.Boot);
+
+                _logger.LogInfo("GameBootstrapper initialization completed", "Bootstrapper");
+            }
+            catch (OperationCanceledException)
+            {
+                _logger?.LogWarning("GameBootstrapper initialization was cancelled", "Bootstrapper");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError($"GameBootstrapper initialization failed: {ex.Message}", "Bootstrapper", ex);
+                throw; // Re-throw to ensure failure is visible
+            }
         }
         private void InitializeCore()
         {
@@ -136,15 +176,21 @@ namespace MythHunter.Core.Game
             _logger.LogInfo("Ігрові системи ініціалізовано", "Bootstrapper");
         }
 
-        private async UniTask InitializeServicesAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTask InitializeServicesAsync(CancellationToken cancellationToken = default)
         {
             _logger.LogInfo("Початок асинхронної ініціалізації сервісів", "Bootstrapper");
 
-            await UniTask.Delay(100);
+            await UniTask.Delay(100, cancellationToken: cancellationToken);
             _sceneDispatcher = _container.Resolve<ISceneDispatcher>();
 
             // Явно ініціалізуємо GameFlowManager перед зміною стану
             var gameFlowManager = _container.Resolve<IGameFlowManager>();
+
+            // EPIC 08 Phase 2: Resolve TimerService for Update loop
+            _timerService = _container.Resolve<ITimerService>();
 
             _logger.LogInfo("Асинхронна ініціалізація сервісів завершена", "Bootstrapper");
         }

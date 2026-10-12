@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Core/StateMachine/BaseState.cs
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 
@@ -25,7 +26,8 @@ namespace MythHunter.Core.StateMachine
 
 
         // Додаємо асинхронний метод EnterAsync
-        public virtual async UniTask EnterAsync(T previousState)
+        // EPIC 08: Added CancellationToken parameter
+        public virtual async UniTask EnterAsync(T previousState, CancellationToken cancellationToken = default)
         {
             // За замовчуванням викликаємо синхронний метод
             Enter(previousState);

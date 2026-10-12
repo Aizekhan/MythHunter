@@ -11,6 +11,8 @@ using MythHunter.Networking.Core;
 using MythHunter.Resources;
 using MythHunter.Resources.SceneManagement;
 using MythHunter.Services.GameSettings;
+using MythHunter.Services.HeroSelection; // EPIC 08 Phase 2
+using MythHunter.Services.Timer;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Phase;
 using MythHunter.Utils.Logging;
@@ -40,6 +42,10 @@ namespace MythHunter.Core.Installers
             // Game settings and configuration
             BindSingleton<IGameSettingsService, GameSettingsService>(container);
             BindSingleton<AutoPreloadConfigurator, AutoPreloadConfigurator>(container);
+
+            // EPIC 08 Phase 2: Services (decoupled from system architecture)
+            BindSingleton<ITimerService, TimerService>(container);
+            BindSingleton<IHeroSelectionService, HeroSelectionService>(container);
 
             // Event system (network-aware)
             InstallEventSystem(container, logger);
