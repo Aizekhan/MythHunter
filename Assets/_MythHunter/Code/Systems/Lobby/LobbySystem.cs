@@ -9,6 +9,7 @@ using MythHunter.Components.Lobby;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Lobby;
 using MythHunter.Events.Domain;
+using MythHunter.Events.Domain.Archetype; // EPIC 08 Phase 2
 using MythHunter.Utils.Logging;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Entities;
@@ -27,7 +28,6 @@ namespace MythHunter.Systems.Lobby
     {
         private readonly IEntityManager _entityManager;
         private readonly IHeroSelectionSystem _heroSelectionSystem; // TODO: EPIC 08 Phase 2 - replace with events
-        private readonly IArchetypeSystem _archetypeSystem; // TODO: EPIC 08 Phase 2 - replace with events
         private readonly IArchetypeTemplateRegistry _archetypeTemplateRegistry;
         private readonly ITimerService _timerService; // EPIC 08 Phase 2: Changed from ITimerSystem
         private readonly IGameSettingsService _gameSettings;
@@ -45,7 +45,6 @@ namespace MythHunter.Systems.Lobby
         public LobbySystem(
             IEntityManager entityManager,
             IHeroSelectionSystem heroSelectionSystem,
-            IArchetypeSystem archetypeSystem,
             IArchetypeTemplateRegistry archetypeTemplateRegistry,
             ITimerService timerService, // EPIC 08 Phase 2: Changed from ITimerSystem
             IGameSettingsService gameSettings,
@@ -55,7 +54,6 @@ namespace MythHunter.Systems.Lobby
         {
             _entityManager = entityManager;
             _heroSelectionSystem = heroSelectionSystem;
-            _archetypeSystem = archetypeSystem;
             _archetypeTemplateRegistry = archetypeTemplateRegistry;
             _timerService = timerService;
             _gameSettings = gameSettings;
@@ -349,6 +347,9 @@ namespace MythHunter.Systems.Lobby
             return true;
         }
 
+        /// <summary>
+        /// EPIC 08 Phase 2: Event-driven hero creation (no direct ArchetypeSystem dependency)
+        /// </summary>
         private void CreateSelectedHeroes(Dictionary<int, List<string>> selectedArchetypes)
         {
             // Для кожного гравця створюємо вибраних героїв
@@ -363,21 +364,23 @@ namespace MythHunter.Systems.Lobby
                 {
                     try
                     {
-                        // Створюємо героя з архетипу через ArchetypeSystem
-                        int entityId = _archetypeSystem.CreateEntityFromArchetype(archetypeId, null);
+                        // EPIC 08 Phase 2: Publish event instead of direct system call
+                        string requestId = Guid.NewGuid().ToString();
 
-                        if (entityId >= 0)
+                        Publish(new CreateEntityFromArchetypeRequestEvent
                         {
-                            _logger.LogInfo($"Created hero entity {entityId} with archetype {archetypeId} for player {playerIndex}", "Lobby");
-                        }
-                        else
-                        {
-                            _logger.LogError($"Failed to create hero entity with archetype {archetypeId} for player {playerIndex}", "Lobby");
-                        }
+                            ArchetypeId = archetypeId,
+                            PlayerIndex = playerIndex,
+                            RequestId = requestId,
+                            AdditionalData = null,
+                            Timestamp = DateTime.UtcNow
+                        });
+
+                        _logger.LogInfo($"Requested hero creation: {archetypeId} for player {playerIndex} (Request: {requestId})", "Lobby");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error creating hero with archetype {archetypeId}: {ex.Message}", "Lobby", ex);
+                        _logger.LogError($"Error requesting hero creation for archetype {archetypeId}: {ex.Message}", "Lobby", ex);
                     }
                 }
             }
