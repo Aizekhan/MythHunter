@@ -4,6 +4,7 @@ using RPGFramework.Core.Composition;
 using RPGFramework.Core.Composition.Modules;
 using MythHunter.Core.Composition.Modules;
 using MythHunter.Core.DI;
+using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
 
 namespace RPGFramework.ECS.Tests
@@ -73,6 +74,8 @@ namespace RPGFramework.ECS.Tests
             var container = new DIContainer(logger);
             container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
             container.BindSingleton<MythHunter.Utils.Logging.IMythLogger>(logger);
+            // GameCoreInstaller needs EventNetworkMode to select event bus implementation
+            container.RegisterInstance(EventNetworkMode.Offline);
 
             var builder = new GameCompositionBuilder(container);
             // Register in wrong order - builder should fix it

@@ -25,7 +25,8 @@ namespace MythHunter.Core.Installers
             container.SetCurrentScope(defaultScope);
 
             // Створюємо компонент для ін'єкції в LazyMonoBehaviour
-            if (Object.FindFirstObjectByType<LazyDependencyInjector>() == null)
+            // Only create in Play mode (DontDestroyOnLoad is not allowed in Edit mode)
+            if (Application.isPlaying && Object.FindFirstObjectByType<LazyDependencyInjector>() == null)
             {
                 var injectorObject = new GameObject("MythHunter_LazyDependencyInjector");
                 var injector = injectorObject.AddComponent<LazyDependencyInjector>();
