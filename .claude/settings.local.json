@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs curl -s)",
+      "Bash(git -C \"D:\\MythHunter-Git\" fetch origin dev)",
+      "Bash(gh api:*)",
+      "Bash(git -C \"D:\\MythHunter-PR48-Validation\" status --short --branch)",
+      "Bash(git -C \"D:\\MythHunter-PR50-Validation\" status --short --branch)",
+      "Bash(unity test:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(unity recompile:*)",
+      "Bash(tee:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git add:*)",
+      "Bash(gh pr list:*)",
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

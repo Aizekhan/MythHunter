@@ -10,6 +10,9 @@ using MythHunter.Systems.Core;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Debug;
 using MythHunter.Core.MonoBehaviours;
+using RPGFramework.Core.Composition;
+using RPGFramework.Core.Composition.Modules;
+using MythHunter.Core.Composition.Modules;
 
 namespace MythHunter.Core.Game
 {
@@ -30,6 +33,7 @@ namespace MythHunter.Core.Game
         private IGameStateMachine _stateMachine;
         private IDependencyInjector _dependencyInjector;
         private ISceneDispatcher _sceneDispatcher;
+        private IGameComposition _composition;
 
         private void Awake()
         {
@@ -46,6 +50,7 @@ namespace MythHunter.Core.Game
 
         private void OnDestroy()
         {
+            _composition?.Shutdown();
             _ecsWorld?.Dispose();
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
         }
@@ -73,13 +78,55 @@ namespace MythHunter.Core.Game
             _container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
             // Authoritative composition-root setting; Offline preserves current behavior.
             _container.RegisterInstance(_eventNetworkMode);
-         
 
-            InstallerRegistry.RegisterInstallers(_container);
+            // NEW: Modular composition system
+            var builder = new GameCompositionBuilder(_container);
+
+            // Framework Core (always)
+            builder.UseModule<FrameworkCoreModule>();
+
+            // Game Layer (always)
+            builder.UseModule<GameLayerModule>();
+
+            // Infrastructure (always - resources, pooling, serialization, UI)
+            builder.UseModule<InfrastructureModule>();
+
+            // Gameplay Systems (always - movement, visibility, hero)
+            builder.UseModule<GameplayModule>();
+
+            // Optional: Networking (only if not offline)
+            if (_eventNetworkMode != EventNetworkMode.Offline)
+            {
+                builder.UseModule<NetworkingModule>();
+                builder.UseModule<LobbyModule>();
+            }
+
+            // Optional: Debug Tools (only in editor/development)
+            #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            builder.UseModule<DebugToolsModule>();
+            #endif
+
+            // Additional installers not yet modularized
+            var lazyInjectorInstaller = new MythHunter.Core.Installers.LazyDependencyInjectorInstaller();
+            lazyInjectorInstaller.InstallBindings(_container);
+
+            var eventsInstaller = new MythHunter.Core.Installers.EventsInstaller();
+            eventsInstaller.InstallBindings(_container);
+
+            var profileInstaller = new MythHunter.Core.Installers.ProfileInstaller();
+            profileInstaller.InstallBindings(_container);
+
+            var parallelSystemsInstaller = new MythHunter.Core.Installers.ParallelSystemsInstaller();
+            parallelSystemsInstaller.InstallBindings(_container);
+
+            // Build composition (configure and initialize all modules)
+            _composition = builder.Build();
 
             _logger = _container.Resolve<IMythLogger>();
             _eventBus = _container.Resolve<IEventBus>();
             _dependencyInjector = _container.Resolve<IDependencyInjector>();
+
+            _logger.LogInfo($"Game composition built with {_composition.Modules.Count} modules", "Bootstrapper");
         }
 
         private void InitializeGameSystems()
