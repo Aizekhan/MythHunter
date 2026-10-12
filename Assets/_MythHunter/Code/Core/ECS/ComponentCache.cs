@@ -1,19 +1,25 @@
 // Файл: Assets/_MythHunter/Code/Core/ECS/ComponentCache.cs
 using RPGFramework.ECS;
 
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace MythHunter.Core.ECS
 {
     /// <summary>
     /// Оптимізований кеш для швидкого доступу до компонентів певного типу
+    /// EPIC 08 Phase 3: Thread-safe implementation with ReaderWriterLockSlim
     /// </summary>
-    public class ComponentCache<T> where T : struct, IComponent
+    public class ComponentCache<T> : IDisposable where T : struct, IComponent
     {
         private readonly Dictionary<int, T> _components = new Dictionary<int, T>();
         private readonly HashSet<int> _entityIds = new HashSet<int>();
         private readonly IEntityManager _entityManager;
+
+        // EPIC 08 Phase 3: Thread safety
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
         // Додаємо масиви для швидкого доступу (для часто використовуваних операцій)
         private int[] _cachedEntityIds = new int[0];
@@ -73,30 +79,40 @@ namespace MythHunter.Core.ECS
 
         /// <summary>
         /// Оновлює весь кеш за один раз
+        /// EPIC 08 Phase 3: Thread-safe with write lock
         /// </summary>
         private void UpdateFullCache()
         {
-            // Очищення кешу перед оновленням
-            _components.Clear();
-            _entityIds.Clear();
-
-            // Отримання всіх сутностей з компонентом типу T
-            int[] entities = _entityManager.GetEntitiesWith<T>();
-
-            // Заповнення кешу
-            foreach (int entityId in entities)
+            _lock.EnterWriteLock();
+            try
             {
-                T component = _entityManager.GetComponent<T>(entityId);
-                _components[entityId] = component;
-                _entityIds.Add(entityId);
-            }
+                // Очищення кешу перед оновленням
+                _components.Clear();
+                _entityIds.Clear();
 
-            // Позначаємо, що кеш потребує оновлення масиву ID
-            _isDirty = true;
+                // Отримання всіх сутностей з компонентом типу T
+                int[] entities = _entityManager.GetEntitiesWith<T>();
+
+                // Заповнення кешу
+                foreach (int entityId in entities)
+                {
+                    T component = _entityManager.GetComponent<T>(entityId);
+                    _components[entityId] = component;
+                    _entityIds.Add(entityId);
+                }
+
+                // Позначаємо, що кеш потребує оновлення масиву ID
+                _isDirty = true;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         /// <summary>
         /// Поступово оновлює кеш, обробляючи до 100 сутностей за раз
+        /// EPIC 08 Phase 3: Thread-safe with write lock
         /// </summary>
         private void UpdateIncrementalCache()
         {
@@ -104,152 +120,300 @@ namespace MythHunter.Core.ECS
             int[] entities = _entityManager.GetEntitiesWith<T>();
             var currentEntityIds = new HashSet<int>(entities);
 
-            // Membership is reconciled every update so removals and destroyed entities
-            // cannot remain in the snapshot while value refresh stays batched.
-            var cachedIds = new List<int>(_components.Keys);
-            foreach (int entityId in cachedIds)
+            _lock.EnterWriteLock();
+            try
             {
-                if (!currentEntityIds.Contains(entityId))
+                // Membership is reconciled every update so removals and destroyed entities
+                // cannot remain in the snapshot while value refresh stays batched.
+                var cachedIds = new List<int>(_components.Keys);
+                foreach (int entityId in cachedIds)
                 {
-                    _components.Remove(entityId);
-                    _entityIds.Remove(entityId);
+                    if (!currentEntityIds.Contains(entityId))
+                    {
+                        _components.Remove(entityId);
+                        _entityIds.Remove(entityId);
+                    }
                 }
-            }
 
-            if (entities.Length == 0)
-            {
-                _incrementalCursor = 0;
+                if (entities.Length == 0)
+                {
+                    _incrementalCursor = 0;
+                    _isDirty = true;
+                    return;
+                }
+
+                // Refresh at most 100 components per update. A rotating cursor ensures
+                // cached values and newly-added components eventually converge without starvation.
+                _incrementalCursor %= entities.Length;
+                int processed = System.Math.Min(batchSize, entities.Length);
+
+                for (int i = 0; i < processed; i++)
+                {
+                    int index = (_incrementalCursor + i) % entities.Length;
+                    int entityId = entities[index];
+                    T component = _entityManager.GetComponent<T>(entityId);
+
+                    _components[entityId] = component;
+                    _entityIds.Add(entityId);
+                }
+
+                _incrementalCursor = (_incrementalCursor + processed) % entities.Length;
                 _isDirty = true;
-                return;
             }
-
-            // Refresh at most 100 components per update. A rotating cursor ensures
-            // cached values and newly-added components eventually converge without starvation.
-            _incrementalCursor %= entities.Length;
-            int processed = System.Math.Min(batchSize, entities.Length);
-
-            for (int i = 0; i < processed; i++)
+            finally
             {
-                int index = (_incrementalCursor + i) % entities.Length;
-                int entityId = entities[index];
-                T component = _entityManager.GetComponent<T>(entityId);
-
-                _components[entityId] = component;
-                _entityIds.Add(entityId);
+                _lock.ExitWriteLock();
             }
-
-            _incrementalCursor = (_incrementalCursor + processed) % entities.Length;
-            _isDirty = true;
         }
 
         /// <summary>
         /// Додає компонент до кешу
+        /// EPIC 08 Phase 3: Thread-safe with write lock
         /// </summary>
         public void Add(int entityId, T component)
         {
-            _components[entityId] = component;
-            _entityIds.Add(entityId);
-            _isDirty = true;
+            _lock.EnterWriteLock();
+            try
+            {
+                _components[entityId] = component;
+                _entityIds.Add(entityId);
+                _isDirty = true;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         /// <summary>
         /// Видаляє компонент з кешу
+        /// EPIC 08 Phase 3: Thread-safe with write lock
         /// </summary>
         public void Remove(int entityId)
         {
-            _components.Remove(entityId);
-            _entityIds.Remove(entityId);
-            _isDirty = true;
+            _lock.EnterWriteLock();
+            try
+            {
+                _components.Remove(entityId);
+                _entityIds.Remove(entityId);
+                _isDirty = true;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         /// <summary>
         /// Отримує компонент з кешу за ідентифікатором сутності
+        /// EPIC 08 Phase 3: Thread-safe with upgradeable read lock
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(int entityId)
         {
             if (_strategy == CacheStrategy.OnDemand)
             {
-                // OnDemand is a live read: validate membership and value against the source of truth.
-                if (_entityManager.HasComponent<T>(entityId))
+                _lock.EnterUpgradeableReadLock();
+                try
                 {
-                    T current = _entityManager.GetComponent<T>(entityId);
-                    _components[entityId] = current;
-                    _entityIds.Add(entityId);
-                    _isDirty = true;
+                    // OnDemand is a live read: validate membership and value against the source of truth.
+                    if (_entityManager.HasComponent<T>(entityId))
+                    {
+                        T current = _entityManager.GetComponent<T>(entityId);
+
+                        _lock.EnterWriteLock();
+                        try
+                        {
+                            _components[entityId] = current;
+                            _entityIds.Add(entityId);
+                            _isDirty = true;
+                            HitCount++;
+                        }
+                        finally
+                        {
+                            _lock.ExitWriteLock();
+                        }
+
+                        return current;
+                    }
+
+                    // Need to remove, upgrade to write lock
+                    _lock.EnterWriteLock();
+                    try
+                    {
+                        _components.Remove(entityId);
+                        _entityIds.Remove(entityId);
+                        _isDirty = true;
+                        MissCount++;
+                    }
+                    finally
+                    {
+                        _lock.ExitWriteLock();
+                    }
+
+                    return default;
+                }
+                finally
+                {
+                    _lock.ExitUpgradeableReadLock();
+                }
+            }
+
+            _lock.EnterReadLock();
+            try
+            {
+                if (_components.TryGetValue(entityId, out T component))
+                {
                     HitCount++;
-                    return current;
+                    return component;
                 }
 
-                Remove(entityId);
                 MissCount++;
                 return default;
             }
-
-            if (_components.TryGetValue(entityId, out T component))
+            finally
             {
-                HitCount++;
-                return component;
+                _lock.ExitReadLock();
             }
-
-            MissCount++;
-            return default;
         }
 
         /// <summary>
         /// Перевіряє, чи міститься компонент у кеші
+        /// EPIC 08 Phase 3: Thread-safe with upgradeable read lock
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(int entityId)
         {
             if (_strategy == CacheStrategy.OnDemand)
             {
-                // Contains is a membership query, not a query for cache residency.
-                // Resolve against the authoritative store even when this ID has not
-                // previously been observed through Get or enumeration.
-                if (_entityManager.HasComponent<T>(entityId))
+                _lock.EnterUpgradeableReadLock();
+                try
                 {
-                    T current = _entityManager.GetComponent<T>(entityId);
-                    _components[entityId] = current;
-                    _entityIds.Add(entityId);
-                    _isDirty = true;
-                    HitCount++;
-                    return true;
-                }
+                    // Contains is a membership query, not a query for cache residency.
+                    // Resolve against the authoritative store even when this ID has not
+                    // previously been observed through Get or enumeration.
+                    if (_entityManager.HasComponent<T>(entityId))
+                    {
+                        T current = _entityManager.GetComponent<T>(entityId);
 
-                Remove(entityId);
-                MissCount++;
-                return false;
+                        _lock.EnterWriteLock();
+                        try
+                        {
+                            _components[entityId] = current;
+                            _entityIds.Add(entityId);
+                            _isDirty = true;
+                            HitCount++;
+                        }
+                        finally
+                        {
+                            _lock.ExitWriteLock();
+                        }
+
+                        return true;
+                    }
+
+                    // Need to remove, upgrade to write lock
+                    _lock.EnterWriteLock();
+                    try
+                    {
+                        _components.Remove(entityId);
+                        _entityIds.Remove(entityId);
+                        _isDirty = true;
+                        MissCount++;
+                    }
+                    finally
+                    {
+                        _lock.ExitWriteLock();
+                    }
+
+                    return false;
+                }
+                finally
+                {
+                    _lock.ExitUpgradeableReadLock();
+                }
             }
 
-            bool result = _components.ContainsKey(entityId);
-            if (result)
-                HitCount++;
-            else
-                MissCount++;
-            return result;
+            _lock.EnterReadLock();
+            try
+            {
+                bool result = _components.ContainsKey(entityId);
+                if (result)
+                    HitCount++;
+                else
+                    MissCount++;
+                return result;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         /// <summary>
         /// Отримує всі ідентифікатори сутностей, що мають даний компонент
+        /// EPIC 08 Phase 3: Thread-safe with upgradeable read lock
         /// </summary>
         public IReadOnlyCollection<int> GetAllEntityIds()
         {
             if (_strategy == CacheStrategy.OnDemand)
             {
-                var cachedIds = new List<int>(_entityIds);
-                foreach (int entityId in cachedIds)
+                _lock.EnterUpgradeableReadLock();
+                try
                 {
-                    if (!_entityManager.HasComponent<T>(entityId))
-                        Remove(entityId);
+                    var cachedIds = new List<int>(_entityIds);
+                    bool needsWrite = false;
+
+                    foreach (int entityId in cachedIds)
+                    {
+                        if (!_entityManager.HasComponent<T>(entityId))
+                        {
+                            needsWrite = true;
+                            break;
+                        }
+                    }
+
+                    if (needsWrite)
+                    {
+                        _lock.EnterWriteLock();
+                        try
+                        {
+                            foreach (int entityId in cachedIds)
+                            {
+                                if (!_entityManager.HasComponent<T>(entityId))
+                                {
+                                    _components.Remove(entityId);
+                                    _entityIds.Remove(entityId);
+                                    _isDirty = true;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            _lock.ExitWriteLock();
+                        }
+                    }
+
+                    return new HashSet<int>(_entityIds);
+                }
+                finally
+                {
+                    _lock.ExitUpgradeableReadLock();
                 }
             }
 
-            return _entityIds;
+            _lock.EnterReadLock();
+            try
+            {
+                return new HashSet<int>(_entityIds);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
         }
 
         /// <summary>
         /// Отримує масив ID сутностей (кешований для швидкого доступу)
+        /// EPIC 08 Phase 3: Thread-safe with upgradeable read lock
         /// </summary>
         public int[] GetEntityIdsArray()
         {
@@ -259,15 +423,31 @@ namespace MythHunter.Core.ECS
                 GetAllEntityIds();
             }
 
-            if (_isDirty)
+            _lock.EnterUpgradeableReadLock();
+            try
             {
-                // Оновлюємо кешований масив
-                _cachedEntityIds = new int[_entityIds.Count];
-                _entityIds.CopyTo(_cachedEntityIds);
-                _isDirty = false;
-            }
+                if (_isDirty)
+                {
+                    _lock.EnterWriteLock();
+                    try
+                    {
+                        // Оновлюємо кешований масив
+                        _cachedEntityIds = new int[_entityIds.Count];
+                        _entityIds.CopyTo(_cachedEntityIds);
+                        _isDirty = false;
+                    }
+                    finally
+                    {
+                        _lock.ExitWriteLock();
+                    }
+                }
 
-            return _cachedEntityIds;
+                return _cachedEntityIds;
+            }
+            finally
+            {
+                _lock.ExitUpgradeableReadLock();
+            }
         }
 
         /// <summary>
@@ -277,18 +457,36 @@ namespace MythHunter.Core.ECS
 
         /// <summary>
         /// Повертає статистику кешу
+        /// EPIC 08 Phase 3: Thread-safe with read lock
         /// </summary>
         public CacheStatistics GetStatistics()
         {
-            return new CacheStatistics
+            _lock.EnterReadLock();
+            try
             {
-                ComponentType = typeof(T).Name,
-                CachedCount = Count,
-                UpdateCount = UpdateCount,
-                HitCount = HitCount,
-                MissCount = MissCount,
-                HitRatio = HitCount + MissCount > 0 ? (float)HitCount / (HitCount + MissCount) : 0
-            };
+                return new CacheStatistics
+                {
+                    ComponentType = typeof(T).Name,
+                    CachedCount = Count,
+                    UpdateCount = UpdateCount,
+                    HitCount = HitCount,
+                    MissCount = MissCount,
+                    HitRatio = HitCount + MissCount > 0 ? (float)HitCount / (HitCount + MissCount) : 0
+                };
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        /// <summary>
+        /// Dispose lock resources
+        /// EPIC 08 Phase 3: Proper cleanup of ReaderWriterLockSlim
+        /// </summary>
+        public void Dispose()
+        {
+            _lock?.Dispose();
         }
 
         /// <summary>
