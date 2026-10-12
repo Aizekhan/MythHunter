@@ -5,6 +5,7 @@ using MythHunter.Core.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
+using MythHunter.Events.Domain.Archetype; // EPIC 08 Phase 2
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Entities.Archetypes
@@ -36,12 +37,18 @@ namespace MythHunter.Entities.Archetypes
         {
             Subscribe<EntityCreatedEvent>(OnEntityCreated);
             Subscribe<EntityDestroyedEvent>(OnEntityDestroyed);
+
+            // EPIC 08 Phase 2: Event-driven entity creation
+            Subscribe<CreateEntityFromArchetypeRequestEvent>(OnCreateEntityFromArchetypeRequest);
         }
 
         protected override void OnUnsubscribeFromEvents()
         {
             Unsubscribe<EntityCreatedEvent>(OnEntityCreated);
             Unsubscribe<EntityDestroyedEvent>(OnEntityDestroyed);
+
+            // EPIC 08 Phase 2: Event-driven entity creation
+            Unsubscribe<CreateEntityFromArchetypeRequestEvent>(OnCreateEntityFromArchetypeRequest);
         }
 
         private void OnEntityCreated(EntityCreatedEvent evt)
@@ -64,6 +71,59 @@ namespace MythHunter.Entities.Archetypes
         {
             // При видаленні сутності видаляємо її з кешу архетипів
             _archetypeRegistry.UnregisterEntityArchetype(evt.EntityId);
+        }
+
+        /// <summary>
+        /// EPIC 08 Phase 2: Event-driven entity creation handler
+        /// Listens to CreateEntityFromArchetypeRequestEvent and creates entity
+        /// </summary>
+        private void OnCreateEntityFromArchetypeRequest(CreateEntityFromArchetypeRequestEvent request)
+        {
+            try
+            {
+                _logger.LogInfo($"Creating entity from archetype: {request.ArchetypeId} (Request: {request.RequestId})", "ArchetypeSystem");
+
+                // Create entity using existing method
+                var overrides = request.AdditionalData as Dictionary<Type, object>;
+                int entityId = CreateEntityFromArchetype(request.ArchetypeId, overrides);
+
+                // Publish success response
+                _eventBus.Publish(new EntityFromArchetypeCreatedEvent
+                {
+                    ArchetypeId = request.ArchetypeId,
+                    EntityId = entityId,
+                    RequestId = request.RequestId,
+                    PlayerIndex = request.PlayerIndex,
+                    Success = entityId >= 0,
+                    ErrorMessage = entityId < 0 ? $"Failed to create entity from archetype '{request.ArchetypeId}'" : null,
+                    Timestamp = DateTime.UtcNow
+                });
+
+                if (entityId >= 0)
+                {
+                    _logger.LogInfo($"Entity {entityId} created from archetype {request.ArchetypeId} (Request: {request.RequestId})", "ArchetypeSystem");
+                }
+                else
+                {
+                    _logger.LogError($"Failed to create entity from archetype {request.ArchetypeId} (Request: {request.RequestId})", "ArchetypeSystem");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception creating entity from archetype {request.ArchetypeId}: {ex.Message}", "ArchetypeSystem", ex);
+
+                // Publish failure response
+                _eventBus.Publish(new EntityFromArchetypeCreatedEvent
+                {
+                    ArchetypeId = request.ArchetypeId,
+                    EntityId = -1,
+                    RequestId = request.RequestId,
+                    PlayerIndex = request.PlayerIndex,
+                    Success = false,
+                    ErrorMessage = ex.Message,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
         }
 
         /// <summary>

@@ -3,6 +3,7 @@ using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 
 namespace MythHunter.Core.Game
 {
@@ -13,6 +14,9 @@ namespace MythHunter.Core.Game
     {
         private readonly IMythLogger _logger;
         private readonly IGameFlowManager _gameFlowManager;
+
+        // EPIC 08: Track cancellation token for state entry
+        private CancellationTokenSource _entryCts;
 
         public override GameStateType StateId => GameStateType.Boot;
 
@@ -26,15 +30,21 @@ namespace MythHunter.Core.Game
         {
             _logger.LogInfo("Entering Boot state", "GameState");
 
-            // Асинхронна ініціалізація
-            InitializeAsync().Forget();
+            // EPIC 08: Create cancellation token for this state entry
+            _entryCts?.Cancel();
+            _entryCts = new CancellationTokenSource();
+            InitializeAsync(_entryCts.Token).Forget();
         }
 
-        private async UniTaskVoid InitializeAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTaskVoid InitializeAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 // ✅ ЗМІНЕНО: переходимо до MainMenu замість Lobby
+                // Note: EnterMainMenuAsync might need cancellation token support
                 await _gameFlowManager.EnterMainMenuAsync();
             }
             catch (Exception ex)
@@ -51,6 +61,11 @@ namespace MythHunter.Core.Game
         public override void Exit()
         {
             _logger.LogInfo("Exiting Boot state", "GameState");
+
+            // EPIC 08: Cancel any ongoing async operations
+            _entryCts?.Cancel();
+            _entryCts?.Dispose();
+            _entryCts = null;
         }
     }
 }

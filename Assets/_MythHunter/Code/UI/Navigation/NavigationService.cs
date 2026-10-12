@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using UnityEngine;
 
 namespace MythHunter.UI.Navigation
@@ -87,24 +88,29 @@ namespace MythHunter.UI.Navigation
 
             if (shouldClear)
             {
-                ClearStackAsync().Forget();
+                // EPIC 08: Pass default cancellation token (fire-and-forget)
+                ClearStackAsync(default).Forget();
             }
         }
 
         /// <summary>
         /// Основний метод навігації - спрощений
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default)
+        public async UniTask<IView> NavigateToAsync(ViewId viewId, NavigationParameters parameters = null, TransitionType transition = TransitionType.Default, CancellationToken cancellationToken = default)
         {
             _logger.LogInfo($"🧭 Навігація до: {viewId}", "Navigation");
 
             try
             {
+                // EPIC 08: Check cancellation at start
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Перевірка глибини стеку
                 if (_navigationStack.Count >= MaxNavigationDepth)
                 {
                     _logger.LogWarning($"⚠️ Досягнуто максимальної глибини навігації ({MaxNavigationDepth})", "Navigation");
-                    await GoToRootAsync();
+                    await GoToRootAsync(null, cancellationToken);
                 }
 
                 // Отримуємо поточний екран
@@ -118,6 +124,9 @@ namespace MythHunter.UI.Navigation
                     _logger.LogError($"❌ Не вдалося створити екран {viewId}", "Navigation");
                     return null;
                 }
+
+                // EPIC 08: Check cancellation before navigation
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // Обробка навігації для старого екрану
                 if (currentView is INavigableView currentNavView)
@@ -160,11 +169,15 @@ namespace MythHunter.UI.Navigation
 
         /// <summary>
         /// Повернення назад - спрощене
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask<IView> GoBackAsync(NavigationParameters parameters = null)
+        public async UniTask<IView> GoBackAsync(NavigationParameters parameters = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                // EPIC 08: Check cancellation at start
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (_navigationStack.Count <= 1)
                 {
                     _logger.LogWarning("⚠️ Неможливо повернутися назад - стек майже порожній", "Navigation");
@@ -207,11 +220,15 @@ namespace MythHunter.UI.Navigation
 
         /// <summary>
         /// Повернення до кореневого екрану
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask<IView> GoToRootAsync(NavigationParameters parameters = null)
+        public async UniTask<IView> GoToRootAsync(NavigationParameters parameters = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                // EPIC 08: Check cancellation at start
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (_navigationStack.Count <= 1)
                     return _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
@@ -224,6 +241,9 @@ namespace MythHunter.UI.Navigation
                 // Очищуємо всі проміжні екрани
                 while (_navigationStack.Count > 1)
                 {
+                    // EPIC 08: Check cancellation during loop
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     var entry = _navigationStack.Pop();
                     if (_navigationStack.Count == 1)
                         rootEntry = _navigationStack.Peek();
@@ -257,11 +277,15 @@ namespace MythHunter.UI.Navigation
 
         /// <summary>
         /// Модальні вікна - спрощені
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask<TResult> ShowModalAsync<TResult>(ViewId viewId, NavigationParameters parameters = null)
+        public async UniTask<TResult> ShowModalAsync<TResult>(ViewId viewId, NavigationParameters parameters = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                // EPIC 08: Check cancellation at start
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (_currentModal != null)
                 {
                     _logger.LogWarning($"⚠️ Вже є активне модальне вікно", "Navigation");
@@ -277,6 +301,9 @@ namespace MythHunter.UI.Navigation
                     _logger.LogError($"❌ Не вдалося створити модальне вікно {viewId}", "Navigation");
                     return default;
                 }
+
+                // EPIC 08: Check cancellation before showing modal
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (newView is IModalView<TResult> modalView)
                 {
@@ -294,7 +321,8 @@ namespace MythHunter.UI.Navigation
                         _modalTcs = null;
                     });
 
-                    return await tcs.Task;
+                    // EPIC 08: Await with cancellation support
+                    return await tcs.Task.AttachExternalCancellation(cancellationToken);
                 }
                 else
                 {
@@ -312,14 +340,16 @@ namespace MythHunter.UI.Navigation
 
         /// <summary>
         /// Налаштування для сцени - спрощене
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters)
+        public async UniTask SetupForSceneAsync(string sceneName, NavigationParameters parameters, CancellationToken cancellationToken = default)
         {
             try
             {
                 _logger.LogInfo($"🎬 Налаштування навігації для сцени: {sceneName}", "Navigation");
 
-                await ClearStackAsync();
+                // EPIC 08: Pass cancellation token through
+                await ClearStackAsync(cancellationToken);
 
                 bool shouldSkipInitialView = parameters?.GetValue<bool>("DontCreateInitialView", false) ?? false;
                 if (shouldSkipInitialView)
@@ -335,7 +365,8 @@ namespace MythHunter.UI.Navigation
                     parameters.Add("SceneName", sceneName);
                     parameters.Add("IsSceneRoot", true);
 
-                    await NavigateToAsync(initialScreenId, parameters, TransitionType.None);
+                    // EPIC 08: Pass cancellation token through
+                    await NavigateToAsync(initialScreenId, parameters, TransitionType.None, cancellationToken);
                     _logger.LogInfo($"✅ Створено початковий View {initialScreenId} для сцени {sceneName}", "Navigation");
                 }
                 else
@@ -351,13 +382,17 @@ namespace MythHunter.UI.Navigation
 
         /// <summary>
         /// Очищення стеку - спрощене
+        /// EPIC 08: Added CancellationToken parameter
         /// </summary>
-        public async UniTask ClearStackAsync()
+        public async UniTask ClearStackAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 while (_navigationStack.Count > 0)
                 {
+                    // EPIC 08: Check cancellation during loop
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     var entry = _navigationStack.Pop();
                     if (entry.View != null)
                     {
@@ -383,7 +418,10 @@ namespace MythHunter.UI.Navigation
         }
 
         // Допоміжні методи та основні інтерфейсні методи
-        public async UniTask PrepareForSceneChangeAsync() => await ClearStackAsync();
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        public async UniTask PrepareForSceneChangeAsync(CancellationToken cancellationToken = default) => await ClearStackAsync(cancellationToken);
         public bool HasScreensInStack() => _navigationStack.Count > 0;
         public IView GetCurrentScreen() => _navigationStack.Count > 0 ? _navigationStack.Peek().View : null;
 
@@ -417,7 +455,8 @@ namespace MythHunter.UI.Navigation
         public void Dispose()
         {
             UnsubscribeFromEvents();
-            ClearStackAsync().Forget();
+            // EPIC 08: Pass default cancellation token (fire-and-forget)
+            ClearStackAsync(default).Forget();
         }
     }
 }

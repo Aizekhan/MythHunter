@@ -54,14 +54,23 @@ namespace MythHunter.States
         /// </summary>
         // Assets/_MythHunter/Code/Core/StateMachine/LobbyState.cs
 
+        // EPIC 08: Track cancellation token for state entry
+        private CancellationTokenSource _entryCts;
+
         public override void Enter(GameStateType previousState)
         {
             _logger.LogInfo("🏠 LobbyState: Завантаження LobbyScene та ініціалізація", "LobbyState");
 
-            EnterLobbyAsync(previousState).Forget();
+            // EPIC 08: Create cancellation token for this state entry
+            _entryCts?.Cancel();
+            _entryCts = new CancellationTokenSource();
+            EnterLobbyAsync(previousState, _entryCts.Token).Forget();
         }
 
-        private async UniTaskVoid EnterLobbyAsync(GameStateType previousState)
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTaskVoid EnterLobbyAsync(GameStateType previousState, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -70,20 +79,21 @@ namespace MythHunter.States
                     return;
                 _isEntered = true;
 
+                // EPIC 08: Pass cancellation token through all async operations
                 // 1. Завантажуємо LobbyScene
-                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene", cancellationToken);
 
                 // 2. Налаштовуємо навігацію
                 var parameters = new NavigationParameters();
                 parameters.Add("PreviousState", previousState.ToString());
-                await _navigationService.SetupForSceneAsync("LobbyScene", parameters);
+                await _navigationService.SetupForSceneAsync("LobbyScene", parameters, cancellationToken);
 
                 // 3. Ініціалізуємо системи лобі
-                await InitializeStateSystemsAsync();
-                await InitializeLobbyAsync();
+                await InitializeStateSystemsAsync(cancellationToken);
+                await InitializeLobbyAsync(cancellationToken);
 
                 // 4. ЗАТРИМКА для завершення всіх підписок
-                await UniTask.DelayFrame(5);
+                await UniTask.DelayFrame(5, cancellationToken: cancellationToken);
 
                 // 5. СПОЧАТКУ GameStateChangedEvent (не очищує UI)
                 _eventBus.Publish(new GameStateChangedEvent
@@ -94,7 +104,7 @@ namespace MythHunter.States
                 });
 
                 // 6. Ще одна затримка
-                await UniTask.DelayFrame(2);
+                await UniTask.DelayFrame(2, cancellationToken: cancellationToken);
 
                 // 7. ПОТІМ LobbyStateEnteredEvent (коли все готове)
                 _eventBus.Publish(new LobbyStateEnteredEvent
@@ -182,7 +192,10 @@ namespace MythHunter.States
         /// Ініціалізація систем для стану
         /// </summary>
 
-        private async UniTask InitializeStateSystemsAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTask InitializeStateSystemsAsync(CancellationToken cancellationToken = default)
         {
             _logger.LogInfo("Ініціалізація систем для стану Lobby", "LobbyState");
 
@@ -194,10 +207,10 @@ namespace MythHunter.States
                 var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
                 if (!lobbyPresenter.IsInitialized)
                 {
-                    await lobbyPresenter.InitializeAsync();
+                    await lobbyPresenter.InitializeAsync(cancellationToken);
                 }
 
-                await UniTask.DelayFrame(2);
+                await UniTask.DelayFrame(2, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
@@ -206,7 +219,10 @@ namespace MythHunter.States
             }
         }
 
-        private async UniTask InitializeLobbyAsync()
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        private async UniTask InitializeLobbyAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -219,7 +235,7 @@ namespace MythHunter.States
                     lobbySystem.InitializeLobby(_gameSettings.PlayerCount);
                 }
 
-                await UniTask.DelayFrame(3);
+                await UniTask.DelayFrame(3, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
@@ -241,6 +257,11 @@ namespace MythHunter.States
         public override void Exit()
         {
             _logger.LogInfo("[LIFECYCLE] Вихід з LobbyState", "GameState");
+
+            // EPIC 08: Cancel any ongoing async operations
+            _entryCts?.Cancel();
+            _entryCts?.Dispose();
+            _entryCts = null;
 
             _uiService.HideScreen(ViewId.Lobby);
             _isEntered = false;
