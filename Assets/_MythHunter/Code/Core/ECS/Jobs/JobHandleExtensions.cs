@@ -13,13 +13,10 @@ namespace MythHunter.Core.ECS.Jobs
         /// <summary>
         /// Перевіряє валідність дескриптора задачі
         /// </summary>
-        /// <summary>
-        /// Перевіряє валідність дескриптора задачі
-        /// </summary>
         public static bool IsValid(this JobHandle handle)
         {
-            // Порівнюємо з default замість доступу до приватного поля
-            return handle != default;
+            // Використовуємо Equals для IL2CPP сумісності
+            return !handle.Equals(default(JobHandle));
         }
 
         /// <summary>
