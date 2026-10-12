@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MythHunter.Core.DI;
 using MythHunter.Resources.Pool;
@@ -63,11 +64,15 @@ namespace MythHunter.Resources.Core
             _logger.LogInfo($"Registered resource provider: {provider.GetType().Name} with priority {priority}", "Resource");
         }
 
-        public async UniTask<T> LoadAsync<T>(string key) where T : UnityEngine.Object
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        public async UniTask<T> LoadAsync<T>(string key, CancellationToken cancellationToken = default) where T : UnityEngine.Object
         {
             // Спочатку перевіряємо, чи ресурс вже кешовано
             if (_resourceCache.TryGetValue(key, out var cachedProvider))
             {
+                // Note: Provider LoadAsync might need CancellationToken support
                 var result = await cachedProvider.LoadAsync<T>(key);
                 if (result != null)
                     return result;
@@ -76,8 +81,12 @@ namespace MythHunter.Resources.Core
             // Послідовно пробуємо кожен провайдер
             foreach (var provider in _providers)
             {
+                // EPIC 08: Check cancellation before each provider attempt
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
+                    // Note: Provider LoadAsync might need CancellationToken support
                     var result = await provider.LoadAsync<T>(key);
                     if (result != null)
                     {
@@ -98,15 +107,22 @@ namespace MythHunter.Resources.Core
             return null;
         }
 
-        public async UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern) where T : UnityEngine.Object
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        public async UniTask<IReadOnlyList<T>> LoadAllAsync<T>(string pattern, CancellationToken cancellationToken = default) where T : UnityEngine.Object
         {
             // Пробуємо всі провайдери та об'єднуємо результати
             List<T> results = new List<T>();
 
             foreach (var provider in _providers)
             {
+                // EPIC 08: Check cancellation before each provider attempt
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
+                    // Note: Provider LoadAllAsync might need CancellationToken support
                     var providerResults = await provider.LoadAllAsync<T>(pattern);
                     if (providerResults != null && providerResults.Count > 0)
                     {
@@ -159,19 +175,23 @@ namespace MythHunter.Resources.Core
             _poolManager.ReturnToPool(key, instance);
         }
 
-        public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null)
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null, CancellationToken cancellationToken = default)
         {
             if (_useAddressables)
             {
                 var addressableProvider = _providers.OfType<IAddressablesProvider>().FirstOrDefault();
                 if (addressableProvider != null)
                 {
+                    // Note: IAddressablesProvider.InstantiateAsync might need CancellationToken support
                     return await addressableProvider.InstantiateAsync(key, parent);
                 }
             }
 
             // Запасний варіант - звичайне створення через Resources
-            var prefab = await LoadAsync<GameObject>(key);
+            var prefab = await LoadAsync<GameObject>(key, cancellationToken);
             if (prefab != null)
             {
                 return UnityEngine.Object.Instantiate(prefab, parent);
@@ -180,10 +200,13 @@ namespace MythHunter.Resources.Core
             return null;
         }
 
-        public async UniTask InitializePoolAsync<T>(string key, int poolSize = 10) where T : UnityEngine.Object
+        /// <summary>
+        /// EPIC 08: Added CancellationToken parameter
+        /// </summary>
+        public async UniTask InitializePoolAsync<T>(string key, int poolSize = 10, CancellationToken cancellationToken = default) where T : UnityEngine.Object
         {
             // Завантажуємо префаб
-            var prefab = await LoadAsync<T>(key);
+            var prefab = await LoadAsync<T>(key, cancellationToken);
             if (prefab == null)
             {
                 _logger.LogError($"Failed to load prefab for pool '{key}'", "Pool");
