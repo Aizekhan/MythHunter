@@ -7,8 +7,11 @@ using MythHunter.Utils.Logging;
 namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор для компонентів паралельного виконання систем
+    /// [OBSOLETE] Parallel systems installer - now integrated into FrameworkCoreInstaller.
+    /// ISystemJobScheduler and ParallelSystemRegistry are registered by FrameworkCoreModule.
+    /// This class will be removed in a future version.
     /// </summary>
+    [System.Obsolete("Use FrameworkCoreInstaller via FrameworkCoreModule instead.", false)]
     public class ParallelSystemsInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)

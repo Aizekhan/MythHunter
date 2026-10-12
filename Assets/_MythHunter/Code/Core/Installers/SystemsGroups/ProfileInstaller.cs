@@ -5,6 +5,11 @@ using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.Installers
 {
+    /// <summary>
+    /// [OBSOLETE] Profile installer - now integrated into InfrastructureModule.
+    /// This class will be removed in a future version.
+    /// </summary>
+    [System.Obsolete("Use InfrastructureModule instead.", false)]
     public class ProfileInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)

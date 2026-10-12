@@ -10,8 +10,11 @@ using MythHunter.Utils.Logging;
 namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор для оновленої подійної системи
+    /// [OBSOLETE] Events installer - now integrated into GameCoreInstaller.
+    /// Event system registration is handled by GameLayerModule.
+    /// This class will be removed in a future version.
     /// </summary>
+    [System.Obsolete("Use GameCoreInstaller via GameLayerModule instead.", false)]
     public class EventsInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)

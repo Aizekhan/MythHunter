@@ -106,19 +106,6 @@ namespace MythHunter.Core.Game
             builder.UseModule<DebugToolsModule>();
             #endif
 
-            // Additional installers not yet modularized
-            var lazyInjectorInstaller = new MythHunter.Core.Installers.LazyDependencyInjectorInstaller();
-            lazyInjectorInstaller.InstallBindings(_container);
-
-            var eventsInstaller = new MythHunter.Core.Installers.EventsInstaller();
-            eventsInstaller.InstallBindings(_container);
-
-            var profileInstaller = new MythHunter.Core.Installers.ProfileInstaller();
-            profileInstaller.InstallBindings(_container);
-
-            var parallelSystemsInstaller = new MythHunter.Core.Installers.ParallelSystemsInstaller();
-            parallelSystemsInstaller.InstallBindings(_container);
-
             // Build composition (configure and initialize all modules)
             _composition = builder.Build();
 

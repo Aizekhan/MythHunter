@@ -40,9 +40,14 @@ namespace MythHunter.Core.Composition.Modules
                     "GameLayerModule requires IDIContainer");
             }
 
-            // Use existing CoreInstaller which registers game flow, state machine, ECS, and scene management
-            var coreInstaller = new MythHunter.Core.Installers.CoreInstaller();
-            coreInstaller.InstallBindings(container);
+            // First, register Framework Core services (on behalf of FrameworkCoreModule)
+            // Cannot be called from FrameworkCoreModule due to assembly dependency constraints
+            var frameworkInstaller = new MythHunter.Core.Installers.FrameworkCoreInstaller();
+            frameworkInstaller.InstallBindings(container);
+
+            // Then, register MythHunter game-specific services
+            var gameInstaller = new MythHunter.Core.Installers.GameCoreInstaller();
+            gameInstaller.InstallBindings(container);
         }
     }
 }

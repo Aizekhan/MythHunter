@@ -18,8 +18,11 @@ using RPGFramework.ECS;
 namespace MythHunter.Core.Installers
 {
     /// <summary>
-    /// Інсталятор базових сервісів ядра системи
+    /// [OBSOLETE] Legacy core installer - replaced by FrameworkCoreInstaller and GameCoreInstaller.
+    /// Use FrameworkCoreModule and GameLayerModule instead.
+    /// This class will be removed in a future version.
     /// </summary>
+    [System.Obsolete("Use FrameworkCoreInstaller and GameCoreInstaller via their respective modules instead.", false)]
     public class CoreInstaller : DIInstaller
     {
         public override void InstallBindings(IDIContainer container)
