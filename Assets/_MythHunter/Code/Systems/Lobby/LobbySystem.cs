@@ -112,7 +112,7 @@ namespace MythHunter.Systems.Lobby
             _isInitialized = true;
 
             // ✅ ЗАПУСКАЄМО ТАЙМЕР ЧЕРЕЗ TimerSystem
-            _lobbyTimerId = _timerSystem.CreateTimer(
+            _lobbyTimerId = _timerService.CreateTimer(
       _gameSettings.LobbyTimerId,          
       _gameSettings.SelectionTimeLimit,    
       OnSelectionTimeExpired,
@@ -278,7 +278,7 @@ namespace MythHunter.Systems.Lobby
             {
                 if (!string.IsNullOrEmpty(_lobbyTimerId))
                 {
-                    _timerSystem.StopTimer(_lobbyTimerId);
+                    _timerService.StopTimer(_lobbyTimerId);
                 }
 
                 Publish(new GameStartRequestEvent
@@ -305,7 +305,7 @@ namespace MythHunter.Systems.Lobby
             // ✅ ЗУПИНЯЄМО ТАЙМЕР при початку гри
             if (!string.IsNullOrEmpty(_lobbyTimerId))
             {
-                _timerSystem.StopTimer(_lobbyTimerId);
+                _timerService.StopTimer(_lobbyTimerId);
             }
 
             // Збираємо всі вибрані архетипи героїв з усіх гравців
@@ -478,7 +478,7 @@ namespace MythHunter.Systems.Lobby
             if (string.IsNullOrEmpty(_lobbyTimerId))
                 return 0f;
                 
-            return _timerSystem.GetRemainingTime(_lobbyTimerId);
+            return _timerService.GetRemainingTime(_lobbyTimerId);
         }
 
         /// <summary>
@@ -491,11 +491,11 @@ namespace MythHunter.Systems.Lobby
                 // Зупиняємо старий таймер
                 if (!string.IsNullOrEmpty(_lobbyTimerId))
                 {
-                    _timerSystem.StopTimer(_lobbyTimerId);
+                    _timerService.StopTimer(_lobbyTimerId);
                 }
 
                 // ✅ ВИПРАВЛЕНО: Створюємо новий таймер і зберігаємо його ID
-                _lobbyTimerId = _timerSystem.CreateTimer(_gameSettings.LobbyTimerId, _gameSettings.SelectionTimeLimit, OnSelectionTimeExpired, true);
+                _lobbyTimerId = _timerService.CreateTimer(_gameSettings.LobbyTimerId, _gameSettings.SelectionTimeLimit, OnSelectionTimeExpired, true);
                 _logger.LogInfo("Selection timer restarted", "Lobby");
             }
         }
@@ -508,7 +508,7 @@ namespace MythHunter.Systems.Lobby
             // ✅ ЗУПИНЯЄМО ТАЙМЕР при dispose
             if (_isInitialized && !string.IsNullOrEmpty(_lobbyTimerId))
             {
-                _timerSystem.StopTimer(_lobbyTimerId);
+                _timerService.StopTimer(_lobbyTimerId);
             }
 
             base.Dispose();

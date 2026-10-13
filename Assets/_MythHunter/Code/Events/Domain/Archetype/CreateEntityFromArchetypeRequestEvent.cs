@@ -7,7 +7,7 @@ namespace MythHunter.Events.Domain.Archetype
     /// EPIC 08 Phase 2: Request to create entity from archetype
     /// Replaces direct ArchetypeSystem.CreateEntityFromArchetype() calls
     /// </summary>
-    public class CreateEntityFromArchetypeRequestEvent : IEvent
+    public struct CreateEntityFromArchetypeRequestEvent : IEvent
     {
         public string ArchetypeId { get; set; }
         public object AdditionalData { get; set; } // Optional context data

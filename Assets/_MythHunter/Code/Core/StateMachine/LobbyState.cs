@@ -81,7 +81,7 @@ namespace MythHunter.States
 
                 // EPIC 08: Pass cancellation token through all async operations
                 // 1. Завантажуємо LobbyScene
-                await _sceneDispatcher.LoadSceneAsync("LobbyScene", cancellationToken);
+                await _sceneDispatcher.LoadSceneAsync("LobbyScene");
 
                 // 2. Налаштовуємо навігацію
                 var parameters = new NavigationParameters();
@@ -207,7 +207,7 @@ namespace MythHunter.States
                 var lobbyPresenter = _container.Resolve<ILobbyPresenter>();
                 if (!lobbyPresenter.IsInitialized)
                 {
-                    await lobbyPresenter.InitializeAsync(cancellationToken);
+                    await lobbyPresenter.InitializeAsync();
                 }
 
                 await UniTask.DelayFrame(2, cancellationToken: cancellationToken);

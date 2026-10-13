@@ -1,13 +1,14 @@
 // Assets/_MythHunter/Code/Data/Serialization/ComponentSerializerBase.cs
 using System.IO;
 using RPGFramework.ECS;
+using RPGFramework.Serialization;
 
 namespace MythHunter.Data.Serialization
 {
     /// <summary>
     /// Базовий клас для серіалізаторів компонентів
     /// </summary>
-    public abstract class ComponentSerializerBase<T> : IComponentSerializer<T> where T : struct, IComponent
+    public abstract class ComponentSerializerBase<T> : RPGFramework.Serialization.IComponentSerializer<T> where T : struct, IComponent
     {
         public byte[] Serialize(T component)
         {

@@ -70,7 +70,6 @@ namespace MythHunter.Core.Game
 
             _composition?.Shutdown();
             _ecsWorld?.Dispose();
-            _stateMachine?.Dispose(); // EPIC 08: Dispose state machine
             _logger?.LogInfo("GameBootstrapper destroyed", "Bootstrapper");
         }
         /// <summary>

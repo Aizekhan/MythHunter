@@ -12,42 +12,15 @@ namespace MythHunter.Core.Async
     public static class AsyncTaskTrackerExtensions
     {
         /// <summary>
-        /// Track a UniTaskVoid operation and forget it
+        /// Track a UniTask operation and forget it
         /// Usage: tracker.TrackAndForget(token => MyAsyncMethod(token), "MyOperation");
-        /// </summary>
-        public static void TrackAndForget(
-            this IAsyncTaskTracker tracker,
-            Func<CancellationToken, UniTaskVoid> operation,
-            string operationName = null)
-        {
-            tracker.Track(operation, operationName);
-        }
-
-        /// <summary>
-        /// Track a UniTask operation (converts to UniTaskVoid) and forget it
-        /// Usage: tracker.TrackAndForget(token => MyAsyncMethod(token).AsUniTaskVoid(), "MyOperation");
         /// </summary>
         public static void TrackAndForget(
             this IAsyncTaskTracker tracker,
             Func<CancellationToken, UniTask> operation,
             string operationName = null)
         {
-            tracker.Track(async token =>
-            {
-                await operation(token);
-            }, operationName);
-        }
-
-        /// <summary>
-        /// Track a parameterless UniTaskVoid operation
-        /// Usage: tracker.TrackAndForget(() => MyAsyncMethod().AsUniTaskVoid(), "MyOperation");
-        /// </summary>
-        public static void TrackAndForget(
-            this IAsyncTaskTracker tracker,
-            Func<UniTaskVoid> operation,
-            string operationName = null)
-        {
-            tracker.Track(_ => operation(), operationName);
+            tracker.Track(operation, operationName);
         }
 
         /// <summary>

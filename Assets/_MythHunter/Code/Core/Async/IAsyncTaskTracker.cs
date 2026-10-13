@@ -13,7 +13,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Track a fire-and-forget operation with cancellation support
         /// </summary>
-        void Track(Func<CancellationToken, UniTaskVoid> asyncOperation, string operationName = null);
+        void Track(Func<CancellationToken, UniTask> asyncOperation, string operationName = null);
 
         /// <summary>
         /// Cancel all tracked operations

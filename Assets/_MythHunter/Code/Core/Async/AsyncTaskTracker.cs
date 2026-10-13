@@ -11,7 +11,7 @@ namespace MythHunter.Core.Async
     /// EPIC 08: Tracks and manages fire-and-forget async operations
     /// Provides cancellation and exception handling for .Forget() operations
     /// </summary>
-    public class AsyncTaskTracker : IDisposable
+    public class AsyncTaskTracker : IAsyncTaskTracker
     {
         private readonly IMythLogger _logger;
         private readonly List<TrackedTask> _activeTasks = new List<TrackedTask>();
@@ -34,7 +34,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Track a fire-and-forget operation with cancellation support
         /// </summary>
-        public void Track(Func<CancellationToken, UniTaskVoid> asyncOperation, string operationName = null)
+        public void Track(Func<CancellationToken, UniTask> asyncOperation, string operationName = null)
         {
             if (_isDisposed)
             {
@@ -66,7 +66,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Execute a tracked async operation with cleanup and exception handling
         /// </summary>
-        private async UniTaskVoid ExecuteTrackedAsync(Func<CancellationToken, UniTaskVoid> operation, TrackedTask task)
+        private async UniTask ExecuteTrackedAsync(Func<CancellationToken, UniTask> operation, TrackedTask task)
         {
             try
             {

@@ -25,7 +25,7 @@ namespace MythHunter.Core.Installers
             if (!container.IsRegistered<ITypeRegistry>())
             {
                 var typeRegistry = new TypeRegistry();
-                container.RegisterSingleton<ITypeRegistry>(typeRegistry);
+                BindInstance<ITypeRegistry>(container, typeRegistry);
                 RegisterNetworkMessageTypes(typeRegistry);
             }
 

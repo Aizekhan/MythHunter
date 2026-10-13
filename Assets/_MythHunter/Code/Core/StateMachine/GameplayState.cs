@@ -56,7 +56,7 @@ namespace MythHunter.States
             {
                 // 1. Завантажуємо GameScene
                 var sceneDispatcher = _container.Resolve<ISceneDispatcher>();
-                await sceneDispatcher.LoadSceneAsync("GameScene", cancellationToken);
+                await sceneDispatcher.LoadSceneAsync("GameScene");
 
                 // 2. Налаштовуємо навігацію для гри
                 var heroes = sceneDispatcher.GetSceneData<string[]>("SelectedHeroArchetypes");
