@@ -15,7 +15,7 @@ namespace RPGFramework.Stats
     /// </summary>
     /// <typeparam name="TStatType">Stat identifier type (must be value type with IConvertible)</typeparam>
     /// <typeparam name="TValue">Stat value type (must be value type with IComparable)</typeparam>
-    [SerializableType(typeId: 3)] // Stable type ID for serialization
+    [SerializableType("RPGFramework.Stats.StatContainer")] // Stable type ID for serialization
     public struct StatContainer<TStatType, TValue> : IComponent, ISerializable, IStatContainer<TStatType, TValue>
         where TStatType : struct, IConvertible
         where TValue : struct, IComparable<TValue>
