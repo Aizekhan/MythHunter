@@ -60,14 +60,13 @@ namespace RPGFramework.Combat.Tests
                 LastRegenTime = 20f
             };
 
-            var typeRegistry = new TypeRegistry();
-            byte[] data = original.Serialize(typeRegistry);
+            byte[] data = original.Serialize();
 
             Assert.IsNotNull(data);
             Assert.Greater(data.Length, 0);
 
             var deserialized = new ResourceComponent<ResourceType>();
-            deserialized.Deserialize(data, typeRegistry);
+            deserialized.Deserialize(data);
 
             Assert.AreEqual(original.ResourceType, deserialized.ResourceType);
             Assert.AreEqual(original.Current, deserialized.Current);
@@ -136,16 +135,14 @@ namespace RPGFramework.Combat.Tests
         public void ResourceComponent_DeserializeNullData_ThrowsException()
         {
             var resource = new ResourceComponent<ResourceType>();
-            var typeRegistry = new TypeRegistry();
 
-            Assert.Throws<System.ArgumentException>(() => resource.Deserialize(null, typeRegistry));
-            Assert.Throws<System.ArgumentException>(() => resource.Deserialize(new byte[0], typeRegistry));
+            Assert.Throws<System.ArgumentException>(() => resource.Deserialize(null));
+            Assert.Throws<System.ArgumentException>(() => resource.Deserialize(new byte[0]));
         }
 
         [Test]
         public void ResourceComponent_AllResourceTypes_SerializeCorrectly()
         {
-            var typeRegistry = new TypeRegistry();
 
             foreach (ResourceType resourceType in System.Enum.GetValues(typeof(ResourceType)))
             {
@@ -158,9 +155,9 @@ namespace RPGFramework.Combat.Tests
                     LastRegenTime = 10f
                 };
 
-                byte[] data = original.Serialize(typeRegistry);
+                byte[] data = original.Serialize();
                 var deserialized = new ResourceComponent<ResourceType>();
-                deserialized.Deserialize(data, typeRegistry);
+                deserialized.Deserialize(data);
 
                 Assert.AreEqual(original.ResourceType, deserialized.ResourceType, $"ResourceType {resourceType} failed serialization");
                 Assert.AreEqual(original.Current, deserialized.Current);

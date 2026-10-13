@@ -32,9 +32,8 @@ namespace RPGFramework.Combat
         /// <summary>
         /// Serialize component to byte array using Framework serialization foundation.
         /// </summary>
-        /// <param name="typeRegistry">Type registry for stable type IDs</param>
         /// <returns>Serialized byte array</returns>
-        public byte[] Serialize(ITypeRegistry typeRegistry)
+        public byte[] Serialize()
         {
             using (var ms = new MemoryStream())
             using (var writer = new BinaryWriter(ms))
@@ -59,8 +58,7 @@ namespace RPGFramework.Combat
         /// Deserialize component from byte array using Framework serialization foundation.
         /// </summary>
         /// <param name="data">Serialized byte array</param>
-        /// <param name="typeRegistry">Type registry for type resolution</param>
-        public void Deserialize(byte[] data, ITypeRegistry typeRegistry)
+        public void Deserialize(byte[] data)
         {
             if (data == null || data.Length == 0)
             {
