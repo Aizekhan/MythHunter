@@ -66,7 +66,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Execute a tracked async operation with cleanup and exception handling
         /// </summary>
-        private async UniTaskVoid ExecuteTrackedAsync(Func<CancellationToken, UniTask> operation, TrackedTask task)
+        private async UniTask ExecuteTrackedAsync(Func<CancellationToken, UniTask> operation, TrackedTask task)
         {
             try
             {
