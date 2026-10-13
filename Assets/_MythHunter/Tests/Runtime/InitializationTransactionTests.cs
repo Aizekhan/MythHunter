@@ -18,12 +18,18 @@ namespace MythHunter.Tests.Runtime
             public List<string> Warnings = new();
             public List<string> Errors = new();
 
-            public void Log(string message, string context = null) => Logs.Add(message);
-            public void LogInfo(string message, string context = null) => Logs.Add(message);
-            public void LogDebug(string message, string context = null) => Logs.Add(message);
-            public void LogWarning(string message, string context = null) => Warnings.Add(message);
-            public void LogError(string message, string context = null, Exception exception = null) => Errors.Add(message);
-            public void LogFatal(string message, string context = null, Exception exception = null) { }
+            public void Log(RPGFramework.Logging.LogSeverity severity, string message, string category = null, Exception exception = null) => Logs.Add(message);
+            public void LogInfo(string message, string category = null) => Logs.Add(message);
+            public void LogDebug(string message, string category = null) => Logs.Add(message);
+            public void LogTrace(string message, string category = null) => Logs.Add(message);
+            public void LogWarning(string message, string category = null) => Warnings.Add(message);
+            public void LogError(string message, string category = null, Exception exception = null) => Errors.Add(message);
+            public void LogFatal(string message, string category = null) { }
+            public void WithContext(string key, object value) { }
+            public void ClearContext() { }
+            public void SetDefaultCategory(string category) { }
+            public void SetMinLogLevel(Utils.Logging.LogLevel level) { }
+            public void EnableFileLogging(bool enable) { }
         }
 
         private TestLogger _logger;

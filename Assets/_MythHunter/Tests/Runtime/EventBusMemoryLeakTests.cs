@@ -16,33 +16,46 @@ namespace MythHunter.Tests.Runtime
         {
             public T Get<T>() where T : struct, IEvent => default;
             public void Return<T>(T evt) where T : struct, IEvent { }
+            public void Clear() { }
         }
 
         private class TestLogger : IMythLogger
         {
             public System.Collections.Generic.List<string> Warnings = new();
 
-            public void Log(string message, string context = null) { }
-            public void LogInfo(string message, string context = null) { }
-            public void LogDebug(string message, string context = null) { }
-            public void LogWarning(string message, string context = null)
+            public void Log(RPGFramework.Logging.LogSeverity severity, string message, string category = null, System.Exception exception = null) { }
+            public void LogInfo(string message, string category = null) { }
+            public void LogDebug(string message, string category = null) { }
+            public void LogTrace(string message, string category = null) { }
+            public void LogWarning(string message, string category = null)
             {
                 Warnings.Add(message);
             }
-            public void LogError(string message, string context = null, System.Exception exception = null) { }
-            public void LogFatal(string message, string context = null, System.Exception exception = null) { }
+            public void LogError(string message, string category = null, System.Exception exception = null) { }
+            public void LogFatal(string message, string category = null) { }
+            public void WithContext(string key, object value) { }
+            public void ClearContext() { }
+            public void SetDefaultCategory(string category) { }
+            public void SetMinLogLevel(Utils.Logging.LogLevel level) { }
+            public void EnableFileLogging(bool enable) { }
         }
 
         private struct TestEvent : IEvent
         {
             public int Value;
             public System.DateTime Timestamp { get; set; }
+
+            public string GetEventId() => $"{GetType().Name}_{System.Guid.NewGuid()}";
+            public EventPriority GetPriority() => EventPriority.Normal;
         }
 
         private struct AnotherTestEvent : IEvent
         {
             public int Value;
             public System.DateTime Timestamp { get; set; }
+
+            public string GetEventId() => $"{GetType().Name}_{System.Guid.NewGuid()}";
+            public EventPriority GetPriority() => EventPriority.Normal;
         }
 
         private EventBus _eventBus;
