@@ -11,7 +11,7 @@ namespace MythHunter.Core.Async
     /// EPIC 08: Tracks and manages fire-and-forget async operations
     /// Provides cancellation and exception handling for .Forget() operations
     /// </summary>
-    public class AsyncTaskTracker : IDisposable
+    public class AsyncTaskTracker : IAsyncTaskTracker
     {
         private readonly IMythLogger _logger;
         private readonly List<TrackedTask> _activeTasks = new List<TrackedTask>();

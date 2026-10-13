@@ -7,7 +7,7 @@ namespace MythHunter.Events.Domain.Archetype
     /// EPIC 08 Phase 2: Response when entity is created from archetype
     /// Published by ArchetypeSystem after creating entity
     /// </summary>
-    public class EntityFromArchetypeCreatedEvent : IEvent
+    public struct EntityFromArchetypeCreatedEvent : IEvent
     {
         public string ArchetypeId { get; set; }
         public int EntityId { get; set; } // Created entity ID
