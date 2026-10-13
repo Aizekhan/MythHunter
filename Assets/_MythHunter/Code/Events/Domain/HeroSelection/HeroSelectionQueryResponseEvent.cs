@@ -25,6 +25,9 @@ namespace MythHunter.Events.Domain.HeroSelection
         public bool Success { get; set; }
         public string ErrorMessage { get; set; }
         public DateTime Timestamp { get; set; }
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Normal;
     }
 
     /// <summary>

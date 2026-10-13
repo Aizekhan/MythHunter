@@ -14,5 +14,8 @@ namespace MythHunter.Events.Domain.Archetype
         public string RequestId { get; set; } // For tracking request/response
         public int PlayerIndex { get; set; } // Which player requested this
         public DateTime Timestamp { get; set; }
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Normal;
     }
 }

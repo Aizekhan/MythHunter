@@ -22,5 +22,8 @@ namespace MythHunter.Events.Domain.HeroSelection
         public int RemainingMana { get; set; }  // For CanSelectHero
         public string RequestId { get; set; }   // For tracking request/response
         public DateTime Timestamp { get; set; }
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Normal;
     }
 }

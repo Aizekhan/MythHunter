@@ -3,25 +3,26 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MythHunter.Utils.Logging;
+using RPGFramework.Pooling;
 
 namespace MythHunter.Resources.Pool
 {
     /// <summary>
-    /// Оптимізований пул для GameObject з розширеною функціональністю
+    /// Unity GameObject pool adapter using Framework ObjectPool internally.
+    /// Handles Unity-specific GameObject lifecycle (Transform parenting, SetActive, naming).
     /// </summary>
     public class GameObjectPool : BaseObjectPool, IObjectPool<GameObject>
     {
         private readonly GameObject _prefab;
-        private readonly Stack<GameObject> _inactiveObjects;
-        private readonly HashSet<GameObject> _activeObjects;
         private readonly Transform _poolParent;
-        private readonly Action<GameObject> _onGet;
-        private readonly Action<GameObject> _onRelease;
+        private readonly HashSet<GameObject> _activeObjects;
+        private readonly RPGFramework.Pooling.ObjectPool<GameObject> _pool;
+        private int _instanceCounter;
 
         /// <summary>
         /// Кількість неактивних об'єктів у пулі
         /// </summary>
-        public override int CountInactive => _inactiveObjects.Count;
+        public override int CountInactive => _pool.CountInactive;
 
         public GameObjectPool(
             GameObject prefab,
@@ -35,10 +36,8 @@ namespace MythHunter.Resources.Pool
                 throw new ArgumentNullException(nameof(prefab));
 
             _prefab = prefab;
-            _inactiveObjects = new Stack<GameObject>(initialSize);
             _activeObjects = new HashSet<GameObject>();
-            _onGet = onGet;
-            _onRelease = onRelease;
+            _instanceCounter = 0;
 
             // Створення контейнера для об'єктів
             if (parent == null)
@@ -52,8 +51,39 @@ namespace MythHunter.Resources.Pool
                 _poolParent = parent;
             }
 
-            // Попереднє створення об'єктів
-            PreWarm(initialSize);
+            // Create Framework pool with Unity-specific lifecycle callbacks
+            _pool = new RPGFramework.Pooling.ObjectPool<GameObject>(
+                createFunc: CreateGameObject,
+                onGet: obj =>
+                {
+                    obj.SetActive(true);
+                    obj.transform.SetParent(null);
+                    onGet?.Invoke(obj);
+                },
+                onRelease: obj =>
+                {
+                    onRelease?.Invoke(obj);
+                    obj.SetActive(false);
+                    obj.transform.SetParent(_poolParent);
+                },
+                onDestroy: obj =>
+                {
+                    if (obj != null)
+                        UnityEngine.Object.Destroy(obj);
+                },
+                initialSize: initialSize,
+                maxSize: 100,
+                logger: new FrameworkLoggerAdapter(logger),
+                poolName: prefab.name
+            );
+        }
+
+        private GameObject CreateGameObject()
+        {
+            GameObject obj = UnityEngine.Object.Instantiate(_prefab, _poolParent);
+            obj.name = $"{_prefab.name}_Pooled_{_instanceCounter++}";
+            obj.SetActive(false);
+            return obj;
         }
 
         /// <summary>
@@ -61,15 +91,8 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public void PreWarm(int count)
         {
-            for (int i = 0; i < count; i++)
-            {
-                GameObject obj = UnityEngine.Object.Instantiate(_prefab, _poolParent);
-                obj.name = $"{_prefab.name}_Pooled_{i}";
-                obj.SetActive(false);
-                _inactiveObjects.Push(obj);
-            }
-
-            LogTrace($"Pre-warmed pool with {count} objects");
+            // Framework pool already handles pre-warming in constructor
+            LogTrace($"Pool pre-warmed with {count} objects");
         }
 
         /// <summary>
@@ -77,26 +100,9 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public GameObject Get()
         {
-            GameObject obj;
-
-            if (_inactiveObjects.Count > 0)
-            {
-                obj = _inactiveObjects.Pop();
-                obj.transform.SetParent(null);
-                LogTrace($"Got object from pool, remaining: {_inactiveObjects.Count}");
-            }
-            else
-            {
-                obj = UnityEngine.Object.Instantiate(_prefab);
-                obj.name = $"{_prefab.name}_Pooled_{_activeObjects.Count}";
-                LogTrace($"Created new object for pool, pool was empty");
-            }
-
-            obj.SetActive(true);
+            var obj = _pool.Get();
             _activeObjects.Add(obj);
             _activeCount++;
-            _onGet?.Invoke(obj);
-
             return obj;
         }
 
@@ -106,7 +112,10 @@ namespace MythHunter.Resources.Pool
         public void Release(GameObject obj)
         {
             if (obj == null)
+            {
+                LogWarning("Attempted to release null GameObject");
                 return;
+            }
 
             if (!_activeObjects.Contains(obj))
             {
@@ -114,15 +123,9 @@ namespace MythHunter.Resources.Pool
                 return;
             }
 
-            _onRelease?.Invoke(obj);
-            obj.SetActive(false);
-            obj.transform.SetParent(_poolParent);
-
             _activeObjects.Remove(obj);
-            _inactiveObjects.Push(obj);
             _activeCount--;
-
-            LogTrace($"Returned object to pool, now contains: {_inactiveObjects.Count}");
+            _pool.Release(obj);
         }
 
         /// <summary>
@@ -145,7 +148,7 @@ namespace MythHunter.Resources.Pool
         /// </summary>
         public override void Clear()
         {
-            // Знищуємо всі активні об'єкти
+            // Destroy active objects (not managed by Framework pool)
             foreach (var obj in _activeObjects)
             {
                 if (obj != null)
@@ -154,13 +157,8 @@ namespace MythHunter.Resources.Pool
             _activeObjects.Clear();
             _activeCount = 0;
 
-            // Знищуємо всі неактивні об'єкти
-            while (_inactiveObjects.Count > 0)
-            {
-                var obj = _inactiveObjects.Pop();
-                if (obj != null)
-                    UnityEngine.Object.Destroy(obj);
-            }
+            // Clear Framework pool (inactive objects)
+            _pool.Clear();
 
             LogInfo("Pool cleared");
         }
@@ -173,14 +171,44 @@ namespace MythHunter.Resources.Pool
             if (count < 0)
                 count = 0;
 
-            while (_inactiveObjects.Count > count)
+            // Resize Framework pool to target size
+            _pool.Resize(count);
+
+            LogInfo($"Trimmed pool to {_pool.CountInactive} inactive objects");
+        }
+
+        /// <summary>
+        /// Adapter class to bridge MythHunter logging to Framework logging.
+        /// </summary>
+        private class FrameworkLoggerAdapter : RPGFramework.Logging.ILogger
+        {
+            private readonly IMythLogger _mythLogger;
+
+            public FrameworkLoggerAdapter(IMythLogger mythLogger)
             {
-                var obj = _inactiveObjects.Pop();
-                if (obj != null)
-                    UnityEngine.Object.Destroy(obj);
+                _mythLogger = mythLogger;
             }
 
-            LogInfo($"Trimmed pool to {_inactiveObjects.Count} inactive objects");
+            public void Log(RPGFramework.Logging.LogSeverity severity, string message, string category = null, Exception exception = null)
+            {
+                switch (severity)
+                {
+                    case RPGFramework.Logging.LogSeverity.Trace:
+                        _mythLogger?.LogTrace(message, category ?? "Pool");
+                        break;
+                    case RPGFramework.Logging.LogSeverity.Debug:
+                    case RPGFramework.Logging.LogSeverity.Information:
+                        _mythLogger?.LogInfo(message, category ?? "Pool");
+                        break;
+                    case RPGFramework.Logging.LogSeverity.Warning:
+                        _mythLogger?.LogWarning(message, category ?? "Pool");
+                        break;
+                    case RPGFramework.Logging.LogSeverity.Error:
+                    case RPGFramework.Logging.LogSeverity.Critical:
+                        _mythLogger?.LogError(message, category ?? "Pool");
+                        break;
+                }
+            }
         }
     }
 }

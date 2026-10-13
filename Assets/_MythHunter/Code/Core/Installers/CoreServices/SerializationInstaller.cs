@@ -23,7 +23,7 @@ namespace MythHunter.Core.Installers
             logger.LogInfo("Встановлення залежностей Serialization завершено", "Installer");
         }
 
-        private void RegisterComponentSerializers(IComponentSerializerRegistry registry)
+        private void RegisterComponentSerializers(RPGFramework.Serialization.IComponentSerializerRegistry registry)
         {
             // Register core component serializers
             registry.RegisterSerializer<Components.Core.IdComponent, Serializers.IdComponentSerializer>(
