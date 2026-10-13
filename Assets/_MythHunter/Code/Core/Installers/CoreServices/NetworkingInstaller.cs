@@ -4,8 +4,10 @@ using MythHunter.Networking.Core;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;
 using MythHunter.Networking.Serialization;
+using MythHunter.Networking.Messages;
 using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
+using RPGFramework.Serialization;
 
 namespace MythHunter.Core.Installers
 {
@@ -18,6 +20,14 @@ namespace MythHunter.Core.Installers
         {
             var logger = container.Resolve<IMythLogger>();
             logger.LogInfo("Встановлення залежностей NetworkingSystem...", "Installer");
+
+            // Register or resolve shared TypeRegistry
+            if (!container.IsRegistered<ITypeRegistry>())
+            {
+                var typeRegistry = new TypeRegistry();
+                container.RegisterSingleton<ITypeRegistry>(typeRegistry);
+                RegisterNetworkMessageTypes(typeRegistry);
+            }
 
             // Реєстрація загальних мережевих сервісів
             BindSingleton<INetworkSerializer, BinaryNetworkSerializer>(container);
@@ -69,6 +79,14 @@ namespace MythHunter.Core.Installers
                 BindSingleton<NetworkAuthority, NetworkAuthority>(container);
 
             logger.LogInfo("Встановлення залежностей NetworkingSystem завершено", "Installer");
+        }
+
+        private void RegisterNetworkMessageTypes(ITypeRegistry registry)
+        {
+            // Register all network message types with their stable IDs
+            registry.RegisterType<NetworkEventMessage>();
+
+            // Add other network message types here as they're created
         }
     }
 }

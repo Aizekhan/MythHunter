@@ -3,6 +3,7 @@ using System;
 using MythHunter.Events;
 using MythHunter.Events.Network;
 using MythHunter.Networking.Messages;
+using RPGFramework.Serialization;
 
 namespace MythHunter.Networking.Messages
 {
@@ -10,6 +11,7 @@ namespace MythHunter.Networking.Messages
     /// Мережеве повідомлення для передачі подій
     /// </summary>
     [Serializable]
+    [SerializableType("myth.net.event", 1)]
     public class NetworkEventMessage : INetworkMessage
     {
         public string EventType
