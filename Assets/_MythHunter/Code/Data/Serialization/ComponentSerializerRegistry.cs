@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using MythHunter.Utils.Logging;
 using MythHunter.Core.DI;
 using RPGFramework.ECS;
+using RPGFramework.Serialization;
 
 namespace MythHunter.Data.Serialization
 {
     /// <summary>
-    /// Реєстр серіалізаторів компонентів
+    /// MythHunter implementation of component serializer registry.
+    /// Game-agnostic: serializers registered via installer.
     /// </summary>
     public class ComponentSerializerRegistry : IComponentSerializerRegistry
     {
@@ -19,7 +21,6 @@ namespace MythHunter.Data.Serialization
         public ComponentSerializerRegistry(IMythLogger logger)
         {
             _logger = logger;
-            RegisterDefaultSerializers();
         }
 
         public void RegisterSerializer<T, TSerializer>(TSerializer serializer)
@@ -57,24 +58,9 @@ namespace MythHunter.Data.Serialization
             return default;
         }
 
-        private void RegisterDefaultSerializers()
+        public bool HasSerializer<T>() where T : struct, IComponent
         {
-            // Реєструємо базові серіалізатори
-           
-            RegisterSerializer<Components.Core.IdComponent, Serializers.IdComponentSerializer>(
-                new Serializers.IdComponentSerializer()
-            );
-            RegisterSerializer<Components.Core.NameComponent, Serializers.NameComponentSerializer>(
-                new Serializers.NameComponentSerializer()
-            );
-            RegisterSerializer<Components.Core.DescriptionComponent, Serializers.DescriptionComponentSerializer>(
-                new Serializers.DescriptionComponentSerializer()
-            );
-            RegisterSerializer<Components.Core.ValueComponent, Serializers.ValueComponentSerializer>(
-                new Serializers.ValueComponentSerializer()
-            );
-
-            _logger.LogInfo("Default component serializers registered", "Serialization");
+            return _serializers.ContainsKey(typeof(T));
         }
     }
 }
