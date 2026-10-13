@@ -39,6 +39,12 @@ namespace MythHunter.Tests.Runtime
             public System.DateTime Timestamp { get; set; }
         }
 
+        private struct AnotherTestEvent : IEvent
+        {
+            public int Value;
+            public System.DateTime Timestamp { get; set; }
+        }
+
         private EventBus _eventBus;
         private TestLogger _logger;
 
@@ -172,12 +178,6 @@ namespace MythHunter.Tests.Runtime
         public void PendingEvents_MultipleEventTypes_IndependentLimits()
         {
             // Arrange
-            struct AnotherTestEvent : IEvent
-            {
-                public int Value;
-                public System.DateTime Timestamp { get; set; }
-            }
-
             _eventBus.MonitorEventType<TestEvent>();
             _eventBus.MonitorEventType<AnotherTestEvent>();
 

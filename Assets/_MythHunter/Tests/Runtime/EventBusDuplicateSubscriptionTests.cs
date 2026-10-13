@@ -44,6 +44,12 @@ namespace MythHunter.Tests.Runtime
             public System.DateTime Timestamp { get; set; }
         }
 
+        private struct AnotherTestEvent : IEvent
+        {
+            public int Value;
+            public System.DateTime Timestamp { get; set; }
+        }
+
         private EventBus _eventBus;
         private TestLogger _logger;
         private int _handlerCallCount;
@@ -218,12 +224,6 @@ namespace MythHunter.Tests.Runtime
         public void Subscribe_MultipleEvents_EachTrackedSeparately()
         {
             // Arrange
-            struct AnotherTestEvent : IEvent
-            {
-                public int Value;
-                public System.DateTime Timestamp { get; set; }
-            }
-
             int testEventCount = 0;
             int anotherEventCount = 0;
 
