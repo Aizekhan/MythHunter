@@ -33,7 +33,7 @@ namespace MythHunter.Services.HeroSelection
             return _heroSelectionSystem.LoadAvailableHeroes();
         }
 
-        public HeroInfo GetHeroInfo(string archetypeId)
+        public Events.Domain.HeroSelection.HeroInfo GetHeroInfo(string archetypeId)
         {
             var systemHeroInfo = _heroSelectionSystem.GetHeroInfo(archetypeId);
 
@@ -41,7 +41,7 @@ namespace MythHunter.Services.HeroSelection
                 return null;
 
             // Convert from system HeroInfo to service HeroInfo (from events namespace)
-            return new HeroInfo
+            return new Events.Domain.HeroSelection.HeroInfo
             {
                 ArchetypeId = systemHeroInfo.ArchetypeId,
                 Name = systemHeroInfo.Name,

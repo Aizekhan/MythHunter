@@ -16,5 +16,8 @@ namespace MythHunter.Events.Domain.Archetype
         public bool Success { get; set; } // Did creation succeed?
         public string ErrorMessage { get; set; } // If failed, why?
         public DateTime Timestamp { get; set; }
+
+        public string GetEventId() => $"{GetType().Name}_{Guid.NewGuid()}";
+        public EventPriority GetPriority() => EventPriority.Normal;
     }
 }
