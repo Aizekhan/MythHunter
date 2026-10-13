@@ -24,6 +24,8 @@
     <!-- Framework Combat Tests -->
     <Compile Include="../../Assets/_Framework/Combat/Tests/ResourceComponentTests.cs"
              Link="Tests/ResourceComponentTests.cs" />
+    <Compile Include="../../Assets/_Framework/Combat/Tests/DamageCalculatorTests.cs"
+             Link="Tests/DamageCalculatorTests.cs" />
 
     <!-- ECS Runtime dependency -->
     <Compile Include="../../Assets/_Framework/ECS/Runtime/*.cs"
