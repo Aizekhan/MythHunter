@@ -25,17 +25,17 @@ namespace MythHunter.Data.Serialization
 
         public void RegisterSerializer<T, TSerializer>(TSerializer serializer)
             where T : struct, IComponent
-            where TSerializer : IComponentSerializer<T>
+            where TSerializer : RPGFramework.Serialization.IComponentSerializer<T>
         {
             _serializers[typeof(T)] = serializer;
             _logger.LogInfo($"Registered serializer for component {typeof(T).Name}", "Serialization");
         }
 
-        public IComponentSerializer<T> GetSerializer<T>() where T : struct, IComponent
+        public RPGFramework.Serialization.IComponentSerializer<T> GetSerializer<T>() where T : struct, IComponent
         {
             if (_serializers.TryGetValue(typeof(T), out var serializer))
             {
-                return (IComponentSerializer<T>)serializer;
+                return (RPGFramework.Serialization.IComponentSerializer<T>)serializer;
             }
 
             _logger.LogError($"No serializer found for component {typeof(T).Name}", "Serialization");

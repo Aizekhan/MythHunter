@@ -34,7 +34,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Track a fire-and-forget operation with cancellation support
         /// </summary>
-        public void Track(Func<CancellationToken, UniTaskVoid> asyncOperation, string operationName = null)
+        public void Track(Func<CancellationToken, UniTask> asyncOperation, string operationName = null)
         {
             if (_isDisposed)
             {
@@ -66,7 +66,7 @@ namespace MythHunter.Core.Async
         /// <summary>
         /// Execute a tracked async operation with cleanup and exception handling
         /// </summary>
-        private async UniTaskVoid ExecuteTrackedAsync(Func<CancellationToken, UniTaskVoid> operation, TrackedTask task)
+        private async UniTaskVoid ExecuteTrackedAsync(Func<CancellationToken, UniTask> operation, TrackedTask task)
         {
             try
             {
