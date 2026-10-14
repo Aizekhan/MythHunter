@@ -1,0 +1,43 @@
+name: RPGFramework Inventory Runtime
+
+on:
+  pull_request:
+    branches: [dev, "feature/epic11-phase1-inventory-system"]
+    paths:
+      - "Assets/_Framework/Inventory/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Core/**"
+      - "Build/RPGFramework.Inventory.Tests/**"
+      - "Build/validate_framework_inventory_boundary.py"
+      - ".github/workflows/rpg-framework-inventory.yml"
+  push:
+    branches: [dev, "feature/epic11-phase1-inventory-system"]
+    paths:
+      - "Assets/_Framework/Inventory/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Core/**"
+      - "Build/RPGFramework.Inventory.Tests/**"
+      - "Build/validate_framework_inventory_boundary.py"
+      - ".github/workflows/rpg-framework-inventory.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and Inventory tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate assembly boundary and GUIDs
+        run: python Build/validate_framework_inventory_boundary.py
+
+      - name: Run Inventory tests
+        run: dotnet test Build/RPGFramework.Inventory.Tests/RPGFramework.Inventory.Tests.csproj --configuration Release
