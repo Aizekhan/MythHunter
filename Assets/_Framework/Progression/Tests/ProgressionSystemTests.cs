@@ -161,10 +161,10 @@ namespace RPGFramework.Progression.Tests
             var levelTable = LevelTable.CreateExponential(maxLevel: 10, baseXP: 100, multiplier: 1.5f);
 
             // Act & Assert
-            // Level 2: baseXP * 1.5^1 = 150
+            // Level 2 total: baseXP * 1.5^1 = 150, so XP to level 2 = 150
             Assert.That(levelTable.GetXPForNextLevel(1), Is.EqualTo(150).Within(1));
-            // Level 3: (baseXP * 1.5^2) - (baseXP * 1.5^1) = 225 - 150 = 75
-            Assert.That(levelTable.GetXPForNextLevel(2), Is.EqualTo(75).Within(1));
+            // Level 3 total: 150 + (baseXP * 1.5^2) = 150 + 225 = 375, so XP from level 2 to 3 = 225
+            Assert.That(levelTable.GetXPForNextLevel(2), Is.EqualTo(225).Within(1));
         }
 
         [Test]
