@@ -119,7 +119,7 @@ namespace RPGFramework.Abilities.Tests
             var ability = new Ability(metadata);
 
             // Act
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Assert
             Assert.That(instance.Ability, Is.EqualTo(ability), "Ability reference should match");
@@ -134,7 +134,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("ready_ability", "Ready", AbilityType.Active);
             var ability = new Ability(metadata);
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Act
             bool canUse = instance.CanUse(currentTime: 0f);
@@ -149,7 +149,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("cooldown_ability", "Cooldown", AbilityType.Active, cooldown: 10f);
             var ability = new Ability(metadata);
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Act
             instance.CompleteCast(currentTime: 0f); // Start cooldown
@@ -165,7 +165,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("cast_ability", "Cast", AbilityType.Active);
             var ability = new Ability(metadata, castInfo: new CastInfo(castTime: 2f));
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Act
             instance.StartCast(currentTime: 10f);
@@ -181,7 +181,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("cancel_ability", "Cancel", AbilityType.Active);
             var ability = new Ability(metadata, castInfo: new CastInfo(castTime: 2f));
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
             instance.StartCast(currentTime: 0f);
 
             // Act
@@ -198,7 +198,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("complete_ability", "Complete", AbilityType.Active, cooldown: 15f);
             var ability = new Ability(metadata);
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
             instance.StartCast(currentTime: 0f);
 
             // Act
@@ -567,7 +567,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("charge_ability", "Charge Ability", AbilityType.Active, maxCharges: 3);
             var ability = new Ability(metadata);
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Assert
             Assert.That(instance.RemainingCharges, Is.EqualTo(3), "Should start with 3 charges");
@@ -579,7 +579,7 @@ namespace RPGFramework.Abilities.Tests
             // Arrange
             var metadata = new AbilityMetadata("dash", "Dash", AbilityType.Active, maxCharges: 2);
             var ability = new Ability(metadata);
-            var instance = new AbilityInstance(ability, entityId: 1);
+            var instance = new AbilityInstance(ability, ownerEntityId: 1);
 
             // Act
             instance.UseCharge();
