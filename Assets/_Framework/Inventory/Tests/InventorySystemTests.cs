@@ -21,9 +21,9 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.Add("item1");
 
             // Assert
-            Assert.IsTrue(result, "Adding item to empty container should succeed");
-            Assert.AreEqual(1, container.Count, "Container count should be 1");
-            Assert.IsTrue(container.Contains("item1"), "Container should contain added item");
+            Assert.That(result, Is.True, "Adding item to empty container should succeed");
+            Assert.That(container.Count, Is.EqualTo(1), "Container count should be 1");
+            Assert.That(container.Contains("item1"), Is.True, "Container should contain added item");
         }
 
         [Test]
@@ -38,9 +38,9 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.Add("item3");
 
             // Assert
-            Assert.IsFalse(result, "Adding item to full container should fail");
-            Assert.AreEqual(2, container.Count, "Container count should remain 2");
-            Assert.IsFalse(container.Contains("item3"), "Container should not contain rejected item");
+            Assert.That(result, Is.False, "Adding item to full container should fail");
+            Assert.That(container.Count, Is.EqualTo(2), "Container count should remain 2");
+            Assert.That(container.Contains("item3"), Is.False, "Container should not contain rejected item");
         }
 
         [Test]
@@ -55,9 +55,9 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.Remove("item1");
 
             // Assert
-            Assert.IsTrue(result, "Removing existing item should succeed");
-            Assert.AreEqual(1, container.Count, "Container count should be 1");
-            Assert.IsFalse(container.Contains("item1"), "Container should not contain removed item");
+            Assert.That(result, Is.True, "Removing existing item should succeed");
+            Assert.That(container.Count, Is.EqualTo(1), "Container count should be 1");
+            Assert.That(container.Contains("item1"), Is.False, "Container should not contain removed item");
         }
 
         [Test]
@@ -71,8 +71,8 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.Remove("item2");
 
             // Assert
-            Assert.IsFalse(result, "Removing non-existent item should fail");
-            Assert.AreEqual(1, container.Count, "Container count should remain unchanged");
+            Assert.That(result, Is.False, "Removing non-existent item should fail");
+            Assert.That(container.Count, Is.EqualTo(1), "Container count should remain unchanged");
         }
 
         [Test]
@@ -88,9 +88,9 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.RemoveAt(1); // Remove "item2"
 
             // Assert
-            Assert.IsTrue(result, "Removing at valid index should succeed");
-            Assert.AreEqual(2, container.Count, "Container count should be 2");
-            Assert.IsFalse(container.Contains("item2"), "Container should not contain removed item");
+            Assert.That(result, Is.True, "Removing at valid index should succeed");
+            Assert.That(container.Count, Is.EqualTo(2), "Container count should be 2");
+            Assert.That(container.Contains("item2"), Is.False, "Container should not contain removed item");
         }
 
         [Test]
@@ -104,8 +104,8 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.RemoveAt(5);
 
             // Assert
-            Assert.IsFalse(result, "Removing at invalid index should fail");
-            Assert.AreEqual(1, container.Count, "Container count should remain unchanged");
+            Assert.That(result, Is.False, "Removing at invalid index should fail");
+            Assert.That(container.Count, Is.EqualTo(1), "Container count should remain unchanged");
         }
 
         [Test]
@@ -121,8 +121,8 @@ namespace RPGFramework.Inventory.Tests
             container.Clear();
 
             // Assert
-            Assert.IsTrue(container.IsEmpty, "Container should be empty after clear");
-            Assert.AreEqual(0, container.Count, "Container count should be 0");
+            Assert.That(container.IsEmpty, Is.True, "Container should be empty after clear");
+            Assert.That(container.Count, Is.EqualTo(0), "Container count should be 0");
         }
 
         [Test]
@@ -137,7 +137,7 @@ namespace RPGFramework.Inventory.Tests
             bool result = container.Contains("item1");
 
             // Assert
-            Assert.IsTrue(result, "Container should contain existing item");
+            Assert.That(result, Is.True, "Container should contain existing item");
         }
     }
 
@@ -164,9 +164,9 @@ namespace RPGFramework.Inventory.Tests
             string previous = slot.Equip("sword");
 
             // Assert
-            Assert.AreEqual(default(string), previous, "Previous item should be default for empty slot");
-            Assert.IsTrue(slot.IsOccupied, "Slot should be occupied after equip");
-            Assert.AreEqual("sword", slot.EquippedItem, "Slot should contain equipped item");
+            Assert.That(previous, Is.EqualTo(default(string)), "Previous item should be default for empty slot");
+            Assert.That(slot.IsOccupied, Is.True, "Slot should be occupied after equip");
+            Assert.That(slot.EquippedItem, Is.EqualTo("sword"), "Slot should contain equipped item");
         }
 
         [Test]
@@ -180,9 +180,9 @@ namespace RPGFramework.Inventory.Tests
             string previous = slot.Equip("axe");
 
             // Assert
-            Assert.AreEqual("sword", previous, "Previous item should be returned");
-            Assert.IsTrue(slot.IsOccupied, "Slot should still be occupied");
-            Assert.AreEqual("axe", slot.EquippedItem, "Slot should contain new item");
+            Assert.That(previous, Is.EqualTo("sword"), "Previous item should be returned");
+            Assert.That(slot.IsOccupied, Is.True, "Slot should still be occupied");
+            Assert.That(slot.EquippedItem, Is.EqualTo("axe"), "Slot should contain new item");
         }
 
         [Test]
@@ -196,9 +196,9 @@ namespace RPGFramework.Inventory.Tests
             string unequipped = slot.Unequip();
 
             // Assert
-            Assert.AreEqual("sword", unequipped, "Unequipped item should be returned");
-            Assert.IsFalse(slot.IsOccupied, "Slot should be empty after unequip");
-            Assert.AreEqual(default(string), slot.EquippedItem, "Equipped item should be default");
+            Assert.That(unequipped, Is.EqualTo("sword"), "Unequipped item should be returned");
+            Assert.That(slot.IsOccupied, Is.False, "Slot should be empty after unequip");
+            Assert.That(slot.EquippedItem, Is.EqualTo(default(string)), "Equipped item should be default");
         }
 
         [Test]
@@ -211,8 +211,8 @@ namespace RPGFramework.Inventory.Tests
             string unequipped = slot.Unequip();
 
             // Assert
-            Assert.AreEqual(default(string), unequipped, "Unequipping empty slot should return default");
-            Assert.IsFalse(slot.IsOccupied, "Slot should remain empty");
+            Assert.That(unequipped, Is.EqualTo(default(string)), "Unequipping empty slot should return default");
+            Assert.That(slot.IsOccupied, Is.False, "Slot should remain empty");
         }
 
         [Test]
@@ -222,7 +222,7 @@ namespace RPGFramework.Inventory.Tests
             var slot = new EquipmentSlot<TestSlotType, string>(TestSlotType.Weapon);
 
             // Assert
-            Assert.IsFalse(slot.IsOccupied, "Empty slot should not be occupied");
+            Assert.That(slot.IsOccupied, Is.False, "Empty slot should not be occupied");
         }
 
         [Test]
@@ -233,7 +233,7 @@ namespace RPGFramework.Inventory.Tests
             slot.Equip("sword");
 
             // Assert
-            Assert.IsTrue(slot.IsOccupied, "Filled slot should be occupied");
+            Assert.That(slot.IsOccupied, Is.True, "Filled slot should be occupied");
         }
     }
 
@@ -253,8 +253,8 @@ namespace RPGFramework.Inventory.Tests
             int added = stack.AddToStack(3);
 
             // Assert
-            Assert.AreEqual(3, added, "Should add full amount");
-            Assert.AreEqual(8, stack.Quantity, "Quantity should be 8");
+            Assert.That(added, Is.EqualTo(3), "Should add full amount");
+            Assert.That(stack.Quantity, Is.EqualTo(8), "Quantity should be 8");
         }
 
         [Test]
@@ -267,9 +267,9 @@ namespace RPGFramework.Inventory.Tests
             int added = stack.AddToStack(5);
 
             // Assert
-            Assert.AreEqual(2, added, "Should only add 2 to reach max");
-            Assert.AreEqual(10, stack.Quantity, "Quantity should be clamped to max");
-            Assert.IsTrue(stack.IsFull, "Stack should be full");
+            Assert.That(added, Is.EqualTo(2), "Should only add 2 to reach max");
+            Assert.That(stack.Quantity, Is.EqualTo(10), "Quantity should be clamped to max");
+            Assert.That(stack.IsFull, Is.True, "Stack should be full");
         }
 
         [Test]
@@ -282,8 +282,8 @@ namespace RPGFramework.Inventory.Tests
             int removed = stack.RemoveFromStack(3);
 
             // Assert
-            Assert.AreEqual(3, removed, "Should remove full amount");
-            Assert.AreEqual(5, stack.Quantity, "Quantity should be 5");
+            Assert.That(removed, Is.EqualTo(3), "Should remove full amount");
+            Assert.That(stack.Quantity, Is.EqualTo(5), "Quantity should be 5");
         }
 
         [Test]
@@ -296,8 +296,8 @@ namespace RPGFramework.Inventory.Tests
             int removed = stack.RemoveFromStack(5);
 
             // Assert
-            Assert.AreEqual(3, removed, "Should only remove available amount");
-            Assert.AreEqual(0, stack.Quantity, "Quantity should be 0");
+            Assert.That(removed, Is.EqualTo(3), "Should only remove available amount");
+            Assert.That(stack.Quantity, Is.EqualTo(0), "Quantity should be 0");
         }
 
         [Test]
@@ -310,10 +310,10 @@ namespace RPGFramework.Inventory.Tests
             var newStack = stack.Split(4);
 
             // Assert
-            Assert.IsNotNull(newStack, "New stack should be created");
-            Assert.AreEqual(6, stack.Quantity, "Original stack should have 6");
-            Assert.AreEqual(4, newStack.Quantity, "New stack should have 4");
-            Assert.AreEqual(stack.Item, newStack.Item, "Both stacks should have same item");
+            Assert.That(newStack, Is.Not.Null, "New stack should be created");
+            Assert.That(stack.Quantity, Is.EqualTo(6), "Original stack should have 6");
+            Assert.That(newStack.Quantity, Is.EqualTo(4), "New stack should have 4");
+            Assert.That(newStack.Item, Is.EqualTo(stack.Item), "Both stacks should have same item");
         }
 
         [Test]
@@ -327,8 +327,8 @@ namespace RPGFramework.Inventory.Tests
             int remaining = stack1.Merge(stack2);
 
             // Assert
-            Assert.AreEqual(0, remaining, "Should merge all items");
-            Assert.AreEqual(8, stack1.Quantity, "Stack1 should have 8");
+            Assert.That(remaining, Is.EqualTo(0), "Should merge all items");
+            Assert.That(stack1.Quantity, Is.EqualTo(8), "Stack1 should have 8");
         }
     }
 
@@ -356,11 +356,11 @@ namespace RPGFramework.Inventory.Tests
             );
 
             // Assert
-            Assert.IsNotNull(component.PrimaryContainer, "Primary container should be initialized");
-            Assert.AreEqual(20, component.PrimaryContainer.Capacity, "Primary capacity should be 20");
-            Assert.AreEqual(2, component.EquipmentSlots.Count, "Should have 2 equipment slots");
-            Assert.IsTrue(component.EquipmentSlots.ContainsKey(TestSlotType.Weapon), "Should have weapon slot");
-            Assert.IsTrue(component.EquipmentSlots.ContainsKey(TestSlotType.Armor), "Should have armor slot");
+            Assert.That(component.PrimaryContainer, Is.Not.Null, "Primary container should be initialized");
+            Assert.That(component.PrimaryContainer.Capacity, Is.EqualTo(20), "Primary capacity should be 20");
+            Assert.That(component.EquipmentSlots.Count, Is.EqualTo(2), "Should have 2 equipment slots");
+            Assert.That(component.EquipmentSlots.ContainsKey(TestSlotType.Weapon), Is.True, "Should have weapon slot");
+            Assert.That(component.EquipmentSlots.ContainsKey(TestSlotType.Armor), Is.True, "Should have armor slot");
         }
 
         [Test]
@@ -374,9 +374,9 @@ namespace RPGFramework.Inventory.Tests
             bool removed = component.PrimaryContainer.Remove("item1");
 
             // Assert
-            Assert.IsTrue(added, "Adding to primary container should succeed");
-            Assert.IsTrue(removed, "Removing from primary container should succeed");
-            Assert.IsTrue(component.PrimaryContainer.IsEmpty, "Primary container should be empty");
+            Assert.That(added, Is.True, "Adding to primary container should succeed");
+            Assert.That(removed, Is.True, "Removing from primary container should succeed");
+            Assert.That(component.PrimaryContainer.IsEmpty, Is.True, "Primary container should be empty");
         }
 
         [Test]
@@ -391,8 +391,8 @@ namespace RPGFramework.Inventory.Tests
             string unequipped = slot.Unequip();
 
             // Assert
-            Assert.AreEqual("sword", unequipped, "Unequipped item should be sword");
-            Assert.IsFalse(slot.IsOccupied, "Slot should be empty after unequip");
+            Assert.That(unequipped, Is.EqualTo("sword"), "Unequipped item should be sword");
+            Assert.That(slot.IsOccupied, Is.False, "Slot should be empty after unequip");
         }
 
         [Test]
@@ -406,8 +406,8 @@ namespace RPGFramework.Inventory.Tests
             component.AdditionalContainers["bank"] = bankContainer;
 
             // Assert
-            Assert.IsTrue(component.AdditionalContainers.ContainsKey("bank"), "Should contain bank container");
-            Assert.AreEqual(50, component.AdditionalContainers["bank"].Capacity, "Bank capacity should be 50");
+            Assert.That(component.AdditionalContainers.ContainsKey("bank"), Is.True, "Should contain bank container");
+            Assert.That(component.AdditionalContainers["bank"].Capacity, Is.EqualTo(50), "Bank capacity should be 50");
         }
     }
 }
