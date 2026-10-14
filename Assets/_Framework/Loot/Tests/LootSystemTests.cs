@@ -266,16 +266,17 @@ namespace RPGFramework.Loot.Tests
                 new LootEntry("item_common", weight: 90),
                 new LootEntry("item_rare", weight: 10)
             };
-            var table = new LootTable("table_test", "Test", entries, minDrops: 100, maxDrops: 100);
+            var table = new LootTable("table_test", "Test", entries, minDrops: 1000, maxDrops: 1000, allowDuplicates: true);
 
             // Act
             var result = generator.GenerateLoot(table, seed: 12345);
 
-            // Assert - common should appear more often (this is probabilistic, but with 100 rolls it's very likely)
+            // Assert - with 1000 rolls, common (90% weight) should appear significantly more than rare (10%)
             int commonCount = result.Drops.Count(d => d.ItemId == "item_common");
             int rareCount = result.Drops.Count(d => d.ItemId == "item_rare");
 
-            Assert.That(commonCount, Is.GreaterThan(rareCount), "Common item should drop more frequently");
+            // At minimum, common should be at least 3x more frequent than rare (conservative threshold)
+            Assert.That(commonCount, Is.GreaterThan(rareCount * 3), "Common item (90% weight) should drop significantly more than rare (10% weight)");
         }
 
         [Test]
