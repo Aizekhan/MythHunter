@@ -10,5 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../RPGFramework.ECS.Runtime/RPGFramework.ECS.Runtime.csproj" />
+    <ProjectReference Include="../RPGFramework.Serialization.Runtime/RPGFramework.Serialization.Runtime.csproj" />
   </ItemGroup>
 </Project>
