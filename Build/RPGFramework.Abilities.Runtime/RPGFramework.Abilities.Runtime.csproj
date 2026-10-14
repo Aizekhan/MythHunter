@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RPGFramework.Abilities</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Assets/_Framework/Abilities/Runtime/Contracts/*.cs" Link="Contracts/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Abilities/Runtime/Data/*.cs" Link="Data/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Abilities/Runtime/Implementations/*.cs" Link="Implementations/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Abilities/Runtime/Events/*.cs" Link="Events/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
