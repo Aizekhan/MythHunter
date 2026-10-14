@@ -1,0 +1,59 @@
+name: RPG Framework - Progression Module
+
+on:
+  pull_request:
+    paths:
+      - 'Assets/_Framework/Progression/**'
+      - 'Build/RPGFramework.Progression.*/**'
+      - 'Build/validate_framework_progression_boundary.py'
+      - '.github/workflows/rpg-framework-progression.yml'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'Assets/_Framework/Progression/**'
+      - 'Build/RPGFramework.Progression.*/**'
+      - 'Build/validate_framework_progression_boundary.py'
+      - '.github/workflows/rpg-framework-progression.yml'
+
+jobs:
+  test-progression-module:
+    name: Test Progression Module
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate module boundaries
+        run: python Build/validate_framework_progression_boundary.py
+
+      - name: Restore dependencies
+        run: dotnet restore Build/RPGFramework.Progression.Tests/RPGFramework.Progression.Tests.csproj
+
+      - name: Build Runtime
+        run: dotnet build Build/RPGFramework.Progression.Runtime/RPGFramework.Progression.Runtime.csproj --configuration Release --no-restore
+
+      - name: Build Tests
+        run: dotnet build Build/RPGFramework.Progression.Tests/RPGFramework.Progression.Tests.csproj --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Build/RPGFramework.Progression.Tests/RPGFramework.Progression.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=progression-test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: progression-test-results
+          path: '**/progression-test-results.trx'
