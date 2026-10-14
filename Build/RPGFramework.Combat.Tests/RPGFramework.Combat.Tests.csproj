@@ -28,6 +28,8 @@
              Link="Tests/DamageCalculatorTests.cs" />
     <Compile Include="../../Assets/_Framework/Combat/Tests/StatusEffectTests.cs"
              Link="Tests/StatusEffectTests.cs" />
+    <Compile Include="../../Assets/_Framework/Combat/Tests/LifeStateTests.cs"
+             Link="Tests/LifeStateTests.cs" />
 
     <!-- ECS Runtime dependency -->
     <Compile Include="../../Assets/_Framework/ECS/Runtime/*.cs"
