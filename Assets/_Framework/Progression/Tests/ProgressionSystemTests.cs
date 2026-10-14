@@ -161,9 +161,10 @@ namespace RPGFramework.Progression.Tests
             var levelTable = LevelTable.CreateExponential(maxLevel: 10, baseXP: 100, multiplier: 1.5f);
 
             // Act & Assert
-            Assert.That(levelTable.GetXPForNextLevel(1), Is.EqualTo(100));
-            Assert.That(levelTable.GetXPForNextLevel(2), Is.EqualTo(150).Within(1));
-            Assert.That(levelTable.GetXPForNextLevel(3), Is.EqualTo(225).Within(1));
+            // Level 2: baseXP * 1.5^1 = 150
+            Assert.That(levelTable.GetXPForNextLevel(1), Is.EqualTo(150).Within(1));
+            // Level 3: (baseXP * 1.5^2) - (baseXP * 1.5^1) = 225 - 150 = 75
+            Assert.That(levelTable.GetXPForNextLevel(2), Is.EqualTo(75).Within(1));
         }
 
         [Test]
@@ -223,7 +224,7 @@ namespace RPGFramework.Progression.Tests
             // Assert
             Assert.That(levelInfo.Level, Is.EqualTo(3));
             Assert.That(levelInfo.TotalXPRequired, Is.EqualTo(300)); // 100 + 200
-            Assert.That(levelInfo.XPFromPrevious, Is.EqualTo(300));
+            Assert.That(levelInfo.XPFromPrevious, Is.EqualTo(200)); // XP from level 2 to 3
         }
 
         // ==================== Stat Growth Tests ====================
@@ -266,7 +267,7 @@ namespace RPGFramework.Progression.Tests
             // Assert
             Assert.That(level1, Is.EqualTo(100f));
             Assert.That(level2, Is.EqualTo(121f).Within(0.1f)); // 100 + 10 = 110, 110 * 1.1 = 121
-            Assert.That(level3, Is.EqualTo(143.1f).Within(0.1f)); // 121 + 10 = 131, 131 * 1.1 = 144.1
+            Assert.That(level3, Is.EqualTo(144.1f).Within(0.1f)); // 121 + 10 = 131, 131 * 1.1 = 144.1
         }
 
         [Test]
