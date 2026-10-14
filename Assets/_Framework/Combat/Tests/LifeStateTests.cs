@@ -279,6 +279,8 @@ namespace RPGFramework.Combat.Tests
         {
             // Arrange
             _testHandler.SetCanDie(false);
+            _manager.UnregisterEntity(TestEntityId);
+            _manager.RegisterEntity(TestEntityId, _testHandler, LifeStateComponent.CreateImmortal());
 
             // Act
             bool result = _manager.Kill(TestEntityId, KillerId, "test_death");
