@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../../Assets/_Framework/Core/**/*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Exclude Composition modules that have circular dependencies -->
+    <Compile Include="../../Assets/_Framework/Core/**/*.cs" Exclude="../../Assets/_Framework/Core/Composition/**/*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

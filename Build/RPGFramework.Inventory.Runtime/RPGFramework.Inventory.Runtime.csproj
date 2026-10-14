@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RPGFramework.Core.Runtime/RPGFramework.Core.Runtime.csproj" />
     <ProjectReference Include="../RPGFramework.ECS.Runtime/RPGFramework.ECS.Runtime.csproj" />
   </ItemGroup>
 </Project>

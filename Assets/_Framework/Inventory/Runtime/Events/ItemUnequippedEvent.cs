@@ -1,7 +1,5 @@
 // Assets/_Framework/Inventory/Runtime/Events/ItemUnequippedEvent.cs
 
-using RPGFramework.Core;
-
 namespace RPGFramework.Inventory.Runtime
 {
     /// <summary>
@@ -9,7 +7,7 @@ namespace RPGFramework.Inventory.Runtime
     /// </summary>
     /// <typeparam name="TSlotType">Enum type for equipment slots</typeparam>
     /// <typeparam name="TItem">Type of item unequipped</typeparam>
-    public struct ItemUnequippedEvent<TSlotType, TItem> : IEvent
+    public struct ItemUnequippedEvent<TSlotType, TItem>
         where TSlotType : System.Enum
     {
         /// <summary>

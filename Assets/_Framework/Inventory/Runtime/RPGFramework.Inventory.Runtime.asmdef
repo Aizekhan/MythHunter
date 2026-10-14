@@ -2,7 +2,6 @@
     "name": "RPGFramework.Inventory.Runtime",
     "rootNamespace": "RPGFramework.Inventory.Runtime",
     "references": [
-        "RPGFramework.Core.Runtime",
         "RPGFramework.ECS.Runtime"
     ],
     "includePlatforms": [],

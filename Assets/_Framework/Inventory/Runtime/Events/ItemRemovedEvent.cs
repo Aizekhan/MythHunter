@@ -1,14 +1,12 @@
 // Assets/_Framework/Inventory/Runtime/Events/ItemRemovedEvent.cs
 
-using RPGFramework.Core;
-
 namespace RPGFramework.Inventory.Runtime
 {
     /// <summary>
     /// Event raised when an item is removed from a container.
     /// </summary>
     /// <typeparam name="TItem">Type of item removed</typeparam>
-    public struct ItemRemovedEvent<TItem> : IEvent
+    public struct ItemRemovedEvent<TItem>
     {
         /// <summary>
         /// ID of the entity that owns the container.
