@@ -1,4 +1,5 @@
 // Assets/_MythHunter/Code/Components/Combat/MythHunterResourceComponent.cs
+using MythHunter.Core.ECS;
 using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
