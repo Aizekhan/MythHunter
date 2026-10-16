@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
+using MythHunter.GameLogic.Inventory;
+using MythHunter.GameLogic.Inventory.Components;
 using UnityEngine;
 
 namespace MythHunter.Entities.Archetypes
@@ -113,7 +115,7 @@ namespace MythHunter.Entities.Archetypes
                     ActiveSkills = ConvertSkillValues(archetype.GetActiveSkills())
                 };
 
-                // Створення компонента інвентаря з базовими значеннями
+                // Створення компонента інвентаря з базовими значеннями (старий формат - для сумісності)
                 var inventoryComponent = new Components.Character.InventoryComponent
                 {
                     Items = new List<string>(),
@@ -129,13 +131,19 @@ namespace MythHunter.Entities.Archetypes
                     }
                 };
 
-                // Реєструємо шаблон героя з усіма компонентами
+                // Створення нового компонента інвентаря (Framework-based)
+                int bagCapacity = (int)statsComponent.GetStat(Components.Character.StatType.BagSlots, 50);
+                if (bagCapacity <= 0) bagCapacity = 50;
+                var newInventoryComponent = MythHunterInventoryComponent.CreateHero(bagCapacity, autoSwitchWeapons: true);
+
+                // Реєструємо шаблон героя з усіма компонентами (dual-component mode)
                 _templateRegistry.RegisterArchetypeTemplate(archetype.ArchetypeId)
                     .WithComponent(identityComponent)
                     .WithComponent(socialComponent)
                     .WithComponent(statsComponent)
                     .WithComponent(skillsComponent)
-                    .WithComponent(inventoryComponent)
+                    .WithComponent(inventoryComponent) // Old component (backward compatibility)
+                    .WithComponent(newInventoryComponent) // New Framework-based component
                     .WithComponent(new Components.Combat.TeamComponent
                     {
                         TeamId = archetype.TeamId,
