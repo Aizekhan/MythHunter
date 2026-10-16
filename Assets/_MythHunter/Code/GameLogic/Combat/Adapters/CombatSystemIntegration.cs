@@ -65,7 +65,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
                 {
                     combatState.ExitCombat();
                 }
-                _entityManager.SetComponent(entityId, combatState);
+                _entityManager.AddComponent(entityId, combatState);
             }
 
             // Update old component if exists (backward compatibility)
@@ -73,7 +73,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             {
                 oldStats.IsInCombat = isInCombat;
                 oldStats.CombatTargetEntityId = targetEntityId;
-                _entityManager.SetComponent(entityId, oldStats);
+                _entityManager.AddComponent(entityId, oldStats);
             }
         }
 
@@ -106,14 +106,14 @@ namespace MythHunter.GameLogic.Combat.Adapters
             if (_entityManager.TryGetComponent<CombatStateComponent>(entityId, out var combatState))
             {
                 combatState.LastAttackTime = time;
-                _entityManager.SetComponent(entityId, combatState);
+                _entityManager.AddComponent(entityId, combatState);
             }
 
             // Update old component if exists
             if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
             {
                 oldStats.LastAttackTime = time;
-                _entityManager.SetComponent(entityId, oldStats);
+                _entityManager.AddComponent(entityId, oldStats);
             }
         }
 
@@ -236,7 +236,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             // Try new component first
             if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
             {
-                return resources.Resources.GetCurrent(MythHunterResourceType.Rage);
+                return resources.RageCurrent;
             }
 
             // Fallback to old component
@@ -256,16 +256,15 @@ namespace MythHunter.GameLogic.Combat.Adapters
             // Update new component if exists
             if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
             {
-                float current = resources.Resources.GetCurrent(MythHunterResourceType.Rage);
-                resources.Resources.SetCurrent(MythHunterResourceType.Rage, current + amount);
-                _entityManager.SetComponent(entityId, resources);
+                resources.RageCurrent = System.Math.Min(resources.RageMax, resources.RageCurrent + amount);
+                _entityManager.AddComponent(entityId, resources);
             }
 
             // Update old component if exists
             if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
             {
                 oldStats.Rage = UnityEngine.Mathf.Min(oldStats.MaxRage, oldStats.Rage + amount);
-                _entityManager.SetComponent(entityId, oldStats);
+                _entityManager.AddComponent(entityId, oldStats);
             }
         }
 
@@ -277,7 +276,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             // Try new component first
             if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
             {
-                return resources.Resources.GetCurrent(MythHunterResourceType.Concentration);
+                return resources.ConcentrationCurrent;
             }
 
             // Fallback to old component
@@ -297,16 +296,15 @@ namespace MythHunter.GameLogic.Combat.Adapters
             // Update new component if exists
             if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
             {
-                float current = resources.Resources.GetCurrent(MythHunterResourceType.Concentration);
-                resources.Resources.SetCurrent(MythHunterResourceType.Concentration, current + amount);
-                _entityManager.SetComponent(entityId, resources);
+                resources.ConcentrationCurrent = System.Math.Min(resources.ConcentrationMax, resources.ConcentrationCurrent + amount);
+                _entityManager.AddComponent(entityId, resources);
             }
 
             // Update old component if exists
             if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
             {
                 oldStats.Concentration = UnityEngine.Mathf.Min(oldStats.MaxConcentration, oldStats.Concentration + amount);
-                _entityManager.SetComponent(entityId, oldStats);
+                _entityManager.AddComponent(entityId, oldStats);
             }
         }
 
@@ -378,7 +376,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             if (_entityManager.TryGetComponent<HealthComponent>(targetEntityId, out var health))
             {
                 health.CurrentHealth -= damage;
-                _entityManager.SetComponent(targetEntityId, health);
+                _entityManager.AddComponent(targetEntityId, health);
             }
 
             return damage;

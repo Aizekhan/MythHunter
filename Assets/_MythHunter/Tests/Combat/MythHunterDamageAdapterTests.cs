@@ -85,7 +85,7 @@ namespace MythHunter.Tests.Combat
             Assert.That(result.FinalDamage, Is.GreaterThan(0));
 
             var targetResources = _entityManager.GetComponent<MythHunterResourceComponent>(target);
-            float healthAfter = targetResources.Resources.GetCurrent(MythHunterResourceType.Health);
+            float healthAfter = targetResources.HealthCurrent;
 
             Assert.That(healthAfter, Is.LessThan(100f));
             Assert.That(healthAfter, Is.EqualTo(100f - result.FinalDamage).Within(0.01f));

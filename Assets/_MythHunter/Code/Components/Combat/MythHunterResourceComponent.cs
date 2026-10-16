@@ -1,40 +1,53 @@
 // Assets/_MythHunter/Code/Components/Combat/MythHunterResourceComponent.cs
-using MythHunter.Core.ECS;
-using MythHunter.GameLogic.Combat;
-using RPGFramework.Combat;
 using RPGFramework.ECS;
 
 namespace MythHunter.Components.Combat
 {
     /// <summary>
-    /// Component containing combat resources (HP, MP, Stamina, etc.) using Framework ResourceComponent.
+    /// Component containing combat resources (HP, MP, Stamina, etc.) using direct fields.
+    /// Custom wrapper for convenient resource access in MythHunter game layer.
     /// Replaces resource tracking from old CombatStatsComponent.
     /// </summary>
     public struct MythHunterResourceComponent : IComponent, ISerializableComponent
     {
-        /// <summary>
-        /// Container for all combat resources
-        /// </summary>
-        public ResourceComponent<MythHunterResourceType> Resources;
+        // Health resource
+        public float HealthCurrent;
+        public float HealthMax;
+
+        // Mana resource
+        public float ManaCurrent;
+        public float ManaMax;
+
+        // Stamina resource
+        public float StaminaCurrent;
+        public float StaminaMax;
+
+        // Rage resource
+        public float RageCurrent;
+        public float RageMax;
+
+        // Concentration resource
+        public float ConcentrationCurrent;
+        public float ConcentrationMax;
 
         /// <summary>
         /// Create resource component with default values
         /// </summary>
         public static MythHunterResourceComponent Create()
         {
-            var component = new MythHunterResourceComponent
+            return new MythHunterResourceComponent
             {
-                Resources = new ResourceComponent<MythHunterResourceType>()
+                HealthCurrent = 100f,
+                HealthMax = 100f,
+                ManaCurrent = 50f,
+                ManaMax = 50f,
+                StaminaCurrent = 100f,
+                StaminaMax = 100f,
+                RageCurrent = 0f,
+                RageMax = 100f,
+                ConcentrationCurrent = 0f,
+                ConcentrationMax = 100f
             };
-
-            // Initialize default resources (current, min, max)
-            component.Resources.SetResource(MythHunterResourceType.Health, 100f, 0f, 100f);
-            component.Resources.SetResource(MythHunterResourceType.Mana, 50f, 0f, 50f);
-            component.Resources.SetResource(MythHunterResourceType.Stamina, 100f, 0f, 100f);
-            component.Resources.SetResource(MythHunterResourceType.Rage, 0f, 0f, 100f);
-            component.Resources.SetResource(MythHunterResourceType.Concentration, 0f, 0f, 100f);
-
-            return component;
         }
 
         /// <summary>
@@ -45,11 +58,19 @@ namespace MythHunter.Components.Combat
             float maxMana = 50f,
             float maxStamina = 100f)
         {
-            var component = Create();
-            component.Resources.SetResource(MythHunterResourceType.Health, maxHealth, 0f, maxHealth);
-            component.Resources.SetResource(MythHunterResourceType.Mana, maxMana, 0f, maxMana);
-            component.Resources.SetResource(MythHunterResourceType.Stamina, maxStamina, 0f, maxStamina);
-            return component;
+            return new MythHunterResourceComponent
+            {
+                HealthCurrent = maxHealth,
+                HealthMax = maxHealth,
+                ManaCurrent = maxMana,
+                ManaMax = maxMana,
+                StaminaCurrent = maxStamina,
+                StaminaMax = maxStamina,
+                RageCurrent = 0f,
+                RageMax = 100f,
+                ConcentrationCurrent = 0f,
+                ConcentrationMax = 100f
+            };
         }
 
         /// <summary>
@@ -57,7 +78,7 @@ namespace MythHunter.Components.Combat
         /// </summary>
         public bool IsAlive()
         {
-            return Resources.GetCurrent(MythHunterResourceType.Health) > 0f;
+            return HealthCurrent > 0f;
         }
 
         /// <summary>
@@ -65,9 +86,7 @@ namespace MythHunter.Components.Combat
         /// </summary>
         public float GetHealthPercentage()
         {
-            float current = Resources.GetCurrent(MythHunterResourceType.Health);
-            float max = Resources.GetMax(MythHunterResourceType.Health);
-            return max > 0 ? current / max : 0f;
+            return HealthMax > 0 ? HealthCurrent / HealthMax : 0f;
         }
 
         public byte[] Serialize()

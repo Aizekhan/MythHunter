@@ -100,9 +100,9 @@ namespace MythHunter.Tests.Combat
 
             // Assert
             var newResources = _entityManager.GetComponent<MythHunterResourceComponent>(entityId);
-            Assert.That(newResources.Resources.GetCurrent(MythHunterResourceType.Rage), Is.EqualTo(25f));
-            Assert.That(newResources.Resources.GetMax(MythHunterResourceType.Rage), Is.EqualTo(100f));
-            Assert.That(newResources.Resources.GetCurrent(MythHunterResourceType.Concentration), Is.EqualTo(30f));
+            Assert.That(newResources.RageCurrent, Is.EqualTo(25f));
+            Assert.That(newResources.RageMax, Is.EqualTo(100f));
+            Assert.That(newResources.ConcentrationCurrent, Is.EqualTo(30f));
         }
 
         [Test]

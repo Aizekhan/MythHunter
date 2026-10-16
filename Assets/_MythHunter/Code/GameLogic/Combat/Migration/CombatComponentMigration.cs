@@ -90,11 +90,11 @@ namespace MythHunter.GameLogic.Combat.Migration
 
                 // Migrate resources (Rage, Concentration)
                 // Note: Health might be in separate HealthComponent, not migrating here
-                newResources.Resources.SetCurrent(MythHunterResourceType.Rage, oldStats.Rage);
-                newResources.Resources.SetMax(MythHunterResourceType.Rage, oldStats.MaxRage);
+                newResources.RageCurrent = oldStats.Rage;
+                newResources.RageMax = oldStats.MaxRage;
 
-                newResources.Resources.SetCurrent(MythHunterResourceType.Concentration, oldStats.Concentration);
-                newResources.Resources.SetMax(MythHunterResourceType.Concentration, oldStats.MaxConcentration);
+                newResources.ConcentrationCurrent = oldStats.Concentration;
+                newResources.ConcentrationMax = oldStats.MaxConcentration;
 
                 // Create combat state component
                 var combatState = CombatStateComponent.Create();

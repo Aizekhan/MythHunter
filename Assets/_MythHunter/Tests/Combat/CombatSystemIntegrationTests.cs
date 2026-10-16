@@ -71,7 +71,7 @@ namespace MythHunter.Tests.Combat
             int entityId = CreateEntityWithNewComponents();
             var combatState = _entityManager.GetComponent<CombatStateComponent>(entityId);
             combatState.IsInCombat = true;
-            _entityManager.SetComponent(entityId, combatState);
+            _entityManager.AddComponent(entityId, combatState);
 
             // Act
             bool result = _integration.IsInCombat(entityId);
@@ -87,7 +87,7 @@ namespace MythHunter.Tests.Combat
             int entityId = CreateEntityWithOldComponent();
             var oldStats = _entityManager.GetComponent<CombatStatsComponent>(entityId);
             oldStats.IsInCombat = true;
-            _entityManager.SetComponent(entityId, oldStats);
+            _entityManager.AddComponent(entityId, oldStats);
 
             // Act
             bool result = _integration.IsInCombat(entityId);
@@ -206,8 +206,8 @@ namespace MythHunter.Tests.Combat
             // Arrange
             int entityId = CreateEntityWithNewComponents();
             var resources = _entityManager.GetComponent<MythHunterResourceComponent>(entityId);
-            resources.Resources.SetCurrent(MythHunterResourceType.Rage, 50f);
-            _entityManager.SetComponent(entityId, resources);
+            resources.RageCurrent = 50f;
+            _entityManager.AddComponent(entityId, resources);
 
             // Act
             float rage = _integration.GetRage(entityId);
@@ -276,7 +276,7 @@ namespace MythHunter.Tests.Combat
 
             // Verify health was reduced
             var targetResources = _entityManager.GetComponent<MythHunterResourceComponent>(target);
-            Assert.That(targetResources.Resources.GetCurrent(MythHunterResourceType.Health), Is.LessThan(100f));
+            Assert.That(targetResources.HealthCurrent, Is.LessThan(100f));
         }
 
         [Test]

@@ -121,12 +121,12 @@ namespace MythHunter.GameLogic.Combat.Adapters
             );
 
             // Apply damage to target health
-            float currentHealth = targetResources.Resources.GetCurrent(MythHunterResourceType.Health);
-            float newHealth = currentHealth - result.FinalDamage;
+            float currentHealth = targetResources.HealthCurrent;
+            float newHealth = System.Math.Max(0f, currentHealth - result.FinalDamage);
 
-            // Update health (clamped by ResourceComponent)
-            targetResources.Resources.SetCurrent(MythHunterResourceType.Health, newHealth);
-            _entityManager.SetComponent(targetEntityId, targetResources);
+            // Update health (clamped to 0-Max range)
+            targetResources.HealthCurrent = System.Math.Min(newHealth, targetResources.HealthMax);
+            _entityManager.AddComponent(targetEntityId, targetResources);
 
             // Log damage details
             _logger.LogInfo(
@@ -147,8 +147,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             if (!_entityManager.TryGetComponent<MythHunterResourceComponent>(targetEntityId, out var resources))
                 return false;
 
-            float currentHealth = resources.Resources.GetCurrent(MythHunterResourceType.Health);
-            return damage >= currentHealth;
+            return damage >= resources.HealthCurrent;
         }
 
         /// <summary>
