@@ -23,6 +23,7 @@ namespace MythHunter.Systems.Combat
         private readonly IPhaseSystem _phaseSystem;
         private readonly ICombatDetectionSystem _combatDetectionSystem;
         private readonly ICombatAbilitySystem _combatAbilitySystem;
+        private readonly MythHunter.GameLogic.Combat.Adapters.CombatSystemIntegration _combatIntegration;
         // Шлях: Assets/_MythHunter/Code/Systems/Combat/CombatSystem.cs (продовження)
 
         // Словник активних боїв: ID бою -> (ID атакуючого, ID захисника)
@@ -57,13 +58,15 @@ namespace MythHunter.Systems.Combat
             IMythLogger logger,
             IPhaseSystem phaseSystem,
             ICombatDetectionSystem combatDetectionSystem,
-            ICombatAbilitySystem combatAbilitySystem)
+            ICombatAbilitySystem combatAbilitySystem,
+            MythHunter.GameLogic.Combat.Adapters.CombatSystemIntegration combatIntegration)
             : base(logger, eventBus)
         {
             _entityManager = entityManager;
             _phaseSystem = phaseSystem;
             _combatDetectionSystem = combatDetectionSystem;
             _combatAbilitySystem = combatAbilitySystem;
+            _combatIntegration = combatIntegration;
         }
 
         public override void Initialize()
@@ -135,49 +138,41 @@ namespace MythHunter.Systems.Combat
         private void OnDamageApplied(DamageAppliedEvent evt)
         {
             // Оновлюємо лють при нанесенні пошкодження
-            if (_entityManager.HasComponent<CombatStatsComponent>(evt.SourceEntityId))
+            float oldRage = _combatIntegration.GetRage(evt.SourceEntityId);
+            float rageGain = evt.IsCritical ? RAGE_GAIN_ON_CRIT : RAGE_GAIN_ON_HIT;
+            _combatIntegration.AddRage(evt.SourceEntityId, rageGain);
+            float newRage = _combatIntegration.GetRage(evt.SourceEntityId);
+
+            // Публікуємо подію про зміну люті
+            if (Mathf.Abs(newRage - oldRage) > 0.01f)
             {
-                CombatStatsComponent stats = _entityManager.GetComponent<CombatStatsComponent>(evt.SourceEntityId);
-                float oldRage = stats.Rage;
-
-                // Збільшуємо лють при нанесенні урону
-                float rageGain = evt.IsCritical ? RAGE_GAIN_ON_CRIT : RAGE_GAIN_ON_HIT;
-                stats.Rage = Mathf.Min(stats.MaxRage, stats.Rage + rageGain);
-
-                _entityManager.AddComponent(evt.SourceEntityId, stats);
-
-                // Публікуємо подію про зміну люті
                 Publish(new RageUpdatedEvent
                 {
                     EntityId = evt.SourceEntityId,
                     OldValue = oldRage,
-                    NewValue = stats.Rage,
+                    NewValue = newRage,
                     Timestamp = DateTime.UtcNow
                 });
             }
 
             // Оновлюємо концентрацію при отриманні пошкодження
-            if (_entityManager.HasComponent<CombatStatsComponent>(evt.TargetEntityId))
+            if (!evt.IsDodged && !evt.IsBlocked)
             {
-                CombatStatsComponent stats = _entityManager.GetComponent<CombatStatsComponent>(evt.TargetEntityId);
-                float oldConcentration = stats.Concentration;
-
-                // Збільшуємо концентрацію при отриманні урону
-                if (!evt.IsDodged && !evt.IsBlocked)
-                {
-                    stats.Concentration = Mathf.Min(stats.MaxConcentration, stats.Concentration + CONCENTRATION_GAIN_ON_DAMAGE);
-                }
-
-                _entityManager.AddComponent(evt.TargetEntityId, stats);
+                float oldConcentration = _combatIntegration.GetConcentration(evt.TargetEntityId);
+                _combatIntegration.AddConcentration(evt.TargetEntityId, CONCENTRATION_GAIN_ON_DAMAGE);
+                float newConcentration = _combatIntegration.GetConcentration(evt.TargetEntityId);
 
                 // Публікуємо подію про зміну концентрації
-                Publish(new ConcentrationUpdatedEvent
+                if (Mathf.Abs(newConcentration - oldConcentration) > 0.01f)
                 {
-                    EntityId = evt.TargetEntityId,
-                    OldValue = oldConcentration,
-                    NewValue = stats.Concentration,
-                    Timestamp = DateTime.UtcNow
-                });
+                    Publish(new ConcentrationUpdatedEvent
+                    {
+                        EntityId = evt.TargetEntityId,
+                        OldValue = oldConcentration,
+                        NewValue = newConcentration,
+                        Timestamp = DateTime.UtcNow
+                    });
+                }
             }
         }
 
@@ -233,22 +228,9 @@ namespace MythHunter.Systems.Combat
             int combatId = _nextCombatId++;
             _activeCombats[combatId] = (attackerEntityId, defenderEntityId);
 
-            // Встановлюємо компоненти бою для обох сутностей
-            if (_entityManager.HasComponent<CombatStatsComponent>(attackerEntityId))
-            {
-                CombatStatsComponent attackerStats = _entityManager.GetComponent<CombatStatsComponent>(attackerEntityId);
-                attackerStats.IsInCombat = true;
-                attackerStats.CombatTargetEntityId = defenderEntityId;
-                _entityManager.AddComponent(attackerEntityId, attackerStats);
-            }
-
-            if (_entityManager.HasComponent<CombatStatsComponent>(defenderEntityId))
-            {
-                CombatStatsComponent defenderStats = _entityManager.GetComponent<CombatStatsComponent>(defenderEntityId);
-                defenderStats.IsInCombat = true;
-                defenderStats.CombatTargetEntityId = attackerEntityId;
-                _entityManager.AddComponent(defenderEntityId, defenderStats);
-            }
+            // Встановлюємо стан бою для обох сутностей
+            _combatIntegration.SetCombatState(attackerEntityId, true, defenderEntityId);
+            _combatIntegration.SetCombatState(defenderEntityId, true, attackerEntityId);
 
             // Публікуємо подію початку бою
             Publish(new CombatStartedEvent
@@ -297,27 +279,12 @@ namespace MythHunter.Systems.Combat
             }
 
             // Скидаємо стан бою для обох сутностей
-            if (_entityManager.HasComponent<CombatStatsComponent>(participants.attacker))
-            {
-                CombatStatsComponent attackerStats = _entityManager.GetComponent<CombatStatsComponent>(participants.attacker);
-                attackerStats.IsInCombat = false;
-                attackerStats.CombatTargetEntityId = -1;
-                _entityManager.AddComponent(participants.attacker, attackerStats);
+            _combatIntegration.SetCombatState(participants.attacker, false);
+            _combatIntegration.SetCombatState(participants.defender, false);
 
-                // Скидаємо стан використання активної здібності
-                _combatAbilitySystem.ResetActiveAbilityUse(participants.attacker);
-            }
-
-            if (_entityManager.HasComponent<CombatStatsComponent>(participants.defender))
-            {
-                CombatStatsComponent defenderStats = _entityManager.GetComponent<CombatStatsComponent>(participants.defender);
-                defenderStats.IsInCombat = false;
-                defenderStats.CombatTargetEntityId = -1;
-                _entityManager.AddComponent(participants.defender, defenderStats);
-
-                // Скидаємо стан використання активної здібності
-                _combatAbilitySystem.ResetActiveAbilityUse(participants.defender);
-            }
+            // Скидаємо стан використання активної здібності
+            _combatAbilitySystem.ResetActiveAbilityUse(participants.attacker);
+            _combatAbilitySystem.ResetActiveAbilityUse(participants.defender);
 
             // Публікуємо подію завершення бою
             Publish(new CombatEndedEvent
@@ -435,68 +402,46 @@ namespace MythHunter.Systems.Combat
 
         private void ProcessCombatActions(int attackerId, int defenderId)
         {
-            // Отримуємо компоненти бою для атакуючого
-            if (!_entityManager.HasComponent<CombatStatsComponent>(attackerId) ||
-                !_entityManager.HasComponent<HealthComponent>(attackerId))
+            // Перевіряємо, чи є компоненти для обох учасників
+            if (!_combatIntegration.IsAlive(attackerId) || !_combatIntegration.IsAlive(defenderId))
             {
                 return;
             }
-
-            // Отримуємо компоненти бою для захисника
-            if (!_entityManager.HasComponent<CombatStatsComponent>(defenderId) ||
-                !_entityManager.HasComponent<HealthComponent>(defenderId))
-            {
-                return;
-            }
-
-            CombatStatsComponent attackerStats = _entityManager.GetComponent<CombatStatsComponent>(attackerId);
-            HealthComponent attackerHealth = _entityManager.GetComponent<HealthComponent>(attackerId);
-
-            CombatStatsComponent defenderStats = _entityManager.GetComponent<CombatStatsComponent>(defenderId);
-            HealthComponent defenderHealth = _entityManager.GetComponent<HealthComponent>(defenderId);
 
             // Перевіряємо, чи минув час для наступної атаки атакуючого
             float currentTime = Time.time;
 
-            if (currentTime - attackerStats.LastAttackTime >= (1f / attackerStats.AttackSpeed))
+            if (_combatIntegration.CanAttack(attackerId, currentTime))
             {
                 // Обробляємо атаку
-                ProcessAttack(attackerId, defenderId, attackerStats, defenderStats);
+                ProcessAttack(attackerId, defenderId);
 
                 // Оновлюємо час останньої атаки
-                attackerStats.LastAttackTime = currentTime;
-                _entityManager.AddComponent(attackerId, attackerStats);
+                _combatIntegration.UpdateLastAttackTime(attackerId, currentTime);
             }
 
             // Перевіряємо, чи минув час для наступної атаки захисника
-            if (currentTime - defenderStats.LastAttackTime >= (1f / defenderStats.AttackSpeed))
+            if (_combatIntegration.CanAttack(defenderId, currentTime))
             {
                 // Обробляємо атаку у зворотньому напрямку
-                ProcessAttack(defenderId, attackerId, defenderStats, attackerStats);
+                ProcessAttack(defenderId, attackerId);
 
                 // Оновлюємо час останньої атаки
-                defenderStats.LastAttackTime = currentTime;
-                _entityManager.AddComponent(defenderId, defenderStats);
+                _combatIntegration.UpdateLastAttackTime(defenderId, currentTime);
             }
         }
 
-        private void ProcessAttack(int attackerId, int defenderId, CombatStatsComponent attackerStats, CombatStatsComponent defenderStats)
+        private void ProcessAttack(int attackerId, int defenderId)
         {
             // Перевіряємо, чи не мертві сутності
-            if (_entityManager.HasComponent<HealthComponent>(attackerId) &&
-                _entityManager.GetComponent<HealthComponent>(attackerId).IsDead)
-            {
-                return;
-            }
-
-            if (_entityManager.HasComponent<HealthComponent>(defenderId) &&
-                _entityManager.GetComponent<HealthComponent>(defenderId).IsDead)
+            if (!_combatIntegration.IsAlive(attackerId) || !_combatIntegration.IsAlive(defenderId))
             {
                 return;
             }
 
             // Визначаємо, чи точний удар
-            bool isAccurate = UnityEngine.Random.value <= attackerStats.Accuracy;
+            float accuracy = _combatIntegration.GetAccuracy(attackerId);
+            bool isAccurate = UnityEngine.Random.value <= accuracy;
 
             if (!isAccurate)
             {
@@ -506,24 +451,26 @@ namespace MythHunter.Systems.Combat
 
             // Визначаємо, чи ухилився захисник
             bool isDodged = false;
+            float defenderConcentration = _combatIntegration.GetConcentration(defenderId);
 
-            if (defenderStats.Concentration >= CONCENTRATION_COST_DODGE)
+            if (defenderConcentration >= CONCENTRATION_COST_DODGE)
             {
-                isDodged = UnityEngine.Random.value <= defenderStats.DodgeChance;
+                float dodgeChance = _combatIntegration.GetDodgeChance(defenderId);
+                isDodged = UnityEngine.Random.value <= dodgeChance;
 
                 if (isDodged)
                 {
                     // Віднімаємо концентрацію при ухиленні
-                    float oldConcentration = defenderStats.Concentration;
-                    defenderStats.Concentration -= CONCENTRATION_COST_DODGE;
-                    _entityManager.AddComponent(defenderId, defenderStats);
+                    float oldConcentration = defenderConcentration;
+                    float newConcentration = defenderConcentration - CONCENTRATION_COST_DODGE;
+                    _combatIntegration.SetConcentration(defenderId, newConcentration);
 
                     // Публікуємо подію про зміну концентрації
                     Publish(new ConcentrationUpdatedEvent
                     {
                         EntityId = defenderId,
                         OldValue = oldConcentration,
-                        NewValue = defenderStats.Concentration,
+                        NewValue = newConcentration,
                         Timestamp = DateTime.UtcNow
                     });
 
@@ -533,57 +480,62 @@ namespace MythHunter.Systems.Combat
 
             // Визначаємо, чи заблокував захисник
             bool isBlocked = false;
+            defenderConcentration = _combatIntegration.GetConcentration(defenderId); // Оновлюємо значення
 
-            if (defenderStats.Concentration >= CONCENTRATION_COST_BLOCK)
+            if (defenderConcentration >= CONCENTRATION_COST_BLOCK)
             {
-                isBlocked = UnityEngine.Random.value <= defenderStats.BlockChance;
+                float blockChance = _combatIntegration.GetBlockChance(defenderId);
+                isBlocked = UnityEngine.Random.value <= blockChance;
 
                 if (isBlocked)
                 {
                     // Віднімаємо концентрацію при блокуванні
-                    float oldConcentration = defenderStats.Concentration;
-                    defenderStats.Concentration -= CONCENTRATION_COST_BLOCK;
-                    _entityManager.AddComponent(defenderId, defenderStats);
+                    float oldConcentration = defenderConcentration;
+                    float newConcentration = defenderConcentration - CONCENTRATION_COST_BLOCK;
+                    _combatIntegration.SetConcentration(defenderId, newConcentration);
 
                     // Публікуємо подію про зміну концентрації
                     Publish(new ConcentrationUpdatedEvent
                     {
                         EntityId = defenderId,
                         OldValue = oldConcentration,
-                        NewValue = defenderStats.Concentration,
+                        NewValue = newConcentration,
                         Timestamp = DateTime.UtcNow
                     });
                 }
             }
 
             // Визначаємо, чи критичний удар
-            bool isCritical = UnityEngine.Random.value <= attackerStats.CriticalChance;
+            float critChance = _combatIntegration.GetCriticalChance(attackerId);
+            bool isCritical = UnityEngine.Random.value <= critChance;
 
             // Перевіряємо, чи наповнена шкала люті для критичного удару
-            if (attackerStats.Rage >= attackerStats.MaxRage)
+            float attackerRage = _combatIntegration.GetRage(attackerId);
+            float maxRage = _combatIntegration.GetMaxRage(attackerId);
+
+            if (attackerRage >= maxRage)
             {
                 isCritical = true;
 
                 // Обнуляємо лють після критичного удару
-                float oldRage = attackerStats.Rage;
-                attackerStats.Rage = 0f;
-                _entityManager.AddComponent(attackerId, attackerStats);
+                _combatIntegration.SetRage(attackerId, 0f);
 
                 // Публікуємо подію про зміну люті
                 Publish(new RageUpdatedEvent
                 {
                     EntityId = attackerId,
-                    OldValue = oldRage,
+                    OldValue = attackerRage,
                     NewValue = 0f,
                     Timestamp = DateTime.UtcNow
                 });
             }
 
             // Розраховуємо базовий урон
-            float baseDamage = attackerStats.AttackPower;
+            float baseDamage = _combatIntegration.GetAttackPower(attackerId);
 
             // Модифікуємо урон залежно від критичного удару
-            float damageMultiplier = isCritical ? attackerStats.CriticalMultiplier : 1f;
+            float critMultiplier = _combatIntegration.GetCriticalMultiplier(attackerId);
+            float damageMultiplier = isCritical ? critMultiplier : 1f;
 
             // Модифікуємо урон залежно від блокування
             if (isBlocked)
@@ -592,7 +544,8 @@ namespace MythHunter.Systems.Combat
             }
 
             // Розраховуємо фінальний урон з урахуванням захисту
-            float finalDamage = (baseDamage * damageMultiplier) * (100f / (100f + defenderStats.Defense));
+            float defense = _combatIntegration.GetDefense(defenderId);
+            float finalDamage = (baseDamage * damageMultiplier) * (100f / (100f + defense));
 
             // Запобігаємо від'ємному урону
             finalDamage = Mathf.Max(1f, finalDamage);
@@ -608,73 +561,62 @@ namespace MythHunter.Systems.Combat
 
         private void UpdateCombatResources(float deltaTime)
         {
-            // Отримуємо всі сутності з компонентом бою
-            int[] entities = _entityManager.GetEntitiesWith<CombatStatsComponent>();
+            // Отримуємо всі сутності з компонентами бою
+            var entities = _combatIntegration.GetEntitiesWithCombatComponents();
 
             foreach (int entityId in entities)
             {
-                if (_entityManager.HasComponent<CombatStatsComponent>(entityId))
+                float oldRage = _combatIntegration.GetRage(entityId);
+                float oldConcentration = _combatIntegration.GetConcentration(entityId);
+
+                // Оновлюємо лють (зменшується з часом, якщо в бою)
+                if (_combatIntegration.IsInCombat(entityId))
                 {
-                    CombatStatsComponent stats = _entityManager.GetComponent<CombatStatsComponent>(entityId);
-                    float oldRage = stats.Rage;
-                    float oldConcentration = stats.Concentration;
+                    float newRage = Mathf.Max(0f, oldRage - (RAGE_DECAY_RATE * deltaTime));
+                    _combatIntegration.SetRage(entityId, newRage);
+                }
 
-                    // Оновлюємо лють (зменшується з часом)
-                    if (stats.IsInCombat)
+                // Оновлюємо концентрацію (регенерується з часом)
+                float maxConcentration = _combatIntegration.GetMaxConcentration(entityId);
+                float newConcentration = Mathf.Min(maxConcentration, oldConcentration + (CONCENTRATION_REGEN_RATE * deltaTime));
+                _combatIntegration.SetConcentration(entityId, newConcentration);
+
+                // Публікуємо події про зміну ресурсів, якщо вони значно змінилися
+                float currentRage = _combatIntegration.GetRage(entityId);
+                float currentConcentration = _combatIntegration.GetConcentration(entityId);
+
+                if (Mathf.Abs(oldRage - currentRage) > 1f)
+                {
+                    Publish(new RageUpdatedEvent
                     {
-                        stats.Rage = Mathf.Max(0f, stats.Rage - (RAGE_DECAY_RATE * deltaTime));
-                    }
+                        EntityId = entityId,
+                        OldValue = oldRage,
+                        NewValue = currentRage,
+                        Timestamp = DateTime.UtcNow
+                    });
+                }
 
-                    // Оновлюємо концентрацію (регенерується з часом)
-                    stats.Concentration = Mathf.Min(stats.MaxConcentration, stats.Concentration + (CONCENTRATION_REGEN_RATE * deltaTime));
-
-                    // Застосовуємо зміни
-                    _entityManager.AddComponent(entityId, stats);
-
-                    // Публікуємо події про зміну ресурсів, якщо вони значно змінилися
-                    if (Mathf.Abs(oldRage - stats.Rage) > 1f)
+                if (Mathf.Abs(oldConcentration - currentConcentration) > 1f)
+                {
+                    Publish(new ConcentrationUpdatedEvent
                     {
-                        Publish(new RageUpdatedEvent
-                        {
-                            EntityId = entityId,
-                            OldValue = oldRage,
-                            NewValue = stats.Rage,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
-
-                    if (Mathf.Abs(oldConcentration - stats.Concentration) > 1f)
-                    {
-                        Publish(new ConcentrationUpdatedEvent
-                        {
-                            EntityId = entityId,
-                            OldValue = oldConcentration,
-                            NewValue = stats.Concentration,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
+                        EntityId = entityId,
+                        OldValue = oldConcentration,
+                        NewValue = currentConcentration,
+                        Timestamp = DateTime.UtcNow
+                    });
                 }
             }
         }
 
         public bool IsEntityInCombat(int entityId)
         {
-            if (_entityManager.HasComponent<CombatStatsComponent>(entityId))
-            {
-                return _entityManager.GetComponent<CombatStatsComponent>(entityId).IsInCombat;
-            }
-
-            return false;
+            return _combatIntegration.IsInCombat(entityId);
         }
 
         public int GetEntityCombatTarget(int entityId)
         {
-            if (_entityManager.HasComponent<CombatStatsComponent>(entityId))
-            {
-                return _entityManager.GetComponent<CombatStatsComponent>(entityId).CombatTargetEntityId;
-            }
-
-            return -1;
+            return _combatIntegration.GetCombatTarget(entityId);
         }
 
         public float ApplyDamage(int sourceEntityId, int targetEntityId, float amount, Events.Domain.DamageType damageType)
@@ -717,32 +659,27 @@ namespace MythHunter.Systems.Combat
             _entityManager.AddComponent(targetEntityId, health);
 
             // Визначаємо критичне попадання
-            bool isCritical = false;
-            if (_entityManager.HasComponent<CombatStatsComponent>(sourceEntityId))
-            {
-                CombatStatsComponent sourceStats = _entityManager.GetComponent<CombatStatsComponent>(sourceEntityId);
-                isCritical = UnityEngine.Random.value <= sourceStats.CriticalChance || sourceStats.Rage >= sourceStats.MaxRage;
-            }
+            float critChance = _combatIntegration.GetCriticalChance(sourceEntityId);
+            float sourceRage = _combatIntegration.GetRage(sourceEntityId);
+            float sourceMaxRage = _combatIntegration.GetMaxRage(sourceEntityId);
+            bool isCritical = UnityEngine.Random.value <= critChance || sourceRage >= sourceMaxRage;
 
             // Визначаємо, чи була атака заблокована або ухилена
             bool isBlocked = false;
             bool isDodged = false;
 
-            if (_entityManager.HasComponent<CombatStatsComponent>(targetEntityId))
+            float targetConcentration = _combatIntegration.GetConcentration(targetEntityId);
+            float blockChance = _combatIntegration.GetBlockChance(targetEntityId);
+            float dodgeChance = _combatIntegration.GetDodgeChance(targetEntityId);
+
+            if (targetConcentration >= CONCENTRATION_COST_BLOCK)
             {
-                // Шлях: Assets/_MythHunter/Code/Systems/Combat/CombatSystem.cs (продовження)
+                isBlocked = UnityEngine.Random.value <= blockChance;
+            }
 
-                CombatStatsComponent targetStats = _entityManager.GetComponent<CombatStatsComponent>(targetEntityId);
-
-                if (targetStats.Concentration >= CONCENTRATION_COST_BLOCK)
-                {
-                    isBlocked = UnityEngine.Random.value <= targetStats.BlockChance;
-                }
-
-                if (targetStats.Concentration >= CONCENTRATION_COST_DODGE && !isBlocked)
-                {
-                    isDodged = UnityEngine.Random.value <= targetStats.DodgeChance;
-                }
+            if (targetConcentration >= CONCENTRATION_COST_DODGE && !isBlocked)
+            {
+                isDodged = UnityEngine.Random.value <= dodgeChance;
             }
 
             // Публікуємо подію про нанесення пошкодження
@@ -819,9 +756,23 @@ namespace MythHunter.Systems.Combat
 
         public void UpdateCombatStatsBasedOnStance(int entityId)
         {
-            if (!_entityManager.HasComponent<CombatStyleComponent>(entityId) ||
-                !_entityManager.HasComponent<CombatStatsComponent>(entityId))
+            // TODO EPIC 12 Phase 3: This method needs to be redesigned to use StatModifiers
+            // instead of directly modifying base stats. For now, it only works with old components.
+            // New components should use the modifier system from RPGFramework.Stats.
+
+            if (!_entityManager.HasComponent<CombatStyleComponent>(entityId))
             {
+                return;
+            }
+
+            // Only apply stance modifiers to old components
+            // New components should use stat modifiers instead
+            if (!_entityManager.HasComponent<CombatStatsComponent>(entityId))
+            {
+                _logger.LogWarning(
+                    $"UpdateCombatStatsBasedOnStance called for entity {entityId} with new components. " +
+                    "This method is deprecated for new components - use stat modifiers instead.",
+                    "Combat");
                 return;
             }
 
@@ -861,12 +812,6 @@ namespace MythHunter.Systems.Combat
 
         public float ExchangeRageForConcentration(int entityId, float rageAmount)
         {
-            if (!_entityManager.HasComponent<CombatStatsComponent>(entityId))
-            {
-                _logger.LogWarning($"Cannot exchange rage for entity {entityId}: it has no CombatStatsComponent", "Combat");
-                return 0f;
-            }
-
             // Перевіряємо, чи пройшов кулдаун
             float currentTime = Time.time;
 
@@ -877,10 +822,13 @@ namespace MythHunter.Systems.Combat
                 return 0f;
             }
 
-            CombatStatsComponent stats = _entityManager.GetComponent<CombatStatsComponent>(entityId);
+            // Отримуємо поточні значення
+            float currentRage = _combatIntegration.GetRage(entityId);
+            float currentConcentration = _combatIntegration.GetConcentration(entityId);
+            float maxConcentration = _combatIntegration.GetMaxConcentration(entityId);
 
             // Обмежуємо кількість люті для обміну
-            float actualRageAmount = Mathf.Min(rageAmount, stats.Rage);
+            float actualRageAmount = Mathf.Min(rageAmount, currentRage);
 
             if (actualRageAmount <= 0f)
             {
@@ -894,14 +842,11 @@ namespace MythHunter.Systems.Combat
             float concentrationGained = actualRageAmount * EXCHANGE_RATE;
 
             // Оновлюємо значення люті та концентрації
-            float oldRage = stats.Rage;
-            float oldConcentration = stats.Concentration;
+            float newRage = currentRage - actualRageAmount;
+            float newConcentration = Mathf.Min(maxConcentration, currentConcentration + concentrationGained);
 
-            stats.Rage -= actualRageAmount;
-            stats.Concentration = Mathf.Min(stats.MaxConcentration, stats.Concentration + concentrationGained);
-
-            // Оновлюємо компонент
-            _entityManager.AddComponent(entityId, stats);
+            _combatIntegration.SetRage(entityId, newRage);
+            _combatIntegration.SetConcentration(entityId, newConcentration);
 
             // Запам'ятовуємо час обміну
             _lastRageExchangeTime[entityId] = currentTime;
@@ -910,16 +855,16 @@ namespace MythHunter.Systems.Combat
             Publish(new RageUpdatedEvent
             {
                 EntityId = entityId,
-                OldValue = oldRage,
-                NewValue = stats.Rage,
+                OldValue = currentRage,
+                NewValue = newRage,
                 Timestamp = DateTime.UtcNow
             });
 
             Publish(new ConcentrationUpdatedEvent
             {
                 EntityId = entityId,
-                OldValue = oldConcentration,
-                NewValue = stats.Concentration,
+                OldValue = currentConcentration,
+                NewValue = newConcentration,
                 Timestamp = DateTime.UtcNow
             });
 

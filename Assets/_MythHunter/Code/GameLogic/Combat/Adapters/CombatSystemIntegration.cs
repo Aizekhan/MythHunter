@@ -224,6 +224,86 @@ namespace MythHunter.GameLogic.Combat.Adapters
             return 0.05f;
         }
 
+        /// <summary>
+        /// Get critical multiplier for entity
+        /// </summary>
+        public float GetCriticalMultiplier(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterStatsComponent>(entityId, out var stats))
+            {
+                return stats.Stats.GetFinalStat(CombatStatType.CriticalMultiplier);
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.CriticalMultiplier;
+            }
+
+            return 1.5f;
+        }
+
+        /// <summary>
+        /// Get accuracy for entity
+        /// </summary>
+        public float GetAccuracy(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterStatsComponent>(entityId, out var stats))
+            {
+                return stats.Stats.GetFinalStat(CombatStatType.Accuracy);
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.Accuracy;
+            }
+
+            return 0.9f;
+        }
+
+        /// <summary>
+        /// Get dodge chance for entity
+        /// </summary>
+        public float GetDodgeChance(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterStatsComponent>(entityId, out var stats))
+            {
+                return stats.Stats.GetFinalStat(CombatStatType.DodgeChance);
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.DodgeChance;
+            }
+
+            return 0.1f;
+        }
+
+        /// <summary>
+        /// Get block chance for entity
+        /// </summary>
+        public float GetBlockChance(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterStatsComponent>(entityId, out var stats))
+            {
+                return stats.Stats.GetFinalStat(CombatStatType.BlockChance);
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.BlockChance;
+            }
+
+            return 0.15f;
+        }
+
         #endregion
 
         #region Resource Helpers
@@ -304,6 +384,86 @@ namespace MythHunter.GameLogic.Combat.Adapters
             if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
             {
                 oldStats.Concentration = UnityEngine.Mathf.Min(oldStats.MaxConcentration, oldStats.Concentration + amount);
+                _entityManager.AddComponent(entityId, oldStats);
+            }
+        }
+
+        /// <summary>
+        /// Get max rage for entity
+        /// </summary>
+        public float GetMaxRage(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
+            {
+                return resources.RageMax;
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.MaxRage;
+            }
+
+            return 100f;
+        }
+
+        /// <summary>
+        /// Get max concentration for entity
+        /// </summary>
+        public float GetMaxConcentration(int entityId)
+        {
+            // Try new component first
+            if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
+            {
+                return resources.ConcentrationMax;
+            }
+
+            // Fallback to old component
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                return oldStats.MaxConcentration;
+            }
+
+            return 100f;
+        }
+
+        /// <summary>
+        /// Set rage for entity (clamped to max)
+        /// </summary>
+        public void SetRage(int entityId, float value)
+        {
+            // Update new component if exists
+            if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
+            {
+                resources.RageCurrent = UnityEngine.Mathf.Clamp(value, 0f, resources.RageMax);
+                _entityManager.AddComponent(entityId, resources);
+            }
+
+            // Update old component if exists
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                oldStats.Rage = UnityEngine.Mathf.Clamp(value, 0f, oldStats.MaxRage);
+                _entityManager.AddComponent(entityId, oldStats);
+            }
+        }
+
+        /// <summary>
+        /// Set concentration for entity (clamped to max)
+        /// </summary>
+        public void SetConcentration(int entityId, float value)
+        {
+            // Update new component if exists
+            if (_entityManager.TryGetComponent<MythHunterResourceComponent>(entityId, out var resources))
+            {
+                resources.ConcentrationCurrent = UnityEngine.Mathf.Clamp(value, 0f, resources.ConcentrationMax);
+                _entityManager.AddComponent(entityId, resources);
+            }
+
+            // Update old component if exists
+            if (_entityManager.TryGetComponent<CombatStatsComponent>(entityId, out var oldStats))
+            {
+                oldStats.Concentration = UnityEngine.Mathf.Clamp(value, 0f, oldStats.MaxConcentration);
                 _entityManager.AddComponent(entityId, oldStats);
             }
         }
@@ -402,6 +562,30 @@ namespace MythHunter.GameLogic.Combat.Adapters
         public bool HasOldComponents(int entityId)
         {
             return _entityManager.HasComponent<CombatStatsComponent>(entityId);
+        }
+
+        /// <summary>
+        /// Get all entities with combat components (either old or new)
+        /// </summary>
+        public System.Collections.Generic.IEnumerable<int> GetEntitiesWithCombatComponents()
+        {
+            var entities = new System.Collections.Generic.HashSet<int>();
+
+            // Get entities with new components
+            var newEntities = _entityManager.GetEntitiesWith<CombatStateComponent>();
+            foreach (var entityId in newEntities)
+            {
+                entities.Add(entityId);
+            }
+
+            // Get entities with old components
+            var oldEntities = _entityManager.GetEntitiesWith<CombatStatsComponent>();
+            foreach (var entityId in oldEntities)
+            {
+                entities.Add(entityId);
+            }
+
+            return entities;
         }
 
         #endregion
