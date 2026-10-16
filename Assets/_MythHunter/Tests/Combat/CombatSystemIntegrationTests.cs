@@ -1,11 +1,11 @@
 // Assets/_MythHunter/Tests/Combat/CombatSystemIntegrationTests.cs
 using NUnit.Framework;
 using MythHunter.Components.Combat;
-using MythHunter.Core.ECS;
 using MythHunter.GameLogic.Combat;
 using MythHunter.GameLogic.Combat.Adapters;
 using MythHunter.Utils.Logging;
 using RPGFramework.Combat;
+using RPGFramework.ECS;
 
 namespace MythHunter.Tests.Combat
 {

@@ -1,8 +1,8 @@
 // Assets/_MythHunter/Code/GameLogic/Combat/Migration/CombatComponentMigration.cs
 using MythHunter.Components.Combat;
 using MythHunter.Core.DI;
-using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
+using RPGFramework.ECS;
 using System.Collections.Generic;
 
 namespace MythHunter.GameLogic.Combat.Migration

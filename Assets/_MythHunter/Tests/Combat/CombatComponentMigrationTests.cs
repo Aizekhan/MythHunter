@@ -1,10 +1,10 @@
 // Assets/_MythHunter/Tests/Combat/CombatComponentMigrationTests.cs
 using NUnit.Framework;
 using MythHunter.Components.Combat;
-using MythHunter.Core.ECS;
 using MythHunter.GameLogic.Combat;
 using MythHunter.GameLogic.Combat.Migration;
 using MythHunter.Utils.Logging;
+using RPGFramework.ECS;
 
 namespace MythHunter.Tests.Combat
 {

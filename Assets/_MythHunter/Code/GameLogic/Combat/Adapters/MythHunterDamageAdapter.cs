@@ -1,9 +1,9 @@
 // Assets/_MythHunter/Code/GameLogic/Combat/Adapters/MythHunterDamageAdapter.cs
 using MythHunter.Components.Combat;
 using MythHunter.Core.DI;
-using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
 using RPGFramework.Combat;
+using RPGFramework.ECS;
 
 namespace MythHunter.GameLogic.Combat.Adapters
 {

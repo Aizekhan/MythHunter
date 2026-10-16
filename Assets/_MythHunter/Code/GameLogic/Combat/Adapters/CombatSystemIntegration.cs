@@ -1,8 +1,8 @@
 // Assets/_MythHunter/Code/GameLogic/Combat/Adapters/CombatSystemIntegration.cs
 using MythHunter.Components.Combat;
 using MythHunter.Core.DI;
-using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
+using RPGFramework.ECS;
 
 namespace MythHunter.GameLogic.Combat.Adapters
 {
