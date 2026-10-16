@@ -1,0 +1,28 @@
+{
+    "name": "MythHunter.Combat.Tests",
+    "rootNamespace": "MythHunter.Tests.Combat",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "MythHunter.Core",
+        "MythHunter.GameLogic",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Stats.Runtime",
+        "RPGFramework.Combat.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

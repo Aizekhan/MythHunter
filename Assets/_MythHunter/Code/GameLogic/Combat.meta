@@ -1,0 +1,8 @@
+fileFormatVersion: 2
+guid: $(uuidgen | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/-//g')
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
