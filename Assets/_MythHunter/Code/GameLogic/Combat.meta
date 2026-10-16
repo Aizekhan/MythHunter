@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: $(uuidgen | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/-//g')
+guid: 8b8121846ba54f9b81cb7dd1858ec6f1
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
