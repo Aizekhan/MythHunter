@@ -30,7 +30,7 @@ namespace MythHunter.GameLogic.Combat.Migration
         /// <returns>Number of entities migrated</returns>
         public int MigrateAllEntities()
         {
-            var entities = _entityManager.GetEntitiesWithComponent<CombatStatsComponent>();
+            var entities = _entityManager.GetEntitiesWith<CombatStatsComponent>();
             int migratedCount = 0;
 
             foreach (var entityId in entities)
@@ -128,7 +128,7 @@ namespace MythHunter.GameLogic.Combat.Migration
         public int RemoveOldComponents()
         {
             int removedCount = 0;
-            var entities = _entityManager.GetEntitiesWithComponent<CombatStatsComponent>();
+            var entities = _entityManager.GetEntitiesWith<CombatStatsComponent>();
 
             foreach (var entityId in entities)
             {
@@ -209,8 +209,8 @@ namespace MythHunter.GameLogic.Combat.Migration
             var allEntities = new List<int>();
 
             // Get all entities with old or new components
-            var oldEntities = _entityManager.GetEntitiesWithComponent<CombatStatsComponent>();
-            var newEntities = _entityManager.GetEntitiesWithComponent<MythHunterStatsComponent>();
+            var oldEntities = _entityManager.GetEntitiesWith<CombatStatsComponent>();
+            var newEntities = _entityManager.GetEntitiesWith<MythHunterStatsComponent>();
 
             allEntities.AddRange(oldEntities);
             allEntities.AddRange(newEntities);

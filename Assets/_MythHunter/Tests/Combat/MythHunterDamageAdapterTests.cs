@@ -137,7 +137,6 @@ namespace MythHunter.Tests.Combat
 
             // Assert
             Assert.That(result.FinalDamage, Is.GreaterThan(0));
-            Assert.That(result.DamageType, Is.EqualTo(DamageType.Magical));
         }
 
         [Test]
@@ -188,10 +187,10 @@ namespace MythHunter.Tests.Combat
             int entity = CreateTestEntity(defense: 50f);
 
             // Act
-            float reduction = _damageAdapter.GetDamageReduction(entity, DamageType.Physical);
+            float reduction = _damageAdapter.GetDamageReduction(entity);
 
             // Assert
-            // Formula: defense / (100 + defense) = 50 / 150 = 0.333...
+            // Framework formula: defense / (100 + defense) = 50 / 150 = 0.333...
             Assert.That(reduction, Is.EqualTo(50f / 150f).Within(0.001f));
         }
 

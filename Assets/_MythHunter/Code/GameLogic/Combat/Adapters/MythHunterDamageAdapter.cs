@@ -40,7 +40,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             int targetEntityId,
             float damageMultiplier = 1.0f)
         {
-            return ApplyDamage(attackerEntityId, targetEntityId, DamageType.Physical, damageMultiplier);
+            return ApplyDamage(attackerEntityId, targetEntityId, damageMultiplier);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             int targetEntityId,
             float damageMultiplier = 1.0f)
         {
-            return ApplyDamage(attackerEntityId, targetEntityId, DamageType.Magical, damageMultiplier);
+            return ApplyDamage(attackerEntityId, targetEntityId, damageMultiplier);
         }
 
         /// <summary>
@@ -59,30 +59,15 @@ namespace MythHunter.GameLogic.Combat.Adapters
         /// </summary>
         /// <param name="attackerEntityId">Entity dealing damage</param>
         /// <param name="targetEntityId">Entity receiving damage</param>
-        /// <param name="damageType">Type of damage (Physical, Magical, Pure)</param>
         /// <param name="damageMultiplier">Damage multiplier (default 1.0)</param>
         /// <param name="armorPenetration">Armor penetration percentage (default 0)</param>
         /// <returns>Damage calculation result</returns>
         public DamageResult ApplyDamage(
             int attackerEntityId,
             int targetEntityId,
-            DamageType damageType,
             float damageMultiplier = 1.0f,
             float armorPenetration = 0f)
         {
-            // Validate entities exist
-            if (!_entityManager.EntityExists(attackerEntityId))
-            {
-                _logger.LogWarning($"Attacker entity {attackerEntityId} does not exist", "DamageAdapter");
-                return default;
-            }
-
-            if (!_entityManager.EntityExists(targetEntityId))
-            {
-                _logger.LogWarning($"Target entity {targetEntityId} does not exist", "DamageAdapter");
-                return default;
-            }
-
             // Get attacker stats
             if (!_entityManager.TryGetComponent<MythHunterStatsComponent>(attackerEntityId, out var attackerStats))
             {
@@ -110,14 +95,14 @@ namespace MythHunter.GameLogic.Combat.Adapters
             float defense = targetStats.Stats.GetFinalStat(CombatStatType.Defense);
 
             // Calculate damage using Framework DamageCalculator
-            DamageResult result = _damageCalculator.CalculateDamage(
+            float[] multipliers = damageMultiplier != 1.0f ? new float[] { damageMultiplier } : null;
+            DamageResult result = _damageCalculator.CalculateDamageWithResult(
                 baseDamage,
                 defense,
-                damageType,
-                damageMultiplier,
-                armorPenetration,
                 critChance,
-                critMultiplier
+                critMultiplier,
+                multipliers,
+                armorPenetration
             );
 
             // Apply damage to target health
@@ -131,7 +116,7 @@ namespace MythHunter.GameLogic.Combat.Adapters
             // Log damage details
             _logger.LogInfo(
                 $"Damage: {attackerEntityId} → {targetEntityId}: " +
-                $"{result.FinalDamage:F1} ({damageType})" +
+                $"{result.FinalDamage:F1}" +
                 $"{(result.IsCritical ? " CRIT!" : "")} " +
                 $"[HP: {currentHealth:F1} → {newHealth:F1}]",
                 "Combat");
@@ -153,16 +138,15 @@ namespace MythHunter.GameLogic.Combat.Adapters
         /// <summary>
         /// Get effective damage reduction from defense (percentage)
         /// </summary>
-        public float GetDamageReduction(int entityId, DamageType damageType)
+        public float GetDamageReduction(int entityId)
         {
             if (!_entityManager.TryGetComponent<MythHunterStatsComponent>(entityId, out var stats))
                 return 0f;
 
             float defense = stats.Stats.GetFinalStat(CombatStatType.Defense);
 
-            // Framework damage formula: damage * (100 / (100 + defense))
-            // Reduction: 1 - (100 / (100 + defense)) = defense / (100 + defense)
-            return defense / (100f + defense);
+            // Use Framework's damage reduction calculation
+            return _damageCalculator.CalculateDamageReduction(defense);
         }
     }
 }
