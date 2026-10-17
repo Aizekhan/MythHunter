@@ -54,12 +54,12 @@ namespace MythHunter.GameLogic.Progression.Components
         /// Create progression component for hero starting at level 1.
         /// Heroes start with no unlocks (will gain them through leveling).
         /// </summary>
-        /// <param name="xpToLevel2">XP required for level 2 (from level table)</param>
-        public static MythHunterProgressionComponent CreateHero(long xpToLevel2)
+        /// <param name="totalXP">Total XP accumulated (determines current level)</param>
+        public static MythHunterProgressionComponent CreateHero(long totalXP)
         {
             return new MythHunterProgressionComponent
             {
-                ExperienceData = new ExperienceData(1, 0, 0, xpToLevel2),
+                ExperienceData = new ExperienceData(1, 0, totalXP, 0), // XPToNextLevel calculated by integration
                 UnlockedContent = new List<string>(),
                 StatValues = new Dictionary<string, float>(),
                 LastXPGainTime = 0f,

@@ -66,8 +66,19 @@ namespace MythHunter.Tests.Progression
         private int CreateEntityWithProgression(int startingLevel = 1)
         {
             int entityId = _entityManager.CreateEntity();
-            long xp = _levelTable.GetTotalXPForLevel(startingLevel);
-            var component = MythHunterProgressionComponent.CreateHero(xp);
+            long totalXP = _levelTable.GetTotalXPForLevel(startingLevel);
+            long xpToNext = startingLevel < 100 ? _levelTable.GetXPForNextLevel(startingLevel) : 0;
+
+            var component = new MythHunterProgressionComponent
+            {
+                ExperienceData = new RPGFramework.Progression.ExperienceData(startingLevel, 0, totalXP, xpToNext),
+                UnlockedContent = new System.Collections.Generic.List<string>(),
+                StatValues = new System.Collections.Generic.Dictionary<string, float>(),
+                LastXPGainTime = 0f,
+                TotalXPFromKills = 0,
+                TotalXPFromQuests = 0
+            };
+
             _entityManager.AddComponent(entityId, component);
 
             return entityId;
