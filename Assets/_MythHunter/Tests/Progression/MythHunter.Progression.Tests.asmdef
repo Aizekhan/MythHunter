@@ -2,8 +2,10 @@
     "name": "MythHunter.Progression.Tests",
     "rootNamespace": "MythHunter.Tests.Progression",
     "references": [
-        "GUID:9ab0b1bbfc7e4a4eaee3000000000003",
-        "GUID:2f0a76a9f98c11f42830c8f8e72a9bb9"
+        "MythHunter.Runtime",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Progression.Runtime",
+        "RPGFramework.Logging.Runtime"
     ],
     "includePlatforms": [
         "Editor"

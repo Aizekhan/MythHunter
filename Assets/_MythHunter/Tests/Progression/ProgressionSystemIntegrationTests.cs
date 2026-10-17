@@ -70,9 +70,6 @@ namespace MythHunter.Tests.Progression
             var component = MythHunterProgressionComponent.CreateHero(xp);
             _entityManager.AddComponent(entityId, component);
 
-            // Initialize tracker
-            _progressionTracker.InitializeEntity(entityId, _levelTable);
-
             return entityId;
         }
 
@@ -255,7 +252,7 @@ namespace MythHunter.Tests.Progression
             var data = _integration.GetProgressionData(entityId);
 
             // Assert
-            Assert.That(data.CurrentLevel, Is.EqualTo(5));
+            Assert.That(data.Level, Is.EqualTo(5));
             Assert.That(data.TotalXP, Is.EqualTo(xpForLevel5));
         }
 
@@ -286,13 +283,13 @@ namespace MythHunter.Tests.Progression
             int entity3 = CreateEntityWithProgression(10);
 
             // Act
-            var entitiesAtLevel5 = _integration.GetEntitiesAtLevel(5);
+            List<int> entitiesAtLevel5 = _integration.GetEntitiesAtLevel(5);
 
             // Assert
-            Assert.That(entitiesAtLevel5, Has.Count.EqualTo(2));
-            Assert.That(entitiesAtLevel5, Contains.Item(entity1));
-            Assert.That(entitiesAtLevel5, Contains.Item(entity2));
-            Assert.That(entitiesAtLevel5, Does.Not.Contain(entity3));
+            Assert.That(entitiesAtLevel5.Count, Is.EqualTo(2));
+            Assert.That(entitiesAtLevel5, Has.Member(entity1));
+            Assert.That(entitiesAtLevel5, Has.Member(entity2));
+            Assert.That(entitiesAtLevel5, Has.No.Member(entity3));
         }
 
         [Test]
@@ -305,14 +302,14 @@ namespace MythHunter.Tests.Progression
             int entity4 = CreateEntityWithProgression(20);
 
             // Act
-            var entitiesInRange = _integration.GetEntitiesInLevelRange(10, 15);
+            List<int> entitiesInRange = _integration.GetEntitiesInLevelRange(10, 15);
 
             // Assert
-            Assert.That(entitiesInRange, Has.Count.EqualTo(2));
-            Assert.That(entitiesInRange, Contains.Item(entity2));
-            Assert.That(entitiesInRange, Contains.Item(entity3));
-            Assert.That(entitiesInRange, Does.Not.Contain(entity1));
-            Assert.That(entitiesInRange, Does.Not.Contain(entity4));
+            Assert.That(entitiesInRange.Count, Is.EqualTo(2));
+            Assert.That(entitiesInRange, Has.Member(entity2));
+            Assert.That(entitiesInRange, Has.Member(entity3));
+            Assert.That(entitiesInRange, Has.No.Member(entity1));
+            Assert.That(entitiesInRange, Has.No.Member(entity4));
         }
 
         #endregion
@@ -428,7 +425,7 @@ namespace MythHunter.Tests.Progression
             var component = MythHunterProgressionComponent.CreateEnemy(5, 1000);
 
             // Assert
-            Assert.That(component.ExperienceData.CurrentLevel, Is.EqualTo(5));
+            Assert.That(component.ExperienceData.Level, Is.EqualTo(5));
             Assert.That(component.ExperienceData.TotalXP, Is.EqualTo(1000));
         }
 
@@ -442,7 +439,7 @@ namespace MythHunter.Tests.Progression
             var component = MythHunterProgressionComponent.CreateNPC(10, 5000, unlocks);
 
             // Assert
-            Assert.That(component.ExperienceData.CurrentLevel, Is.EqualTo(10));
+            Assert.That(component.ExperienceData.Level, Is.EqualTo(10));
             Assert.That(component.UnlockedContent, Has.Count.EqualTo(2));
             Assert.That(component.UnlockedContent, Contains.Item("ability_talk"));
         }
