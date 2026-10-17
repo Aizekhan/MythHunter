@@ -12,6 +12,7 @@
         "RPGFramework.Loot.Runtime",
         "RPGFramework.Abilities.Runtime",
         "RPGFramework.Progression.Runtime",
+        "RPGFramework.Skills.Runtime",
         "RPGFramework.DeltaCompression.Runtime",
         "RPGFramework.Serialization.Runtime",
         "RPGFramework.Pooling.Runtime",
