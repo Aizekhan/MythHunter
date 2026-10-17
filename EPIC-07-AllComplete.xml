@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="60" result="Skipped:Ignored" total="60" passed="56" failed="0" inconclusive="0" skipped="4" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1,5538467">
+  <test-suite type="TestSuite" id="1000" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="60" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.553847" total="60" passed="56" failed="0" inconclusive="0" skipped="4" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <reason>
+      <message><![CDATA[One or more child tests were ignored]]></message>
+    </reason>
+    <test-suite type="Assembly" id="1010" name="Assembly-CSharp-Editor.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/Assembly-CSharp-Editor.dll" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.280161" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="17468" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1011" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.279478" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1012" name="ECS" fullname="RPGFramework.ECS" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.278238" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1013" name="Tests" fullname="RPGFramework.ECS.Tests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.277868" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="ModularCompositionTests" fullname="RPGFramework.ECS.Tests.ModularCompositionTests" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.276187" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties>
+                <property name="Category" value="Architecture" />
+                <property name="Category" value="Composition" />
+              </properties>
+              <test-case id="1002" name="FrameworkCoreModule_CanBeInstantiated" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.FrameworkCoreModule_CanBeInstantiated" methodname="FrameworkCoreModule_CanBeInstantiated" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="1721719749" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.022662" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="GameCompositionBuilder_CanBuildMinimalComposition" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.GameCompositionBuilder_CanBuildMinimalComposition" methodname="GameCompositionBuilder_CanBuildMinimalComposition" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="1173759013" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.064711" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#DDDDDD>23:42:33.173 📝 🐞 <b>[DI]</b> Registered instance of IDIContainer [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.182 📝 🐞 <b>[DI]</b> Registered instance of ILogger [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.184 📝 🐞 <b>[DI]</b> Registered instance of IMythLogger [MythLogger.cs:LogDebug():219]</color>
+]]></output>
+              </test-case>
+              <test-case id="1009" name="GameCompositionBuilder_CanShutdownModules" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.GameCompositionBuilder_CanShutdownModules" methodname="GameCompositionBuilder_CanShutdownModules" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="1009426392" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.011740" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#DDDDDD>23:42:33.201 📝 🐞 <b>[DI]</b> Registered instance of IDIContainer [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.201 📝 🐞 <b>[DI]</b> Registered instance of ILogger [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.201 📝 🐞 <b>[DI]</b> Registered instance of IMythLogger [MythLogger.cs:LogDebug():219]</color>
+]]></output>
+              </test-case>
+              <test-case id="1008" name="GameCompositionBuilder_DetectsMissingDependency" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.GameCompositionBuilder_DetectsMissingDependency" methodname="GameCompositionBuilder_DetectsMissingDependency" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="83842207" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.015243" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#DDDDDD>23:42:33.217 📝 🐞 <b>[DI]</b> Registered instance of IDIContainer [MythLogger.cs:LogDebug():219]</color>
+]]></output>
+              </test-case>
+              <test-case id="1007" name="GameCompositionBuilder_ResolvesDependenciesInOrder" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.GameCompositionBuilder_ResolvesDependenciesInOrder" methodname="GameCompositionBuilder_ResolvesDependenciesInOrder" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="1190704145" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.121148" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#DDDDDD>23:42:33.239 📝 🐞 <b>[DI]</b> Registered instance of IDIContainer [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.241 📝 🐞 <b>[DI]</b> Registered instance of ILogger [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.241 📝 🐞 <b>[DI]</b> Registered instance of IMythLogger [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.244 📝 🐞 <b>[DI]</b> Registered instance of EventNetworkMode [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.247 📝 ℹ️ <b>[FrameworkCoreInstaller]</b> Installing Framework Core services...</color>
+<color=#DDDDDD>23:42:33.250 📝 🐞 <b>[DI]</b> Registered Singleton EntityManager as IEntityManager [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.254 📝 🐞 <b>[DI]</b> Registered Singleton EcsWorld as IEcsWorld [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.257 📝 🐞 <b>[DI]</b> Registered Singleton EventPool as IEventPool [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.259 📝 🐞 <b>[DI]</b> Registered Singleton DILifecycleManager as IDILifecycleManager [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.261 📝 🐞 <b>[DI]</b> Registered Singleton SystemJobScheduler as ISystemJobScheduler [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.263 📝 🐞 <b>[DI]</b> Registered Singleton ParallelSystemRegistry as ISystemRegistry [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.266 📝 ℹ️ <b>[FrameworkCoreInstaller]</b> Framework Core services installed successfully</color>
+<color=#FFFFFF>23:42:33.268 📝 ℹ️ <b>[GameCoreInstaller]</b> Installing Game Core services...</color>
+<color=#DDDDDD>23:42:33.268 📝 🐞 <b>[DI]</b> Registered Singleton GameStateMachine as IGameStateMachine [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.272 📝 🐞 <b>[DI]</b> Registered Singleton GamePhaseProvider as IPhaseProvider [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.273 📝 🐞 <b>[DI]</b> Registered Singleton GameFlowManager as IGameFlowManager [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.275 📝 🐞 <b>[DI]</b> Registered Singleton SceneLoader as SceneLoader [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.278 📝 🐞 <b>[DI]</b> Registered Singleton SceneDispatcher as ISceneDispatcher [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.278 📝 🐞 <b>[DI]</b> Registered Singleton GameSettingsService as IGameSettingsService [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.280 📝 🐞 <b>[DI]</b> Registered Singleton AutoPreloadConfigurator as AutoPreloadConfigurator [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.285 📝 ℹ️ <b>[GameCoreInstaller]</b> Installing Event System...</color>
+<color=#DDDDDD>23:42:33.286 📝 🐞 <b>[DI]</b> Registered Singleton EventThrottler as IEventThrottler [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.289 📝 🐞 <b>[DI]</b> Registered Singleton EventThrottlerUpdateSystem as IEventThrottlerUpdateSystem [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.289 📝 🐞 <b>[DI]</b> Registered Singleton EventBatcher as IEventBatcher [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.292 📝 🐞 <b>[DI]</b> Registered Singleton EventStore as IEventStore [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.295 📝 ℹ️ <b>[GameCoreInstaller]</b> Event network synchronization disabled; using EventBus</color>
+<color=#DDDDDD>23:42:33.295 📝 🐞 <b>[DI]</b> Registered Singleton EventBus as IEventBus [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.318 🌐 🐞 <b>[General]</b> Subscribed to event PhaseChangedEvent with priority Normal [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.320 📝 🐞 <b>[Systems]</b> SystemRegistry subscribed to events [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.322 📝 ℹ️ <b>[Systems]</b> SystemRegistry initialized</color>
+<color=#DDDDDD>23:42:33.325 📝 🐞 <b>[DI]</b> Registered Singleton TimerSystem as ITimerSystem [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.327 📝 🐞 <b>[EventThrottler]</b> Registered throttle for event MythHunter.Events.Domain.TimerUpdatedEvent: interval=0,25, mode=DropIntermediate [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.327 📝 🐞 <b>[EventThrottler]</b> Registered throttle for event MythHunter.Events.Domain.PhaseUpdateEvent: interval=0,1, mode=DropIntermediate [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.333 📝 ℹ️ <b>[Systems]</b> Registered system: TimerSystem with priority 0, category OnDemand</color>
+<color=#DDDDDD>23:42:33.336 📝 🐞 <b>[DI]</b> Registered Transient EventLogger as EventLogger [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.338 📝 ℹ️ <b>[GameCoreInstaller]</b> Event System installed</color>
+<color=#FFFFFF>23:42:33.340 📝 ℹ️ <b>[Installer]</b> Встановлення розширень DI...</color>
+<color=#DDDDDD>23:42:33.342 📝 🐞 <b>[DI]</b> Registered Transient DependencyValidator as DependencyValidator [MythLogger.cs:LogDebug():219]</color>
+<color=#DDDDDD>23:42:33.343 📝 🐞 <b>[DI]</b> Set current DI scope to GlobalScope [MythLogger.cs:LogDebug():219]</color>
+<color=#FFFFFF>23:42:33.345 📝 ℹ️ <b>[Installer]</b> Розширення DI встановлено</color>
+<color=#FFFFFF>23:42:33.347 📝 ℹ️ <b>[Validation]</b> Starting dependency validation...</color>
+<color=#FFFFFF>23:42:33.356 📝 ℹ️ <b>[Validation]</b> Dependency validation completed with 0 issues</color>
+<color=#FFFFFF>23:42:33.359 📝 ℹ️ <b>[GameCoreInstaller]</b> Game Core services installed successfully</color>
+]]></output>
+              </test-case>
+              <test-case id="1003" name="GameLayerModule_DependsOnFrameworkCore" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.GameLayerModule_DependsOnFrameworkCore" methodname="GameLayerModule_DependsOnFrameworkCore" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="2019420025" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.000987" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="LobbyModule_DependsOnNetworking" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.LobbyModule_DependsOnNetworking" methodname="LobbyModule_DependsOnNetworking" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="2113599953" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.000427" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="NetworkingModule_DependsOnGameLayer" fullname="RPGFramework.ECS.Tests.ModularCompositionTests.NetworkingModule_DependsOnGameLayer" methodname="NetworkingModule_DependsOnGameLayer" classname="RPGFramework.ECS.Tests.ModularCompositionTests" runstate="Runnable" seed="1228788105" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.000497" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1054" name="MythHunter.DI.Characterization.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/MythHunter.DI.Characterization.Tests.dll" runstate="Runnable" testcasecount="36" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.008237" total="36" passed="32" failed="0" inconclusive="0" skipped="4" asserts="0">
+      <properties>
+        <property name="_PID" value="17468" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <reason>
+        <message><![CDATA[One or more child tests were ignored]]></message>
+      </reason>
+      <test-suite type="TestSuite" id="1055" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="36" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.005429" total="36" passed="32" failed="0" inconclusive="0" skipped="4" asserts="0">
+        <properties />
+        <reason>
+          <message><![CDATA[One or more child tests were ignored]]></message>
+        </reason>
+        <test-suite type="TestSuite" id="1056" name="DI" fullname="MythHunter.DI" runstate="Runnable" testcasecount="36" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.004540" total="36" passed="32" failed="0" inconclusive="0" skipped="4" asserts="0">
+          <properties />
+          <reason>
+            <message><![CDATA[One or more child tests were ignored]]></message>
+          </reason>
+          <test-suite type="TestSuite" id="1057" name="CharacterizationTests" fullname="MythHunter.DI.CharacterizationTests" runstate="Runnable" testcasecount="36" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.003595" total="36" passed="32" failed="0" inconclusive="0" skipped="4" asserts="0">
+            <properties />
+            <reason>
+              <message><![CDATA[One or more child tests were ignored]]></message>
+            </reason>
+            <test-suite type="TestFixture" id="1014" name="DIContainerCharacterizationTests" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" testcasecount="36" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="1.002165" total="36" passed="32" failed="0" inconclusive="0" skipped="4" asserts="0">
+              <properties />
+              <reason>
+                <message><![CDATA[One or more child tests were ignored]]></message>
+              </reason>
+              <test-case id="1024" name="ChildScope_HasIndependentScopedInstance_AndDoesNotDisposeParentInstance" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ChildScope_HasIndependentScopedInstance_AndDoesNotDisposeParentInstance" methodname="ChildScope_HasIndependentScopedInstance_AndDoesNotDisposeParentInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="861096871" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.007192" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1042" name="ComponentCache_FullRefreshesChangedValuesAndRemovesMissingMembership" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ComponentCache_FullRefreshesChangedValuesAndRemovesMissingMembership" methodname="ComponentCache_FullRefreshesChangedValuesAndRemovesMissingMembership" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1870117937" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.013829" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1045" name="ComponentCache_IncrementalRefreshesValuesAndPrunesRemovedComponentsInBatches" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ComponentCache_IncrementalRefreshesValuesAndPrunesRemovedComponentsInBatches" methodname="ComponentCache_IncrementalRefreshesValuesAndPrunesRemovedComponentsInBatches" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="884634510" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.010939" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1043" name="ComponentCache_OnDemandContainsFindsUncachedAuthoritativeMembership" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ComponentCache_OnDemandContainsFindsUncachedAuthoritativeMembership" methodname="ComponentCache_OnDemandContainsFindsUncachedAuthoritativeMembership" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="110474536" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.001553" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1044" name="ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager" methodname="ComponentCache_OnDemandRevalidatesValuesAndMembershipAgainstEntityManager" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1111136756" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.001806" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1027" name="EventNetworkAuthorityPolicy_OnlyAllowsConfiguredAuthority" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventNetworkAuthorityPolicy_OnlyAllowsConfiguredAuthority" methodname="EventNetworkAuthorityPolicy_OnlyAllowsConfiguredAuthority" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1858933026" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.002005" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1053" name="EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry" methodname="EventsInstaller_RegistersFinalEventBusBeforeResolvingSystemRegistry" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Ignored" seed="202089357" result="Skipped" label="Ignored" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.000225" asserts="0">
+                <properties>
+                  <property name="_SKIPREASON" value="EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)" />
+                </properties>
+                <reason>
+                  <message><![CDATA[EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)]]></message>
+                </reason>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1035" name="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Ignored" testcasecount="3" result="Skipped" label="Ignored" site="SetUp" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.001446" total="3" passed="0" failed="0" inconclusive="0" skipped="3" asserts="0">
+                <properties>
+                  <property name="_SKIPREASON" value="EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)" />
+                </properties>
+                <reason>
+                  <message><![CDATA[EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)]]></message>
+                </reason>
+                <test-case id="1032" name="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Offline&quot;,&quot;MythHunter.Events.EventBus&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Offline&quot;,&quot;MythHunter.Events.EventBus&quot;)" methodname="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1190965994" result="Skipped" label="Ignored" site="Parent" start-time="0001-01-01 00:00:00Z" end-time="0001-01-01 00:00:00Z" duration="0.000000" asserts="0">
+                  <properties />
+                  <reason>
+                    <message><![CDATA[EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)]]></message>
+                  </reason>
+                </test-case>
+                <test-case id="1033" name="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Client&quot;,&quot;MythHunter.Events.Network.NetworkEventBus&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Client&quot;,&quot;MythHunter.Events.Network.NetworkEventBus&quot;)" methodname="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="707868499" result="Skipped" label="Ignored" site="Parent" start-time="0001-01-01 00:00:00Z" end-time="0001-01-01 00:00:00Z" duration="0.000000" asserts="0">
+                  <properties />
+                  <reason>
+                    <message><![CDATA[EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)]]></message>
+                  </reason>
+                </test-case>
+                <test-case id="1034" name="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Server&quot;,&quot;MythHunter.Events.Network.NetworkEventBus&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance(&quot;Server&quot;,&quot;MythHunter.Events.Network.NetworkEventBus&quot;)" methodname="EventsInstaller_SelectsBusFromExplicitMode_AndRegistryCapturesSameInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1030797646" result="Skipped" label="Ignored" site="Parent" start-time="0001-01-01 00:00:00Z" end-time="0001-01-01 00:00:00Z" duration="0.000000" asserts="0">
+                  <properties />
+                  <reason>
+                    <message><![CDATA[EventsInstaller removed - logic now in GameCoreInstaller (EPIC 07 Phase 2)]]></message>
+                  </reason>
+                </test-case>
+              </test-suite>
+              <test-case id="1022" name="LazySingleton_CreatesAndCachesValueOnFirstAccess" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.LazySingleton_CreatesAndCachesValueOnFirstAccess" methodname="LazySingleton_CreatesAndCachesValueOnFirstAccess" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="386993423" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.002571" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1052" name="LegacyPhaseGroupRegistration_FailsFastWhenNoProviderIsRegistered" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.LegacyPhaseGroupRegistration_FailsFastWhenNoProviderIsRegistered" methodname="LegacyPhaseGroupRegistration_FailsFastWhenNoProviderIsRegistered" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="773569634" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.028286" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#FF6666>23:42:33.443 📝 ❌ <b>[System]</b> No IPhaseProvider is registered. Pass an IPhaseProvider explicitly when registering a phase system group.</color>
+]]></output>
+              </test-case>
+              <test-case id="1046" name="MovementSystemUpdate_PersistsMutatedComponentsToAuthoritativeEntityManager" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.MovementSystemUpdate_PersistsMutatedComponentsToAuthoritativeEntityManager" methodname="MovementSystemUpdate_PersistsMutatedComponentsToAuthoritativeEntityManager" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1395894250" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.019371" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1031" name="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="0.839607" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1028" name="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Offline&quot;,False,null)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Offline&quot;,False,null)" methodname="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1765426908" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:33Z" duration="0.007634" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1029" name="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Client&quot;,True,&quot;MythHunter.Networking.Core.ClientNetworkSystem&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Client&quot;,True,&quot;MythHunter.Networking.Core.ClientNetworkSystem&quot;)" methodname="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1870946848" result="Passed" start-time="2026-10-12 20:42:33Z" end-time="2026-10-12 20:42:34Z" duration="0.687134" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1030" name="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Server&quot;,True,&quot;MythHunter.Networking.Core.ServerNetworkSystem&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem(&quot;Server&quot;,True,&quot;MythHunter.Networking.Core.ServerNetworkSystem&quot;)" methodname="NetworkingInstaller_RegistersOnlyTheExplicitRoleAsINetworkSystem" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="302590668" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.143590" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1040" name="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.008605" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1036" name="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;OnBoot&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;OnBoot&quot;)" methodname="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="872804031" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.003148" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1037" name="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Lobby&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Lobby&quot;)" methodname="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="377085156" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001069" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1038" name="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Gameplay&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Gameplay&quot;)" methodname="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1306443983" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001002" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1039" name="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Manual&quot;)" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory(&quot;Manual&quot;)" methodname="RegistryExtensions_RegisterGroupWithCategory_ForwardsRequestedCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1101062484" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001103" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1051" name="RegistryExtensions_RegisterPhaseGroupThroughTheInterfaceContract" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.RegistryExtensions_RegisterPhaseGroupThroughTheInterfaceContract" methodname="RegistryExtensions_RegisterPhaseGroupThroughTheInterfaceContract" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="3342786" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.003862" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="ResolveByType_ReturnsResolvedServiceInsteadOfRegistrationMetadata" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ResolveByType_ReturnsResolvedServiceInsteadOfRegistrationMetadata" methodname="ResolveByType_ReturnsResolvedServiceInsteadOfRegistrationMetadata" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1069634280" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001338" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="ScopeDisposal_DisposesScopedServiceExactlyOnce" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ScopeDisposal_DisposesScopedServiceExactlyOnce" methodname="ScopeDisposal_DisposesScopedServiceExactlyOnce" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="131091460" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001252" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1026" name="ScopeDisposal_DoesNotDisposeSameSharedInstanceTwice" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ScopeDisposal_DoesNotDisposeSameSharedInstanceTwice" methodname="ScopeDisposal_DoesNotDisposeSameSharedInstanceTwice" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="708968285" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001692" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1025" name="ScopeDisposal_UsesReverseCreationOrder_AndContinuesAfterDisposeThrows" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ScopeDisposal_UsesReverseCreationOrder_AndContinuesAfterDisposeThrows" methodname="ScopeDisposal_UsesReverseCreationOrder_AndContinuesAfterDisposeThrows" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1779801398" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.015760" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="ScopedRegistration_CachesByServiceTypeWithinScope" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ScopedRegistration_CachesByServiceTypeWithinScope" methodname="ScopedRegistration_CachesByServiceTypeWithinScope" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1537657701" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000864" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="ScopedRegistration_UsesSeparateInstancesForSeparateScopes" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.ScopedRegistration_UsesSeparateInstancesForSeparateScopes" methodname="ScopedRegistration_UsesSeparateInstancesForSeparateScopes" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="836533020" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000813" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1023" name="SetCurrentScope_OnWorkerThread_DoesNotReplaceMainThreadScope" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SetCurrentScope_OnWorkerThread_DoesNotReplaceMainThreadScope" methodname="SetCurrentScope_OnWorkerThread_DoesNotReplaceMainThreadScope" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1918013941" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001940" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1015" name="SingletonRegistration_ReturnsSameInstance" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SingletonRegistration_ReturnsSameInstance" methodname="SingletonRegistration_ReturnsSameInstance" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1756560402" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000806" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1049" name="SystemGroup_IsolatesInitializeUpdateAndDisposeFailures" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SystemGroup_IsolatesInitializeUpdateAndDisposeFailures" methodname="SystemGroup_IsolatesInitializeUpdateAndDisposeFailures" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="573042956" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.012287" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[<color=#FF6666>23:42:34.351 📝 ❌ <b>[System]</b> Error initializing system generatedProxy_7 in group 'LifecycleProbe': Expected initialize failure.
+Exception: Expected initialize failure.
+StackTrace:   at MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests+SystemSpyProxy.Invoke (System.Reflection.MethodInfo targetMethod, System.Object[] args) [0x000b9] in D:\MythHunter-Git\Assets\_MythHunter\Tests\DI\DIContainerCharacterizationTests.cs:1039 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <314938d17f3848e8ac683e11b27f62ee>:0 
+--- End of stack trace from previous location where exception was thrown ---
+
+  at System.Reflection.DispatchProxyGenerator.Invoke (System.Object[] args) [0x00070] in <5aebfe1c65ec4623a20c903ee295186d>:0 
+  at generatedProxy_7.Initialize () [0x00049] in <9ca88465fe7c4c19acb7db6f3c129901>:0 
+  at MythHunter.Systems.Groups.SystemGroup.Initialize () [0x00028] in D:\MythHunter-Git\Assets\_MythHunter\Code\Systems\Groups\SystemGroup.cs:40 </color>
+<color=#FF6666>23:42:34.353 📝 ❌ <b>[System]</b> Error updating system generatedProxy_7 in group 'LifecycleProbe': Expected update failure.
+Exception: Expected update failure.
+StackTrace:   at MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests+SystemSpyProxy.Invoke (System.Reflection.MethodInfo targetMethod, System.Object[] args) [0x000b9] in D:\MythHunter-Git\Assets\_MythHunter\Tests\DI\DIContainerCharacterizationTests.cs:1039 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <314938d17f3848e8ac683e11b27f62ee>:0 
+--- End of stack trace from previous location where exception was thrown ---
+
+  at System.Reflection.DispatchProxyGenerator.Invoke (System.Object[] args) [0x00070] in <5aebfe1c65ec4623a20c903ee295186d>:0 
+  at generatedProxy_7.Update (System.Single ) [0x0005b] in <9ca88465fe7c4c19acb7db6f3c129901>:0 
+  at MythHunter.Systems.Groups.SystemGroup.Update (System.Single deltaTime) [0x00025] in D:\MythHunter-Git\Assets\_MythHunter\Code\Systems\Groups\SystemGroup.cs:64 </color>
+<color=#FF6666>23:42:34.354 📝 ❌ <b>[System]</b> Error disposing system generatedProxy_7 in group 'LifecycleProbe': Expected dispose failure.
+Exception: Expected dispose failure.
+StackTrace:   at MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests+SystemSpyProxy.Invoke (System.Reflection.MethodInfo targetMethod, System.Object[] args) [0x000b9] in D:\MythHunter-Git\Assets\_MythHunter\Tests\DI\DIContainerCharacterizationTests.cs:1039 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <314938d17f3848e8ac683e11b27f62ee>:0 
+--- End of stack trace from previous location where exception was thrown ---
+
+  at System.Reflection.DispatchProxyGenerator.Invoke (System.Object[] args) [0x00070] in <5aebfe1c65ec4623a20c903ee295186d>:0 
+  at generatedProxy_7.Dispose () [0x00049] in <9ca88465fe7c4c19acb7db6f3c129901>:0 
+  at MythHunter.Systems.Groups.SystemGroup.Dispose () [0x0001d] in D:\MythHunter-Git\Assets\_MythHunter\Code\Systems\Groups\SystemGroup.cs:84 </color>
+]]></output>
+              </test-case>
+              <test-case id="1048" name="SystemRegistry_DisposesSystemsInReverseInitializationOrder" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SystemRegistry_DisposesSystemsInReverseInitializationOrder" methodname="SystemRegistry_DisposesSystemsInReverseInitializationOrder" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="580851059" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.005337" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1047" name="SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization" methodname="SystemRegistry_DoesNotUpdateRegisteredSystemBeforeInitialization" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1499132171" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.003333" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1041" name="SystemRegistry_RegisterSystemWithPriority_HonorsExplicitCategory" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SystemRegistry_RegisterSystemWithPriority_HonorsExplicitCategory" methodname="SystemRegistry_RegisterSystemWithPriority_HonorsExplicitCategory" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1778742311" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.003541" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1050" name="SystemRegistryContract_DoesNotExposeTheDependencyContainer" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.SystemRegistryContract_DoesNotExposeTheDependencyContainer" methodname="SystemRegistryContract_DoesNotExposeTheDependencyContainer" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="1530885497" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001028" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="TransientRegistration_ReturnsDifferentInstances" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.TransientRegistration_ReturnsDifferentInstances" methodname="TransientRegistration_ReturnsDifferentInstances" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="298206006" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000935" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="TypeBasedRegistrationCheck_IncludesRegisteredInstances" fullname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests.TypeBasedRegistrationCheck_IncludesRegisteredInstances" methodname="TypeBasedRegistrationCheck_IncludesRegisteredInstances" classname="MythHunter.DI.CharacterizationTests.DIContainerCharacterizationTests" runstate="Runnable" seed="848073014" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001025" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1074" name="RPGFramework.ECS.Runtime.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/RPGFramework.ECS.Runtime.Tests.dll" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.250482" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="17468" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1075" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.249795" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1076" name="ECS" fullname="RPGFramework.ECS" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.249367" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1077" name="Tests" fullname="RPGFramework.ECS.Tests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.248916" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1058" name="ArchitectureTests" fullname="RPGFramework.ECS.Tests.ArchitectureTests" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.238995" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties>
+                <property name="Category" value="Architecture" />
+              </properties>
+              <test-case id="1060" name="AllComponents_AreStructs" fullname="RPGFramework.ECS.Tests.ArchitectureTests.AllComponents_AreStructs" methodname="AllComponents_AreStructs" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="170295781" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.116266" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1061" name="Components_AreDataOnly" fullname="RPGFramework.ECS.Tests.ArchitectureTests.Components_AreDataOnly" methodname="Components_AreDataOnly" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="450785028" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.110730" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <reason>
+                  <message><![CDATA[Checked 21 components]]></message>
+                </reason>
+                <output><![CDATA[[Architecture] Components should be data-only (no methods):
+MovementComponent has methods: Serialize, Deserialize
+PathComponent has methods: Serialize, Deserialize
+PositionComponent has methods: Serialize, Deserialize
+VisibilityComponent has methods: Serialize, Deserialize
+HeroSelectionComponent has methods: Serialize, Deserialize
+LobbyStateComponent has methods: Serialize, Deserialize
+CombatAbilityComponent has methods: Serialize, Deserialize
+CombatStatsComponent has methods: Serialize, Deserialize
+CombatStyleComponent has methods: Serialize, Deserialize
+HealthComponent has methods: Serialize, Deserialize
+TeamComponent has methods: Serialize, Deserialize
+HeroIdentityComponent has methods: Serialize, Deserialize
+InventoryComponent has methods: Serialize, Deserialize
+SkillsComponent has methods: Serialize, Deserialize
+SocialSkillsComponent has methods: Serialize, Deserialize
+StatsComponent has methods: GetStat, SetStat, Serialize, Deserialize
+]]></output>
+              </test-case>
+              <test-case id="1059" name="Framework_DoesNotReference_GameLayer" fullname="RPGFramework.ECS.Tests.ArchitectureTests.Framework_DoesNotReference_GameLayer" methodname="Framework_DoesNotReference_GameLayer" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="720711212" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001638" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1063" name="Framework_FollowsNamingConvention" fullname="RPGFramework.ECS.Tests.ArchitectureTests.Framework_FollowsNamingConvention" methodname="Framework_FollowsNamingConvention" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="36046632" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.002001" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="Framework_HasNoCircularDependencies" fullname="RPGFramework.ECS.Tests.ArchitectureTests.Framework_HasNoCircularDependencies" methodname="Framework_HasNoCircularDependencies" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="1076008583" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.003683" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <reason>
+                  <message><![CDATA[No circular dependencies found in 5 Framework assemblies]]></message>
+                </reason>
+              </test-case>
+              <test-case id="1064" name="Framework_TypesUseCorrectNamespaces" fullname="RPGFramework.ECS.Tests.ArchitectureTests.Framework_TypesUseCorrectNamespaces" methodname="Framework_TypesUseCorrectNamespaces" classname="RPGFramework.ECS.Tests.ArchitectureTests" runstate="Runnable" seed="1062589983" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001970" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1065" name="EntityManagerTests" fullname="RPGFramework.ECS.Tests.EntityManagerTests" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.009010" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1067" name="AddComponent_CanBeQueriedAndRetrieved" fullname="RPGFramework.ECS.Tests.EntityManagerTests.AddComponent_CanBeQueriedAndRetrieved" methodname="AddComponent_CanBeQueriedAndRetrieved" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="595770403" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001759" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1068" name="AddComponent_RejectsUnknownOrDestroyedEntityWithoutCreatingPhantoms" fullname="RPGFramework.ECS.Tests.EntityManagerTests.AddComponent_RejectsUnknownOrDestroyedEntityWithoutCreatingPhantoms" methodname="AddComponent_RejectsUnknownOrDestroyedEntityWithoutCreatingPhantoms" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1172061499" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000842" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1066" name="CreateEntity_ReturnsDistinctIncreasingIds" fullname="RPGFramework.ECS.Tests.EntityManagerTests.CreateEntity_ReturnsDistinctIncreasingIds" methodname="CreateEntity_ReturnsDistinctIncreasingIds" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1955345468" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.002415" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1071" name="DestroyEntity_RemovesEntityAndItsComponentIndexEntries" fullname="RPGFramework.ECS.Tests.EntityManagerTests.DestroyEntity_RemovesEntityAndItsComponentIndexEntries" methodname="DestroyEntity_RemovesEntityAndItsComponentIndexEntries" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="502446481" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000501" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1072" name="DestroyUnknownEntity_IsANoOp" fullname="RPGFramework.ECS.Tests.EntityManagerTests.DestroyUnknownEntity_IsANoOp" methodname="DestroyUnknownEntity_IsANoOp" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1779611901" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000399" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1073" name="GetComponent_ReturnsDefaultWhenComponentIsMissing" fullname="RPGFramework.ECS.Tests.EntityManagerTests.GetComponent_ReturnsDefaultWhenComponentIsMissing" methodname="GetComponent_ReturnsDefaultWhenComponentIsMissing" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1094788063" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000225" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1070" name="RemoveComponent_UpdatesComponentIndex" fullname="RPGFramework.ECS.Tests.EntityManagerTests.RemoveComponent_UpdatesComponentIndex" methodname="RemoveComponent_UpdatesComponentIndex" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1982421956" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000401" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1069" name="TryGetComponent_ReturnsFalseWhenComponentIsMissing" fullname="RPGFramework.ECS.Tests.EntityManagerTests.TryGetComponent_ReturnsFalseWhenComponentIsMissing" methodname="TryGetComponent_ReturnsFalseWhenComponentIsMissing" classname="RPGFramework.ECS.Tests.EntityManagerTests" runstate="Runnable" seed="1530372268" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000303" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1080" name="RPGFramework.Logging.Runtime.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/RPGFramework.Logging.Runtime.Tests.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.002045" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="17468" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1081" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001771" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1082" name="Logging" fullname="RPGFramework.Logging" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001578" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1083" name="Tests" fullname="RPGFramework.Logging.Tests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001368" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1078" name="LoggerContractTests" fullname="RPGFramework.Logging.Tests.LoggerContractTests" classname="RPGFramework.Logging.Tests.LoggerContractTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001147" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1079" name="Log_PreservesSeverityMessageCategoryAndException" fullname="RPGFramework.Logging.Tests.LoggerContractTests.Log_PreservesSeverityMessageCategoryAndException" methodname="Log_PreservesSeverityMessageCategoryAndException" classname="RPGFramework.Logging.Tests.LoggerContractTests" runstate="Runnable" seed="2108325265" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000534" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1086" name="Unity.Addressables.DocExampleCode.Editor.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/Unity.Addressables.DocExampleCode.Editor.Tests.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001366" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="17468" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1087" name="AddressableAssets" fullname="AddressableAssets" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.001140" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1088" name="DocExampleCode" fullname="AddressableAssets.DocExampleCode" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000934" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1084" name="TestStub" fullname="AddressableAssets.DocExampleCode.TestStub" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000721" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1085" name="RequiredTest" fullname="AddressableAssets.DocExampleCode.TestStub.RequiredTest" methodname="RequiredTest" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" seed="83000350" result="Passed" start-time="2026-10-12 20:42:34Z" end-time="2026-10-12 20:42:34Z" duration="0.000124" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/Admin/AppData/LocalLow/MasterMindGames/MythHunter\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

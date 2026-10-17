@@ -1,0 +1,31 @@
+{
+    "name": "MythHunter.Runtime",
+    "rootNamespace": "MythHunter",
+    "references": [
+        "RPGFramework.Core.Runtime",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Logging.Runtime",
+        "RPGFramework.Combat.Runtime",
+        "RPGFramework.Stats.Runtime",
+        "RPGFramework.Inventory.Runtime",
+        "RPGFramework.Items.Runtime",
+        "RPGFramework.Loot.Runtime",
+        "RPGFramework.Abilities.Runtime",
+        "RPGFramework.Progression.Runtime",
+        "RPGFramework.DeltaCompression.Runtime",
+        "RPGFramework.Serialization.Runtime",
+        "RPGFramework.Pooling.Runtime",
+        "UniTask",
+        "Unity.TextMeshPro",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

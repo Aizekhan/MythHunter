@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RPGFramework.Inventory.Runtime</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Assets/_Framework/Inventory/Runtime/Contracts/*.cs" Link="Contracts/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Inventory/Runtime/Components/*.cs" Link="Components/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Inventory/Runtime/Implementations/*.cs" Link="Implementations/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Inventory/Runtime/Events/*.cs" Link="Events/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RPGFramework.ECS.Runtime/RPGFramework.ECS.Runtime.csproj" />
+  </ItemGroup>
+</Project>

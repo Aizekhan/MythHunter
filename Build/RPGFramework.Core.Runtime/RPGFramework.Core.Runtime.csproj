@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RPGFramework.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Exclude Composition modules that have circular dependencies -->
+    <Compile Include="../../Assets/_Framework/Core/**/*.cs" Exclude="../../Assets/_Framework/Core/Composition/**/*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

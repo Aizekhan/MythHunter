@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RPGFramework.Progression</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Assets/_Framework/Progression/Runtime/Contracts/*.cs" />
+    <Compile Include="../../Assets/_Framework/Progression/Runtime/Data/*.cs" />
+    <Compile Include="../../Assets/_Framework/Progression/Runtime/Implementations/*.cs" />
+    <Compile Include="../../Assets/_Framework/Progression/Runtime/Events/*.cs" />
+  </ItemGroup>
+
+</Project>
