@@ -14,18 +14,18 @@ namespace MythHunter.GameLogic.Crafting.Sample
         /// </summary>
         public static ICraftingRecipe CreateIronSwordRecipe()
         {
-            var ingredients = new List<ICraftingIngredient>
+            var ingredients = new ICraftingIngredient[]
             {
                 new CraftingIngredient("iron_ore", 5),
                 new CraftingIngredient("leather_wrap", 2)
             };
 
-            var results = new List<ICraftingResult>
+            var results = new ICraftingResult[]
             {
                 new CraftingResult("iron_sword", 1, 90f)
             };
 
-            var requirements = new List<ICraftingRequirement>
+            var requirements = new ICraftingRequirement[]
             {
                 new CraftingRequirement(RequirementType.SkillLevel, "blacksmithing", 5)
             };
@@ -47,19 +47,19 @@ namespace MythHunter.GameLogic.Crafting.Sample
         /// </summary>
         public static ICraftingRecipe CreateHealthPotionRecipe()
         {
-            var ingredients = new List<ICraftingIngredient>
+            var ingredients = new ICraftingIngredient[]
             {
                 new CraftingIngredient("red_herb", 3),
                 new CraftingIngredient("mineral_water", 2),
                 new CraftingIngredient("crystal_dust", 1)
             };
 
-            var results = new List<ICraftingResult>
+            var results = new ICraftingResult[]
             {
                 new CraftingResult("health_potion", 3, 85f)
             };
 
-            var requirements = new List<ICraftingRequirement>
+            var requirements = new ICraftingRequirement[]
             {
                 new CraftingRequirement(RequirementType.SkillLevel, "alchemy", 3)
             };
@@ -81,18 +81,18 @@ namespace MythHunter.GameLogic.Crafting.Sample
         /// </summary>
         public static ICraftingRecipe CreateBreadLoafRecipe()
         {
-            var ingredients = new List<ICraftingIngredient>
+            var ingredients = new ICraftingIngredient[]
             {
                 new CraftingIngredient("wheat", 3),
                 new CraftingIngredient("salt", 1)
             };
 
-            var results = new List<ICraftingResult>
+            var results = new ICraftingResult[]
             {
                 new CraftingResult("bread_loaf", 2, 95f)
             };
 
-            var requirements = new List<ICraftingRequirement>();
+            var requirements = new ICraftingRequirement[0];
 
             return new CraftingRecipe(
                 "recipe_bread_loaf",
@@ -111,7 +111,7 @@ namespace MythHunter.GameLogic.Crafting.Sample
         /// </summary>
         public static ICraftingRecipe CreateEnchantedRingRecipe()
         {
-            var ingredients = new List<ICraftingIngredient>
+            var ingredients = new ICraftingIngredient[]
             {
                 new CraftingIngredient("gold_bar", 3),
                 new CraftingIngredient("sapphire", 2),
@@ -119,12 +119,12 @@ namespace MythHunter.GameLogic.Crafting.Sample
                 new CraftingIngredient("enchanting_scroll", 1)
             };
 
-            var results = new List<ICraftingResult>
+            var results = new ICraftingResult[]
             {
                 new CraftingResult("enchanted_ring", 1, 60f)
             };
 
-            var requirements = new List<ICraftingRequirement>
+            var requirements = new ICraftingRequirement[]
             {
                 new CraftingRequirement(RequirementType.SkillLevel, "enchanting", 15),
                 new CraftingRequirement(RequirementType.ToolRequired, "enchanting_rod", 1)
@@ -147,19 +147,19 @@ namespace MythHunter.GameLogic.Crafting.Sample
         /// </summary>
         public static ICraftingRecipe CreateWoodenShieldRecipe()
         {
-            var ingredients = new List<ICraftingIngredient>
+            var ingredients = new ICraftingIngredient[]
             {
                 new CraftingIngredient("oak_wood", 8),
                 new CraftingIngredient("iron_plate", 2),
                 new CraftingIngredient("leather_strap", 1)
             };
 
-            var results = new List<ICraftingResult>
+            var results = new ICraftingResult[]
             {
                 new CraftingResult("wooden_shield", 1, 88f)
             };
 
-            var requirements = new List<ICraftingRequirement>
+            var requirements = new ICraftingRequirement[]
             {
                 new CraftingRequirement(RequirementType.SkillLevel, "carpentry", 4)
             };
