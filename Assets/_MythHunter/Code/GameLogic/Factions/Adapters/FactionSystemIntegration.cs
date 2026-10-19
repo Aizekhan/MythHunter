@@ -49,7 +49,7 @@ namespace MythHunter.GameLogic.Factions
         public void RegisterFaction(string factionId, string name, FactionType factionType,
             string description = "", int defaultReputation = 0)
         {
-            var faction = Faction.Create(factionId, name, factionType, description, defaultReputation);
+            var faction = new Faction(factionId, name, description, factionType, defaultReputation);
             _factionRegistry.RegisterFaction(faction);
         }
 
