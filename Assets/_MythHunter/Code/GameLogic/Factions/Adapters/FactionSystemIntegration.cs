@@ -119,12 +119,12 @@ namespace MythHunter.GameLogic.Factions
             var newReputation = _factionManager.GetReputation(entityId, factionId);
             var newStanding = _factionManager.GetStanding(entityId, factionId);
 
-            Debug.Log($"[FactionSystem] Entity {entityId} reputation with '{factionId}': " +
+            UnityEngine.Debug.Log($"[FactionSystem] Entity {entityId} reputation with '{factionId}': " +
                       $"{oldReputation} → {newReputation} (Δ{amount:+#;-#;0}) - {reason}");
 
             if (oldStanding != newStanding)
             {
-                Debug.Log($"[FactionSystem] Entity {entityId} standing with '{factionId}' changed: " +
+                UnityEngine.Debug.Log($"[FactionSystem] Entity {entityId} standing with '{factionId}' changed: " +
                           $"{GetStandingDisplayName(oldStanding)} → {GetStandingDisplayName(newStanding)}");
             }
         }

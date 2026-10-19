@@ -54,7 +54,7 @@ namespace MythHunter.GameLogic.Factions
         {
             if (_factionManager == null || _entityId < 0)
             {
-                Debug.LogWarning($"[MythHunterFactionComponent] Cannot get reputation - not initialized");
+                UnityEngine.Debug.LogWarning($"[MythHunterFactionComponent] Cannot get reputation - not initialized");
                 return 0;
             }
 
@@ -68,7 +68,7 @@ namespace MythHunter.GameLogic.Factions
         {
             if (_factionManager == null || _entityId < 0)
             {
-                Debug.LogWarning($"[MythHunterFactionComponent] Cannot get standing - not initialized");
+                UnityEngine.Debug.LogWarning($"[MythHunterFactionComponent] Cannot get standing - not initialized");
                 return FactionStanding.Neutral;
             }
 
@@ -82,7 +82,7 @@ namespace MythHunter.GameLogic.Factions
         {
             if (_factionManager == null || _entityId < 0)
             {
-                Debug.LogWarning($"[MythHunterFactionComponent] Cannot modify reputation - not initialized");
+                UnityEngine.Debug.LogWarning($"[MythHunterFactionComponent] Cannot modify reputation - not initialized");
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace MythHunter.GameLogic.Factions
         {
             if (_factionManager == null || _entityId < 0)
             {
-                Debug.LogWarning($"[MythHunterFactionComponent] Cannot check standing - not initialized");
+                UnityEngine.Debug.LogWarning($"[MythHunterFactionComponent] Cannot check standing - not initialized");
                 return false;
             }
 
