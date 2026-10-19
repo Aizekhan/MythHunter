@@ -6,6 +6,7 @@ using MythHunter.Core.Composition.Modules;
 using MythHunter.Core.DI;
 using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
+using UnityEngine.TestTools;
 
 namespace RPGFramework.ECS.Tests
 {
@@ -81,6 +82,9 @@ namespace RPGFramework.ECS.Tests
             // Register in wrong order - builder should fix it
             builder.UseModule<GameLayerModule>();
             builder.UseModule<FrameworkCoreModule>();
+
+            // Expect validation errors for missing dependencies (PrefabProvider needs IResourceManager)
+            LogAssert.Expect(UnityEngine.LogType.Error, new System.Text.RegularExpressions.Regex(".*PrefabProvider.*IResourceManager.*"));
 
             var composition = builder.Build();
 

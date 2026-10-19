@@ -60,8 +60,14 @@ namespace RPGFramework.Serialization
                     throw new InvalidOperationException($"Migrator for {typeId} does not have Migrate method");
                 }
 
-                // Get TFrom and TTo types from the migrator
-                var genericArgs = migratorType.GetGenericArguments();
+                // Get TFrom and TTo types from the IMigrator<,> interface
+                var migratorInterface = migratorType.GetInterface(typeof(IMigrator<,>).Name);
+                if (migratorInterface == null)
+                {
+                    throw new InvalidOperationException($"Migrator for {typeId} does not implement IMigrator interface");
+                }
+
+                var genericArgs = migratorInterface.GetGenericArguments();
                 if (genericArgs.Length != 2)
                 {
                     throw new InvalidOperationException($"Invalid migrator type for {typeId}");
