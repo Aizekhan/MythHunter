@@ -49,7 +49,7 @@ namespace RPGFramework.Trading
                 return false;
 
             // Store proposed trade
-            _proposedTrades[offerId] = (playerEntityId, offer, UnityEngine.Time.time);
+            _proposedTrades[offerId] = (playerEntityId, offer, 0f); // Timestamp handled by game layer
             return true;
         }
 
@@ -75,7 +75,7 @@ namespace RPGFramework.Trading
                 return TradeResultData.CreateFailure("Insufficient gold");
 
             // Create result
-            var result = TradeResultData.CreateSuccess(offerId, offer.GoldAmount, UnityEngine.Time.time);
+            var result = TradeResultData.CreateSuccess(offerId, offer.GoldAmount, 0f); // Timestamp handled by game layer
             result.ItemsReceived.AddRange(offer.OfferedItems);
             result.ItemsGiven.AddRange(offer.RequestedItems);
 

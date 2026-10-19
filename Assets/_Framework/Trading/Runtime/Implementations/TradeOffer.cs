@@ -7,7 +7,7 @@ namespace RPGFramework.Trading
     /// </summary>
     public class TradeOffer : ITradeOffer
     {
-        private readonly TradeOfferData _data;
+        private TradeOfferData _data; // Not readonly - struct needs to be mutable
         private readonly List<TradeConditionData> _conditions;
 
         public string OfferId => _data.OfferId;

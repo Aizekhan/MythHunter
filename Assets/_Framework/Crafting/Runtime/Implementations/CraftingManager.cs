@@ -84,7 +84,8 @@ namespace RPGFramework.Crafting
 
             activeCrafts.ActiveCrafts[operationId] = operation;
 
-            _entityManager.SetComponent(entityId, activeCrafts);
+            _entityManager.RemoveComponent<ActiveCraftingData>(entityId);
+            _entityManager.AddComponent(entityId, activeCrafts);
 
             CraftingStarted?.Invoke(this, new CraftingStartedEvent(entityId, recipeId, station, recipe.CraftingTimeSeconds));
 
@@ -113,7 +114,8 @@ namespace RPGFramework.Crafting
             var recipeId = operation.RecipeId;
 
             activeCrafts.ActiveCrafts.Remove(operationId);
-            _entityManager.SetComponent(entityId, activeCrafts);
+            _entityManager.RemoveComponent<ActiveCraftingData>(entityId);
+            _entityManager.AddComponent(entityId, activeCrafts);
 
             CraftingCancelled?.Invoke(this, new CraftingCancelledEvent(entityId, recipeId, timeSpent));
 
@@ -160,7 +162,8 @@ namespace RPGFramework.Crafting
             activeCrafts.TotalItemsCrafted += results.Sum(r => r.Quantity);
             activeCrafts.TotalCraftingTimeSeconds += operation.ElapsedTimeSeconds;
 
-            _entityManager.SetComponent(entityId, activeCrafts);
+            _entityManager.RemoveComponent<ActiveCraftingData>(entityId);
+            _entityManager.AddComponent(entityId, activeCrafts);
 
             CraftingCompleted?.Invoke(this, new CraftingCompletedEvent(
                 entityId,
@@ -179,7 +182,8 @@ namespace RPGFramework.Crafting
                 return;
 
             activeCrafts.ActiveCrafts.Remove(operationId);
-            _entityManager.SetComponent(entityId, activeCrafts);
+            _entityManager.RemoveComponent<ActiveCraftingData>(entityId);
+            _entityManager.AddComponent(entityId, activeCrafts);
 
             CraftingFailed?.Invoke(this, new CraftingFailedEvent(
                 entityId,

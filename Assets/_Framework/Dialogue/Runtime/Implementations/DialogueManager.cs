@@ -58,7 +58,8 @@ namespace RPGFramework.Dialogue
                 DialogueId = dialogueId,
                 StartedAt = DateTime.UtcNow
             };
-            _entityManager.PublishEvent(startEvent);
+            // Note: Event publishing through ECS not yet implemented
+            // Game layer can use C# events (DialogueStarted, etc.) instead
 
             return true;
         }
@@ -112,7 +113,7 @@ namespace RPGFramework.Dialogue
                     TargetNodeId = nextNodeId,
                     SelectedAt = DateTime.UtcNow
                 };
-                _entityManager.PublishEvent(choiceEvent);
+                // Note: Event publishing through ECS not yet implemented
             }
             else
             {
@@ -132,7 +133,7 @@ namespace RPGFramework.Dialogue
                     Text = currentNode.Text,
                     SpokenAt = DateTime.UtcNow
                 };
-                _entityManager.PublishEvent(lineEvent);
+                // Note: Event publishing through ECS not yet implemented
             }
 
             // Move to next node
@@ -167,7 +168,7 @@ namespace RPGFramework.Dialogue
                     EndState = DialogueState.Completed,
                     EndedAt = DateTime.UtcNow
                 };
-                _entityManager.PublishEvent(endEvent);
+                // Note: Event publishing through ECS not yet implemented
             }
             else
             {
@@ -208,7 +209,7 @@ namespace RPGFramework.Dialogue
                 EndState = DialogueState.Interrupted,
                 EndedAt = DateTime.UtcNow
             };
-            _entityManager.PublishEvent(endEvent);
+            // Note: Event publishing through ECS not yet implemented
         }
 
         /// <summary>
