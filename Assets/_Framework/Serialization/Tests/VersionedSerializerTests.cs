@@ -100,7 +100,7 @@ namespace RPGFramework.Serialization.Tests
             // Act & Assert
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 _serializer.Deserialize<TestDataV2>(bytes));
-            Assert.That(ex.Message, Does.Contain("no migration registry"));
+            Assert.That(ex.Message, Does.Contain("No migration registered"));
         }
 
         [Test]

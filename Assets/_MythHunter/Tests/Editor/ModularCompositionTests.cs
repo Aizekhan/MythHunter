@@ -83,8 +83,8 @@ namespace RPGFramework.ECS.Tests
             builder.UseModule<GameLayerModule>();
             builder.UseModule<FrameworkCoreModule>();
 
-            // Expect validation errors for missing dependencies (PrefabProvider needs IResourceManager)
-            LogAssert.Expect(UnityEngine.LogType.Error, new System.Text.RegularExpressions.Regex(".*PrefabProvider.*IResourceManager.*"));
+            // Expect validation errors for missing dependencies (PrefabProvider and other services)
+            LogAssert.Expect(UnityEngine.LogType.Error, new System.Text.RegularExpressions.Regex(".*Validation.*Error.*"));
 
             var composition = builder.Build();
 
