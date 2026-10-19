@@ -310,7 +310,7 @@ namespace RPGFramework.Trading.Tests
         [Test]
         public void ActiveTradesData_RecordCompletedTrade_IncrementsCounter()
         {
-            var data = new ActiveTradesData();
+            var data = new ActiveTradesData(0); // Use constructor to initialize collections
             data.ActiveTradeIds.Add("trade_001");
             data.ActiveTradeIds.Add("trade_002");
 
