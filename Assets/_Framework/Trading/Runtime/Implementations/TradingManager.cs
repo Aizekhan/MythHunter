@@ -89,6 +89,9 @@ namespace RPGFramework.Trading
             playerData.RecordCompletedTrade(offerId);
             offer.IncrementUse();
 
+            // Update player data (struct is value type, must write back)
+            _playerTrades[playerEntityId] = playerData;
+
             // Clean up
             _proposedTrades.Remove(offerId);
 

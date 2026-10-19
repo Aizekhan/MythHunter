@@ -673,6 +673,12 @@ namespace RPGFramework.Dialogue.Tests
                 .Setup(em => em.TryGetComponent<ActiveDialoguesData>(It.IsAny<int>(), out activeDialoguesData))
                 .Returns(true);
 
+            // Capture updated component when AddComponent is called
+            ActiveDialoguesData capturedData = activeDialoguesData;
+            mockEntityManager
+                .Setup(em => em.AddComponent<ActiveDialoguesData>(It.IsAny<int>(), It.IsAny<ActiveDialoguesData>()))
+                .Callback<int, ActiveDialoguesData>((id, data) => capturedData = data);
+
             var nodes = new List<IDialogueNode>
             {
                 CreateTestNode("node_001", DialogueNodeType.Line, "npc_001", "Goodbye!", new List<string> { "node_end" }.AsReadOnly()),
@@ -690,9 +696,9 @@ namespace RPGFramework.Dialogue.Tests
 
             // Assert
             Assert.That(advanced, Is.True);
-            Assert.That(activeDialoguesData.ActiveDialogues, Does.Not.ContainKey("dialogue_001"));
-            Assert.That(activeDialoguesData.CompletedDialogueIds, Contains.Item("dialogue_001"));
-            Assert.That(activeDialoguesData.TotalDialoguesCompleted, Is.EqualTo(1));
+            Assert.That(capturedData.ActiveDialogues, Does.Not.ContainKey("dialogue_001"));
+            Assert.That(capturedData.CompletedDialogueIds, Contains.Item("dialogue_001"));
+            Assert.That(capturedData.TotalDialoguesCompleted, Is.EqualTo(1));
         }
 
         #endregion
