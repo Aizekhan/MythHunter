@@ -42,6 +42,8 @@ namespace RPGFramework.Trading
         /// </summary>
         public int GetReputation(string traderId)
         {
+            if (TraderReputation == null)
+                return 0;
             return TraderReputation.TryGetValue(traderId, out var rep) ? rep : 0;
         }
 
@@ -50,6 +52,8 @@ namespace RPGFramework.Trading
         /// </summary>
         public void AddReputation(string traderId, int amount)
         {
+            if (TraderReputation == null)
+                TraderReputation = new Dictionary<string, int>();
             if (!TraderReputation.ContainsKey(traderId))
                 TraderReputation[traderId] = 0;
             TraderReputation[traderId] += amount;
@@ -84,6 +88,8 @@ namespace RPGFramework.Trading
         public void RecordCompletedTrade(string tradeId)
         {
             CompletedTradeCount++;
+            if (ActiveTradeIds == null)
+                ActiveTradeIds = new List<string>();
             if (ActiveTradeIds.Contains(tradeId))
                 ActiveTradeIds.Remove(tradeId);
         }

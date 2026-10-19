@@ -22,6 +22,7 @@ namespace RPGFramework.Pooling
 
         private int _activeCount;
         private int _totalCreated;
+        private int _createdOnDemand; // Objects created during Get() calls (not pre-warming)
         private long _totalGetCount;
         private long _totalReturnCount;
         private int _peakActiveCount;
@@ -112,6 +113,7 @@ namespace RPGFramework.Pooling
             {
                 obj = _createFunc();
                 _totalCreated++;
+                _createdOnDemand++;
                 LogTrace($"Created new object for pool (pool was empty), total created: {_totalCreated}");
             }
 
@@ -220,6 +222,7 @@ namespace RPGFramework.Pooling
                 ActiveCount = _activeCount,
                 InactiveCount = _pool.Count,
                 TotalCreated = _totalCreated,
+                CreatedOnDemand = _createdOnDemand,
                 TotalGetCount = _totalGetCount,
                 TotalReturnCount = _totalReturnCount,
                 PeakActiveCount = _peakActiveCount,

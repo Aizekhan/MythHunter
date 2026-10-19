@@ -583,6 +583,12 @@ namespace RPGFramework.Quests.Tests
                 .Setup(em => em.TryGetComponent<ActiveQuestsData>(It.IsAny<int>(), out activeQuestsData))
                 .Returns(true);
 
+            // Capture updated component when AddComponent is called
+            ActiveQuestsData capturedData = activeQuestsData;
+            mockEntityManager
+                .Setup(em => em.AddComponent<ActiveQuestsData>(It.IsAny<int>(), It.IsAny<ActiveQuestsData>()))
+                .Callback<int, ActiveQuestsData>((id, data) => capturedData = data);
+
             var objectives = new List<IQuestObjective>
             {
                 CreateTestObjective("obj_001", ObjectiveType.Kill, "enemy_1", 5),
@@ -600,9 +606,9 @@ namespace RPGFramework.Quests.Tests
 
             // Assert
             Assert.That(completed, Is.True);
-            Assert.That(activeQuestsData.ActiveQuests, Does.Not.ContainKey("quest_001"));
-            Assert.That(activeQuestsData.CompletedQuestIds, Contains.Item("quest_001"));
-            Assert.That(activeQuestsData.TotalQuestsCompleted, Is.EqualTo(1));
+            Assert.That(capturedData.ActiveQuests, Does.Not.ContainKey("quest_001"));
+            Assert.That(capturedData.CompletedQuestIds, Contains.Item("quest_001"));
+            Assert.That(capturedData.TotalQuestsCompleted, Is.EqualTo(1));
         }
 
         [Test]
@@ -1038,6 +1044,12 @@ namespace RPGFramework.Quests.Tests
                 .Setup(em => em.TryGetComponent<ActiveQuestsData>(It.IsAny<int>(), out activeQuestsData))
                 .Returns(true);
 
+            // Capture updated component when AddComponent is called
+            ActiveQuestsData capturedData = activeQuestsData;
+            mockEntityManager
+                .Setup(em => em.AddComponent<ActiveQuestsData>(It.IsAny<int>(), It.IsAny<ActiveQuestsData>()))
+                .Callback<int, ActiveQuestsData>((id, data) => capturedData = data);
+
             var registry = new QuestRegistry();
             var quest = CreateTestQuest("quest_repeatable", isRepeatable: true, objectives: new List<IQuestObjective> { CreateTestObjective("obj_001") });
             registry.RegisterQuest(quest);
@@ -1049,7 +1061,7 @@ namespace RPGFramework.Quests.Tests
 
             // Assert
             Assert.That(completed, Is.True);
-            Assert.That(activeQuestsData.TotalQuestsCompleted, Is.EqualTo(3));
+            Assert.That(capturedData.TotalQuestsCompleted, Is.EqualTo(3));
         }
 
         #endregion

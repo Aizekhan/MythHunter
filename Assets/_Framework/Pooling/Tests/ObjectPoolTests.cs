@@ -288,12 +288,12 @@ namespace RPGFramework.Pooling.Tests
             var stats = pool.GetStatistics();
 
             Assert.AreEqual(typeof(TestObject).Name, stats.PoolType);
-            Assert.AreEqual(1, stats.ActiveCount);
-            Assert.AreEqual(3, stats.InactiveCount);
-            Assert.AreEqual(3, stats.TotalCreated);
-            Assert.AreEqual(2, stats.TotalGetCount);
-            Assert.AreEqual(1, stats.TotalReturnCount);
-            Assert.AreEqual(2, stats.PeakActiveCount);
+            Assert.AreEqual(1, stats.ActiveCount); // obj2 still active
+            Assert.AreEqual(2, stats.InactiveCount); // started with 3, got 2 (leaving 1), released 1 (now 2)
+            Assert.AreEqual(3, stats.TotalCreated); // initial pool size
+            Assert.AreEqual(2, stats.TotalGetCount); // got obj1, obj2
+            Assert.AreEqual(1, stats.TotalReturnCount); // released obj1
+            Assert.AreEqual(2, stats.PeakActiveCount); // peak when both obj1 and obj2 were active
         }
 
         [Test]

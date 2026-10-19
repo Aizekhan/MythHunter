@@ -37,6 +37,11 @@ namespace RPGFramework.Pooling
         public int TotalCreated;
 
         /// <summary>
+        /// Number of objects created on-demand during Get() calls (excludes pre-warming).
+        /// </summary>
+        public int CreatedOnDemand;
+
+        /// <summary>
         /// Total number of Get() calls.
         /// </summary>
         public long TotalGetCount;
@@ -62,11 +67,11 @@ namespace RPGFramework.Pooling
         public readonly int TotalSize => ActiveCount + InactiveCount;
 
         /// <summary>
-        /// Pool hit rate (reused vs created).
-        /// 1.0 = perfect reuse, 0.0 = no reuse.
+        /// Pool hit rate (reused vs created on demand).
+        /// 1.0 = perfect reuse (no objects created during Get), 0.0 = no reuse (all Gets created new objects).
         /// </summary>
         public readonly float HitRate => TotalGetCount > 0
-            ? (TotalGetCount - TotalCreated) / (float)TotalGetCount
+            ? (TotalGetCount - CreatedOnDemand) / (float)TotalGetCount
             : 0f;
 
         public override readonly string ToString()
