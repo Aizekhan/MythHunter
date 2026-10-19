@@ -6,23 +6,23 @@ namespace RPGFramework.Crafting
     /// Represents a single result item from crafting.
     /// </summary>
     [Serializable]
-    public struct CraftingResult
+    public struct CraftingResult : ICraftingResult
     {
         /// <summary>
         /// Item ID of the crafted result.
         /// </summary>
-        public string ItemId;
+        public string ItemId { get; set; }
 
         /// <summary>
         /// Quantity of this item produced.
         /// </summary>
-        public int Quantity;
+        public int Quantity { get; set; }
 
         /// <summary>
         /// Success chance for this result (0-100).
         /// 100 means guaranteed, 0 means impossible.
         /// </summary>
-        public float SuccessChance;
+        public float SuccessChance { get; set; }
 
         /// <summary>
         /// Create a new crafting result.

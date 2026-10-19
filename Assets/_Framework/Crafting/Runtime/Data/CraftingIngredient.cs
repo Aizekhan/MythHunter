@@ -6,17 +6,17 @@ namespace RPGFramework.Crafting
     /// Represents a single ingredient required for crafting.
     /// </summary>
     [Serializable]
-    public struct CraftingIngredient
+    public struct CraftingIngredient : ICraftingIngredient
     {
         /// <summary>
         /// Item ID of the ingredient.
         /// </summary>
-        public string ItemId;
+        public string ItemId { get; set; }
 
         /// <summary>
         /// Quantity of this ingredient required.
         /// </summary>
-        public int Quantity;
+        public int Quantity { get; set; }
 
         /// <summary>
         /// Create a new crafting ingredient.
