@@ -30,8 +30,8 @@ namespace MythHunter.Tests.Integration
         private ITraderRegistry _traderRegistry;
         private IItemRegistry _itemRegistry;
 
-        private EntityId _testPlayerId;
-        private EntityId _testNpcId;
+        private int _testPlayerId;
+        private int _testNpcId;
 
         [SetUp]
         public void Setup()
@@ -70,7 +70,8 @@ namespace MythHunter.Tests.Integration
         [TearDown]
         public void TearDown()
         {
-            _entityManager?.Dispose();
+            // EntityManager cleanup - currently no dispose needed for simple implementation
+            _entityManager = null;
         }
 
         #region Item Setup
