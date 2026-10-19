@@ -19,11 +19,17 @@ namespace MythHunter.GameLogic.Trading
         /// <summary>List of trader IDs that favor this player</summary>
         public List<string> FavoredTraders;
 
-        public MythHunterTradingComponent()
+        /// <summary>
+        /// Factory method to create a new trading component.
+        /// </summary>
+        public static MythHunterTradingComponent Create()
         {
-            TraderMetadata = new Dictionary<string, TraderMetadata>();
-            _tradersByType = new Dictionary<TraderType, List<string>>();
-            FavoredTraders = new List<string>();
+            return new MythHunterTradingComponent
+            {
+                TraderMetadata = new Dictionary<string, TraderMetadata>(),
+                _tradersByType = new Dictionary<TraderType, List<string>>(),
+                FavoredTraders = new List<string>()
+            };
         }
 
         /// <summary>

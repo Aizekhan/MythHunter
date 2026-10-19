@@ -144,7 +144,7 @@ namespace RPGFramework.Trading.Tests
         [Test]
         public void Trader_MeetsReputationRequirement_PassesWhenEnough()
         {
-            var trader = Trader.Create("exclusive_merchant", "Exclusive", TraderType.Merchant, minimumReputation: 50);
+            var trader = new Trader("exclusive_merchant", "Exclusive", TraderType.Merchant, priceModifier: 1.0f, minimumReputation: 50);
             Assert.That(trader.MeetsReputationRequirement(60), Is.True);
             Assert.That(trader.MeetsReputationRequirement(50), Is.True);
             Assert.That(trader.MeetsReputationRequirement(49), Is.False);

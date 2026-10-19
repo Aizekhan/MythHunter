@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using RPGFramework.ECS;
+using MythHunter.Quests.Data;
 
 namespace MythHunter.Quests.Components
 {

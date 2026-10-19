@@ -38,21 +38,21 @@ namespace MythHunter.Quests.Sample
                     {
                         Id = "objective_kill_goblins",
                         Description = "Kill 3 goblins",
-                        TargetCount = 3
+                        RequiredCount = 3
                     }
                 },
                 Rewards = new[]
                 {
                     new QuestRewardData
                     {
-                        Id = "reward_experience",
-                        RewardType = "experience",
+                        RewardId = "reward_experience",
+                        Type = RewardType.Experience,
                         Amount = 100
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_gold",
-                        RewardType = "gold",
+                        RewardId = "reward_gold",
+                        Type = RewardType.Currency,
                         Amount = 50
                     }
                 },
@@ -89,28 +89,27 @@ namespace MythHunter.Quests.Sample
                     {
                         Id = "objective_collect_herbs",
                         Description = "Collect 5 bundles of medicinal herbs",
-                        TargetCount = 5
+                        RequiredCount = 5
                     }
                 },
                 Rewards = new[]
                 {
                     new QuestRewardData
                     {
-                        Id = "reward_experience",
-                        RewardType = "experience",
+                        RewardId = "reward_experience",
+                        Type = RewardType.Experience,
                         Amount = 150
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_gold",
-                        RewardType = "gold",
+                        RewardId = "reward_gold",
+                        Type = RewardType.Currency,
                         Amount = 75
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_item",
-                        RewardType = "item",
-                        ItemId = "potion_healing_major"
+                        Type = RewardType.Item,
+                        RewardId = "potion_healing_major"
                     }
                 },
                 PrerequisiteQuestIds = new string[] { },
@@ -145,34 +144,33 @@ namespace MythHunter.Quests.Sample
                     {
                         Id = "objective_visit_ruins",
                         Description = "Reach the Ancient Ruins location",
-                        TargetCount = 1
+                        RequiredCount = 1
                     },
                     new QuestObjectiveData
                     {
                         Id = "objective_find_artifact",
                         Description = "Locate the golden artifact",
-                        TargetCount = 1
+                        RequiredCount = 1
                     }
                 },
                 Rewards = new[]
                 {
                     new QuestRewardData
                     {
-                        Id = "reward_experience",
-                        RewardType = "experience",
+                        RewardId = "reward_experience",
+                        Type = RewardType.Experience,
                         Amount = 200
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_gold",
-                        RewardType = "gold",
+                        RewardId = "reward_gold",
+                        Type = RewardType.Currency,
                         Amount = 100
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_artifact",
-                        RewardType = "item",
-                        ItemId = "artifact_golden_amulet"
+                        Type = RewardType.Item,
+                        RewardId = "artifact_golden_amulet"
                     }
                 },
                 PrerequisiteQuestIds = new string[] { },
@@ -213,28 +211,27 @@ namespace MythHunter.Quests.Sample
                     {
                         Id = "objective_defeat_boss",
                         Description = "Defeat the Goblin King",
-                        TargetCount = 1
+                        RequiredCount = 1
                     }
                 },
                 Rewards = new[]
                 {
                     new QuestRewardData
                     {
-                        Id = "reward_experience",
-                        RewardType = "experience",
+                        RewardId = "reward_experience",
+                        Type = RewardType.Experience,
                         Amount = 300
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_gold",
-                        RewardType = "gold",
+                        RewardId = "reward_gold",
+                        Type = RewardType.Currency,
                         Amount = 200
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_sword",
-                        RewardType = "item",
-                        ItemId = "sword_iron_boss_drop"
+                        Type = RewardType.Item,
+                        RewardId = "sword_iron_boss_drop"
                     }
                 },
                 PrerequisiteQuestIds = new[] { "quest_tutorial_kill_goblins" },
@@ -270,27 +267,27 @@ namespace MythHunter.Quests.Sample
                     {
                         Id = "objective_patrol_complete",
                         Description = "Complete patrol of village perimeter",
-                        TargetCount = 1
+                        RequiredCount = 1
                     },
                     new QuestObjectiveData
                     {
                         Id = "objective_enemies_defeated",
                         Description = "Defeat 5 enemies during patrol",
-                        TargetCount = 5
+                        RequiredCount = 5
                     }
                 },
                 Rewards = new[]
                 {
                     new QuestRewardData
                     {
-                        Id = "reward_experience",
-                        RewardType = "experience",
+                        RewardId = "reward_experience",
+                        Type = RewardType.Experience,
                         Amount = 75
                     },
                     new QuestRewardData
                     {
-                        Id = "reward_gold",
-                        RewardType = "gold",
+                        RewardId = "reward_gold",
+                        Type = RewardType.Currency,
                         Amount = 40
                     }
                 },
