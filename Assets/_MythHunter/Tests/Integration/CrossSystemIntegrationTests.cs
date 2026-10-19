@@ -30,8 +30,8 @@ namespace MythHunter.Tests.Integration
         private ITraderRegistry _traderRegistry;
         private IItemRegistry _itemRegistry;
 
-        private EntityId _testPlayerId;
-        private EntityId _testNpcId;
+        private int _testPlayerId;
+        private int _testNpcId;
 
         [SetUp]
         public void Setup()
