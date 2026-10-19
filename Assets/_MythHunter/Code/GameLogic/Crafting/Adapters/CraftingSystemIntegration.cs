@@ -42,20 +42,20 @@ namespace MythHunter.GameLogic.Crafting
         {
             if (string.IsNullOrEmpty(recipeId))
             {
-                _logger.LogError($"Cannot start crafting: Recipe ID is empty");
+                _logger.Log(LogSeverity.Error, $"Cannot start crafting: Recipe ID is empty");
                 return false;
             }
 
             if (station == null)
             {
-                _logger.LogError($"Cannot start crafting: Station is null");
+                _logger.Log(LogSeverity.Error, $"Cannot start crafting: Station is null");
                 return false;
             }
 
             var recipe = _recipeRegistry.GetRecipe(recipeId);
             if (recipe == null)
             {
-                _logger.LogError($"Cannot start crafting: Recipe '{recipeId}' not found in registry");
+                _logger.Log(LogSeverity.Error, $"Cannot start crafting: Recipe '{recipeId}' not found in registry");
                 return false;
             }
 
@@ -63,7 +63,7 @@ namespace MythHunter.GameLogic.Crafting
             var craftingComponent = _entityManager.GetComponent<MythHunterCraftingComponent>(entityId);
             if (!craftingComponent.HasLearned(recipeId))
             {
-                _logger.LogError($"Entity {entityId} has not learned recipe '{recipeId}'");
+                _logger.Log(LogSeverity.Error, $"Entity {entityId} has not learned recipe '{recipeId}'");
                 return false;
             }
 
@@ -71,11 +71,11 @@ namespace MythHunter.GameLogic.Crafting
             var operationId = _craftingManager.StartCrafting(entityId, recipeId, station);
             if (operationId < 0)
             {
-                _logger.LogError($"Failed to start crafting operation for recipe '{recipeId}'");
+                _logger.Log(LogSeverity.Error, $"Failed to start crafting operation for recipe '{recipeId}'");
                 return false;
             }
 
-            _logger.LogInfo($"Started crafting operation {operationId} for recipe '{recipeId}' by entity {entityId}");
+            _logger.Log(LogSeverity.Information, $"Started crafting operation {operationId} for recipe '{recipeId}' by entity {entityId}");
             return true;
         }
 
@@ -87,11 +87,11 @@ namespace MythHunter.GameLogic.Crafting
             var result = _craftingManager.CancelCrafting(entityId, operationId);
             if (result)
             {
-                _logger.LogInfo($"Cancelled crafting operation {operationId} for entity {entityId}");
+                _logger.Log(LogSeverity.Information, $"Cancelled crafting operation {operationId} for entity {entityId}");
             }
             else
             {
-                _logger.LogWarning($"Failed to cancel crafting operation {operationId} for entity {entityId}");
+                _logger.Log(LogSeverity.Warning, $"Failed to cancel crafting operation {operationId} for entity {entityId}");
             }
             return result;
         }
@@ -151,25 +151,26 @@ namespace MythHunter.GameLogic.Crafting
             var recipe = _recipeRegistry.GetRecipe(recipeId);
             if (recipe == null)
             {
-                _logger.LogError($"Cannot learn recipe: Recipe '{recipeId}' not found");
+                _logger.Log(LogSeverity.Error, $"Cannot learn recipe: Recipe '{recipeId}' not found");
                 return false;
             }
 
             var component = _entityManager.GetComponent<MythHunterCraftingComponent>(entityId);
             if (component.HasLearned(recipeId))
             {
-                _logger.LogWarning($"Entity {entityId} has already learned recipe '{recipeId}'");
+                _logger.Log(LogSeverity.Warning, $"Entity {entityId} has already learned recipe '{recipeId}'");
                 return false;
             }
 
             if (!component.LearnRecipe(recipeId))
             {
-                _logger.LogError($"Failed to learn recipe '{recipeId}' for entity {entityId}");
+                _logger.Log(LogSeverity.Error, $"Failed to learn recipe '{recipeId}' for entity {entityId}");
                 return false;
             }
 
-            _entityManager.SetComponent(entityId, component);
-            _logger.LogInfo($"Entity {entityId} learned recipe '{recipeId}' ({recipe.Name})");
+            _entityManager.RemoveComponent<MythHunterCraftingComponent>(entityId);
+            _entityManager.AddComponent(entityId, component);
+            _logger.Log(LogSeverity.Information, $"Entity {entityId} learned recipe '{recipeId}' ({recipe.Name})");
             return true;
         }
 
@@ -210,9 +211,10 @@ namespace MythHunter.GameLogic.Crafting
 
             var component = _entityManager.GetComponent<MythHunterCraftingComponent>(entityId);
             component.AddExperience(amount);
-            _entityManager.SetComponent(entityId, component);
+            _entityManager.RemoveComponent<MythHunterCraftingComponent>(entityId);
+            _entityManager.AddComponent(entityId, component);
 
-            _logger.LogInfo($"Entity {entityId} gained {amount} crafting experience (total: {component.CraftingExperience})");
+            _logger.Log(LogSeverity.Information, $"Entity {entityId} gained {amount} crafting experience (total: {component.CraftingExperience})");
         }
 
         /// <summary>
@@ -231,7 +233,8 @@ namespace MythHunter.GameLogic.Crafting
         {
             var component = _entityManager.GetComponent<MythHunterCraftingComponent>(entityId);
             component.RegisterMetadata(recipeId, metadata);
-            _entityManager.SetComponent(entityId, component);
+            _entityManager.RemoveComponent<MythHunterCraftingComponent>(entityId);
+            _entityManager.AddComponent(entityId, component);
         }
 
         /// <summary>
@@ -292,14 +295,14 @@ namespace MythHunter.GameLogic.Crafting
 
         private void OnCraftingStarted(object sender, CraftingStartedEvent e)
         {
-            _logger.LogInfo($"[CRAFTING] Crafting started: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
+            _logger.Log(LogSeverity.Information, $"[CRAFTING] Crafting started: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
                 $"at station '{e.Station.StationId}' (Duration: {e.CraftingTimeSeconds}s)");
         }
 
         private void OnCraftingCompleted(object sender, CraftingCompletedEvent e)
         {
             int totalQuantity = e.Results.Sum(r => r.Quantity);
-            _logger.LogInfo($"[CRAFTING] Crafting completed: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
+            _logger.Log(LogSeverity.Information, $"[CRAFTING] Crafting completed: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
                 $"produced {totalQuantity} items in {e.TotalTimeSeconds}s");
 
             // Add experience on successful craft
@@ -308,13 +311,13 @@ namespace MythHunter.GameLogic.Crafting
 
         private void OnCraftingFailed(object sender, CraftingFailedEvent e)
         {
-            _logger.LogWarning($"[CRAFTING] Crafting failed: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
+            _logger.Log(LogSeverity.Warning, $"[CRAFTING] Crafting failed: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
                 $"- Reason: {e.FailureReason} (Time elapsed: {e.TimeBeforeFailureSeconds}s)");
         }
 
         private void OnCraftingCancelled(object sender, CraftingCancelledEvent e)
         {
-            _logger.LogInfo($"[CRAFTING] Crafting cancelled: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
+            _logger.Log(LogSeverity.Information, $"[CRAFTING] Crafting cancelled: Recipe '{e.RecipeId}' by entity {e.EntityId} " +
                 $"(Time spent: {e.TimeSpentSeconds}s)");
         }
     }

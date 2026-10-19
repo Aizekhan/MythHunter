@@ -485,7 +485,7 @@ namespace MythHunter.GameLogic.Dialogue.Sample
 
         public static DialogueMetadata CompanionConversationMetadata()
         {
-            return new DialogueMetadata.CreateFull(
+            return DialogueMetadata.CreateFull(
                 speakerName: "Companion Aria",
                 speakerPortraitPath: "Textures/Portraits/companion_aria",
                 speakerVoiceActorId: "voice_aria",

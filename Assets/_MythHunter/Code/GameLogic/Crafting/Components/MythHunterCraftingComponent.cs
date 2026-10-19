@@ -63,9 +63,10 @@ namespace MythHunter.GameLogic.Crafting
             if (LearnedRecipeIds == null || registry == null)
                 return new List<string>();
 
+            var learnedRecipes = LearnedRecipeIds;
             return registry
                 .GetRecipesByStationType(stationType)
-                .Where(recipe => LearnedRecipeIds.Contains(recipe.RecipeId))
+                .Where(recipe => learnedRecipes.Contains(recipe.RecipeId))
                 .Select(recipe => recipe.RecipeId)
                 .ToList();
         }

@@ -1,6 +1,5 @@
 using RPGFramework.Trading;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace MythHunter.GameLogic.Trading
 {
@@ -217,7 +216,8 @@ namespace MythHunter.GameLogic.Trading
 
         private void LogTrade(int playerEntityId, string offerId, TradeResultData result)
         {
-            Debug.Log($"[Trade] Player {playerEntityId} completed trade {offerId}. " +
+            // TODO: Replace with proper logging system
+            System.Console.WriteLine($"[Trade] Player {playerEntityId} completed trade {offerId}. " +
                      $"Gold change: {result.GoldChange}, Items received: {result.ItemsReceived.Count}");
         }
 
@@ -242,7 +242,7 @@ namespace MythHunter.GameLogic.Trading
                 PlayerEntityId = playerEntityId,
                 TraderId = GetOfferFromRegistry(offerId)?.TraderId ?? "",
                 TradeOfferId = offerId,
-                Timestamp = Time.time
+                Timestamp = 0f // TODO: Use proper game time system
             };
             // Game layer would publish this event
         }

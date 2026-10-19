@@ -13,7 +13,7 @@ namespace MythHunter.GameLogic.Trading
         /// </summary>
         public static Trader CreateGeneralMerchant()
         {
-            var trader = Trader.Create("general_merchant", "General Merchant", TraderType.Merchant, priceModifier: 1.0f);
+            var trader = Trader.Create("general_merchant", "General Merchant", TraderType.Merchant);
             trader.SetReputationGain(5);
 
             // Offer 1: Buy potions
@@ -47,8 +47,8 @@ namespace MythHunter.GameLogic.Trading
         /// </summary>
         public static Trader CreateMasterBlacksmith()
         {
-            var trader = Trader.Create("master_blacksmith", "Master Blacksmith", TraderType.Blacksmith,
-                priceModifier: 1.3f, minimumReputation: 50);
+            var trader = new Trader("master_blacksmith", "Master Blacksmith", TraderType.Blacksmith,
+                priceModifier: 1.0f, minimumReputation: 50);
             trader.SetReputationGain(15);
 
             // Offer 1: Legendary sword (reputation locked)
@@ -83,8 +83,8 @@ namespace MythHunter.GameLogic.Trading
         /// </summary>
         public static Trader CreateAlchemistShop()
         {
-            var trader = Trader.Create("alchemist_shop", "Alchemist's Emporium", TraderType.Alchemist,
-                priceModifier: 1.15f, minimumReputation: 0);
+            var trader = new Trader("alchemist_shop", "Alchemist's Emporium", TraderType.Alchemist,
+                priceModifier: 1.0f, minimumReputation: 0);
             trader.SetReputationGain(10);
 
             // Offer 1: Healing potion pack
@@ -118,8 +118,8 @@ namespace MythHunter.GameLogic.Trading
         /// </summary>
         public static Trader CreateShadyFenceDealer()
         {
-            var trader = Trader.Create("shady_fence", "Shady Fence Dealer", TraderType.FenceDealer,
-                priceModifier: 0.6f, minimumReputation: 0);
+            var trader = new Trader("shady_fence", "Shady Fence Dealer", TraderType.FenceDealer,
+                priceModifier: 1.0f, minimumReputation: 0);
             trader.SetReputationGain(8);
 
             // Offer 1: Stolen artifacts
@@ -153,7 +153,7 @@ namespace MythHunter.GameLogic.Trading
         /// </summary>
         public static Trader CreateQuestRewardTrader()
         {
-            var trader = Trader.Create("quest_reward_trader", "Quartermaster", TraderType.QuestGiver,
+            var trader = new Trader("quest_reward_trader", "Quartermaster", TraderType.QuestGiver,
                 priceModifier: 1.0f, minimumReputation: 0);
             trader.SetReputationGain(20);
 
