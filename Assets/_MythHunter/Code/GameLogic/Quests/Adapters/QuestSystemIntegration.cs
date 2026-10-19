@@ -1,6 +1,7 @@
 // Assets/_MythHunter/Code/GameLogic/Quests/Adapters/QuestSystemIntegration.cs
 
 using System.Collections.Generic;
+using System.Linq;
 using RPGFramework.ECS;
 using RPGFramework.Quests;
 using MythHunter.Core.DI;
