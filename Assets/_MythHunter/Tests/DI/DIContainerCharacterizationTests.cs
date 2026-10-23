@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 namespace MythHunter.DI.CharacterizationTests
 {
     // Reflection is used because the current MythHunter runtime compiles into
-    // Assembly-CSharp, which a custom asmdef test assembly cannot reference directly.
+    // MythHunter.Runtime assembly, which requires dynamic loading for characterization tests.
     public sealed class DIContainerCharacterizationTests
     {
         [Test]
@@ -231,8 +231,8 @@ namespace MythHunter.DI.CharacterizationTests
         public void EventNetworkAuthorityPolicy_OnlyAllowsConfiguredAuthority()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
             var authorityType = assembly.GetType("MythHunter.Events.Network.NetworkEventAuthority", true);
             var policyType = assembly.GetType("MythHunter.Events.Network.EventNetworkAuthorityPolicy", true);
@@ -267,8 +267,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
@@ -306,8 +306,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var modeType = assembly.GetType("MythHunter.Events.Network.EventNetworkMode", true);
@@ -363,8 +363,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
@@ -405,8 +405,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
@@ -562,8 +562,8 @@ namespace MythHunter.DI.CharacterizationTests
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var frameworkAssembly = assemblies.FirstOrDefault(a => a.GetType("RPGFramework.ECS.EntityManager", false) != null)
                 ?? Assembly.Load("RPGFramework.ECS.Runtime");
-            var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+            var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
 
             var entityManagerType = frameworkAssembly.GetType("RPGFramework.ECS.EntityManager", true);
             var entityManager = Activator.CreateInstance(entityManagerType);
@@ -652,8 +652,8 @@ namespace MythHunter.DI.CharacterizationTests
                 var assemblies = AppDomain.CurrentDomain.GetAssemblies();
                 var frameworkAssembly = assemblies.FirstOrDefault(a => a.GetType("RPGFramework.ECS.EntityManager", false) != null)
                     ?? Assembly.Load("RPGFramework.ECS.Runtime");
-                var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp")
-                    ?? Assembly.Load("Assembly-CSharp");
+                var gameAssembly = assemblies.FirstOrDefault(a => a.GetName().Name == "MythHunter.Runtime")
+                    ?? Assembly.Load("MythHunter.Runtime");
                 var entityManagerType = frameworkAssembly.GetType("RPGFramework.ECS.EntityManager", true);
                 _entityManager = Activator.CreateInstance(entityManagerType);
                 _componentType = gameAssembly.GetType("MythHunter.Components.Movement.PositionComponent", true);
@@ -713,8 +713,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
@@ -764,8 +764,8 @@ namespace MythHunter.DI.CharacterizationTests
             SystemSpyProxy.DisposeOrder.Clear();
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
@@ -818,8 +818,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
             var logger = Resolve(container, assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true));
             var systemInterface = assembly.GetType("MythHunter.Core.ECS.ISystem", true);
@@ -871,8 +871,8 @@ namespace MythHunter.DI.CharacterizationTests
         public void SystemRegistryContract_DoesNotExposeTheDependencyContainer()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             var registryInterface = assembly.GetType("MythHunter.Systems.Core.ISystemRegistry", true);
 
             Assert.That(registryInterface.GetMethod("GetContainer"), Is.Null,
@@ -884,8 +884,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
@@ -935,8 +935,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             RegisterErrorOnlyLogger(container, assembly);
 
             var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
@@ -1106,8 +1106,8 @@ namespace MythHunter.DI.CharacterizationTests
         {
             var container = CreateContainer();
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
 
             var loggerType = assembly.GetType("MythHunter.Utils.Logging.MythLogger", true);
             var loggerInterface = assembly.GetType("MythHunter.Utils.Logging.IMythLogger", true);
@@ -1170,9 +1170,10 @@ namespace MythHunter.DI.CharacterizationTests
 
         private static object CreateContainer()
         {
+            // Updated to use MythHunter.Runtime instead of MythHunter.Runtime
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
+                .FirstOrDefault(candidate => candidate.GetName().Name == "MythHunter.Runtime")
+                ?? Assembly.Load("MythHunter.Runtime");
             var containerType = assembly.GetType("MythHunter.Core.DI.DIContainer", true);
             return Activator.CreateInstance(containerType, new object[] { null });
         }
