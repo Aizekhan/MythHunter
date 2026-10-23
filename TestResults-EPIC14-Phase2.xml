@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="17" result="Passed" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0,1090603">
+  <test-suite type="TestSuite" id="1000" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="414" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.109060" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1101" name="MythHunter.Skills.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/MythHunter.Skills.Tests.dll" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.079882" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="18108" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1102" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.079051" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1103" name="Tests" fullname="MythHunter.Tests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.078547" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1104" name="Skills" fullname="MythHunter.Tests.Skills" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.078083" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1083" name="SkillSystemIntegrationTests" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.076430" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1094" name="AddFavoriteSkill_AddsFavorite" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.AddFavoriteSkill_AddsFavorite" methodname="AddFavoriteSkill_AddsFavorite" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="2021845378" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.032599" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1097" name="CalculateStatBonuses_MultipleSkills_SumsBonuses" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.CalculateStatBonuses_MultipleSkills_SumsBonuses" methodname="CalculateStatBonuses_MultipleSkills_SumsBonuses" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1819449958" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.004745" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1096" name="CalculateStatBonuses_ReturnsBonusesFromSkills" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.CalculateStatBonuses_ReturnsBonusesFromSkills" methodname="CalculateStatBonuses_ReturnsBonusesFromSkills" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1176698099" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.001347" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1092" name="CanLearnSkill_PrerequisitesMet_ReturnsTrue" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.CanLearnSkill_PrerequisitesMet_ReturnsTrue" methodname="CanLearnSkill_PrerequisitesMet_ReturnsTrue" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="810734096" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000654" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1093" name="GetAvailableSkills_ReturnsOnlyAvailable" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.GetAvailableSkills_ReturnsOnlyAvailable" methodname="GetAvailableSkills_ReturnsOnlyAvailable" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="546421628" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.001913" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1091" name="GetLearnedSkills_ReturnsAllLearned" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.GetLearnedSkills_ReturnsAllLearned" methodname="GetLearnedSkills_ReturnsAllLearned" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1930045904" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.001139" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1090" name="IncreaseSkillLevel_AtMaxLevel_ReturnsFalse" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.IncreaseSkillLevel_AtMaxLevel_ReturnsFalse" methodname="IncreaseSkillLevel_AtMaxLevel_ReturnsFalse" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1396609689" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.002715" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1088" name="IncreaseSkillLevel_LearnedSkill_Succeeds" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.IncreaseSkillLevel_LearnedSkill_Succeeds" methodname="IncreaseSkillLevel_LearnedSkill_Succeeds" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="943203437" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000837" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1089" name="IncreaseSkillLevel_UnlearnedSkill_ReturnsFalse" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.IncreaseSkillLevel_UnlearnedSkill_ReturnsFalse" methodname="IncreaseSkillLevel_UnlearnedSkill_ReturnsFalse" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="185154105" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000426" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1085" name="LearnSkill_AlreadyLearned_ReturnsFalse" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.LearnSkill_AlreadyLearned_ReturnsFalse" methodname="LearnSkill_AlreadyLearned_ReturnsFalse" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="589283184" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000613" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1084" name="LearnSkill_NewSkill_Succeeds" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.LearnSkill_NewSkill_Succeeds" methodname="LearnSkill_NewSkill_Succeeds" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1305831205" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000582" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1086" name="LearnSkill_PrerequisitesNotMet_ReturnsFalse" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.LearnSkill_PrerequisitesNotMet_ReturnsFalse" methodname="LearnSkill_PrerequisitesNotMet_ReturnsFalse" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="29925088" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000399" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1087" name="LearnSkill_WithCallback_TriggersCallback" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.LearnSkill_WithCallback_TriggersCallback" methodname="LearnSkill_WithCallback_TriggersCallback" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="54486718" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000542" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1100" name="MythHunterSkillsComponent_CreateEnemy" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.MythHunterSkillsComponent_CreateEnemy" methodname="MythHunterSkillsComponent_CreateEnemy" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1671715383" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000730" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1098" name="MythHunterSkillsComponent_CreateHero_CreatesEmpty" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.MythHunterSkillsComponent_CreateHero_CreatesEmpty" methodname="MythHunterSkillsComponent_CreateHero_CreatesEmpty" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1578036010" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.002494" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1099" name="MythHunterSkillsComponent_CreateHero_WithStartingSkills" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.MythHunterSkillsComponent_CreateHero_WithStartingSkills" methodname="MythHunterSkillsComponent_CreateHero_WithStartingSkills" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="1676012751" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.000790" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1095" name="RemoveFavoriteSkill_RemovesFavorite" fullname="MythHunter.Tests.Skills.SkillSystemIntegrationTests.RemoveFavoriteSkill_RemovesFavorite" methodname="RemoveFavoriteSkill_RemovesFavorite" classname="MythHunter.Tests.Skills.SkillSystemIntegrationTests" runstate="Runnable" seed="526714358" result="Passed" start-time="2026-10-17 20:02:43Z" end-time="2026-10-17 20:02:43Z" duration="0.001064" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/Admin/AppData/LocalLow/MasterMindGames/MythHunter\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

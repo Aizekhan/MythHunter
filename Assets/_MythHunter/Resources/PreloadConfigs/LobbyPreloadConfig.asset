@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6625162ed8f610140afebb8b504579cc, type: 3}
+  m_Name: LobbyPreloadConfig
+  m_EditorClassIdentifier: 
+  sceneName: LobbyScene
+  resources:
+  - relatedViewId: 0
+    resourceKey: ScriptableObjects/Heroes
+    resourceType: 6
+    loadingMode: 1
+    priority: 100
+    createPool: 0
+    poolSize: 100
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: " \u0410\u0440\u0445\u0435\u0442\u0438\u043F\u0438 \u0433\u0435\u0440\u043E\u0457\u0432"
+  - relatedViewId: 9
+    resourceKey: UI/Lobby/HeroCardUI
+    resourceType: 0
+    loadingMode: 0
+    priority: 50
+    createPool: 1
+    poolSize: 50
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: "\u041A\u0430\u0440\u0442\u043A\u0438 \u0433\u0435\u0440\u043E\u0457\u0432 "
+  - relatedViewId: 1
+    resourceKey: UI/Lobby/LobbyView
+    resourceType: 0
+    loadingMode: 0
+    priority: 94
+    createPool: 0
+    poolSize: 1
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: 
+  - relatedViewId: 10
+    resourceKey: UI/Lobby/SelectedHeroCard
+    resourceType: 0
+    loadingMode: 0
+    priority: 70
+    createPool: 1
+    poolSize: 8
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: 
+  - relatedViewId: 0
+    resourceKey: UI/Icons/Heroes
+    resourceType: 1
+    loadingMode: 1
+    priority: 50
+    createPool: 0
+    poolSize: 0
+    onlyInEditor: 0
+    onlyInBuild: 0
+    description: 
+  autoRegisterOnAwake: 1
+  enableDebugLogging: 1

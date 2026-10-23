@@ -1,0 +1,45 @@
+name: RPGFramework Stats Runtime
+
+on:
+  pull_request:
+    branches: [dev, "feature/epic-10-phase-2-stat-system"]
+    paths:
+      - "Assets/_Framework/Stats/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Logging/**"
+      - "Assets/_Framework/Serialization/**"
+      - "Build/RPGFramework.Stats.Tests/**"
+      - "Build/validate_framework_stats_boundary.py"
+      - ".github/workflows/rpg-framework-stats.yml"
+  push:
+    branches: [dev, "feature/epic-10-phase-2-stat-system"]
+    paths:
+      - "Assets/_Framework/Stats/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Logging/**"
+      - "Assets/_Framework/Serialization/**"
+      - "Build/RPGFramework.Stats.Tests/**"
+      - "Build/validate_framework_stats_boundary.py"
+      - ".github/workflows/rpg-framework-stats.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and Stats tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate assembly boundary and GUIDs
+        run: python Build/validate_framework_stats_boundary.py
+
+      - name: Run Stats tests
+        run: dotnet test Build/RPGFramework.Stats.Tests/RPGFramework.Stats.Tests.csproj --configuration Release

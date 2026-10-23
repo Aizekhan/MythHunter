@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="24" result="Passed" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0,1637897">
+  <test-suite type="TestSuite" id="1000" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="397" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.163790" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1456" name="RPGFramework.Skills.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/RPGFramework.Skills.Tests.dll" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.141860" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="14440" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1457" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.133513" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1458" name="Skills" fullname="RPGFramework.Skills" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.132523" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1459" name="Tests" fullname="RPGFramework.Skills.Tests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.131890" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1431" name="SkillSystemTests" fullname="RPGFramework.Skills.Tests.SkillSystemTests" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.129383" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1434" name="Skill_HasBonuses" fullname="RPGFramework.Skills.Tests.SkillSystemTests.Skill_HasBonuses" methodname="Skill_HasBonuses" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1419626423" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.059643" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1432" name="Skill_HasCorrectProperties" fullname="RPGFramework.Skills.Tests.SkillSystemTests.Skill_HasCorrectProperties" methodname="Skill_HasCorrectProperties" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="2106276673" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.002559" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1433" name="Skill_HasPrerequisites" fullname="RPGFramework.Skills.Tests.SkillSystemTests.Skill_HasPrerequisites" methodname="Skill_HasPrerequisites" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1235157402" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.001060" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1445" name="SkillBonus_CalculateBonus_Additive" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillBonus_CalculateBonus_Additive" methodname="SkillBonus_CalculateBonus_Additive" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1534015304" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000766" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1446" name="SkillBonus_CalculateBonus_Multiplicative" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillBonus_CalculateBonus_Multiplicative" methodname="SkillBonus_CalculateBonus_Multiplicative" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1288196880" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000471" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1441" name="SkillPrerequisite_CharacterLevel_IsSatisfied" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillPrerequisite_CharacterLevel_IsSatisfied" methodname="SkillPrerequisite_CharacterLevel_IsSatisfied" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="527113079" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.001399" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1444" name="SkillPrerequisite_Combined_BothMustBeSatisfied" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillPrerequisite_Combined_BothMustBeSatisfied" methodname="SkillPrerequisite_Combined_BothMustBeSatisfied" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1343387522" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000762" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1442" name="SkillPrerequisite_SkillLevel_IsSatisfied" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillPrerequisite_SkillLevel_IsSatisfied" methodname="SkillPrerequisite_SkillLevel_IsSatisfied" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1528592534" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000726" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1443" name="SkillPrerequisite_SkillLevel_NotSatisfied" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillPrerequisite_SkillLevel_NotSatisfied" methodname="SkillPrerequisite_SkillLevel_NotSatisfied" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1988701573" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.005391" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1435" name="SkillProgress_EmptyByDefault" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgress_EmptyByDefault" methodname="SkillProgress_EmptyByDefault" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="2039184228" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.003614" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1436" name="SkillProgress_GetSkillLevel_ReturnsZeroForUnlearnedSkill" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgress_GetSkillLevel_ReturnsZeroForUnlearnedSkill" methodname="SkillProgress_GetSkillLevel_ReturnsZeroForUnlearnedSkill" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="341674343" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000429" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1437" name="SkillProgress_HasSkill_ReturnsFalseForUnlearnedSkill" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgress_HasSkill_ReturnsFalseForUnlearnedSkill" methodname="SkillProgress_HasSkill_ReturnsFalseForUnlearnedSkill" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1562802098" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000517" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1440" name="SkillProgressData_CreateWithSkills_InitializesSkillsAtLevel1" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgressData_CreateWithSkills_InitializesSkillsAtLevel1" methodname="SkillProgressData_CreateWithSkills_InitializesSkillsAtLevel1" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="255807909" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.005019" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1439" name="SkillProgressData_RemoveSkill_RemovesSkill" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgressData_RemoveSkill_RemovesSkill" methodname="SkillProgressData_RemoveSkill_RemovesSkill" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1807757304" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000784" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1438" name="SkillProgressData_SetSkillLevel_SetsLevel" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillProgressData_SetSkillLevel_SetsLevel" methodname="SkillProgressData_SetSkillLevel_SetsLevel" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="593204893" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000578" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1454" name="SkillTree_CanLearnSkill_AlreadyAtMaxLevel" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_CanLearnSkill_AlreadyAtMaxLevel" methodname="SkillTree_CanLearnSkill_AlreadyAtMaxLevel" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="726015727" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000851" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1453" name="SkillTree_CanLearnSkill_PrerequisitesMet" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_CanLearnSkill_PrerequisitesMet" methodname="SkillTree_CanLearnSkill_PrerequisitesMet" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="2117632211" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000535" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1452" name="SkillTree_CanLearnSkill_PrerequisitesNotMet" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_CanLearnSkill_PrerequisitesNotMet" methodname="SkillTree_CanLearnSkill_PrerequisitesNotMet" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="362946087" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000312" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1449" name="SkillTree_ContainsSkill_ReturnsFalse" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_ContainsSkill_ReturnsFalse" methodname="SkillTree_ContainsSkill_ReturnsFalse" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="2121836873" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000343" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1448" name="SkillTree_ContainsSkill_ReturnsTrue" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_ContainsSkill_ReturnsTrue" methodname="SkillTree_ContainsSkill_ReturnsTrue" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1751673588" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000241" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1455" name="SkillTree_GetAvailableSkills_ReturnsOnlyAvailableSkills" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_GetAvailableSkills_ReturnsOnlyAvailableSkills" methodname="SkillTree_GetAvailableSkills_ReturnsOnlyAvailableSkills" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1429418086" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.001090" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1451" name="SkillTree_GetSkill_ReturnsNullForUnknownSkill" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_GetSkill_ReturnsNullForUnknownSkill" methodname="SkillTree_GetSkill_ReturnsNullForUnknownSkill" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="884160856" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000302" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1450" name="SkillTree_GetSkill_ReturnsSkill" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_GetSkill_ReturnsSkill" methodname="SkillTree_GetSkill_ReturnsSkill" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="524584631" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000297" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1447" name="SkillTree_HasCorrectProperties" fullname="RPGFramework.Skills.Tests.SkillSystemTests.SkillTree_HasCorrectProperties" methodname="SkillTree_HasCorrectProperties" classname="RPGFramework.Skills.Tests.SkillSystemTests" runstate="Runnable" seed="1170706907" result="Passed" start-time="2026-10-17 17:16:59Z" end-time="2026-10-17 17:16:59Z" duration="0.000696" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/Admin/AppData/LocalLow/MasterMindGames/MythHunter\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

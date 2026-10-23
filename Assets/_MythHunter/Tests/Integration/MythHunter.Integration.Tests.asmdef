@@ -1,0 +1,29 @@
+{
+    "name": "MythHunter.Integration.Tests",
+    "rootNamespace": "MythHunter.Tests.Integration",
+    "references": [
+        "MythHunter.Runtime",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Logging.Runtime",
+        "RPGFramework.Quests.Runtime",
+        "RPGFramework.Dialogue.Runtime",
+        "RPGFramework.Crafting.Runtime",
+        "RPGFramework.Trading.Runtime",
+        "RPGFramework.Inventory.Runtime",
+        "RPGFramework.Items.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
