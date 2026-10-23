@@ -23,6 +23,7 @@
         "RPGFramework.Trading.Runtime",
         "RPGFramework.Factions.Runtime",
         "RPGFramework.Housing.Runtime",
+        "RPGFramework.Persistence.Runtime",
         "UniTask",
         "Unity.TextMeshPro",
         "Unity.Mathematics"
