@@ -2,14 +2,20 @@
     "name": "MythHunter.Integration.Tests",
     "rootNamespace": "MythHunter.Tests.Integration",
     "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
         "MythHunter.Runtime",
         "RPGFramework.ECS.Runtime",
         "RPGFramework.Logging.Runtime",
         "RPGFramework.Quests.Runtime",
         "RPGFramework.Dialogue.Runtime",
-        "RPGFramework.Crafting.Runtime",
         "RPGFramework.Trading.Runtime",
+        "RPGFramework.Factions.Runtime",
+        "RPGFramework.Combat.Runtime",
+        "RPGFramework.Loot.Runtime",
         "RPGFramework.Inventory.Runtime",
+        "RPGFramework.Crafting.Runtime",
         "RPGFramework.Items.Runtime"
     ],
     "includePlatforms": [
@@ -17,13 +23,14 @@
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Moq.dll",
+        "Castle.Core.dll"
+    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
-    "noEngineReferences": false,
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ]
+    "noEngineReferences": false
 }
