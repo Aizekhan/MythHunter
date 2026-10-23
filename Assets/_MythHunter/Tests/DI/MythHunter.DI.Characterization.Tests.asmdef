@@ -2,9 +2,10 @@
     "name": "MythHunter.DI.Characterization.Tests",
     "rootNamespace": "MythHunter.DI.CharacterizationTests",
     "references": [
-        "GUID:53b8d6d2c2c3435cb61ad1e7eaa55f8c",
-        "GUID:9ab0b1bbfc7e4a4eaee3000000000003",
-        "GUID:153cdb2c99181b543a4ab08caabe015d"
+        "MythHunter.Runtime",
+        "RPGFramework.Core.Runtime",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Logging.Runtime"
     ],
     "includePlatforms": [
         "Editor"
