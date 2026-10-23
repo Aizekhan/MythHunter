@@ -22,6 +22,7 @@
         "RPGFramework.Crafting.Runtime",
         "RPGFramework.Trading.Runtime",
         "RPGFramework.Factions.Runtime",
+        "RPGFramework.Networking.Runtime",
         "UniTask",
         "Unity.TextMeshPro",
         "Unity.Mathematics"
