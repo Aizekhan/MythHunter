@@ -113,7 +113,7 @@ namespace MythHunter.Editor.Tools
             titleText.fontSize = 24;
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.color = Color.white;
-            titleText.font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
+            titleText.font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             // Add close instruction text
             var instructionObj = new GameObject("Instructions");
@@ -131,7 +131,7 @@ namespace MythHunter.Editor.Tools
             instructionText.fontSize = 16;
             instructionText.alignment = TextAnchor.MiddleCenter;
             instructionText.color = Color.yellow;
-            instructionText.font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
+            instructionText.font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             // Set panelRoot to hidden by default
             panelRoot.SetActive(false);
