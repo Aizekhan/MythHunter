@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using RPGFramework.ECS;
 using RPGFramework.Achievements;
 using RPGFramework.Achievements.Runtime;
+using RPGFramework.Achievements.Runtime.Contracts;
 using MythHunter.Core.DI;
 using MythHunter.Utils.Logging;
 

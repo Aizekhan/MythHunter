@@ -1,3 +1,5 @@
+// TODO: This UI needs refactoring to work with actual Framework interfaces (IAbilityExecutor, IAbilityRegistry)
+#if FALSE
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -385,3 +387,4 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
+#endif

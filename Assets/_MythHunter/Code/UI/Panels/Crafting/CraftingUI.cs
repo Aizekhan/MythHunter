@@ -1,3 +1,5 @@
+// TODO: This UI needs refactoring to work with actual Framework Crafting interfaces
+#if FALSE
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -581,3 +583,4 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
+#endif

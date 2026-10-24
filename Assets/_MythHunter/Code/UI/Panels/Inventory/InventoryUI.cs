@@ -1,3 +1,5 @@
+// TODO: This UI needs refactoring to work with actual Framework Inventory interfaces
+#if FALSE
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -549,3 +551,4 @@ namespace MythHunter.UI.Panels
         }
     }
 }
+#endif
