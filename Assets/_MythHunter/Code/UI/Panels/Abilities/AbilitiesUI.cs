@@ -190,10 +190,7 @@ namespace MythHunter.UI.Panels
                 numberText.text = (slotIndex + 1).ToString();
 
             // TODO: Get ability in this slot and display it
-
-            // Set drop handler for drag-drop
-            var dropHandler = slot.AddComponent<AbilitySlotDropHandler>();
-            dropHandler.Initialize(slotIndex, this);
+            // TODO: Implement drag-drop handlers when ability loadout system is complete
         }
 
         private void RefreshAvailableAbilities()
