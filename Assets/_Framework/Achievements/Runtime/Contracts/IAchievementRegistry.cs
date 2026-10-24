@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RPGFramework.Achievements.Runtime.Contracts;
 
 namespace RPGFramework.Achievements.Runtime
 {

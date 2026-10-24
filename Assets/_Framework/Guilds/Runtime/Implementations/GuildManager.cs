@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RPGFramework.ECS;
+using RPGFramework.Factions;
 
 namespace RPGFramework.Guilds.Runtime
 {
@@ -12,16 +13,18 @@ namespace RPGFramework.Guilds.Runtime
     public class GuildManager : IGuildManager
     {
         private readonly IGuildRegistry _registry;
-        private readonly IComponentContainer _componentContainer;
+        private readonly IEntityManager _entityManager;
+        private readonly IFactionRegistry _factionRegistry;
         private readonly Dictionary<int, string> _entityToGuildMap; // entityId -> guildId
 
         /// <summary>
         /// Create a new guild manager.
         /// </summary>
-        public GuildManager(IGuildRegistry registry, IComponentContainer componentContainer)
+        public GuildManager(IEntityManager entityManager, IFactionRegistry factionRegistry, IGuildRegistry registry)
         {
+            _entityManager = entityManager ?? throw new ArgumentNullException(nameof(entityManager));
+            _factionRegistry = factionRegistry ?? throw new ArgumentNullException(nameof(factionRegistry));
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-            _componentContainer = componentContainer ?? throw new ArgumentNullException(nameof(componentContainer));
             _entityToGuildMap = new Dictionary<int, string>();
         }
 
