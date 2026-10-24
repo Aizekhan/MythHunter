@@ -32,11 +32,11 @@ namespace RPGFramework.DI
         protected void InstallWithLogging(IDIContainer container, string subsystemName, Action<IDIContainer> installAction)
         {
             var logger = container.Resolve<Logging.ILogger>();
-            logger.Log(Logging.LogSeverity.Info, $"Installing dependencies for {subsystemName}...", "Installer");
+            logger.Log(Logging.LogSeverity.Information, $"Installing dependencies for {subsystemName}...", "Installer");
 
             installAction(container);
 
-            logger.Log(Logging.LogSeverity.Info, $"Dependency installation for {subsystemName} completed", "Installer");
+            logger.Log(Logging.LogSeverity.Information, $"Dependency installation for {subsystemName} completed", "Installer");
         }
     }
 }
