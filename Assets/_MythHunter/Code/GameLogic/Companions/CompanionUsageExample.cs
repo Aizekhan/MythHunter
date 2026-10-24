@@ -1,3 +1,5 @@
+// TODO: Fix ICompanionManager.GetCompanionStats() - method doesn't exist
+#if FALSE
 using RPGFramework.Companions.Runtime;
 using System;
 
@@ -263,3 +265,4 @@ namespace MythHunter.GameLogic.Companions
         }
     }
 }
+#endif

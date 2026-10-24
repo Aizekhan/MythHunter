@@ -1,3 +1,5 @@
+// TODO: Fix Guild constructor signature and IGuildManager missing methods
+#if FALSE
 using System;
 using System.Collections.Generic;
 using RPGFramework.ECS;
@@ -341,3 +343,4 @@ namespace MythHunter.GameLogic.Guilds
         }
     }
 }
+#endif
