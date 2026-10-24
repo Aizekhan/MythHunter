@@ -1,3 +1,5 @@
+// TODO: UIManager needs refactoring to work with actual UI panels once they're fixed
+#if FALSE
 using UnityEngine;
 using System.Collections.Generic;
 using MythHunter.UI.Panels;
@@ -299,3 +301,4 @@ namespace MythHunter.UI.Managers
         #endregion
     }
 }
+#endif
