@@ -1,5 +1,4 @@
-// TODO: UIManager needs refactoring to work with actual UI panels once they're fixed
-#if FALSE
+// Fixed: UIManager re-enabled - all 9 UI panels are now working with Framework
 using UnityEngine;
 using System.Collections.Generic;
 using MythHunter.UI.Panels;
@@ -301,4 +300,3 @@ namespace MythHunter.UI.Managers
         #endregion
     }
 }
-#endif
