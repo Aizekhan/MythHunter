@@ -22,17 +22,19 @@ namespace RPGFramework.Editor.Utilities
 
         // ===== Editor Windows =====
 
-        [MenuItem(MENU_ROOT + "Quest Editor", false, 100)]
-        public static void OpenQuestEditor()
-        {
-            EditorWindows.QuestEditorWindow.ShowWindow();
-        }
+        // TODO: Quest Editor disabled - needs refactoring for struct-based QuestData
+        // [MenuItem(MENU_ROOT + "Quest Editor", false, 100)]
+        // public static void OpenQuestEditor()
+        // {
+        //     EditorWindows.QuestEditorWindow.ShowWindow();
+        // }
 
-        [MenuItem(MENU_ROOT + "Dialogue Graph Editor", false, 101)]
-        public static void OpenDialogueGraphEditor()
-        {
-            EditorWindows.DialogueGraphEditorWindow.ShowWindow();
-        }
+        // TODO: Dialogue Graph Editor disabled - needs refactoring for struct-based DialogueData
+        // [MenuItem(MENU_ROOT + "Dialogue Graph Editor", false, 101)]
+        // public static void OpenDialogueGraphEditor()
+        // {
+        //     EditorWindows.DialogueGraphEditorWindow.ShowWindow();
+        // }
 
         [MenuItem(MENU_ROOT + "Item Database", false, 102)]
         public static void OpenItemDatabase()
@@ -40,11 +42,12 @@ namespace RPGFramework.Editor.Utilities
             EditorWindows.ItemDatabaseWindow.ShowWindow();
         }
 
-        [MenuItem(MENU_ROOT + "Faction Relationship Map", false, 103)]
-        public static void OpenFactionRelationshipMap()
-        {
-            EditorWindows.FactionRelationshipMapWindow.ShowWindow();
-        }
+        // TODO: Faction Relationship Map disabled - needs refactoring for runtime Faction class
+        // [MenuItem(MENU_ROOT + "Faction Relationship Map", false, 103)]
+        // public static void OpenFactionRelationshipMap()
+        // {
+        //     EditorWindows.FactionRelationshipMapWindow.ShowWindow();
+        // }
 
         [MenuItem(MENU_ROOT + "Loot Table Editor", false, 104)]
         public static void OpenLootTableEditor()
