@@ -54,7 +54,7 @@ namespace RPGFramework.Guilds.Runtime
             ((Guild)guild).AddMemberInternal(leaderMember);
 
             // Update entity component
-            _componentContainer.SetComponent(leaderId, leaderData);
+            _entityManager.AddComponent(leaderId, leaderData);
             _entityToGuildMap[leaderId] = guildId;
 
             return guild;
@@ -89,9 +89,9 @@ namespace RPGFramework.Guilds.Runtime
             }
 
             // Fallback: check component
-            if (_componentContainer.HasComponent<GuildMemberData>(entityId))
+            if (_entityManager.HasComponent<GuildMemberData>(entityId))
             {
-                var data = _componentContainer.GetComponent<GuildMemberData>(entityId);
+                var data = _entityManager.GetComponent<GuildMemberData>(entityId);
                 if (data.IsInGuild())
                 {
                     _entityToGuildMap[entityId] = data.GuildId;
@@ -131,7 +131,7 @@ namespace RPGFramework.Guilds.Runtime
             ((Guild)guild).AddMemberInternal(member);
 
             // Update entity component
-            _componentContainer.SetComponent(entityId, memberData);
+            _entityManager.AddComponent(entityId, memberData);
             _entityToGuildMap[entityId] = guildId;
 
             return true;
@@ -156,7 +156,7 @@ namespace RPGFramework.Guilds.Runtime
             // Clear entity component
             var memberData = GuildMemberData.Create(string.Empty);
             memberData.Clear();
-            _componentContainer.SetComponent(entityId, memberData);
+            _entityManager.AddComponent(entityId, memberData);
             _entityToGuildMap.Remove(entityId);
 
             // If this was the last member, disband the guild
@@ -186,7 +186,7 @@ namespace RPGFramework.Guilds.Runtime
 
             // Update component
             var data = ((GuildMember)member).GetData();
-            _componentContainer.SetComponent(entityId, data);
+            _entityManager.AddComponent(entityId, data);
 
             return true;
         }
@@ -213,7 +213,7 @@ namespace RPGFramework.Guilds.Runtime
 
             // Update component
             var data = ((GuildMember)member).GetData();
-            _componentContainer.SetComponent(entityId, data);
+            _entityManager.AddComponent(entityId, data);
 
             return true;
         }
@@ -234,13 +234,13 @@ namespace RPGFramework.Guilds.Runtime
                 // Demote old leader to Elder
                 ((GuildMember)oldLeader).SetRank(GuildRankType.Elder);
                 var oldData = ((GuildMember)oldLeader).GetData();
-                _componentContainer.SetComponent(guild.LeaderId, oldData);
+                _entityManager.AddComponent(guild.LeaderId, oldData);
             }
 
             // Promote new leader
             ((GuildMember)newLeader).SetRank(GuildRankType.Leader);
             var newData = ((GuildMember)newLeader).GetData();
-            _componentContainer.SetComponent(newLeaderId, newData);
+            _entityManager.AddComponent(newLeaderId, newData);
 
             // Update guild leader
             // In a real implementation, this would update the GuildData structure
@@ -271,9 +271,9 @@ namespace RPGFramework.Guilds.Runtime
             if (_entityToGuildMap.ContainsKey(entityId))
                 return true;
 
-            if (_componentContainer.HasComponent<GuildMemberData>(entityId))
+            if (_entityManager.HasComponent<GuildMemberData>(entityId))
             {
-                var data = _componentContainer.GetComponent<GuildMemberData>(entityId);
+                var data = _entityManager.GetComponent<GuildMemberData>(entityId);
                 return data.IsInGuild();
             }
 
