@@ -61,10 +61,10 @@ namespace MythHunter.Editor.Tools
             // Save scene
             EditorSceneManager.SaveScene(scene, "Assets/_MythHunter/Scenes/UITestScene.unity");
 
-            Debug.Log("[CreateUITestScene] ✅ UI Test Scene created successfully!");
-            Debug.Log("[CreateUITestScene] Scene saved to: Assets/_MythHunter/Scenes/UITestScene.unity");
-            Debug.Log("[CreateUITestScene] Press Play to test UI panels with keyboard shortcuts:");
-            Debug.Log("[CreateUITestScene] Q=Quest, I=Inventory, C=Crafting, T=Trading, D=Dialogue, F=Faction, K=Stats, P=Abilities, L=CombatLog, O=Loot");
+            UnityEngine.Debug.Log("[CreateUITestScene] ✅ UI Test Scene created successfully!");
+            UnityEngine.Debug.Log("[CreateUITestScene] Scene saved to: Assets/_MythHunter/Scenes/UITestScene.unity");
+            UnityEngine.Debug.Log("[CreateUITestScene] Press Play to test UI panels with keyboard shortcuts:");
+            UnityEngine.Debug.Log("[CreateUITestScene] Q=Quest, I=Inventory, C=Crafting, T=Trading, D=Dialogue, F=Faction, K=Stats, P=Abilities, L=CombatLog, O=Loot");
         }
 
         private static T CreateUIPanel<T>(Transform parent, string name) where T : MonoBehaviour
@@ -113,7 +113,7 @@ namespace MythHunter.Editor.Tools
             titleText.fontSize = 24;
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.color = Color.white;
-            titleText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            titleText.font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             // Add close instruction text
             var instructionObj = new GameObject("Instructions");
@@ -131,7 +131,7 @@ namespace MythHunter.Editor.Tools
             instructionText.fontSize = 16;
             instructionText.alignment = TextAnchor.MiddleCenter;
             instructionText.color = Color.yellow;
-            instructionText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            instructionText.font = UnityEngine.Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             // Set panelRoot to hidden by default
             panelRoot.SetActive(false);
