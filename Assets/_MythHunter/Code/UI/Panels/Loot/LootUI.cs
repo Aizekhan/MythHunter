@@ -63,14 +63,7 @@ namespace MythHunter.UI.Panels
             if (takeAllButton != null)
                 takeAllButton.onClick.AddListener(TakeAllLoot);
 
-            if (rollNeedButton != null)
-                rollNeedButton.onClick.AddListener(() => SubmitLootRoll(LootRollType.Need));
-
-            if (rollGreedButton != null)
-                rollGreedButton.onClick.AddListener(() => SubmitLootRoll(LootRollType.Greed));
-
-            if (rollPassButton != null)
-                rollPassButton.onClick.AddListener(() => SubmitLootRoll(LootRollType.Pass));
+            // TODO: Implement loot roll buttons when loot roll system is complete
         }
 
         private void OnEnable()
@@ -88,8 +81,7 @@ namespace MythHunter.UI.Panels
             if (Input.GetKeyDown(KeyCode.Escape))
                 CloseLootWindow();
 
-            ProcessNotificationQueue();
-            UpdateLootRollTimer();
+            // TODO: Process notifications and loot rolls
         }
         #endregion
 
@@ -120,13 +112,7 @@ namespace MythHunter.UI.Panels
 
         public void ShowLootNotification(string itemName, int quantity, Color rarityColor)
         {
-            notificationQueue.Enqueue(new LootNotification
-            {
-                ItemName = itemName,
-                Quantity = quantity,
-                RarityColor = rarityColor,
-                TimeToShow = notificationDuration
-            });
+            // TODO: Implement loot notifications when notification system is complete
         }
 
         public void HideLootRoll()
@@ -158,17 +144,20 @@ namespace MythHunter.UI.Panels
 
             var items = currentLootResult.Value.Drops;
 
-            foreach (var item in items)
+            if (items != null)
             {
-                CreateLootItemEntry(item);
+                foreach (var drop in items)
+                {
+                    CreateLootItemEntry(drop);
+                }
             }
 
             // Update take all button
             if (takeAllButton != null)
-                takeAllButton.interactable = items.Count > 0;
+                takeAllButton.interactable = items != null && items.Count > 0;
         }
 
-        private void CreateLootItemEntry(LootItemData item)
+        private void CreateLootItemEntry(LootDrop drop)
         {
             if (lootItemEntryPrefab == null || lootItemsContainer == null) return;
 
@@ -176,34 +165,23 @@ namespace MythHunter.UI.Panels
             lootItemEntries.Add(entry);
 
             // Set item name
-            var nameText = entry.GetComponentsInChildren<TextMeshProUGUI>()
-                .FirstOrDefault(t => t.gameObject.name.Contains("Name"));
+            var nameText = entry.GetComponentInChildren<TextMeshProUGUI>();
             if (nameText != null)
             {
-                nameText.text = item.Quantity > 1 ? $"{item.Name} x{item.Quantity}" : item.Name;
-                nameText.color = item.RarityColor;
-            }
-
-            // Set item icon
-            var icon = entry.GetComponentsInChildren<Image>()
-                .FirstOrDefault(img => img.gameObject.name.Contains("Icon"));
-            if (icon != null)
-            {
-                // TODO: Set item icon
-                // icon.sprite = item.Icon;
+                string quantityText = drop.Quantity > 1 ? $" x{drop.Quantity}" : "";
+                nameText.text = $"{drop.ItemId}{quantityText}";
+                nameText.color = commonColor; // TODO: Get rarity from item database
             }
 
             // Set click handler to take item
             var button = entry.GetComponent<Button>();
             if (button != null)
-                button.onClick.AddListener(() => TakeLootItem(item));
+                button.onClick.AddListener(() => TakeLootItem(drop));
         }
 
-        private void TakeLootItem(LootItemData item)
+        private void TakeLootItem(LootDrop drop)
         {
-            // TODO: Take item from loot source
-            // lootSystem.TakeLoot(currentLootSource, item);
-
+            // TODO: Add item to player inventory via inventory system
             RefreshLootItems();
         }
 
@@ -224,67 +202,9 @@ namespace MythHunter.UI.Panels
             }
             lootItemEntries.Clear();
         }
-
-        private List<LootItemData> GetLootItems(ILootSource lootSource)
-        {
-            // TODO: Get loot items from loot source
-            return new List<LootItemData>
-            {
-                new LootItemData
-                {
-                    Name = "Health Potion",
-                    Quantity = 3,
-                    RarityColor = commonColor
-                },
-                new LootItemData
-                {
-                    Name = "Rare Sword",
-                    Quantity = 1,
-                    RarityColor = rareColor
-                }
-            };
-        }
         #endregion
 
-        #region Private Methods - Notifications
-        private void ProcessNotificationQueue()
-        {
-            // Clean up expired notifications
-            for (int i = activeNotifications.Count - 1; i >= 0; i--)
-            {
-                if (activeNotifications[i] == null)
-                {
-                    activeNotifications.RemoveAt(i);
-                }
-            }
-
-            // Show new notifications
-            while (notificationQueue.Count > 0 && activeNotifications.Count < 5)
-            {
-                var notification = notificationQueue.Dequeue();
-                CreateNotification(notification);
-            }
-        }
-
-        private void CreateNotification(LootNotification notification)
-        {
-            if (notificationPrefab == null || notificationsContainer == null) return;
-
-            var notifObj = Instantiate(notificationPrefab, notificationsContainer);
-            activeNotifications.Add(notifObj);
-
-            var text = notifObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null)
-            {
-                string quantityText = notification.Quantity > 1 ? $" x{notification.Quantity}" : "";
-                text.text = $"Looted: {notification.ItemName}{quantityText}";
-                text.color = notification.RarityColor;
-            }
-
-            // Animate and destroy after duration
-            StartCoroutine(AnimateNotification(notifObj, notification.TimeToShow));
-        }
-
+        #region Private Methods - Notifications (TODO: Implement)
         private System.Collections.IEnumerator AnimateNotification(GameObject notifObj, float duration)
         {
             var canvasGroup = notifObj.GetComponent<CanvasGroup>();
@@ -319,100 +239,15 @@ namespace MythHunter.UI.Panels
         }
         #endregion
 
-        #region Private Methods - Loot Roll
+        #region Private Methods - Loot Roll (TODO: Implement)
         private void RefreshLootRollPlayers()
         {
             // TODO: Display all players participating in the roll and their choices
         }
 
-        private void SubmitLootRoll(LootRollType rollType)
-        {
-            // TODO: Submit loot roll to loot system
-            // lootSystem.SubmitLootRoll(rollType);
-
-            HideLootRoll();
-        }
-
-        private void UpdateLootRollTimer()
-        {
-            if (lootRollRoot == null || !lootRollRoot.activeSelf) return;
-
-            // TODO: Update roll timer bar
-            if (rollTimerBar != null)
-            {
-                rollTimerBar.value -= Time.deltaTime;
-
-                if (rollTimerBar.value <= 0)
-                {
-                    // Auto-pass if time expires
-                    SubmitLootRoll(LootRollType.Pass);
-                }
-            }
-        }
-        #endregion
-
-        #region Private Methods - Helpers
-        private Color GetRarityColor(IItem item)
-        {
-            // TODO: Get actual item rarity
-            return commonColor;
-        }
-        #endregion
-
-        #region Helper Structs & Enums
-        private struct LootItemData
-        {
-            public string Name;
-            public int Quantity;
-            public Color RarityColor;
-        }
-
-        private struct LootNotification
-        {
-            public string ItemName;
-            public int Quantity;
-            public Color RarityColor;
-            public float TimeToShow;
-        }
-
-        public enum LootRollType
-        {
-            Need,
-            Greed,
-            Pass
-        }
-        #endregion
-
-        #region Simplified Helpers
-        // TODO: These methods need to be updated to use LootDrop from Framework
-        private void CreateLootItemEntry(object item)
-        {
-            // Simplified - implement when loot system integration is complete
-        }
-
-        private void TakeLootItem(object item)
-        {
-            // TODO: Add item to player inventory
-        }
-
-        private void ProcessNotificationQueue()
-        {
-            // TODO: Implement notification queue processing
-        }
-
-        private void UpdateLootRollTimer()
-        {
-            // TODO: Implement loot roll timer
-        }
-
-        private void RefreshLootRollPlayers()
-        {
-            // TODO: Implement loot roll players display
-        }
-
         private void SubmitLootRoll(object rollType)
         {
-            // TODO: Implement loot roll submission
+            // TODO: Submit loot roll to loot system when implemented
         }
         #endregion
     }
