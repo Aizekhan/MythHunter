@@ -1,5 +1,4 @@
-// TODO: Fix - depends on GuildSystemIntegration which is disabled
-#if FALSE
+// Fixed: Re-enabled after GuildSystemIntegration was fixed
 using RPGFramework.Guilds.Runtime;
 using UnityEngine;
 
@@ -218,4 +217,4 @@ namespace MythHunter.GameLogic.Guilds
         }
     }
 }
-#endif
+

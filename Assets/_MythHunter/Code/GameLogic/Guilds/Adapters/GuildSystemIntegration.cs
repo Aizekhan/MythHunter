@@ -1,5 +1,5 @@
-// TODO: Fix Guild constructor signature and IGuildManager missing methods
-#if FALSE
+// Fixed: Guild constructor takes only GuildData parameter
+// Note: DepositGold/WithdrawGold methods removed - treasury management is separate in Framework
 using System;
 using System.Collections.Generic;
 using RPGFramework.ECS;
@@ -86,7 +86,7 @@ namespace MythHunter.GameLogic.Guilds
 
             // Create and register guild
             var guildData = GuildData.Create(guildId, name, tag, leaderId, description, maxMembers);
-            var guild = new Guild(guildData, _factionRegistry);
+            var guild = new Guild(guildData);
             _guildRegistry.RegisterGuild(guild);
 
             // Store metadata
@@ -244,24 +244,24 @@ namespace MythHunter.GameLogic.Guilds
         /// </summary>
         public bool HasPermission(string guildId, int entityId, GuildPermission permission)
         {
-            return _guildManager.HasPermission(guildId, entityId, permission);
+            return _guildManager.HasPermission(entityId, permission);
         }
 
+        // TODO: Treasury operations are managed separately in Framework via IGuildTreasury
+        // These methods are commented out until proper treasury integration is implemented
+        // Framework provides IGuildTreasury.DepositGold/WithdrawGold directly on treasury objects
+
+        /*
         /// <summary>
         /// Deposit gold into guild treasury (game layer convenience method).
         /// </summary>
         public bool DepositGold(string guildId, int entityId, int amount, string reason = "")
         {
-            var success = _guildManager.DepositGold(guildId, amount, entityId);
-
-            if (success)
-            {
-                var guild = _guildRegistry.GetGuild(guildId);
-                var reasonText = string.IsNullOrEmpty(reason) ? "" : $" - {reason}";
-                UnityEngine.Debug.Log($"[GuildSystemIntegration] Entity {entityId} deposited {amount} gold to '{guild?.Name}' treasury{reasonText}");
-            }
-
-            return success;
+            // TODO: Implement using IGuildTreasury instead of IGuildManager
+            // var guild = _guildRegistry.GetGuild(guildId);
+            // var treasury = guild.Treasury; // This property doesn't exist yet
+            // return treasury.DepositGold(amount, entityId);
+            return false;
         }
 
         /// <summary>
@@ -276,17 +276,13 @@ namespace MythHunter.GameLogic.Guilds
                 return false;
             }
 
-            var success = _guildManager.WithdrawGold(guildId, amount, entityId);
-
-            if (success)
-            {
-                var guild = _guildRegistry.GetGuild(guildId);
-                var reasonText = string.IsNullOrEmpty(reason) ? "" : $" - {reason}";
-                UnityEngine.Debug.Log($"[GuildSystemIntegration] Entity {entityId} withdrew {amount} gold from '{guild?.Name}' treasury{reasonText}");
-            }
-
-            return success;
+            // TODO: Implement using IGuildTreasury instead of IGuildManager
+            // var guild = _guildRegistry.GetGuild(guildId);
+            // var treasury = guild.Treasury; // This property doesn't exist yet
+            // return treasury.WithdrawGold(amount, entityId);
+            return false;
         }
+        */
 
         /// <summary>
         /// Get formatted guild information for UI display.
@@ -343,4 +339,3 @@ namespace MythHunter.GameLogic.Guilds
         }
     }
 }
-#endif

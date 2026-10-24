@@ -1,9 +1,9 @@
 // Assets/_MythHunter/Code/GameLogic/Achievements/Sample/SampleAchievements.cs
-// TODO: Fix IAchievementReward namespace issue
-#if FALSE
+// Fixed: Added RPGFramework.Achievements.Runtime namespace for IAchievementReward
 
 using System.Collections.Generic;
 using RPGFramework.Achievements;
+using RPGFramework.Achievements.Runtime;
 using RPGFramework.Achievements.Runtime.Contracts;
 
 namespace MythHunter.GameLogic.Achievements.Sample
@@ -557,4 +557,3 @@ namespace MythHunter.GameLogic.Achievements.Sample
         }
     }
 }
-#endif
