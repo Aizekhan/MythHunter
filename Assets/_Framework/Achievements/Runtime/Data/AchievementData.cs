@@ -1,4 +1,5 @@
 using System;
+using RPGFramework.ECS;
 
 namespace RPGFramework.Achievements
 {
@@ -7,7 +8,7 @@ namespace RPGFramework.Achievements
     /// Stores which achievements have been unlocked and when.
     /// </summary>
     [Serializable]
-    public struct AchievementData
+    public struct AchievementData : IComponent
     {
         /// <summary>
         /// Array of unlocked achievement IDs.

@@ -2,7 +2,7 @@
     "name": "RPGFramework.Guilds.Runtime",
     "rootNamespace": "RPGFramework.Guilds.Runtime",
     "references": [
-        "RPGFramework.ECS",
+        "RPGFramework.ECS.Runtime",
         "RPGFramework.Factions.Runtime"
     ],
     "includePlatforms": [],
