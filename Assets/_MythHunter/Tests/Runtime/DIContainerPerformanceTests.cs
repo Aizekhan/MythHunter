@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Tests/Runtime/DIContainerPerformanceTests.cs
 using NUnit.Framework;
 using System.Diagnostics;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Tests.Runtime

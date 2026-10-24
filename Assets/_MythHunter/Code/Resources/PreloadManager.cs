@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Resources.Core;
 using MythHunter.Systems.Phase;

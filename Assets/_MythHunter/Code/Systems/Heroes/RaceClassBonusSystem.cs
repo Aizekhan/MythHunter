@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/Systems/Heroes/RaceClassBonusSystem.cs
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Components.Character;
 using MythHunter.Entities.Heroes;

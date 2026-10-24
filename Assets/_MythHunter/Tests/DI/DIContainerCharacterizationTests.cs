@@ -1171,9 +1171,9 @@ namespace MythHunter.DI.CharacterizationTests
         private static object CreateContainer()
         {
             var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(candidate => candidate.GetName().Name == "Assembly-CSharp")
-                ?? Assembly.Load("Assembly-CSharp");
-            var containerType = assembly.GetType("MythHunter.Core.DI.DIContainer", true);
+                .FirstOrDefault(candidate => candidate.GetName().Name == "RPGFramework.DI.Runtime")
+                ?? Assembly.Load("RPGFramework.DI.Runtime");
+            var containerType = assembly.GetType("RPGFramework.DI.DIContainer", true);
             return Activator.CreateInstance(containerType, new object[] { null });
         }
 

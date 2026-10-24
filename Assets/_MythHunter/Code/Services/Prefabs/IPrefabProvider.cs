@@ -1,6 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
 using UnityEngine;

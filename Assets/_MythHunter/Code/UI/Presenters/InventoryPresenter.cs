@@ -2,7 +2,7 @@ using MythHunter.UI.Core;
 using MythHunter.UI.Models;
 using MythHunter.UI.Views;
 using MythHunter.Events;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 

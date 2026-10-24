@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/EntitiesInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities;
 using MythHunter.Entities.Archetypes;

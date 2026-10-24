@@ -1,6 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/PoolInstaller.cs
 
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Resources.Pool;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;

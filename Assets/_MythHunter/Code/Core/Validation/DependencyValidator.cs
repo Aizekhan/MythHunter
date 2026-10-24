@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using UnityEngine;
 

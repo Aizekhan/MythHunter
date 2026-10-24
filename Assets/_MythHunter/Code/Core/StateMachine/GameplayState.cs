@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Core.StateMachine;

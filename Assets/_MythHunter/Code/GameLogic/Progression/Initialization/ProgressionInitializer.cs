@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/GameLogic/Progression/Initialization/ProgressionInitializer.cs
 
 using RPGFramework.Progression;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Progression.Data;
 using System;

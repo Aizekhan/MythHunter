@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/GameLogic/Loot/Initialization/LootRegistryInitializer.cs
 
 using RPGFramework.Loot;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Loot.Data;
 using System;

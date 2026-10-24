@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using RPGFramework.ECS;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Entities;
 
 namespace MythHunter.Core.ECS

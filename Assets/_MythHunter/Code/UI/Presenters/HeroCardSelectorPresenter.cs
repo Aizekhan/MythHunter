@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/UI/Presenters/HeroCardSelectorPresenter.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Systems.Lobby;
 using MythHunter.UI.Navigation;

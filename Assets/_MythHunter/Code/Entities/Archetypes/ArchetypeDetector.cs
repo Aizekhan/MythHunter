@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Entities/Archetypes/ArchetypeDetector.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using RPGFramework.ECS;
 

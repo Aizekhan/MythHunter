@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/Core/StateMachine/ProfileState.cs
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
 using MythHunter.Events;

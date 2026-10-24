@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RPGFramework.ECS;
 using RPGFramework.Abilities;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Abilities.Components;
 

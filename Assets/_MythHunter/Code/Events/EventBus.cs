@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
 using MythHunter.Utils.Extensions;

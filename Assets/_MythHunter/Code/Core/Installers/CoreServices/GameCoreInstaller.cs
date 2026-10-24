@@ -1,4 +1,4 @@
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Core.Game;
 using MythHunter.Core.MonoBehaviours;

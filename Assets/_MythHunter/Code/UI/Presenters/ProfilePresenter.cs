@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/UI/Presenters/ProfilePresenter.cs
 using System;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Profile;
 using MythHunter.UI.Core;

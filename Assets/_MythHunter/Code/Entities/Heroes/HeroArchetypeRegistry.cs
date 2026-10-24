@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Entities/Heroes/HeroArchetypeRegistry.cs
 using System.Collections.Generic;
 using System;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Inventory;
 using MythHunter.GameLogic.Inventory.Components;

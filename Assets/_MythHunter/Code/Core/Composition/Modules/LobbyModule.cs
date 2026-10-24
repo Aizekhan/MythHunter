@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Core/Composition/Modules/LobbyModule.cs
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using RPGFramework.Core.Composition;
 
 namespace MythHunter.Core.Composition.Modules

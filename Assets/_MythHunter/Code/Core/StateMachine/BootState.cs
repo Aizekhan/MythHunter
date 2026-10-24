@@ -1,4 +1,4 @@
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;

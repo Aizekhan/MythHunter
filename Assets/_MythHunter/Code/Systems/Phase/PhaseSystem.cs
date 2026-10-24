@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Systems.Phase;

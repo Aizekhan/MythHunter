@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Core.MonoBehaviours

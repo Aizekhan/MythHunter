@@ -387,7 +387,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}System.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Core.ECS;");
             sb.AppendLine("using RPGFramework.ECS;");
             sb.AppendLine("using MythHunter.Events;");
@@ -664,7 +664,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Service.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
 
             if (_useUniTask)
@@ -759,7 +759,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Factory.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
@@ -838,7 +838,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Manager.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
             sb.AppendLine("using MythHunter.Events;");
 
@@ -916,7 +916,7 @@ namespace MythHunter.Editor
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Installer.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
             sb.AppendLine();
             sb.AppendLine($"namespace {GetFullNamespace()}");
@@ -974,7 +974,7 @@ namespace MythHunter.Editor
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace(".", "/")}/{_name}Model.cs");
             sb.AppendLine("using System;");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Events;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
             sb.AppendLine();
@@ -1084,7 +1084,7 @@ namespace MythHunter.Editor
             string presenterNamespace = GetFullNamespace().Replace("Models", "Presenters");
 
             sb.AppendLine($"// Шлях: Assets/_MythHunter/Code/{_subNamespace.Replace("Models", "Presenters")}/{_name}Presenter.cs");
-            sb.AppendLine("using MythHunter.Core.DI;");
+            sb.AppendLine("using RPGFramework.DI;");
             sb.AppendLine("using MythHunter.Utils.Logging;");
             sb.AppendLine($"using {modelNamespace};");
             sb.AppendLine($"using {viewNamespace};");

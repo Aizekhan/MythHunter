@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/UI/Core/UIViewBase.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Utils.Logging;
 using UnityEngine;

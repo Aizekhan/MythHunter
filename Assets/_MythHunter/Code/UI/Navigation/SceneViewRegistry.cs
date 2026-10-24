@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.UI.Navigation
 {

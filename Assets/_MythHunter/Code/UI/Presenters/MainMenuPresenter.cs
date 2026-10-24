@@ -1,5 +1,5 @@
 // Assets/_MythHunter/Code/UI/Presenters/MainMenuPresenter.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.Game;
 using MythHunter.Events;
 using MythHunter.Events.Domain.Menu;

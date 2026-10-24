@@ -1,7 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Networking/Core/ClientNetworkSystem.cs
 using System;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Messages;
 using MythHunter.Utils.Logging;

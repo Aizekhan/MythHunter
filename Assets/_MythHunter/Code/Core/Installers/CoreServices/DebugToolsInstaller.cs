@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/DebugToolsInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Debug.Core;
 using MythHunter.Debug.Events;
 using MythHunter.Debug.Profiling;

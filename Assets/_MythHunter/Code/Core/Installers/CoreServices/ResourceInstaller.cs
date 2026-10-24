@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/ResourceInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Resources;
 using MythHunter.Resources.Core;
 using MythHunter.Resources.Pool;

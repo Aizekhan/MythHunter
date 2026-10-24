@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/OnBootSystemsInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Systems;
 using MythHunter.Systems.Core;
 using MythHunter.Utils.Logging;

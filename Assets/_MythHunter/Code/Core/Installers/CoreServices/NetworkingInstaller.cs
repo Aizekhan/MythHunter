@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/NetworkingInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Networking.Core;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;

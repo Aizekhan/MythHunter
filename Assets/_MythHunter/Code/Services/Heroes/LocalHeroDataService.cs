@@ -2,7 +2,7 @@
 
 using Cysharp.Threading.Tasks;
 using MythHunter.Entities.Heroes;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using System.Collections.Generic;
 using System.IO;

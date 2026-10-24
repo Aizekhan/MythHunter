@@ -1,5 +1,5 @@
 using UnityEngine;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 namespace MythHunter.Networking.Core
 {
     /// <summary>

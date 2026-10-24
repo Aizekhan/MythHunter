@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Services/GameSettings/GameSettingsService.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.Services.GameSettings
 {

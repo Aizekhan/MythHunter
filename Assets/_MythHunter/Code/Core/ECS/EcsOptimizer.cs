@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using RPGFramework.ECS;
 

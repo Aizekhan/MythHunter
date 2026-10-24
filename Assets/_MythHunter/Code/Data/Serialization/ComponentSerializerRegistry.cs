@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using RPGFramework.ECS;
 using RPGFramework.Serialization;
 

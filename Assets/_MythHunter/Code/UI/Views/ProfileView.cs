@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using MythHunter.UI.Core;
 using MythHunter.UI.Presenters;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.UI.Navigation;
 using Cysharp.Threading.Tasks;

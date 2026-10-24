@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Core/Game/GameFlowManager.cs
 
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.SceneManagement;
 using MythHunter.Entities.Archetypes;
 using MythHunter.Events;

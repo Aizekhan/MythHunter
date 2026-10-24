@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/GameLogic/Abilities/Initialization/AbilityRegistryInitializer.cs
 
 using RPGFramework.Abilities;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Abilities.Data;
 using System;

@@ -1,7 +1,7 @@
 // Файл: Assets/_MythHunter/Code/Events/Debugging/EventLogger.cs
 using System;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.Events.Debugging
 {

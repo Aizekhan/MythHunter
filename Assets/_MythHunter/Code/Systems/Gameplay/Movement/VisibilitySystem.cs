@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using UnityEngine;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Utils.Logging;
 using RPGFramework.ECS;

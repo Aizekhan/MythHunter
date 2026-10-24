@@ -5,7 +5,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using MythHunter.Resources.Core;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.UI.Navigation;
 using MythHunter.UI.Core;
 

@@ -2,7 +2,7 @@ using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 namespace MythHunter.Resources.SceneManagement
 {
     public class SceneLoader 

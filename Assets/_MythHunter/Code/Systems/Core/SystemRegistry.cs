@@ -5,7 +5,7 @@ using MythHunter.Core.ECS;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Systems.Groups;
 
 namespace MythHunter.Systems.Core

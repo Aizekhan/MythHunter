@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RPGFramework.ECS;
 using RPGFramework.StatusEffects;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.StatusEffects.Components;
 

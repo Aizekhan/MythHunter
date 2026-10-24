@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/LobbySystemsInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Systems.Core;
 using MythHunter.Systems.Lobby;
 using MythHunter.Utils.Logging;

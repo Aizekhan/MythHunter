@@ -3,7 +3,7 @@ using NUnit.Framework;
 using RPGFramework.Core.Composition;
 using RPGFramework.Core.Composition.Modules;
 using MythHunter.Core.Composition.Modules;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events.Network;
 using MythHunter.Utils.Logging;
 using UnityEngine.TestTools;

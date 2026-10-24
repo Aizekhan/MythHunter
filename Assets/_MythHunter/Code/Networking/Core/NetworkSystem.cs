@@ -5,7 +5,7 @@ using MythHunter.Utils.Logging;
 using MythHunter.Networking.Client;
 using MythHunter.Networking.Server;
 using MythHunter.Networking.Serialization;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 namespace MythHunter.Networking.Core
 {
     /// <summary>

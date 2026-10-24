@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/Systems/Movement/MovementSystem.cs
 using MythHunter.Components.Movement;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Events.Domain;
 using MythHunter.Events;

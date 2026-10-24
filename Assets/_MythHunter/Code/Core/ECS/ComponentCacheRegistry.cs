@@ -4,7 +4,7 @@ using RPGFramework.ECS;
 using System;
 using System.Collections.Generic;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Entities;
 using MythHunter.Events.Domain;

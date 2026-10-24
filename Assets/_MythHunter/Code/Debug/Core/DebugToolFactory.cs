@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Debug.Events;
 using MythHunter.Debug.Profiling;
 using MythHunter.Debug.UI;

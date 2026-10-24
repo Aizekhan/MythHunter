@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using MythHunter.Networking.Messages;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using RPGFramework.Serialization;
 
 namespace MythHunter.Networking.Serialization

@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/SerializationInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Data.Serialization;
 using MythHunter.Data.Serialization.Serializers;
 using MythHunter.Utils.Logging;

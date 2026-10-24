@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using MythHunter.Networking.Messages;
 using MythHunter.Networking.Serialization;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 namespace MythHunter.Networking.Server
 {
     /// <summary>

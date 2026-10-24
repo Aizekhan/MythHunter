@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/DIExtensionsInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.MonoBehaviours;
 using MythHunter.Core.Validation;
 using MythHunter.Utils.Logging;

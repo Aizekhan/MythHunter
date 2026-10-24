@@ -1,5 +1,5 @@
 using MythHunter.Core.Async;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Core.ECS.Jobs;
 using MythHunter.Entities;
@@ -27,9 +27,6 @@ namespace MythHunter.Core.Installers
 
             // Event infrastructure
             BindSingleton<IEventPool, EventPool>(container);
-
-            // Dependency injection lifecycle
-            BindSingleton<IDILifecycleManager, DILifecycleManager>(container);
 
             // EPIC 08: Async task tracking for fire-and-forget operations
             BindSingleton<IAsyncTaskTracker, AsyncTaskTracker>(container);

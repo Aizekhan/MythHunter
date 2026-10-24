@@ -4,7 +4,7 @@ using MythHunter.UI.Presenters;
 using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.UI.Views
 {

@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/Core/Game/GameStateMachine.cs
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.States;
 using MythHunter.Utils.Logging;

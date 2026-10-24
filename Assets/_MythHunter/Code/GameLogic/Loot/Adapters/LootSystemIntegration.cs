@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RPGFramework.ECS;
 using RPGFramework.Loot;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Loot.Components;
 using MythHunter.GameLogic.Inventory.Components;

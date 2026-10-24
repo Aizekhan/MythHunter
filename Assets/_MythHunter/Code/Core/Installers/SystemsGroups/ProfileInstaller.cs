@@ -1,5 +1,5 @@
 // Assets/_MythHunter/Code/Core/Installers/ProfileInstaller.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.UI.Presenters;
 using MythHunter.Utils.Logging;
 

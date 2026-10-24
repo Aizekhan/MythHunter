@@ -1,5 +1,5 @@
 // Assets/_MythHunter/Code/Core/StateMachine/MainMenuState.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.StateMachine;
 using MythHunter.Utils.Logging;
 using MythHunter.Events;

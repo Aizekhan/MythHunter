@@ -1,6 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Debug/DebugService.cs
 using UnityEngine;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.Debug.Core;
 using MythHunter.Debug.UI;

@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Core/StateMachine/BaseState.cs
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.Core.StateMachine
 {

@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.Game;
 using MythHunter.Core.StateMachine;
 using MythHunter.Events;

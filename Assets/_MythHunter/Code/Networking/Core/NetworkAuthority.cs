@@ -1,7 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/Networking/Core/NetworkAuthority.cs
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Networking.Messages;
 using MythHunter.Utils.Logging;

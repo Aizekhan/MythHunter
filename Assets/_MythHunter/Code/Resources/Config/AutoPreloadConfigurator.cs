@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Resources.Config;
 using MythHunter.Utils.Logging;
 using UnityEngine;

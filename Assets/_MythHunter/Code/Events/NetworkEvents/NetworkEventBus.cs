@@ -1,6 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Events/NetworkEvents/NetworkEventBus.cs
 using System;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Networking.Core;
 using MythHunter.Utils.Logging;
 using System.Collections.Generic;

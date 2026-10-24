@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Services/Timer/TimerService.cs
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
 using MythHunter.Events.Domain.Lobby;

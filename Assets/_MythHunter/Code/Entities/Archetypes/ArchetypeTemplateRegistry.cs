@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using MythHunter.Core.ECS;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using static MythHunter.Entities.Archetypes.ArchetypeTemplateRegistry;
 
 namespace MythHunter.Entities.Archetypes

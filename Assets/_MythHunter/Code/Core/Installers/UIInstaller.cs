@@ -1,6 +1,6 @@
 // Шлях: Assets/_MythHunter/Code/Core/Installers/UIInstaller.cs
 
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.UI.Core;
 using MythHunter.UI.Presenters;
 using MythHunter.UI.Models;

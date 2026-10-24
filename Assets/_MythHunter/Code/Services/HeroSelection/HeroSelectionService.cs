@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/Services/HeroSelection/HeroSelectionService.cs
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Events.Domain.HeroSelection;
 using MythHunter.Systems.Lobby;
 using MythHunter.Utils.Logging;

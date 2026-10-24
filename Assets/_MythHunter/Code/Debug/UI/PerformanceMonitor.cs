@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MythHunter.Debug.Core;
 using MythHunter.Utils.Logging;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using UnityEngine.Profiling;
 
 namespace MythHunter.Debug.UI

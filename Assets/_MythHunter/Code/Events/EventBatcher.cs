@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Events

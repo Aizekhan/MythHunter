@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Resources/Pool/AutoPooledObject.cs
 using UnityEngine;
 using MythHunter.Core.MonoBehaviours;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 
 namespace MythHunter.Resources.Pool

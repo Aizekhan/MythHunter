@@ -1,6 +1,6 @@
 // LazyMonoBehaviour.cs — без доступу до GameBootstrapper.Instance
 using UnityEngine;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.Core.MonoBehaviours
 {

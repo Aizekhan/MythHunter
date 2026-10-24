@@ -3,6 +3,7 @@
     "rootNamespace": "MythHunter",
     "references": [
         "RPGFramework.Core.Runtime",
+        "RPGFramework.DI.Runtime",
         "RPGFramework.ECS.Runtime",
         "RPGFramework.Logging.Runtime",
         "RPGFramework.Combat.Runtime",

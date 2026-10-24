@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/GameLogic/Progression/Adapters/ProgressionSystemIntegration.cs
 
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Progression.Components;
 using RPGFramework.ECS;

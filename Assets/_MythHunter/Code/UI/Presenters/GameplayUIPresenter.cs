@@ -4,7 +4,7 @@ using MythHunter.UI.Models;
 using MythHunter.UI.Views;
 using MythHunter.Events;
 using MythHunter.Events.Domain;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using Cysharp.Threading.Tasks;
 using System;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 
 namespace MythHunter.Editor
 {

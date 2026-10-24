@@ -1,7 +1,7 @@
 // Assets/_MythHunter/Code/Debug/Tools/PreloadDebugTool.cs
 using System.Collections.Generic;
 using System.Linq;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Debug.Core;
 using MythHunter.Resources;
 using MythHunter.Utils.Logging;

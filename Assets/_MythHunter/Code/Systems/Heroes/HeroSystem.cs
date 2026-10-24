@@ -1,5 +1,5 @@
 // Шлях: Assets/_MythHunter/Code/Systems/Heroes/HeroSystem.cs
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.ECS;
 using MythHunter.Entities.Heroes;
 using MythHunter.Events;

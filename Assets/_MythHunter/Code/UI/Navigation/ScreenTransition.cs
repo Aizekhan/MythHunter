@@ -1,7 +1,7 @@
 // Шлях: Assets/_MythHunter/Code/UI/Navigation/ScreenTransition.cs
 
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using System;
 using UnityEngine;

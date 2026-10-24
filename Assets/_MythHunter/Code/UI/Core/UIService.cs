@@ -1,6 +1,6 @@
 // Assets/_MythHunter/Code/UI/Core/UIService.cs
 using Cysharp.Threading.Tasks;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.UI.Core;
 using MythHunter.Utils.Logging;
 

@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RPGFramework.ECS;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Utils.Logging;
 using MythHunter.GameLogic.Inventory.Components;
 using MythHunter.Components.Character; // Old InventoryComponent

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using MythHunter.UI.Core;
 using MythHunter.UI.Presenters;
-using MythHunter.Core.DI;
+using RPGFramework.DI;
 using MythHunter.Core.MonoBehaviours;
 
 namespace MythHunter.UI.Views
