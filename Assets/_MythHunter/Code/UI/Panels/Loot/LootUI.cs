@@ -91,6 +91,25 @@ namespace MythHunter.UI.Panels
             lootGenerator = generator;
         }
 
+        public void Show()
+        {
+            if (lootWindowRoot != null)
+                lootWindowRoot.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            CloseLootWindow();
+        }
+
+        public void Toggle()
+        {
+            if (lootWindowRoot != null && lootWindowRoot.activeSelf)
+                Hide();
+            else
+                Show();
+        }
+
         public void ShowLootWindow(LootResult lootResult)
         {
             currentLootResult = lootResult;
