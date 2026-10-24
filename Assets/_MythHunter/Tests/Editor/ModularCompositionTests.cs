@@ -55,8 +55,8 @@ namespace RPGFramework.ECS.Tests
         {
             var logger = MythLogger.CreateDefaultLogger();
             var container = new DIContainer(logger);
-            container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
-            container.BindSingleton<MythHunter.Utils.Logging.IMythLogger>(logger);
+            container.RegisterInstance<RPGFramework.Logging.ILogger>(logger);
+            container.RegisterInstance<MythHunter.Utils.Logging.IMythLogger>(logger);
 
             var builder = new GameCompositionBuilder(container);
             builder.UseModule<FrameworkCoreModule>();
@@ -73,8 +73,8 @@ namespace RPGFramework.ECS.Tests
         {
             var logger = MythLogger.CreateDefaultLogger();
             var container = new DIContainer(logger);
-            container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
-            container.BindSingleton<MythHunter.Utils.Logging.IMythLogger>(logger);
+            container.RegisterInstance<RPGFramework.Logging.ILogger>(logger);
+            container.RegisterInstance<MythHunter.Utils.Logging.IMythLogger>(logger);
             // GameCoreInstaller needs EventNetworkMode to select event bus implementation
             container.RegisterInstance(EventNetworkMode.Offline);
 
@@ -114,8 +114,8 @@ namespace RPGFramework.ECS.Tests
         {
             var logger = MythLogger.CreateDefaultLogger();
             var container = new DIContainer(logger);
-            container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
-            container.BindSingleton<MythHunter.Utils.Logging.IMythLogger>(logger);
+            container.RegisterInstance<RPGFramework.Logging.ILogger>(logger);
+            container.RegisterInstance<MythHunter.Utils.Logging.IMythLogger>(logger);
 
             var builder = new GameCompositionBuilder(container);
             builder.UseModule<FrameworkCoreModule>();

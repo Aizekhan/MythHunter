@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "RPGFramework.DI.Runtime"
+        "RPGFramework.DI.Runtime",
+        "RPGFramework.Logging.Runtime"
     ],
     "includePlatforms": [
         "Editor"

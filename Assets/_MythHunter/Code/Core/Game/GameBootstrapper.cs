@@ -113,8 +113,8 @@ namespace MythHunter.Core.Game
             var logger = MythLogger.CreateDefaultLogger();
             _container = new DIContainer(logger);
 
-            _container.BindSingleton<IMythLogger>(logger);
-            _container.BindSingleton<RPGFramework.Logging.ILogger>(logger);
+            _container.RegisterInstance<IMythLogger>(logger);
+            _container.RegisterInstance<RPGFramework.Logging.ILogger>(logger);
             // Authoritative composition-root setting; Offline preserves current behavior.
             _container.RegisterInstance(_eventNetworkMode);
 
