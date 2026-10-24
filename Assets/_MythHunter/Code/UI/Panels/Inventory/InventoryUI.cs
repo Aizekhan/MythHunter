@@ -1,12 +1,15 @@
-// TODO: This UI needs refactoring to work with actual Framework Inventory interfaces
-#if FALSE
+// Fixed: Updated to use Framework InventoryComponent via IEntityManager (ECS Pattern)
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
-using RPGFramework.Inventory;
+using System.Linq;
+using RPGFramework.Inventory.Runtime;
+using RPGFramework.ECS;
 using RPGFramework.Items;
+using MythHunter.GameLogic.Inventory;
+using MythHunter.GameLogic.Inventory.Components;
 
 namespace MythHunter.UI.Panels
 {
@@ -71,10 +74,11 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private IInventory inventory;
+        private IEntityManager entityManager;
+        private int playerEntityId;
         private List<ItemSlotUI> inventorySlots = new List<ItemSlotUI>();
         private ItemSlotUI draggedSlot;
-        private IItem hoveredItem;
+        private string hoveredItemId;
         #endregion
 
         #region Unity Lifecycle
@@ -141,9 +145,10 @@ namespace MythHunter.UI.Panels
                 Show();
         }
 
-        public void Initialize(IInventory playerInventory)
+        public void Initialize(IEntityManager entityMgr, int playerEntity)
         {
-            inventory = playerInventory;
+            entityManager = entityMgr;
+            playerEntityId = playerEntity;
             RefreshInventory();
         }
         #endregion
@@ -187,55 +192,31 @@ namespace MythHunter.UI.Panels
         #region Private Methods - Event Handling
         private void SubscribeToEvents()
         {
-            if (inventory == null) return;
-
-            // Subscribe to inventory events for real-time updates
-            // inventory.OnItemAdded += OnItemAdded;
-            // inventory.OnItemRemoved += OnItemRemoved;
-            // inventory.OnItemMoved += OnItemMoved;
+            // TODO: Subscribe to inventory events via EventBus
+            // e.g., EventBus.Subscribe<ItemAddedEvent>(OnItemAdded);
         }
 
         private void UnsubscribeFromEvents()
         {
-            if (inventory == null) return;
-
-            // Unsubscribe from inventory events
-            // inventory.OnItemAdded -= OnItemAdded;
-            // inventory.OnItemRemoved -= OnItemRemoved;
-            // inventory.OnItemMoved -= OnItemMoved;
-        }
-
-        private void OnItemAdded(IItem item)
-        {
-            RefreshInventory();
-        }
-
-        private void OnItemRemoved(IItem item)
-        {
-            RefreshInventory();
-        }
-
-        private void OnItemMoved(IItem item, int fromSlot, int toSlot)
-        {
-            RefreshInventory();
+            // TODO: Unsubscribe from events
         }
         #endregion
 
         #region Private Methods - Slot Callbacks
         private void OnSlotClicked(ItemSlotUI slot)
         {
-            if (slot.Item == null) return;
+            if (slot.ItemId == null) return;
 
             // Right-click to use/equip item
             if (Input.GetMouseButton(1))
             {
-                UseOrEquipItem(slot.Item);
+                UseOrEquipItem(slot.ItemId);
             }
         }
 
         private void OnSlotBeginDrag(ItemSlotUI slot)
         {
-            if (slot.Item == null) return;
+            if (slot.ItemId == null) return;
 
             draggedSlot = slot;
             HideTooltip();
@@ -263,16 +244,16 @@ namespace MythHunter.UI.Panels
 
         private void OnSlotPointerEnter(ItemSlotUI slot)
         {
-            if (slot.Item != null)
+            if (slot.ItemId != null)
             {
-                hoveredItem = slot.Item;
-                ShowTooltip(slot.Item);
+                hoveredItemId = slot.ItemId;
+                ShowTooltip(slot.ItemId);
             }
         }
 
         private void OnSlotPointerExit(ItemSlotUI slot)
         {
-            hoveredItem = null;
+            hoveredItemId = null;
             HideTooltip();
         }
         #endregion
@@ -280,7 +261,10 @@ namespace MythHunter.UI.Panels
         #region Private Methods - UI Updates
         private void RefreshInventory()
         {
-            if (inventory == null) return;
+            if (entityManager == null || !entityManager.HasComponent<MythHunterInventoryComponent>(playerEntityId))
+                return;
+
+            var inventoryComp = entityManager.GetComponent<MythHunterInventoryComponent>(playerEntityId);
 
             // Clear all slots
             foreach (var slot in inventorySlots)
@@ -288,13 +272,14 @@ namespace MythHunter.UI.Panels
                 slot.Clear();
             }
 
-            // Get items from inventory
-            var items = GetFilteredItems();
+            // Get items from primary container
+            var items = inventoryComp.Inventory.PrimaryContainer.GetAllItems().ToList();
+            var filteredItems = ApplyFilters(items);
 
             // Populate slots with items
-            for (int i = 0; i < items.Count && i < inventorySlots.Count; i++)
+            for (int i = 0; i < filteredItems.Count && i < inventorySlots.Count; i++)
             {
-                inventorySlots[i].SetItem(items[i]);
+                inventorySlots[i].SetItemId(filteredItems[i]);
             }
 
             // Update equipment slots
@@ -306,38 +291,67 @@ namespace MythHunter.UI.Panels
 
         private void RefreshEquipmentSlots()
         {
-            // TODO: Get equipped items and update equipment slots
-            // headSlot?.SetItem(GetEquippedItem(EquipmentSlotType.Head));
-            // chestSlot?.SetItem(GetEquippedItem(EquipmentSlotType.Chest));
-            // etc...
+            if (entityManager == null || !entityManager.HasComponent<MythHunterInventoryComponent>(playerEntityId))
+                return;
+
+            var inventoryComp = entityManager.GetComponent<MythHunterInventoryComponent>(playerEntityId);
+
+            // Update equipment slots
+            headSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Helmet));
+            chestSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Chest));
+            legsSlot?.SetItemId(null); // MythHunter doesn't have legs slot
+            feetSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Boots));
+            mainHandSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.MainWeapon));
+            offHandSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.SecondaryWeapon));
+            neckSlot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Necklace));
+            ring1Slot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Ring1));
+            ring2Slot?.SetItemId(GetEquippedItem(inventoryComp, MythHunterEquipmentSlot.Ring2));
+        }
+
+        private string GetEquippedItem(MythHunterInventoryComponent inventoryComp, MythHunterEquipmentSlot slotType)
+        {
+            if (inventoryComp.Inventory.EquipmentSlots.TryGetValue(slotType, out var slot))
+            {
+                return slot.IsOccupied ? slot.EquippedItem : null;
+            }
+            return null;
         }
 
         private void UpdateWeightAndGold()
         {
-            if (inventory == null) return;
+            if (entityManager == null || !entityManager.HasComponent<MythHunterInventoryComponent>(playerEntityId))
+                return;
 
-            // TODO: Get actual weight and gold values
-            float currentWeight = 0f; // inventory.TotalWeight;
-            float maxWeight = 100f; // inventory.MaxWeight;
-            int gold = 0; // inventory.Gold;
+            var inventoryComp = entityManager.GetComponent<MythHunterInventoryComponent>(playerEntityId);
+
+            // TODO: Calculate weight from items when item database is available
+            float currentWeight = 0f;
+            float maxWeight = 100f; // TODO: Get from character stats
+
+            int itemCount = inventoryComp.Inventory.PrimaryContainer.Count;
+            int maxItems = inventoryComp.Inventory.PrimaryContainer.Capacity;
 
             if (weightText != null)
-                weightText.text = $"Weight: {currentWeight:F1} / {maxWeight:F1}";
+                weightText.text = maxItems > 0
+                    ? $"Items: {itemCount} / {maxItems}"
+                    : $"Items: {itemCount}";
 
-            if (weightBar != null)
+            if (weightBar != null && maxItems > 0)
             {
-                weightBar.maxValue = maxWeight;
-                weightBar.value = currentWeight;
+                weightBar.maxValue = maxItems;
+                weightBar.value = itemCount;
             }
 
+            // TODO: Get gold from currency component when available
             if (goldText != null)
-                goldText.text = $"Gold: {gold}";
+                goldText.text = "Gold: 0";
         }
 
-        private List<IItem> GetFilteredItems()
+        private List<string> ApplyFilters(IReadOnlyList<string> items)
         {
-            // TODO: Get items from inventory and apply filters
-            return new List<IItem>();
+            // TODO: Implement filtering by item type when item database is available
+            // For now, return all items
+            return items.ToList();
         }
 
         private void OnSortChanged(int sortIndex)
@@ -348,31 +362,28 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Methods - Tooltip
-        private void ShowTooltip(IItem item)
+        private void ShowTooltip(string itemId)
         {
-            if (tooltipPanel == null || item == null) return;
+            if (tooltipPanel == null || string.IsNullOrEmpty(itemId)) return;
 
             tooltipPanel.SetActive(true);
 
-            // Set tooltip content
+            // TODO: Get item data from item database/registry when available
+            // For now, display item ID
             if (tooltipNameText != null)
             {
-                tooltipNameText.text = item.Name;
-                tooltipNameText.color = GetRarityColor(item);
+                tooltipNameText.text = itemId;
+                tooltipNameText.color = Color.white;
             }
 
             if (tooltipDescriptionText != null)
-                tooltipDescriptionText.text = item.Description;
+                tooltipDescriptionText.text = "Item description";
 
             if (tooltipStatsText != null)
-                tooltipStatsText.text = GetItemStats(item);
+                tooltipStatsText.text = GetItemStats(itemId);
 
             if (tooltipTypeText != null)
-                tooltipTypeText.text = GetItemType(item);
-
-            // TODO: Set tooltip icon
-            // if (tooltipIconImage != null)
-            //     tooltipIconImage.sprite = item.Icon;
+                tooltipTypeText.text = GetItemType(itemId);
 
             UpdateTooltipPosition();
         }
@@ -391,39 +402,30 @@ namespace MythHunter.UI.Panels
             tooltipPanel.transform.position = mousePosition + new Vector2(15, -15);
         }
 
-        private string GetItemStats(IItem item)
+        private string GetItemStats(string itemId)
         {
-            // TODO: Get item stats as formatted string
-            return "Damage: 10-15\nStrength: +5\nDexterity: +3";
+            // TODO: Get item stats from item database when available
+            return "Stats: TBD";
         }
 
-        private string GetItemType(IItem item)
+        private string GetItemType(string itemId)
         {
-            // TODO: Get item type/category
-            return "Weapon - Sword";
-        }
-
-        private Color GetRarityColor(IItem item)
-        {
-            // TODO: Get item rarity and return appropriate color
-            return commonColor;
+            // TODO: Get item type from item database when available
+            return "Type: Unknown";
         }
         #endregion
 
         #region Private Methods - Item Actions
-        private void UseOrEquipItem(IItem item)
+        private void UseOrEquipItem(string itemId)
         {
-            // TODO: Use consumable or equip equipment
+            // TODO: Use consumable or equip equipment via inventory system
             RefreshInventory();
         }
 
         private void SwapItems(ItemSlotUI fromSlot, ItemSlotUI toSlot)
         {
-            if (inventory == null) return;
-
-            // TODO: Swap items in inventory
-            // inventory.MoveItem(fromSlot.SlotIndex, toSlot.SlotIndex);
-
+            // TODO: Implement item swapping via Framework inventory container
+            // This requires modifying the container's internal list order
             RefreshInventory();
         }
 
@@ -453,7 +455,7 @@ namespace MythHunter.UI.Panels
         [SerializeField] private TextMeshProUGUI quantityText;
         [SerializeField] private Image backgroundImage;
 
-        private IItem item;
+        private string itemId;
         private int slotIndex;
 
         private System.Action<ItemSlotUI> onClicked;
@@ -463,7 +465,7 @@ namespace MythHunter.UI.Panels
         private System.Action<ItemSlotUI> onPointerEnter;
         private System.Action<ItemSlotUI> onPointerExit;
 
-        public IItem Item => item;
+        public string ItemId => itemId;
         public int SlotIndex => slotIndex;
 
         public void Initialize(int index,
@@ -483,25 +485,19 @@ namespace MythHunter.UI.Panels
             onPointerExit = pointerExitCallback;
         }
 
-        public void SetItem(IItem newItem)
+        public void SetItemId(string newItemId)
         {
-            item = newItem;
+            itemId = newItemId;
 
-            if (item != null)
+            if (!string.IsNullOrEmpty(itemId))
             {
-                // TODO: Set item icon
-                // if (iconImage != null)
-                //     iconImage.sprite = item.Icon;
-
+                // TODO: Set item icon from item database when available
                 if (iconImage != null)
                     iconImage.enabled = true;
 
-                // Show quantity for stackable items
+                // TODO: Show quantity for stackable items when item stacking is implemented
                 if (quantityText != null)
-                {
-                    int quantity = 1; // TODO: Get actual quantity from item
-                    quantityText.text = quantity > 1 ? quantity.ToString() : "";
-                }
+                    quantityText.text = "";
             }
             else
             {
@@ -511,7 +507,7 @@ namespace MythHunter.UI.Panels
 
         public void Clear()
         {
-            item = null;
+            itemId = null;
 
             if (iconImage != null)
                 iconImage.enabled = false;
@@ -551,4 +547,3 @@ namespace MythHunter.UI.Panels
         }
     }
 }
-#endif

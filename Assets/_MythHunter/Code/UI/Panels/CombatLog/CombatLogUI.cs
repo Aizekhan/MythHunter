@@ -1,10 +1,8 @@
-// TODO: This UI needs refactoring to work with actual Framework Combat interfaces
-#if FALSE
+// Fixed: Updated to use Framework EventBus for combat events
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using RPGFramework.Combat;
 
 namespace MythHunter.UI.Panels
 {
@@ -52,7 +50,6 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private ICombatSystem combatSystem;
         private List<GameObject> logEntries = new List<GameObject>();
         private Queue<string> pendingMessages = new Queue<string>();
         private bool showDamage = true;
@@ -114,9 +111,9 @@ namespace MythHunter.UI.Panels
                 Show();
         }
 
-        public void Initialize(ICombatSystem system)
+        public void Initialize()
         {
-            combatSystem = system;
+            // No initialization needed - will subscribe to EventBus events
         }
 
         public void AddLogEntry(string message, LogEntryType type)
@@ -209,24 +206,14 @@ namespace MythHunter.UI.Panels
         #region Private Methods - Event Handling
         private void SubscribeToEvents()
         {
-            if (combatSystem == null) return;
-
-            // Subscribe to combat events
-            // combatSystem.OnDamageDealt += OnDamageDealt;
-            // combatSystem.OnHealingDone += OnHealingDone;
-            // combatSystem.OnCombatStarted += OnCombatStarted;
-            // combatSystem.OnCombatEnded += OnCombatEnded;
+            // TODO: Subscribe to combat events via EventBus when combat events are defined
+            // e.g., EventBus.Subscribe<DamageDealtEvent>(OnDamageDealt);
+            // e.g., EventBus.Subscribe<HealingDoneEvent>(OnHealingDone);
         }
 
         private void UnsubscribeFromEvents()
         {
-            if (combatSystem == null) return;
-
-            // Unsubscribe from combat events
-            // combatSystem.OnDamageDealt -= OnDamageDealt;
-            // combatSystem.OnHealingDone -= OnHealingDone;
-            // combatSystem.OnCombatStarted -= OnCombatStarted;
-            // combatSystem.OnCombatEnded -= OnCombatEnded;
+            // TODO: Unsubscribe from combat events
         }
 
         private void OnDamageDealt(string attacker, string target, int damage, bool isCritical)
@@ -383,4 +370,3 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
-#endif

@@ -1,9 +1,9 @@
-// TODO: This UI needs refactoring to work with actual Framework interfaces (IAbilityExecutor, IAbilityRegistry)
-#if FALSE
+// Fixed: Updated to use IAbilityRegistry and IAbilityExecutor (Framework Pattern)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq;
 using RPGFramework.Abilities;
 
 namespace MythHunter.UI.Panels
@@ -55,7 +55,9 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private IAbilitySystem abilitySystem;
+        private IAbilityRegistry abilityRegistry;
+        private IAbilityExecutor abilityExecutor;
+        private int playerEntityId;
         private List<GameObject> activeSlots = new List<GameObject>();
         private List<GameObject> availableEntries = new List<GameObject>();
         private IAbility selectedAbility;
@@ -124,9 +126,11 @@ namespace MythHunter.UI.Panels
                 Show();
         }
 
-        public void Initialize(IAbilitySystem system)
+        public void Initialize(IAbilityRegistry registry, IAbilityExecutor executor, int playerEntity)
         {
-            abilitySystem = system;
+            abilityRegistry = registry;
+            abilityExecutor = executor;
+            playerEntityId = playerEntity;
             RefreshAll();
         }
         #endregion
@@ -134,16 +138,13 @@ namespace MythHunter.UI.Panels
         #region Private Methods - Event Handling
         private void SubscribeToEvents()
         {
-            if (abilitySystem == null) return;
-            // abilitySystem.OnAbilityUnlocked += OnAbilityUnlocked;
-            // abilitySystem.OnAbilityUsed += OnAbilityUsed;
+            // TODO: Subscribe to ability events via EventBus
+            // e.g., EventBus.Subscribe<AbilityExecutedEvent>(OnAbilityExecuted);
         }
 
         private void UnsubscribeFromEvents()
         {
-            if (abilitySystem == null) return;
-            // abilitySystem.OnAbilityUnlocked -= OnAbilityUnlocked;
-            // abilitySystem.OnAbilityUsed -= OnAbilityUsed;
+            // TODO: Unsubscribe from events
         }
         #endregion
 
@@ -199,9 +200,9 @@ namespace MythHunter.UI.Panels
         {
             ClearAvailableEntries();
 
-            if (abilitySystem == null) return;
+            if (abilityRegistry == null) return;
 
-            var abilities = GetAvailableAbilities();
+            var abilities = abilityRegistry.GetAllAbilities();
 
             foreach (var ability in abilities)
             {
@@ -209,7 +210,7 @@ namespace MythHunter.UI.Panels
             }
         }
 
-        private void CreateAvailableAbilityEntry(AbilityData ability)
+        private void CreateAvailableAbilityEntry(IAbility ability)
         {
             if (availableAbilityPrefab == null || availableAbilitiesContainer == null) return;
 
@@ -220,22 +221,17 @@ namespace MythHunter.UI.Panels
             if (nameText != null)
             {
                 nameText.text = ability.Name;
-                nameText.color = ability.IsUnlocked ? availableColor : lockedColor;
+                nameText.color = availableColor; // TODO: Check if unlocked when unlocking system is available
             }
 
             var button = entry.GetComponent<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(() => SelectAbility(ability));
-                button.interactable = ability.IsUnlocked;
+                button.interactable = true; // TODO: Check if unlocked
             }
 
-            // Add drag handler
-            if (ability.IsUnlocked)
-            {
-                var dragHandler = entry.AddComponent<AbilityDragHandler>();
-                dragHandler.Initialize(ability);
-            }
+            // TODO: Add drag handler when drag-drop system is implemented
         }
 
         private void RefreshSkillTree()
@@ -270,9 +266,9 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Methods - Ability Details
-        private void SelectAbility(AbilityData ability)
+        private void SelectAbility(IAbility ability)
         {
-            selectedAbility = null; // TODO: Set selected ability
+            selectedAbility = ability;
             RefreshAbilityDetails();
         }
 
@@ -284,107 +280,31 @@ namespace MythHunter.UI.Panels
                 abilityNameText.text = selectedAbility.Name;
 
             if (abilityDescriptionText != null)
-                abilityDescriptionText.text = selectedAbility.Description;
+                abilityDescriptionText.text = selectedAbility.Metadata.Description;
 
-            // TODO: Display ability stats
             if (cooldownText != null)
-                cooldownText.text = "Cooldown: 5s";
+                cooldownText.text = $"Cooldown: {selectedAbility.Cooldown:F1}s";
 
             if (manaCostText != null)
-                manaCostText.text = "Cost: 25 Mana";
+            {
+                var manaCost = selectedAbility.ResourceCosts.FirstOrDefault(c => c.ResourceType == "Mana");
+                manaCostText.text = manaCost != null ? $"Cost: {manaCost.Amount} Mana" : "Cost: None";
+            }
 
             if (rangeText != null)
-                rangeText.text = "Range: 10m";
+                rangeText.text = $"Range: {selectedAbility.Range:F1}m";
 
             if (damageText != null)
-                damageText.text = "Damage: 50-75";
+                damageText.text = "Damage: TBD"; // TODO: Extract damage from ability metadata
         }
         #endregion
 
         #region Private Methods - Ability Management
-        public void AssignAbilityToSlot(AbilityData ability, int slotIndex)
+        public void AssignAbilityToSlot(IAbility ability, int slotIndex)
         {
-            // TODO: Assign ability to slot
+            // TODO: Implement ability slot assignment when ability loadout system is available
             RefreshActiveAbilities();
-        }
-
-        private List<AbilityData> GetAvailableAbilities()
-        {
-            // TODO: Get abilities from ability system
-            return new List<AbilityData>
-            {
-                new AbilityData { Name = "Fireball", IsUnlocked = true },
-                new AbilityData { Name = "Ice Blast", IsUnlocked = true },
-                new AbilityData { Name = "Chain Lightning", IsUnlocked = false }
-            };
-        }
-        #endregion
-
-        #region Helper Classes
-        private class AbilitySlotDropHandler : MonoBehaviour, UnityEngine.EventSystems.IDropHandler
-        {
-            private int slotIndex;
-            private AbilitiesUI ui;
-
-            public void Initialize(int index, AbilitiesUI abilitiesUI)
-            {
-                slotIndex = index;
-                ui = abilitiesUI;
-            }
-
-            public void OnDrop(UnityEngine.EventSystems.PointerEventData eventData)
-            {
-                var dragHandler = eventData.pointerDrag?.GetComponent<AbilityDragHandler>();
-                if (dragHandler != null && ui != null)
-                {
-                    ui.AssignAbilityToSlot(dragHandler.Ability, slotIndex);
-                }
-            }
-        }
-
-        private class AbilityDragHandler : MonoBehaviour, UnityEngine.EventSystems.IBeginDragHandler,
-            UnityEngine.EventSystems.IDragHandler, UnityEngine.EventSystems.IEndDragHandler
-        {
-            public AbilityData Ability { get; private set; }
-            private Transform originalParent;
-            private CanvasGroup canvasGroup;
-
-            public void Initialize(AbilityData ability)
-            {
-                Ability = ability;
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
-            }
-
-            public void OnBeginDrag(UnityEngine.EventSystems.PointerEventData eventData)
-            {
-                originalParent = transform.parent;
-                transform.SetParent(transform.root);
-                canvasGroup.alpha = 0.6f;
-                canvasGroup.blocksRaycasts = false;
-            }
-
-            public void OnDrag(UnityEngine.EventSystems.PointerEventData eventData)
-            {
-                transform.position = eventData.position;
-            }
-
-            public void OnEndDrag(UnityEngine.EventSystems.PointerEventData eventData)
-            {
-                transform.SetParent(originalParent);
-                canvasGroup.alpha = 1f;
-                canvasGroup.blocksRaycasts = true;
-            }
-        }
-        #endregion
-
-        #region Helper Structs
-        public struct AbilityData
-        {
-            public string Name;
-            public string Description;
-            public bool IsUnlocked;
         }
         #endregion
     }
 }
-#endif
