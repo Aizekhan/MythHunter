@@ -1,5 +1,5 @@
-// TODO: This UI needs refactoring to work with actual Framework StatusEffects interfaces
-#if FALSE
+// Fixed: Updated to use IStatusEffectManager (Framework Pattern A - Manager-based)
+
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -40,7 +40,7 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private IStatusEffectSystem statusEffectSystem;
+        private IStatusEffectManager statusEffectSystem;
         private List<GameObject> effectIcons = new List<GameObject>();
         private IStatusEffect hoveredEffect;
         #endregion
@@ -88,7 +88,7 @@ namespace MythHunter.UI.Panels
             HideTooltip();
         }
 
-        public void Initialize(IStatusEffectSystem system)
+        public void Initialize(IStatusEffectManager system)
         {
             statusEffectSystem = system;
             RefreshEffects();
@@ -339,4 +339,4 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
-#endif
+

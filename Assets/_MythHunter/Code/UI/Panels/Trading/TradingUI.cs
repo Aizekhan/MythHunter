@@ -1,5 +1,5 @@
-// TODO: This UI needs refactoring to work with actual Framework Trading interfaces
-#if FALSE
+// Fixed: Updated to use ITradingManager (Framework Pattern A - Manager-based)
+
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -69,7 +69,7 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private ITradingSystem tradingSystem;
+        private ITradingManager tradingSystem;
         private ITrader currentMerchant;
         private List<GameObject> merchantItemEntries = new List<GameObject>();
         private List<GameObject> playerItemEntries = new List<GameObject>();
@@ -166,7 +166,7 @@ namespace MythHunter.UI.Panels
                 Show();
         }
 
-        public void Initialize(ITradingSystem system, ITrader merchant)
+        public void Initialize(ITradingManager system, ITrader merchant)
         {
             tradingSystem = system;
             currentMerchant = merchant;
@@ -200,7 +200,7 @@ namespace MythHunter.UI.Panels
 
         private void OnTradeFailed(string reason)
         {
-            Debug.LogWarning($"Trade failed: {reason}");
+            UnityEngine.Debug.LogWarning($"Trade failed: {reason}");
         }
         #endregion
 
@@ -553,7 +553,7 @@ namespace MythHunter.UI.Panels
 
             if (!CanAffordItem(totalPrice))
             {
-                Debug.LogWarning("Cannot afford item");
+                UnityEngine.Debug.LogWarning("Cannot afford item");
                 return;
             }
 
@@ -682,4 +682,4 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
-#endif
+

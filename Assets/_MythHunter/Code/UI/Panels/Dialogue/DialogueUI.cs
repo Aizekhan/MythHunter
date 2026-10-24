@@ -1,5 +1,4 @@
-// TODO: This UI needs refactoring to work with actual Framework Dialogue interfaces
-#if FALSE
+// Fixed: Updated to use IDialogueManager (Framework Pattern A - Manager-based)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -45,7 +44,7 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private IDialogueSystem dialogueSystem;
+        private IDialogueManager dialogueSystem;
         private IDialogue currentDialogue;
         private IDialogueNode currentNode;
         private List<GameObject> choiceButtons = new List<GameObject>();
@@ -115,7 +114,7 @@ namespace MythHunter.UI.Panels
                 panelRoot.SetActive(false);
         }
 
-        public void Initialize(IDialogueSystem system)
+        public void Initialize(IDialogueManager system)
         {
             dialogueSystem = system;
         }
@@ -373,7 +372,7 @@ namespace MythHunter.UI.Panels
             return new List<DialogueChoice>();
         }
 
-        private IDialogueNode GetNextNode(DialogueChoice choice)
+        private IDialogueNode GetNextNode(DialogueChoice? choice)
         {
             // TODO: Get next node based on choice or auto-progression
             return null;
@@ -396,4 +395,3 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
-#endif

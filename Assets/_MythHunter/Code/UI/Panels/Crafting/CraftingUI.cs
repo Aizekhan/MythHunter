@@ -1,5 +1,4 @@
-// TODO: This UI needs refactoring to work with actual Framework Crafting interfaces
-#if FALSE
+// Fixed: Updated to use ICraftingManager (Framework Pattern A - Manager-based)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -57,7 +56,7 @@ namespace MythHunter.UI.Panels
         #endregion
 
         #region Private Fields
-        private ICraftingSystem craftingSystem;
+        private ICraftingManager craftingSystem;
         private List<GameObject> recipeEntries = new List<GameObject>();
         private List<GameObject> materialEntries = new List<GameObject>();
         private List<GameObject> queueEntries = new List<GameObject>();
@@ -138,7 +137,7 @@ namespace MythHunter.UI.Panels
                 Show();
         }
 
-        public void Initialize(ICraftingSystem system)
+        public void Initialize(ICraftingManager system)
         {
             craftingSystem = system;
             RefreshRecipeList();
@@ -402,7 +401,7 @@ namespace MythHunter.UI.Panels
 
             if (!CanCraftRecipe(selectedRecipe, craftQuantity))
             {
-                Debug.LogWarning("Cannot craft recipe: insufficient materials or requirements not met");
+                UnityEngine.Debug.LogWarning("Cannot craft recipe: insufficient materials or requirements not met");
                 return;
             }
 
@@ -583,4 +582,3 @@ namespace MythHunter.UI.Panels
         #endregion
     }
 }
-#endif
