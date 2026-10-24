@@ -284,8 +284,8 @@ namespace MythHunter.UI.Panels
 
             if (manaCostText != null)
             {
-                var manaCost = selectedAbility.ResourceCosts.FirstOrDefault(c => c.ResourceType == "Mana");
-                manaCostText.text = manaCost != null ? $"Cost: {manaCost.Amount} Mana" : "Cost: None";
+                var manaCosts = selectedAbility.ResourceCosts.Where(c => c.ResourceType == "Mana").ToList();
+                manaCostText.text = manaCosts.Count > 0 ? $"Cost: {manaCosts[0].Amount} Mana" : "Cost: None";
             }
 
             if (rangeText != null)

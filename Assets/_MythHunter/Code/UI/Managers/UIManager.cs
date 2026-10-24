@@ -172,7 +172,7 @@ namespace MythHunter.UI.Managers
         {
             if (!panels.ContainsKey(panelName))
             {
-                Debug.LogWarning($"Panel '{panelName}' not found");
+                UnityEngine.Debug.LogWarning($"Panel '{panelName}' not found");
                 return;
             }
 
@@ -197,7 +197,7 @@ namespace MythHunter.UI.Managers
         {
             if (!panels.ContainsKey(panelName))
             {
-                Debug.LogWarning($"Panel '{panelName}' not found");
+                UnityEngine.Debug.LogWarning($"Panel '{panelName}' not found");
                 return;
             }
 
