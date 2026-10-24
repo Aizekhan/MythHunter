@@ -43,9 +43,15 @@ namespace RPGFramework.Factions
         Honored = 5,
 
         /// <summary>
+        /// Very positive relationship (reputation +50 to +74).
+        /// Faction considers you an ally, special discounts, unique quests.
+        /// </summary>
+        Revered = 6,
+
+        /// <summary>
         /// Maximum positive relationship (reputation +75 to +100).
         /// Faction's highest rank, best rewards, exclusive content.
         /// </summary>
-        Revered = 6
+        Exalted = 7
     }
 }

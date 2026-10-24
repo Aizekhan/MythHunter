@@ -1,3 +1,6 @@
+// TODO: This Editor window needs refactoring to work with DialogueData struct instead of ScriptableObject
+#if FALSE
+
 using UnityEditor;
 using UnityEngine;
 using RPGFramework.Dialogue;
@@ -283,3 +286,5 @@ namespace RPGFramework.Editor.EditorWindows
         }
     }
 }
+
+#endif

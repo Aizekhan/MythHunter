@@ -1,3 +1,6 @@
+// TODO: This Editor window needs refactoring - Faction is a runtime class, not a ScriptableObject asset
+#if FALSE
+
 using UnityEditor;
 using UnityEngine;
 using RPGFramework.Factions;
@@ -286,3 +289,5 @@ namespace RPGFramework.Editor.EditorWindows
         }
     }
 }
+
+#endif

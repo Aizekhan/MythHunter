@@ -1,3 +1,6 @@
+// TODO: This Editor window needs refactoring to work with QuestData struct instead of ScriptableObject
+#if FALSE
+
 using UnityEditor;
 using UnityEngine;
 using RPGFramework.Quests;
@@ -292,3 +295,5 @@ namespace RPGFramework.Editor.EditorWindows
         }
     }
 }
+
+#endif
