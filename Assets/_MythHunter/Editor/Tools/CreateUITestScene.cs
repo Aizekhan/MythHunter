@@ -23,6 +23,13 @@ namespace MythHunter.Editor.Tools
             var uiManagerObj = new GameObject("UIManager");
             var uiManager = uiManagerObj.AddComponent<UIManager>();
 
+            // Disable DI validation for test scene (avoids spam warnings)
+            var diValidatorObj = GameObject.Find("DIValidator");
+            if (diValidatorObj != null)
+            {
+                Object.DestroyImmediate(diValidatorObj);
+            }
+
             // Create Canvas for UI
             var canvasObj = new GameObject("Canvas");
             var canvas = canvasObj.AddComponent<Canvas>();
@@ -137,6 +144,7 @@ namespace MythHunter.Editor.Tools
             panelRoot.SetActive(false);
 
             // Assign panelRoot reference using reflection
+            // Try "panelRoot" first, then "lootWindowRoot" for LootUI
             var panelRootField = typeof(T).GetField("panelRoot",
                 System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
@@ -144,6 +152,18 @@ namespace MythHunter.Editor.Tools
             if (panelRootField != null)
             {
                 panelRootField.SetValue(uiComponent, panelRoot);
+            }
+            else
+            {
+                // Try lootWindowRoot for LootUI
+                var lootWindowRootField = typeof(T).GetField("lootWindowRoot",
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+
+                if (lootWindowRootField != null)
+                {
+                    lootWindowRootField.SetValue(uiComponent, panelRoot);
+                }
             }
 
             return uiComponent;
