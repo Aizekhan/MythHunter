@@ -98,7 +98,7 @@ jobs:
           fi
 
           # Check Game assembly exists
-          if [ ! -f "Assets/_MythHunter/Code/MythHunter.GameLogic.asmdef" ]; then
+          if [ ! -f "Assets/_MythHunter/Code/MythHunter.Runtime.asmdef" ]; then
             echo "❌ Game assembly definition missing"
             exit 1
           fi
