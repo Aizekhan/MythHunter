@@ -218,7 +218,7 @@ namespace MythHunter.Editor.Tools
             private readonly System.Collections.Generic.Dictionary<int, ExperienceData> _expData =
                 new System.Collections.Generic.Dictionary<int, ExperienceData>();
 
-            public void AddExperience(int entityId, int amount)
+            public void AddExperience(int entityId, long amount)
             {
                 if (!_expData.ContainsKey(entityId))
                 {
@@ -231,7 +231,7 @@ namespace MythHunter.Editor.Tools
                 }
 
                 var data = _expData[entityId];
-                data.CurrentExperience += amount;
+                data.CurrentExperience += (int)amount;
 
                 while (data.CurrentExperience >= data.ExperienceToNextLevel)
                 {
@@ -253,11 +253,11 @@ namespace MythHunter.Editor.Tools
             // Other interface methods (not used in this test)
             public bool CanLevelUp(int entityId) => false;
             public bool LevelUp(int entityId) => false;
-            public void SetExperience(int entityId, int amount) { }
+            public void SetExperience(int entityId, long amount) { }
             public void SetLevel(int entityId, int level) { }
             public int GetLevel(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].CurrentLevel : 1;
-            public int GetCurrentExperience(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].CurrentExperience : 0;
-            public int GetExperienceToNextLevel(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].ExperienceToNextLevel : 100;
+            public long GetCurrentExperience(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].CurrentExperience : 0;
+            public long GetExperienceToNextLevel(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].ExperienceToNextLevel : 100;
         }
 
         #endregion
