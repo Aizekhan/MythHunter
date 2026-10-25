@@ -130,12 +130,9 @@ namespace MythHunter.Editor.Tools
                     }
                 }
 
-                // Check if leveled up
+                // Check progression
                 var expData = progressionTracker.GetExperienceData(playerEntityId);
-                if (expData != null)
-                {
-                    UnityEngine.Debug.Log($"📈 Player Level: {expData.CurrentLevel} (XP: {expData.CurrentExperience}/{expData.ExperienceToNextLevel})");
-                }
+                UnityEngine.Debug.Log($"📈 Player Level: {expData.CurrentLevel} (XP: {expData.CurrentExperience}/{expData.ExperienceToNextLevel})");
             }
             else
             {
@@ -217,8 +214,50 @@ namespace MythHunter.Editor.Tools
         {
             private readonly System.Collections.Generic.Dictionary<int, ExperienceData> _expData =
                 new System.Collections.Generic.Dictionary<int, ExperienceData>();
+            private readonly System.Collections.Generic.Dictionary<int, long> _totalXP =
+                new System.Collections.Generic.Dictionary<int, long>();
 
-            public void AddExperience(int entityId, long amount)
+            public ProgressionResult AddExperience(int entityId, long amount)
+            {
+                if (!_expData.ContainsKey(entityId))
+                {
+                    _expData[entityId] = new ExperienceData
+                    {
+                        CurrentLevel = 1,
+                        CurrentExperience = 0,
+                        ExperienceToNextLevel = 100
+                    };
+                    _totalXP[entityId] = 0;
+                }
+
+                var data = _expData[entityId];
+                data.CurrentExperience += amount;
+                _totalXP[entityId] += amount;
+
+                var result = new ProgressionResult
+                {
+                    LeveledUp = false,
+                    OldLevel = data.CurrentLevel,
+                    NewLevel = data.CurrentLevel,
+                    XPGained = amount
+                };
+
+                while (data.CurrentExperience >= data.ExperienceToNextLevel)
+                {
+                    data.CurrentExperience -= data.ExperienceToNextLevel;
+                    data.CurrentLevel++;
+                    data.ExperienceToNextLevel = data.CurrentLevel * 100; // Simple formula
+                    result.LeveledUp = true;
+                    result.NewLevel = data.CurrentLevel;
+
+                    UnityEngine.Debug.Log($"🎊 LEVEL UP! Now level {data.CurrentLevel}!");
+                }
+
+                _expData[entityId] = data;
+                return result;
+            }
+
+            public ExperienceData GetExperienceData(int entityId)
             {
                 if (!_expData.ContainsKey(entityId))
                 {
@@ -229,35 +268,49 @@ namespace MythHunter.Editor.Tools
                         ExperienceToNextLevel = 100
                     };
                 }
-
-                var data = _expData[entityId];
-                data.CurrentExperience += (int)amount;
-
-                while (data.CurrentExperience >= data.ExperienceToNextLevel)
-                {
-                    data.CurrentExperience -= data.ExperienceToNextLevel;
-                    data.CurrentLevel++;
-                    data.ExperienceToNextLevel = data.CurrentLevel * 100; // Simple formula
-
-                    UnityEngine.Debug.Log($"🎊 LEVEL UP! Now level {data.CurrentLevel}!");
-                }
-
-                _expData[entityId] = data;
+                return _expData[entityId];
             }
 
-            public ExperienceData? GetExperienceData(int entityId)
+            public void SetLevel(int entityId, int level)
             {
-                return _expData.ContainsKey(entityId) ? _expData[entityId] : (ExperienceData?)null;
+                if (!_expData.ContainsKey(entityId))
+                {
+                    _expData[entityId] = new ExperienceData
+                    {
+                        CurrentLevel = level,
+                        CurrentExperience = 0,
+                        ExperienceToNextLevel = level * 100
+                    };
+                }
+                else
+                {
+                    var data = _expData[entityId];
+                    data.CurrentLevel = level;
+                    data.ExperienceToNextLevel = level * 100;
+                    _expData[entityId] = data;
+                }
             }
 
-            // Other interface methods (not used in this test)
-            public bool CanLevelUp(int entityId) => false;
-            public bool LevelUp(int entityId) => false;
-            public void SetExperience(int entityId, long amount) { }
-            public void SetLevel(int entityId, int level) { }
-            public int GetLevel(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].CurrentLevel : 1;
-            public long GetCurrentExperience(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].CurrentExperience : 0;
-            public long GetExperienceToNextLevel(int entityId) => _expData.ContainsKey(entityId) ? _expData[entityId].ExperienceToNextLevel : 100;
+            public int GetLevel(int entityId)
+            {
+                return _expData.ContainsKey(entityId) ? _expData[entityId].CurrentLevel : 1;
+            }
+
+            public long GetTotalXP(int entityId)
+            {
+                return _totalXP.ContainsKey(entityId) ? _totalXP[entityId] : 0;
+            }
+
+            public long GetXPRequiredForLevel(int level)
+            {
+                // Simple cumulative formula: sum of (level * 100) for each level
+                long total = 0;
+                for (int i = 1; i < level; i++)
+                {
+                    total += i * 100;
+                }
+                return total;
+            }
         }
 
         #endregion
