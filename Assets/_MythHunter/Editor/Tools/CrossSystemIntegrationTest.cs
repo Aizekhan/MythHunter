@@ -33,8 +33,9 @@ namespace MythHunter.Editor.Tools
                 var questRegistry = new RPGFramework.Quests.QuestRegistry();
                 var sampleQuests = SampleQuests.GetAllSampleQuestsData();
 
-                foreach (var quest in sampleQuests)
+                foreach (var questData in sampleQuests)
                 {
+                    var quest = new RPGFramework.Quests.Quest(questData);
                     questRegistry.RegisterQuest(quest);
                 }
 
