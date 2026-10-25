@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="38" result="Failed(Child)" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0,2704625">
+  <test-suite type="TestSuite" id="1000" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="655" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.270463" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1543" name="RPGFramework.Persistence.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/RPGFramework.Persistence.Tests.dll" runstate="Runnable" testcasecount="38" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.247814" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16808" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1544" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="38" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.246730" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1545" name="Persistence" fullname="RPGFramework.Persistence" runstate="Runnable" testcasecount="38" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.246022" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1546" name="Tests" fullname="RPGFramework.Persistence.Tests" runstate="Runnable" testcasecount="38" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.245303" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1504" name="PersistenceSystemTests" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" testcasecount="38" result="Failed" site="Child" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.243127" total="38" passed="35" failed="3" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1521" name="BinarySerializer_Format_IsBinary" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.BinarySerializer_Format_IsBinary" methodname="BinarySerializer_Format_IsBinary" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="750636456" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.033247" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1520" name="BinarySerializer_SerializeDeserialize_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.BinarySerializer_SerializeDeserialize_Success" methodname="BinarySerializer_SerializeDeserialize_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="121329926" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.078502" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1519" name="JsonSerializer_Format_IsJson" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.JsonSerializer_Format_IsJson" methodname="JsonSerializer_Format_IsJson" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="455914155" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001416" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1518" name="JsonSerializer_SerializeDeserialize_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.JsonSerializer_SerializeDeserialize_Success" methodname="JsonSerializer_SerializeDeserialize_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1377389086" result="Failed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.009098" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                  <stack-trace><![CDATA[at RPGFramework.Persistence.Tests.PersistenceSystemTests.JsonSerializer_SerializeDeserialize_Success () [0x0006e] in D:\MythHunter-Git\Assets\_Framework\Persistence\Tests\PersistenceSystemTests.cs:257
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1542" name="LoadResult_CreateFailure_HasCorrectProperties" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.LoadResult_CreateFailure_HasCorrectProperties" methodname="LoadResult_CreateFailure_HasCorrectProperties" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1218975505" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001903" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1541" name="LoadResult_CreateSuccess_HasCorrectProperties" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.LoadResult_CreateSuccess_HasCorrectProperties" methodname="LoadResult_CreateSuccess_HasCorrectProperties" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1431922374" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001967" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1524" name="SaveFile_Properties_AreSetCorrectly" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveFile_Properties_AreSetCorrectly" methodname="SaveFile_Properties_AreSetCorrectly" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1852054866" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.004386" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1523" name="SaveFile_ValidateIntegrity_InvalidChecksum_ReturnsFalse" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveFile_ValidateIntegrity_InvalidChecksum_ReturnsFalse" methodname="SaveFile_ValidateIntegrity_InvalidChecksum_ReturnsFalse" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="891821696" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002078" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1522" name="SaveFile_ValidateIntegrity_ValidChecksum_ReturnsTrue" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveFile_ValidateIntegrity_ValidChecksum_ReturnsTrue" methodname="SaveFile_ValidateIntegrity_ValidChecksum_ReturnsTrue" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2134626692" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001568" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1534" name="SaveMetadata_CustomData_CanAddKeyValuePairs" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveMetadata_CustomData_CanAddKeyValuePairs" methodname="SaveMetadata_CustomData_CanAddKeyValuePairs" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1931031556" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001939" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1532" name="SaveMetadata_DefaultConstructor_InitializesCorrectly" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveMetadata_DefaultConstructor_InitializesCorrectly" methodname="SaveMetadata_DefaultConstructor_InitializesCorrectly" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="206662592" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002741" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1533" name="SaveMetadata_ParameterizedConstructor_SetsProperties" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveMetadata_ParameterizedConstructor_SetsProperties" methodname="SaveMetadata_ParameterizedConstructor_SetsProperties" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="838786371" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001410" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1540" name="SaveResult_CreateFailure_HasCorrectProperties" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveResult_CreateFailure_HasCorrectProperties" methodname="SaveResult_CreateFailure_HasCorrectProperties" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="819171742" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001408" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1539" name="SaveResult_CreateSuccess_HasCorrectProperties" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveResult_CreateSuccess_HasCorrectProperties" methodname="SaveResult_CreateSuccess_HasCorrectProperties" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1093285195" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001366" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1517" name="SaveSystem_ActiveSlot_UpdatesAfterSave" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_ActiveSlot_UpdatesAfterSave" methodname="SaveSystem_ActiveSlot_UpdatesAfterSave" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2128108410" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.004834" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1514" name="SaveSystem_AutoSave_TriggersCorrectly" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_AutoSave_TriggersCorrectly" methodname="SaveSystem_AutoSave_TriggersCorrectly" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="478432093" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002956" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1515" name="SaveSystem_AutoSaveEnabled_GetSet" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_AutoSaveEnabled_GetSet" methodname="SaveSystem_AutoSaveEnabled_GetSet" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2142512713" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001675" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1516" name="SaveSystem_AutoSaveInterval_GetSet" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_AutoSaveInterval_GetSet" methodname="SaveSystem_AutoSaveInterval_GetSet" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="641133671" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001524" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1510" name="SaveSystem_DeleteSave_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_DeleteSave_Success" methodname="SaveSystem_DeleteSave_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2016064344" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002732" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1511" name="SaveSystem_GetMetadata_ReturnsCorrectMetadata" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_GetMetadata_ReturnsCorrectMetadata" methodname="SaveSystem_GetMetadata_ReturnsCorrectMetadata" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2145728787" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002519" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1505" name="SaveSystem_InitializesWithCorrectMaxSlots" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_InitializesWithCorrectMaxSlots" methodname="SaveSystem_InitializesWithCorrectMaxSlots" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1306669476" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002400" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1508" name="SaveSystem_LoadFromEmptySlot_ReturnsFailure" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_LoadFromEmptySlot_ReturnsFailure" methodname="SaveSystem_LoadFromEmptySlot_ReturnsFailure" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1301138339" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001997" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1513" name="SaveSystem_QuickLoad_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_QuickLoad_Success" methodname="SaveSystem_QuickLoad_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="306699749" result="Failed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.004250" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                  <stack-trace><![CDATA[at RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_QuickLoad_Success () [0x0006a] in D:\MythHunter-Git\Assets\_Framework\Persistence\Tests\PersistenceSystemTests.cs:194
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1512" name="SaveSystem_QuickSave_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_QuickSave_Success" methodname="SaveSystem_QuickSave_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1806811553" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002372" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1538" name="SaveSystem_RaisesAutoSaveTriggeredEvent_OnAutoSave" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_RaisesAutoSaveTriggeredEvent_OnAutoSave" methodname="SaveSystem_RaisesAutoSaveTriggeredEvent_OnAutoSave" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="281153928" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002776" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1535" name="SaveSystem_RaisesSaveCreatedEvent_OnSuccessfulSave" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_RaisesSaveCreatedEvent_OnSuccessfulSave" methodname="SaveSystem_RaisesSaveCreatedEvent_OnSuccessfulSave" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1592081497" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002669" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1537" name="SaveSystem_RaisesSaveDeletedEvent_OnSuccessfulDelete" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_RaisesSaveDeletedEvent_OnSuccessfulDelete" methodname="SaveSystem_RaisesSaveDeletedEvent_OnSuccessfulDelete" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="102548359" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.002689" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1536" name="SaveSystem_RaisesSaveLoadedEvent_OnSuccessfulLoad" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_RaisesSaveLoadedEvent_OnSuccessfulLoad" methodname="SaveSystem_RaisesSaveLoadedEvent_OnSuccessfulLoad" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1762899973" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.009876" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1506" name="SaveSystem_SaveAndLoad_SingleSlot_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_SaveAndLoad_SingleSlot_Success" methodname="SaveSystem_SaveAndLoad_SingleSlot_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1653736454" result="Failed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.004356" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: not null
+  But was:  null
+]]></message>
+                  <stack-trace><![CDATA[at RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_SaveAndLoad_SingleSlot_Success () [0x000f1] in D:\MythHunter-Git\Assets\_Framework\Persistence\Tests\PersistenceSystemTests.cs:91
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1509" name="SaveSystem_SaveMultipleSlots_Success" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_SaveMultipleSlots_Success" methodname="SaveSystem_SaveMultipleSlots_Success" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1395050876" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.003860" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1507" name="SaveSystem_SaveToNonExistentSlot_ReturnsFailure" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveSystem_SaveToNonExistentSlot_ReturnsFailure" methodname="SaveSystem_SaveToNonExistentSlot_ReturnsFailure" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="2138849339" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001914" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1531" name="SaveValidator_ComputeChecksum_ProducesDifferentHashForDifferentData" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_ComputeChecksum_ProducesDifferentHashForDifferentData" methodname="SaveValidator_ComputeChecksum_ProducesDifferentHashForDifferentData" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="675409220" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001700" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1530" name="SaveValidator_ComputeChecksum_ProducesSameHashForSameData" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_ComputeChecksum_ProducesSameHashForSameData" methodname="SaveValidator_ComputeChecksum_ProducesSameHashForSameData" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1436395891" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001499" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1528" name="SaveValidator_IsCompatible_DifferentVersion_ReturnsFalse" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_IsCompatible_DifferentVersion_ReturnsFalse" methodname="SaveValidator_IsCompatible_DifferentVersion_ReturnsFalse" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1812761667" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.003893" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1527" name="SaveValidator_IsCompatible_SameVersion_ReturnsTrue" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_IsCompatible_SameVersion_ReturnsTrue" methodname="SaveValidator_IsCompatible_SameVersion_ReturnsTrue" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1893423794" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001632" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1529" name="SaveValidator_TryRepair_RecomputesChecksum" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_TryRepair_RecomputesChecksum" methodname="SaveValidator_TryRepair_RecomputesChecksum" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="865434344" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001881" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1526" name="SaveValidator_ValidateIntegrity_CorruptedSave_ReturnsFalse" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_ValidateIntegrity_CorruptedSave_ReturnsFalse" methodname="SaveValidator_ValidateIntegrity_CorruptedSave_ReturnsFalse" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="249613124" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001656" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1525" name="SaveValidator_ValidateIntegrity_ValidSave_ReturnsTrue" fullname="RPGFramework.Persistence.Tests.PersistenceSystemTests.SaveValidator_ValidateIntegrity_ValidSave_ReturnsTrue" methodname="SaveValidator_ValidateIntegrity_ValidSave_ReturnsTrue" classname="RPGFramework.Persistence.Tests.PersistenceSystemTests" runstate="Runnable" seed="1569262929" result="Passed" start-time="2026-10-23 15:19:26Z" end-time="2026-10-23 15:19:26Z" duration="0.001641" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/Admin/AppData/LocalLow/MasterMindGames/MythHunter\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

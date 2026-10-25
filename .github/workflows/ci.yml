@@ -1,0 +1,17 @@
+name: Minimal CI
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  noop:
+    name: Just acknowledge the push
+    runs-on: ubuntu-latest
+    steps:
+      - name: ✅ No CI actions needed
+        run: echo "CI is delegated to Unity Cloud Build 🚀"

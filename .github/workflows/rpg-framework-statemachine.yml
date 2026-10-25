@@ -1,0 +1,34 @@
+name: RPGFramework StateMachine Runtime
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/StateMachine/**"
+      - "Build/RPGFramework.StateMachine.Tests/**"
+      - ".github/workflows/rpg-framework-statemachine.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/StateMachine/**"
+      - "Build/RPGFramework.StateMachine.Tests/**"
+      - ".github/workflows/rpg-framework-statemachine.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and StateMachine tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run StateMachine tests
+        run: dotnet test Build/RPGFramework.StateMachine.Tests/RPGFramework.StateMachine.Tests.csproj --configuration Release

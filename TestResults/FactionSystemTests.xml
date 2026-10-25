@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="19" result="Passed" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0,0888429">
+  <test-suite type="TestSuite" id="1000" name="MythHunter" fullname="MythHunter" runstate="Runnable" testcasecount="586" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.088843" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1366" name="RPGFramework.Factions.Tests.dll" fullname="D:/MythHunter-Git/Library/ScriptAssemblies/RPGFramework.Factions.Tests.dll" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.070441" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5940" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1367" name="RPGFramework" fullname="RPGFramework" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.069538" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1368" name="Factions" fullname="RPGFramework.Factions" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.068994" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1369" name="Tests" fullname="RPGFramework.Factions.Tests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.068442" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1346" name="FactionSystemTests" fullname="RPGFramework.Factions.Tests.FactionSystemTests" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.066247" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1349" name="Faction_Create_ThrowsOnEmptyId" fullname="RPGFramework.Factions.Tests.FactionSystemTests.Faction_Create_ThrowsOnEmptyId" methodname="Faction_Create_ThrowsOnEmptyId" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1547156129" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.018534" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1347" name="Faction_Create_ValidProperties" fullname="RPGFramework.Factions.Tests.FactionSystemTests.Faction_Create_ValidProperties" methodname="Faction_Create_ValidProperties" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="415470628" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.006739" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1348" name="Faction_Create_WithDefaultReputation" fullname="RPGFramework.Factions.Tests.FactionSystemTests.Faction_Create_WithDefaultReputation" methodname="Faction_Create_WithDefaultReputation" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1684295592" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000243" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1361" name="FactionManager_GetReputation_ReturnsDefault" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionManager_GetReputation_ReturnsDefault" methodname="FactionManager_GetReputation_ReturnsDefault" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="182352169" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.003108" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1363" name="FactionManager_GetStanding_CalculatesCorrectly" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionManager_GetStanding_CalculatesCorrectly" methodname="FactionManager_GetStanding_CalculatesCorrectly" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="156726797" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.002968" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1365" name="FactionManager_InitializeEntityReputations_SetsDefaults" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionManager_InitializeEntityReputations_SetsDefaults" methodname="FactionManager_InitializeEntityReputations_SetsDefaults" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1238246593" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.001013" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1362" name="FactionManager_ModifyReputation_UpdatesValue" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionManager_ModifyReputation_UpdatesValue" methodname="FactionManager_ModifyReputation_UpdatesValue" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1216420366" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.001130" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1364" name="FactionManager_RelationshipCascade_AppliesModifier" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionManager_RelationshipCascade_AppliesModifier" methodname="FactionManager_RelationshipCascade_AppliesModifier" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="280763991" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.001360" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1359" name="FactionRegistry_GetFactionsByType_FiltersCorrectly" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRegistry_GetFactionsByType_FiltersCorrectly" methodname="FactionRegistry_GetFactionsByType_FiltersCorrectly" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="377865104" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000852" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1358" name="FactionRegistry_RegisterDuplicate_Throws" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRegistry_RegisterDuplicate_Throws" methodname="FactionRegistry_RegisterDuplicate_Throws" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1007399035" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000416" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1357" name="FactionRegistry_RegisterFaction_Success" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRegistry_RegisterFaction_Success" methodname="FactionRegistry_RegisterFaction_Success" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="40035609" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000254" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1360" name="FactionRegistry_RegisterRelationship_Success" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRegistry_RegisterRelationship_Success" methodname="FactionRegistry_RegisterRelationship_Success" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="98719608" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.002488" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1356" name="FactionRelationship_Create_ThrowsOnSameFaction" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRelationship_Create_ThrowsOnSameFaction" methodname="FactionRelationship_Create_ThrowsOnSameFaction" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="2133243526" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000393" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1354" name="FactionRelationship_Create_ValidProperties" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRelationship_Create_ValidProperties" methodname="FactionRelationship_Create_ValidProperties" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="813904240" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.001140" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1355" name="FactionRelationship_GetOtherFaction_ReturnsCorrect" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionRelationship_GetOtherFaction_ReturnsCorrect" methodname="FactionRelationship_GetOtherFaction_ReturnsCorrect" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="820573107" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000313" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1350" name="FactionReputation_CalculateStanding_Hated" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionReputation_CalculateStanding_Hated" methodname="FactionReputation_CalculateStanding_Hated" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="931519411" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000184" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1351" name="FactionReputation_CalculateStanding_Neutral" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionReputation_CalculateStanding_Neutral" methodname="FactionReputation_CalculateStanding_Neutral" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1808601112" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000162" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1352" name="FactionReputation_CalculateStanding_Revered" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionReputation_CalculateStanding_Revered" methodname="FactionReputation_CalculateStanding_Revered" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="1916929105" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000164" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1353" name="FactionReputation_ModifyReputation_Clamps" fullname="RPGFramework.Factions.Tests.FactionSystemTests.FactionReputation_ModifyReputation_Clamps" methodname="FactionReputation_ModifyReputation_Clamps" classname="RPGFramework.Factions.Tests.FactionSystemTests" runstate="Runnable" seed="950277465" result="Passed" start-time="2026-10-19 20:31:54Z" end-time="2026-10-19 20:31:54Z" duration="0.000245" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/Admin/AppData/LocalLow/MasterMindGames/MythHunter\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

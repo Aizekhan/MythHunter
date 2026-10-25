@@ -1,0 +1,24 @@
+{
+    "name": "MythHunter.Progression.Tests",
+    "rootNamespace": "MythHunter.Tests.Progression",
+    "references": [
+        "MythHunter.Runtime",
+        "RPGFramework.ECS.Runtime",
+        "RPGFramework.Progression.Runtime",
+        "RPGFramework.Logging.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

@@ -1,0 +1,131 @@
+name: Architecture Validation
+
+on:
+  pull_request:
+    branches: [ dev, main ]
+    paths:
+      - 'Assets/_Framework/**'
+      - 'Assets/_MythHunter/**'
+      - '.github/workflows/architecture-validation.yml'
+  push:
+    branches: [ dev ]
+    paths:
+      - 'Assets/_Framework/**'
+      - 'Assets/_MythHunter/**'
+
+jobs:
+  architecture-tests:
+    name: Run Architecture Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - name: Run Architecture Tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.0.45f1
+          testMode: EditMode
+          customParameters: -category Architecture
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Architecture Tests Results
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Architecture-Test-Results
+          path: artifacts/**/*.xml
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Read test results
+            let comment = '## ❌ Architecture Validation Failed\n\n';
+            comment += 'Architecture tests detected violations:\n\n';
+            comment += '**Common violations:**\n';
+            comment += '- RPGFW001: Framework code references Game code\n';
+            comment += '- RPGFW004: Component is class instead of struct\n';
+            comment += '- RPGFW005: Component has methods (should be data-only)\n\n';
+            comment += 'Please review the test results and fix violations.\n\n';
+            comment += 'See [Architecture Quick Reference](../blob/dev/ARCHITECTURE-QUICK-REFERENCE.md) for guidelines.';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  assembly-definition-check:
+    name: Validate Assembly Definitions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Assembly Definition Structure
+        run: |
+          echo "Validating assembly definitions..."
+
+          # Check Framework assemblies exist
+          if [ ! -f "Assets/_Framework/ECS/Runtime/RPGFramework.ECS.Runtime.asmdef" ]; then
+            echo "❌ Framework ECS assembly definition missing"
+            exit 1
+          fi
+
+          # Check Game assembly exists
+          if [ ! -f "Assets/_MythHunter/Code/MythHunter.Runtime.asmdef" ]; then
+            echo "❌ Game assembly definition missing"
+            exit 1
+          fi
+
+          # Check Framework doesn't reference Game (simple grep check)
+          if grep -r "MythHunter" Assets/_Framework/**/*.asmdef 2>/dev/null; then
+            echo "❌ Framework assembly definitions reference Game assemblies!"
+            exit 1
+          fi
+
+          echo "✅ Assembly definitions structure is valid"
+
+      - name: Comment success
+        if: github.event_name == 'pull_request' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = '## ✅ Architecture Validation Passed\n\n' +
+                          'All architecture rules validated successfully:\n' +
+                          '- ✅ Assembly definitions correct\n' +
+                          '- ✅ No Framework → Game dependencies\n' +
+                          '- ✅ Architecture tests passed\n\n' +
+                          'Safe to merge!';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

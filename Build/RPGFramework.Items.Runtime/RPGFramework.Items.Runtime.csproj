@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RPGFramework.Items</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Assets/_Framework/Items/Runtime/Contracts/*.cs" Link="Contracts/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Items/Runtime/Enums/*.cs" Link="Enums/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Items/Runtime/Components/*.cs" Link="Components/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Items/Runtime/Events/*.cs" Link="Events/%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/_Framework/Items/Runtime/Implementations/*.cs" Link="Implementations/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RPGFramework.ECS.Runtime/RPGFramework.ECS.Runtime.csproj" />
+    <ProjectReference Include="../RPGFramework.Stats.Runtime/RPGFramework.Stats.Runtime.csproj" />
+  </ItemGroup>
+</Project>

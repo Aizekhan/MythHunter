@@ -1,0 +1,45 @@
+name: RPGFramework Combat Runtime
+
+on:
+  pull_request:
+    branches: [dev, "feature/epic-10-phase-1-resource-system"]
+    paths:
+      - "Assets/_Framework/Combat/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Logging/**"
+      - "Assets/_Framework/Serialization/**"
+      - "Build/RPGFramework.Combat.Tests/**"
+      - "Build/validate_framework_combat_boundary.py"
+      - ".github/workflows/rpg-framework-combat.yml"
+  push:
+    branches: [dev, "feature/epic-10-phase-1-resource-system"]
+    paths:
+      - "Assets/_Framework/Combat/**"
+      - "Assets/_Framework/ECS/**"
+      - "Assets/_Framework/Logging/**"
+      - "Assets/_Framework/Serialization/**"
+      - "Build/RPGFramework.Combat.Tests/**"
+      - "Build/validate_framework_combat_boundary.py"
+      - ".github/workflows/rpg-framework-combat.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and Combat tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate assembly boundary and GUIDs
+        run: python Build/validate_framework_combat_boundary.py
+
+      - name: Run Combat tests
+        run: dotnet test Build/RPGFramework.Combat.Tests/RPGFramework.Combat.Tests.csproj --configuration Release

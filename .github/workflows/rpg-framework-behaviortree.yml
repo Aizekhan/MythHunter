@@ -1,0 +1,34 @@
+name: RPGFramework BehaviorTree Runtime
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/BehaviorTree/**"
+      - "Build/RPGFramework.BehaviorTree.Tests/**"
+      - ".github/workflows/rpg-framework-behaviortree.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "Assets/_Framework/BehaviorTree/**"
+      - "Build/RPGFramework.BehaviorTree.Tests/**"
+      - ".github/workflows/rpg-framework-behaviortree.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Pure .NET compile and BehaviorTree tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run BehaviorTree tests
+        run: dotnet test Build/RPGFramework.BehaviorTree.Tests/RPGFramework.BehaviorTree.Tests.csproj --configuration Release
