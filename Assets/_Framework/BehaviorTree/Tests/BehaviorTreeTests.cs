@@ -35,6 +35,11 @@ namespace RPGFramework.BehaviorTree.Tests
             public override void Reset()
             {
                 base.Reset();
+                // Keep ExecuteCount for test verification - don't reset it
+            }
+
+            public void ResetCount()
+            {
                 ExecuteCount = 0;
             }
         }
@@ -173,7 +178,7 @@ namespace RPGFramework.BehaviorTree.Tests
 
             // Act
             tree.Reset();
-            counter.Reset(); // Also reset counter for test
+            counter.ResetCount(); // Reset count for clean test
             tree.Tick();
 
             // Assert
