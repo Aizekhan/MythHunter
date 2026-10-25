@@ -137,16 +137,13 @@ namespace RPGFramework.BehaviorTree.Tests
             var repeater = new RepeaterNode(counter, repeatCount: 2);
 
             // Act
-            var status1 = repeater.Execute(); // First execution completes, child reset
+            var status1 = repeater.Execute(); // First execution completes, child reset, count = 1
             Assert.AreEqual(NodeStatus.Running, status1);
 
-            var status2 = repeater.Execute(); // Second execution completes
-            Assert.AreEqual(NodeStatus.Running, status2);
-
-            var status3 = repeater.Execute(); // Repeat count reached
+            var status2 = repeater.Execute(); // Second execution completes, count = 2, repeat limit reached
 
             // Assert
-            Assert.AreEqual(NodeStatus.Success, status3);
+            Assert.AreEqual(NodeStatus.Success, status2);
             Assert.AreEqual(2, counter.ExecuteCount);
         }
 
